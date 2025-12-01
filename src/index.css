@@ -1,0 +1,189 @@
+@import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@500;600;700&family=Inter:wght@300;400;500;600&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Nunito:wght@300;800&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&display=swap');
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Definition of the design system. All colors, gradients, fonts, etc should be defined here. 
+All colors MUST be HSL.
+*/
+
+@layer base {
+  :root {
+    --background: 30 20% 98%;
+    --foreground: 20 10% 10%;
+
+    --card: 0 0% 100%;
+    --card-foreground: 20 10% 10%;
+
+    --popover: 0 0% 100%;
+    --popover-foreground: 20 10% 10%;
+
+    --primary: 20 10% 10%;
+    --primary-foreground: 30 20% 98%;
+
+    --secondary: 30 15% 94%;
+    --secondary-foreground: 20 10% 10%;
+
+    --muted: 30 15% 94%;
+    --muted-foreground: 20 8% 45%;
+
+    --accent: 150 60% 45%;
+    --accent-foreground: 30 20% 98%;
+
+    --destructive: 0 84.2% 60.2%;
+    --destructive-foreground: 30 20% 98%;
+
+    --border: 30 15% 88%;
+    --input: 30 15% 88%;
+    --ring: 150 60% 45%;
+
+    --radius: 1rem;
+
+    /* Fashion-forward design tokens */
+    --brand: 25 75% 60%;
+    --brand-light: 25 85% 75%;
+    --brand-dark: 25 65% 45%;
+    
+    --gradient-hero: linear-gradient(135deg, hsl(150 60% 45% / 0.1), hsl(150 80% 70% / 0.05));
+    --gradient-card: linear-gradient(180deg, transparent, hsl(30 15% 94% / 0.3));
+    
+    --shadow-soft: 0 2px 16px hsl(20 10% 10% / 0.06);
+    --shadow-medium: 0 4px 24px hsl(20 10% 10% / 0.08);
+    --shadow-strong: 0 8px 32px hsl(20 10% 10% / 0.12);
+    
+    --transition-smooth: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+
+  .dark {
+    --background: 0 0% 4%;
+    --foreground: 0 0% 98%;
+
+    --card: 0 0% 6%;
+    --card-foreground: 0 0% 98%;
+
+    --popover: 0 0% 6%;
+    --popover-foreground: 0 0% 98%;
+
+    --primary: 0 0% 98%;
+    --primary-foreground: 0 0% 6%;
+
+    --secondary: 0 0% 10%;
+    --secondary-foreground: 0 0% 98%;
+
+    --muted: 0 0% 12%;
+    --muted-foreground: 0 0% 65%;
+
+    --accent: 150 60% 50%;
+    --accent-foreground: 0 0% 98%;
+
+    --destructive: 0 84.2% 60.2%;
+    --destructive-foreground: 0 0% 98%;
+
+    --border: 0 0% 15%;
+    --input: 0 0% 15%;
+    --ring: 150 60% 50%;
+
+    /* Dark mode gradients */
+    --gradient-hero: linear-gradient(135deg, hsl(150 60% 45% / 0.15), hsl(150 80% 70% / 0.08));
+    --gradient-card: linear-gradient(180deg, transparent, hsl(0 0% 6% / 0.5));
+    --gradient-bg: linear-gradient(180deg, hsl(0 0% 4%) 0%, hsl(0 0% 6.5%) 100%);
+    
+    --shadow-soft: 0 2px 16px hsl(0 0% 0% / 0.3);
+    --shadow-medium: 0 4px 24px hsl(0 0% 0% / 0.4);
+    --shadow-strong: 0 8px 32px hsl(0 0% 0% / 0.5);
+  }
+}
+
+@layer base {
+  * {
+    border-color: hsl(var(--border));
+  }
+
+  body {
+    background-color: hsl(var(--background));
+    background-image: var(--gradient-bg, none);
+    color: hsl(var(--foreground));
+    font-family: 'Outfit', 'Inter', sans-serif;
+    font-feature-settings: 'kern', 'liga', 'calt';
+    user-select: none;
+    -webkit-user-select: none;
+    -moz-user-select: none;
+    -ms-user-select: none;
+  }
+  
+  h1, h2, h3, h4, h5, h6 {
+    font-family: 'Outfit', sans-serif;
+    font-weight: 600;
+  }
+}
+
+@layer components {
+  /* Nunito ExtraBold Italic utility for title */
+  .font-nunito-extrabold-italic {
+    font-family: 'Nunito', system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', Arial;
+    font-weight: 800;
+    font-style: italic;
+  }
+  .font-nunito-light {
+    font-family: 'Nunito', system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', Arial;
+    font-weight: 300;
+    font-style: normal;
+  }
+
+  /* Fade-in animations */
+  @keyframes fadeIn {
+    from {
+      opacity: 0;
+      transform: translateY(20px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+
+  .animate-fade-in {
+    animation: fadeIn 0.6s ease-out forwards;
+  }
+
+  .animate-fade-in-delay-1 {
+    animation: fadeIn 0.6s ease-out 0.1s forwards;
+    opacity: 0;
+  }
+
+  .animate-fade-in-delay-2 {
+    animation: fadeIn 0.6s ease-out 0.2s forwards;
+    opacity: 0;
+  }
+
+  .animate-fade-in-delay-3 {
+    animation: fadeIn 0.6s ease-out 0.3s forwards;
+    opacity: 0;
+  }
+
+  /* Stagger animation for grid items */
+  .stagger-fade-in > * {
+    animation: fadeIn 0.5s ease-out forwards;
+    opacity: 0;
+  }
+
+  .stagger-fade-in > *:nth-child(1) { animation-delay: 0.05s; }
+  .stagger-fade-in > *:nth-child(2) { animation-delay: 0.1s; }
+  .stagger-fade-in > *:nth-child(3) { animation-delay: 0.15s; }
+  .stagger-fade-in > *:nth-child(4) { animation-delay: 0.2s; }
+  .stagger-fade-in > *:nth-child(5) { animation-delay: 0.25s; }
+  .stagger-fade-in > *:nth-child(6) { animation-delay: 0.3s; }
+  .stagger-fade-in > *:nth-child(7) { animation-delay: 0.35s; }
+  .stagger-fade-in > *:nth-child(8) { animation-delay: 0.4s; }
+  .stagger-fade-in > *:nth-child(n+9) { animation-delay: 0.45s; }
+
+  /* Glass panel effect */
+  .glass-panel {
+    background: rgba(255, 255, 255, 0.05);
+    backdrop-filter: blur(12px);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+  }
+}
