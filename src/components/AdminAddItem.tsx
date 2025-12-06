@@ -1,6 +1,5 @@
 // AdminAddItem.tsx
 import React, { useState } from "react";
-import { supabase } from "@/integrations/supabase/client";
 
 const AdminAddItem: React.FC = () => {
   const [name, setName] = useState("");
@@ -15,9 +14,9 @@ const AdminAddItem: React.FC = () => {
   const [storeShipping, setStoreShipping] = useState("");
 
   const handleAddItem = async () => {
-    // Check if user is logged in
-    const { data: { user } } = await supabase.auth.getUser();
-    if (!user) {
+    const token = localStorage.getItem('access_token');
+    
+    if (!token) {
       alert("Спочатку залогіньтесь!");
       return;
     }
@@ -26,56 +25,65 @@ const AdminAddItem: React.FC = () => {
       // First, check if store exists or create it
       let storeId: string;
       
-      const { data: existingStore } = await supabase
-        .from("stores")
-        .select("id")
-        .eq("name", storeName)
-        .maybeSingle();
+      // Check for existing store
+      const storesResponse = await fetch('http://localhost:3000/api/stores');
+      
+      if (!storesResponse.ok) {
+        throw new Error('Failed to fetch stores');
+      }
+      
+      const storesResult = await storesResponse.json();
+      const stores = storesResult.data || storesResult;
+      const existingStore = stores.find((s: any) => s.name === storeName);
 
       if (existingStore) {
         storeId = existingStore.id;
       } else {
         // Create new store
-        const { data: newStore, error: storeError } = await supabase
-          .from("stores")
-          .insert({
+        const createStoreResponse = await fetch('http://localhost:3000/api/admin/stores', {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${token}`,
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
             name: storeName,
             telegram_url: storeTelegram || null,
             instagram_url: storeInstagram || null,
             shipping_info: storeShipping || null,
-          })
-          .select()
-          .single();
+          }),
+        });
 
-        if (storeError) throw storeError;
+        if (!createStoreResponse.ok) {
+          throw new Error('Failed to create store');
+        }
+
+        const newStore = await createStoreResponse.json();
         storeId = newStore.id;
       }
 
-      // Create product
-      const { data: product, error: productError } = await supabase
-        .from("products")
-        .insert({
+      // Create product with store link
+      const createProductResponse = await fetch('http://localhost:3000/api/admin/products', {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
           name,
           color,
           type,
           price: parseFloat(price),
           description: description || null,
           image_url: imageUrl || null,
-        })
-        .select()
-        .single();
+          store_ids: [storeId],
+        }),
+      });
 
-      if (productError) throw productError;
-
-      // Link product to store
-      const { error: linkError } = await supabase
-        .from("product_stores")
-        .insert({
-          product_id: product.id,
-          store_id: storeId,
-        });
-
-      if (linkError) throw linkError;
+      if (!createProductResponse.ok) {
+        const errorData = await createProductResponse.json();
+        throw new Error(errorData.error || 'Failed to create product');
+      }
 
       alert("Предмет успішно додано!");
       // Clear form after successful addition

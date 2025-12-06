@@ -1,12 +1,13 @@
 import { useState, useEffect } from "react";
-import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Card } from "@/components/ui/card";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Checkbox } from "@/components/ui/checkbox";
 import { useToast } from "@/hooks/use-toast";
-import { Pencil, Trash2, Plus, X, Save } from "lucide-react";
+import { Pencil, Trash2, Plus, X, Save, CheckCircle2 } from "lucide-react";
 
 interface Store {
   id: string;
@@ -14,6 +15,9 @@ interface Store {
   telegram_url: string | null;
   instagram_url: string | null;
   shipping_info: string | null;
+  is_verified: boolean;
+  average_rating: number;
+  total_ratings: number;
   created_at: string;
 }
 
@@ -28,19 +32,27 @@ export const StoreManagement = () => {
   const [telegramUrl, setTelegramUrl] = useState("");
   const [instagramUrl, setInstagramUrl] = useState("");
   const [shippingInfo, setShippingInfo] = useState("");
+  const [isVerified, setIsVerified] = useState(false);
 
   useEffect(() => {
     fetchStores();
   }, []);
 
   const fetchStores = async () => {
-    const { data, error } = await supabase
-      .from("stores")
-      .select("*")
-      .order("name");
-
-    if (!error && data) {
-      setStores(data);
+    try {
+      const response = await fetch('http://localhost:3000/api/stores');
+      
+      if (response.ok) {
+        const result = await response.json();
+        const storesData = result.data || result;
+        if (storesData) {
+          // Sort by name
+          const sortedStores = storesData.sort((a: Store, b: Store) => a.name.localeCompare(b.name));
+          setStores(sortedStores);
+        }
+      }
+    } catch (error) {
+      console.error('Failed to fetch stores:', error);
     }
   };
 
@@ -49,6 +61,7 @@ export const StoreManagement = () => {
     setTelegramUrl("");
     setInstagramUrl("");
     setShippingInfo("");
+    setIsVerified(false);
     setEditingStore(null);
     setIsAdding(false);
   };
@@ -59,6 +72,7 @@ export const StoreManagement = () => {
     setTelegramUrl(store.telegram_url || "");
     setInstagramUrl(store.instagram_url || "");
     setShippingInfo(store.shipping_info || "");
+    setIsVerified(store.is_verified || false);
     setIsAdding(false);
   };
 
@@ -79,47 +93,61 @@ export const StoreManagement = () => {
       return;
     }
 
+    const token = localStorage.getItem('access_token');
+    if (!token) {
+      toast({
+        title: "Error",
+        description: "Please login first",
+        variant: "destructive",
+      });
+      return;
+    }
+
     const storeData = {
       name: storeName.trim(),
       telegram_url: telegramUrl.trim() || null,
       instagram_url: instagramUrl.trim() || null,
       shipping_info: shippingInfo.trim() || null,
+      is_verified: isVerified,
     };
 
-    if (editingStore) {
-      // Update existing store
-      const { error } = await supabase
-        .from("stores")
-        .update(storeData)
-        .eq("id", editingStore.id);
-
-      if (error) {
-        toast({
-          title: "Error",
-          description: "Failed to update store",
-          variant: "destructive",
+    try {
+      if (editingStore) {
+        // Update existing store
+        const response = await fetch(`http://localhost:3000/api/admin/stores/${editingStore.id}`, {
+          method: 'PUT',
+          headers: {
+            'Authorization': `Bearer ${token}`,
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify(storeData),
         });
-      } else {
+
+        if (!response.ok) {
+          throw new Error('Failed to update store');
+        }
+
         toast({
           title: "Success",
           description: "Store updated successfully",
         });
         resetForm();
         fetchStores();
-      }
-    } else {
-      // Create new store
-      const { error } = await supabase
-        .from("stores")
-        .insert([storeData]);
-
-      if (error) {
-        toast({
-          title: "Error",
-          description: "Failed to create store",
-          variant: "destructive",
-        });
       } else {
+        // Create new store
+        const response = await fetch('http://localhost:3000/api/admin/stores', {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${token}`,
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify(storeData),
+        });
+
+        if (!response.ok) {
+          throw new Error('Failed to create store');
+        }
+
         toast({
           title: "Success",
           description: "Store created successfully",
@@ -127,6 +155,12 @@ export const StoreManagement = () => {
         resetForm();
         fetchStores();
       }
+    } catch (error: any) {
+      toast({
+        title: "Error",
+        description: error.message || (editingStore ? "Failed to update store" : "Failed to create store"),
+        variant: "destructive",
+      });
     }
   };
 
@@ -135,23 +169,40 @@ export const StoreManagement = () => {
       return;
     }
 
-    const { error } = await supabase
-      .from("stores")
-      .delete()
-      .eq("id", storeId);
+    try {
+      const token = localStorage.getItem('access_token');
+      if (!token) {
+        toast({
+          title: "Error",
+          description: "Please login first",
+          variant: "destructive",
+        });
+        return;
+      }
 
-    if (error) {
-      toast({
-        title: "Error",
-        description: "Failed to delete store",
-        variant: "destructive",
+      const response = await fetch(`http://localhost:3000/api/admin/stores/${storeId}`, {
+        method: 'DELETE',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+        },
       });
-    } else {
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || 'Failed to delete store');
+      }
+
       toast({
         title: "Success",
         description: "Store deleted successfully",
       });
       fetchStores();
+    } catch (error: any) {
+      toast({
+        title: "Error",
+        description: error.message || "Failed to delete store",
+        variant: "destructive",
+      });
     }
   };
 
@@ -196,13 +247,33 @@ export const StoreManagement = () => {
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="shipping-info">Shipping Region</Label>
-                <Input
-                  id="shipping-info"
-                  value={shippingInfo}
-                  onChange={(e) => setShippingInfo(e.target.value)}
-                  placeholder="e.g., Worldwide, Europe"
-                />
+                <Label htmlFor="shipping-info">Shipping Region *</Label>
+                <Select value={shippingInfo} onValueChange={setShippingInfo} required>
+                  <SelectTrigger id="shipping-info">
+                    <SelectValue placeholder="Select shipping region" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="Worldwide">Worldwide</SelectItem>
+                    <SelectItem value="Europe">Europe</SelectItem>
+                    <SelectItem value="USA">USA</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <div className="space-y-2">
+                <div className="flex items-center space-x-2 pt-6">
+                  <Checkbox 
+                    id="is-verified" 
+                    checked={isVerified}
+                    onCheckedChange={(checked) => setIsVerified(checked as boolean)}
+                  />
+                  <Label htmlFor="is-verified" className="cursor-pointer">
+                    Verified Store
+                  </Label>
+                </div>
+                <p className="text-xs text-muted-foreground select-none">
+                  Mark as verified to show trust badge
+                </p>
               </div>
 
               <div className="space-y-2">
@@ -262,13 +333,29 @@ export const StoreManagement = () => {
               >
                 <div className="flex items-start justify-between gap-4">
                   <div className="flex-1 space-y-2">
-                    <h4 className="font-semibold text-lg select-none">{store.name}</h4>
+                    <div className="flex items-center gap-2">
+                      <h4 className="font-semibold text-lg select-none">{store.name}</h4>
+                      {store.is_verified && (
+                        <div className="flex items-center gap-1 bg-green-100 text-green-800 px-2 py-0.5 rounded-full text-xs font-medium">
+                          <CheckCircle2 className="w-3 h-3" />
+                          Verified
+                        </div>
+                      )}
+                    </div>
                     
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-sm">
                       {store.shipping_info && (
                         <div>
                           <span className="text-muted-foreground select-none">Shipping: </span>
                           <span className="select-none">{store.shipping_info}</span>
+                        </div>
+                      )}
+                      {store.total_ratings > 0 && (
+                        <div>
+                          <span className="text-muted-foreground select-none">Rating: </span>
+                          <span className="select-none font-medium">
+                            ⭐ {store.average_rating.toFixed(1)} ({store.total_ratings} reviews)
+                          </span>
                         </div>
                       )}
                       {store.telegram_url && (

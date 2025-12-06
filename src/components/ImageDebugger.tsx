@@ -25,13 +25,13 @@ const ImageDebugger = ({ src, alt, className }: ImageDebuggerProps) => {
       naturalHeight: e.currentTarget.naturalHeight,
       complete: e.currentTarget.complete
     });
-    e.currentTarget.src = "/placeholder.svg";
+    e.currentTarget.src = "/mainlogo.png";
   };
 
   return (
     <div className="relative">
       <img
-        src={src || "/placeholder.svg"}
+        src={src || "/mainlogo.png"}
         alt={alt}
         className={className}
         crossOrigin="anonymous"

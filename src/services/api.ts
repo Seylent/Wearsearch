@@ -16,7 +16,7 @@ export const api: AxiosInstance = axios.create({
 api.interceptors.request.use(
   (config: InternalAxiosRequestConfig) => {
     // Get token from localStorage (adjust based on your auth implementation)
-    const token = localStorage.getItem('authToken');
+    const token = localStorage.getItem('access_token');
     
     if (token && config.headers) {
       config.headers.Authorization = `Bearer ${token}`;
@@ -39,9 +39,21 @@ api.interceptors.response.use(
     if (error.response) {
       switch (error.response.status) {
         case 401:
-          // Unauthorized - clear token and redirect to login
-          localStorage.removeItem('authToken');
-          window.location.href = '/auth';
+          // Unauthorized - clear invalid tokens but DON'T redirect
+          // Public endpoints don't require auth, so user can continue browsing
+          localStorage.removeItem('access_token');
+          localStorage.removeItem('refresh_token');
+          localStorage.removeItem('user');
+          localStorage.removeItem('token_type');
+          
+          // Dispatch auth change event so Navigation updates
+          window.dispatchEvent(new Event('authChange'));
+          
+          // Only redirect to /auth if user is on a protected page
+          const protectedPaths = ['/profile', '/favorites', '/admin'];
+          if (protectedPaths.some(path => window.location.pathname.startsWith(path))) {
+            window.location.href = '/auth';
+          }
           break;
         case 403:
           console.error('Access forbidden');

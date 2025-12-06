@@ -92,17 +92,17 @@ export const ImageUploader = ({ onImageUpload, currentImage, label = "Product Im
       const formData = new FormData();
       formData.append('image', file);
 
-      // Upload to backend server on port 3000
-      const response = await fetch('http://localhost:3000/api/upload/image', {
+      // Upload to backend Supabase upload endpoint
+      const response = await fetch('http://localhost:3000/api/supabase-upload/image', {
         method: 'POST',
         body: formData,
       });
 
-      if (!response.ok) {
-        throw new Error('Upload endpoint not available');
-      }
-
       const data = await response.json();
+
+      if (!response.ok || !data.success) {
+        throw new Error(data.error || 'Upload failed');
+      }
       
       if (data.url) {
         onImageUpload(data.url);

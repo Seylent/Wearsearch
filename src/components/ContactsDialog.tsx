@@ -13,16 +13,19 @@ export const ContactsDialog = () => {
   return (
     <Dialog>
       <DialogTrigger asChild>
-        <Button variant="ghost" className="font-semibold text-2xl leading-none h-auto px-4 py-2">
+        <Button 
+          variant="ghost" 
+          className="text-sm font-medium uppercase tracking-widest text-muted-foreground hover:text-white hover:drop-shadow-[0_0_8px_rgba(255,255,255,0.5)] transition-all h-auto px-3 py-2"
+        >
           Contacts
         </Button>
       </DialogTrigger>
-      <DialogContent className="sm:max-w-md bg-background border-2 shadow-strong">
+      <DialogContent className="sm:max-w-md bg-black/95 backdrop-blur-xl border-white/20">
         <DialogHeader>
-          <DialogTitle className="text-2xl font-semibold text-center mb-2">
+          <DialogTitle className="text-2xl font-semibold text-center mb-2 text-white">
             Get in Touch
           </DialogTitle>
-          <p className="text-muted-foreground text-center text-sm">
+          <p className="text-white/60 text-center text-sm">
             Connect with us through your preferred platform
           </p>
         </DialogHeader>
@@ -35,12 +38,12 @@ export const ContactsDialog = () => {
           >
             <Button
               variant="outline"
-              className="w-full h-14 text-base justify-start gap-4 hover:scale-[1.02] transition-transform"
+              className="w-full h-14 text-base justify-start gap-4 hover:scale-[1.02] hover:bg-white/10 hover:border-white/40 transition-all border-white/20 bg-white/5"
             >
               <FaTelegram className="w-6 h-6 text-[#0088cc]" />
               <div className="text-left">
-                <div className="font-semibold">Telegram</div>
-                <div className="text-xs text-muted-foreground">@wearsearch</div>
+                <div className="font-semibold text-white">Telegram</div>
+                <div className="text-xs text-white/60">@wearsearch</div>
               </div>
             </Button>
           </a>
@@ -53,12 +56,12 @@ export const ContactsDialog = () => {
           >
             <Button
               variant="outline"
-              className="w-full h-14 text-base justify-start gap-4 hover:scale-[1.02] transition-transform"
+              className="w-full h-14 text-base justify-start gap-4 hover:scale-[1.02] hover:bg-white/10 hover:border-white/40 transition-all border-white/20 bg-white/5"
             >
               <FaInstagram className="w-6 h-6 text-[#E4405F]" />
               <div className="text-left">
-                <div className="font-semibold">Instagram</div>
-                <div className="text-xs text-muted-foreground">@wearsearch</div>
+                <div className="font-semibold text-white">Instagram</div>
+                <div className="text-xs text-white/60">@wearsearch</div>
               </div>
             </Button>
           </a>
@@ -66,12 +69,12 @@ export const ContactsDialog = () => {
           <a href="mailto:contact@wearsearch.com" className="block">
             <Button
               variant="outline"
-              className="w-full h-14 text-base justify-start gap-4 hover:scale-[1.02] transition-transform"
+              className="w-full h-14 text-base justify-start gap-4 hover:scale-[1.02] hover:bg-white/10 hover:border-white/40 transition-all border-white/20 bg-white/5"
             >
-              <Mail className="w-6 h-6 text-accent" />
+              <Mail className="w-6 h-6 text-white" />
               <div className="text-left">
-                <div className="font-semibold">Email</div>
-                <div className="text-xs text-muted-foreground">contact@wearsearch.com</div>
+                <div className="font-semibold text-white">Email</div>
+                <div className="text-xs text-white/60">contact@wearsearch.com</div>
               </div>
             </Button>
           </a>
