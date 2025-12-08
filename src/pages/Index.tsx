@@ -1,339 +1,300 @@
-import { useState, useEffect } from "react";
-import Header from "@/components/Header";
+import React, { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
+import Navigation from "@/components/layout/Navigation";
+import { Footer } from "@/components/layout/Footer";
 import ProductCard from "@/components/ProductCard";
-import { supabase } from "@/integrations/supabase/client";
-import { Checkbox } from "@/components/ui/checkbox";
-import { Label } from "@/components/ui/label";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Button } from "@/components/ui/button";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
-import { Filter } from "lucide-react";
-import {
-  Pagination,
-  PaginationContent,
-  PaginationItem,
-  PaginationLink,
-  PaginationNext,
-  PaginationPrevious,
-  PaginationEllipsis,
-} from "@/components/ui/pagination";
+import { Sparkles, Shield, Globe, Clock, ArrowRight } from "lucide-react";
+import { productService, Product } from "@/services/productService";
 
-const Index = () => {
-  const [searchQuery, setSearchQuery] = useState("");
-  const [selectedColors, setSelectedColors] = useState<string[]>([]);
-  const [selectedTypes, setSelectedTypes] = useState<string[]>([]);
-  const [selectedShipping, setSelectedShipping] = useState<string[]>([]);
-  const [sortBy, setSortBy] = useState("default");
-  const [currentPage, setCurrentPage] = useState(1);
-  const [products, setProducts] = useState<any[]>([]);
+const Index: React.FC = () => {
+  const navigate = useNavigate();
+  const [products, setProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
-  const [filterOpen, setFilterOpen] = useState(false);
-  const itemsPerPage = 15;
+  const [activeCategory, setActiveCategory] = useState("All");
 
-  const colors = ["Black", "White", "Blue", "Red", "Brown", "Beige", "Gray"];
-  const types = ["Outerwear", "Bottoms", "Hats", "Shoes", "Tops", "Accessories"];
-  const shippingOptions = ["Worldwide", "Europe", "Ukraine"];
+  const categories = ["All", "Women", "Men", "Accessories"];
 
   useEffect(() => {
     fetchProducts();
   }, []);
 
   const fetchProducts = async () => {
-    setLoading(true);
-    const { data, error } = await supabase
-      .from("products")
-      .select(`
-        *,
-        product_stores(
-          stores(*)
-        )
-      `)
-      .order("created_at", { ascending: false });
-
-    if (error) {
+    try {
+      const response = await productService.getAllProducts(undefined, { limit: 8 });
+      if (response?.products) {
+        setProducts(response.products);
+      }
+    } catch (error) {
       console.error("Error fetching products:", error);
+    } finally {
+      setLoading(false);
     }
-    
-    if (data) {
-      setProducts(data);
-    }
-    setLoading(false);
   };
 
-  const filteredProducts = products.filter((product) => {
-    const matchesSearch = 
-      product.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      product.type.toLowerCase().includes(searchQuery.toLowerCase());
-    
-    const matchesColor = selectedColors.length === 0 || selectedColors.includes(product.color);
-    const matchesType = selectedTypes.length === 0 || selectedTypes.includes(product.type);
-    
-    // Shipping filter - check if product has stores with exact matching shipping region
-    const matchesShipping = selectedShipping.length === 0 || (
-      product.product_stores?.some((ps: any) => 
-        selectedShipping.includes(ps.stores?.shipping_info)
-      )
-    );
-    
-    return matchesSearch && matchesColor && matchesType && matchesShipping;
-  }).sort((a, b) => {
-    switch (sortBy) {
-      case "name-asc":
-        return a.name.localeCompare(b.name);
-      case "name-desc":
-        return b.name.localeCompare(a.name);
-      case "price-asc":
-        return parseFloat(a.price) - parseFloat(b.price);
-      case "price-desc":
-        return parseFloat(b.price) - parseFloat(a.price);
-      default:
-        return 0;
-    }
-  });
-
-  const totalPages = Math.ceil(filteredProducts.length / itemsPerPage);
-  const startIndex = (currentPage - 1) * itemsPerPage;
-  const endIndex = startIndex + itemsPerPage;
-  const currentProducts = filteredProducts.slice(startIndex, endIndex);
-
-  const toggleColor = (color: string) => {
-    setSelectedColors(prev => 
-      prev.includes(color) ? prev.filter(c => c !== color) : [...prev, color]
-    );
-    setCurrentPage(1);
-  };
-
-  const toggleType = (type: string) => {
-    setSelectedTypes(prev => 
-      prev.includes(type) ? prev.filter(t => t !== type) : [...prev, type]
-    );
-    setCurrentPage(1);
-  };
-
-  const toggleShipping = (shipping: string) => {
-    setSelectedShipping(prev => 
-      prev.includes(shipping) ? prev.filter(s => s !== shipping) : [...prev, shipping]
-    );
-    setCurrentPage(1);
-  };
-
-  const clearAllFilters = () => {
-    setSelectedColors([]);
-    setSelectedTypes([]);
-    setSelectedShipping([]);
-    setCurrentPage(1);
-  };
-
-  useEffect(() => {
-    setCurrentPage(1);
-  }, [searchQuery]);
+  const features = [
+    {
+      icon: Sparkles,
+      title: "Curated Selection",
+      description: "Hand-picked pieces from world-renowned designers.",
+    },
+    {
+      icon: Shield,
+      title: "Authenticity Guaranteed",
+      description: "Every item verified by our expert team.",
+    },
+    {
+      icon: Globe,
+      title: "Global Shipping",
+      description: "Express delivery to 50+ countries worldwide.",
+    },
+    {
+      icon: Clock,
+      title: "24/7 Support",
+      description: "Personal styling assistance anytime.",
+    },
+  ];
 
   return (
-    <div className="min-h-screen bg-background">
-      <Header searchQuery={searchQuery} onSearchChange={setSearchQuery} />
-      
-      <main className="container mx-auto px-4 py-12">
-        {loading ? (
-          <div className="text-center py-16">
-            <p className="text-lg">Loading products...</p>
-          </div>
-        ) : (
-          <div>
-            <div className="mb-6 flex justify-between items-center">
-              <div className="flex items-center gap-4">
-                <p className="text-sm text-muted-foreground">
-                  {filteredProducts.length} {filteredProducts.length === 1 ? 'product' : 'products'} found
-                </p>
-                <Dialog open={filterOpen} onOpenChange={setFilterOpen}>
-                  <DialogTrigger asChild>
-                    <Button variant="outline" size="default" className="shadow-sm">
-                      <Filter className="w-4 h-4 mr-2" />
-                      Filters
-                      {(selectedColors.length + selectedTypes.length + selectedShipping.length) > 0 && (
-                        <span className="ml-2 bg-primary text-primary-foreground rounded-full px-2.5 py-0.5 text-xs font-semibold">
-                          {selectedColors.length + selectedTypes.length + selectedShipping.length}
-                        </span>
-                      )}
-                    </Button>
-                  </DialogTrigger>
-                  <DialogContent className="max-w-md max-h-[80vh] overflow-y-auto border-2 shadow-strong rounded-2xl">
-                    <DialogHeader>
-                      <DialogTitle className="text-xl">Filter Products</DialogTitle>
-                    </DialogHeader>
-                    <div className="space-y-6 py-4">
-                      {/* Color Filter */}
-                      <div>
-                        <h3 className="font-semibold mb-3">Color</h3>
-                        <div className="space-y-2">
-                          {colors.map((color) => (
-                            <div key={color} className="flex items-center space-x-2">
-                              <Checkbox 
-                                id={`filter-color-${color}`}
-                                checked={selectedColors.includes(color)}
-                                onCheckedChange={() => toggleColor(color)}
-                              />
-                              <Label 
-                                htmlFor={`filter-color-${color}`}
-                                className="text-sm cursor-pointer"
-                              >
-                                {color}
-                              </Label>
-                            </div>
-                          ))}
-                        </div>
-                      </div>
+    <div className="min-h-screen bg-background text-foreground">
+      <Navigation />
 
-                      {/* Category Filter */}
-                      <div>
-                        <h3 className="font-semibold mb-3">Category</h3>
-                        <div className="space-y-2">
-                          {types.map((type) => (
-                            <div key={type} className="flex items-center space-x-2">
-                              <Checkbox 
-                                id={`filter-type-${type}`}
-                                checked={selectedTypes.includes(type)}
-                                onCheckedChange={() => toggleType(type)}
-                              />
-                              <Label 
-                                htmlFor={`filter-type-${type}`}
-                                className="text-sm cursor-pointer"
-                              >
-                                {type}
-                              </Label>
-                            </div>
-                          ))}
-                        </div>
-                      </div>
+      {/* Hero Section */}
+      <section className="relative min-h-screen flex items-center justify-center overflow-hidden">
+        {/* Background - pure black */}
+        <div className="absolute inset-0 bg-[#0a0a0a]" />
+        
+        {/* Decorative Dark Spheres - scattered around */}
+        <div className="absolute inset-0 overflow-hidden pointer-events-none">
+          {/* Large sphere - top left */}
+          <div className="absolute -top-20 -left-20 w-80 h-80 rounded-full bg-gradient-to-br from-zinc-800/80 to-zinc-900/90" />
+          
+          {/* Medium sphere - left center */}
+          <div className="absolute top-1/3 left-[5%] w-32 h-32 rounded-full bg-gradient-to-br from-zinc-800/70 to-zinc-900/80" />
+          
+          {/* Small sphere - left bottom */}
+          <div className="absolute bottom-[20%] left-[15%] w-20 h-20 rounded-full bg-gradient-to-br from-zinc-700/60 to-zinc-800/70" />
+          
+          {/* Large sphere - bottom center-left */}
+          <div className="absolute -bottom-32 left-[20%] w-72 h-72 rounded-full bg-gradient-to-br from-zinc-800/70 to-zinc-900/80" />
+          
+          {/* Medium sphere - right side */}
+          <div className="absolute top-[60%] right-[25%] w-24 h-24 rounded-full bg-gradient-to-br from-zinc-800/60 to-zinc-900/70" />
+          
+          {/* Small sphere - top right area */}
+          <div className="absolute top-[25%] right-[30%] w-16 h-16 rounded-full bg-gradient-to-br from-zinc-700/50 to-zinc-800/60" />
+        </div>
 
-                      {/* Shipping Filter */}
-                      <div>
-                        <h3 className="font-semibold mb-3">Shipping Region</h3>
-                        <div className="space-y-2">
-                          {shippingOptions.map((shipping) => (
-                            <div key={shipping} className="flex items-center space-x-2">
-                              <Checkbox 
-                                id={`filter-shipping-${shipping}`}
-                                checked={selectedShipping.includes(shipping)}
-                                onCheckedChange={() => toggleShipping(shipping)}
-                              />
-                              <Label 
-                                htmlFor={`filter-shipping-${shipping}`}
-                                className="text-sm cursor-pointer"
-                              >
-                                {shipping === "Ukraine" ? "Ukraine Only" : shipping}
-                              </Label>
-                            </div>
-                          ))}
-                        </div>
-                      </div>
+        {/* Curved decorative lines */}
+        <div className="absolute inset-0 overflow-hidden pointer-events-none opacity-20">
+          <svg className="absolute top-0 left-0 w-full h-full" viewBox="0 0 1200 800" fill="none" preserveAspectRatio="xMidYMid slice">
+            <path d="M-100 400 Q 300 200, 600 400 T 1300 400" stroke="white" strokeWidth="1" fill="none" opacity="0.3"/>
+            <path d="M-100 500 Q 400 300, 700 500 T 1400 500" stroke="white" strokeWidth="1" fill="none" opacity="0.2"/>
+          </svg>
+        </div>
 
-                       <div className="flex gap-3 pt-4">
-                        <Button 
-                          variant="outline" 
-                          className="flex-1"
-                          onClick={clearAllFilters}
-                        >
-                          Clear All
-                        </Button>
-                        <Button 
-                          className="flex-1 shadow-sm"
-                          onClick={() => setFilterOpen(false)}
-                        >
-                          Apply Filters
-                        </Button>
-                      </div>
-                    </div>
-                  </DialogContent>
-                </Dialog>
-              </div>
-              <div className="flex items-center gap-2">
-                <Label htmlFor="sort" className="text-sm">Sort by:</Label>
-                <Select value={sortBy} onValueChange={setSortBy}>
-                  <SelectTrigger id="sort" className="w-[180px]">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="default">Default</SelectItem>
-                    <SelectItem value="name-asc">Name (A-Z)</SelectItem>
-                    <SelectItem value="name-desc">Name (Z-A)</SelectItem>
-                    <SelectItem value="price-asc">Price (Low to High)</SelectItem>
-                    <SelectItem value="price-desc">Price (High to Low)</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
+        {/* Mannequin/Statue Figure - Right Side */}
+        <div className="absolute right-0 top-0 bottom-0 w-[40%] hidden lg:flex items-end justify-end overflow-hidden pointer-events-none">
+          <div className="relative h-full w-full">
+            {/* Gradient overlay to blend */}
+            <div className="absolute inset-0 bg-gradient-to-r from-[#0a0a0a] via-transparent to-transparent z-10" />
+            {/* Placeholder for mannequin - using a gradient silhouette effect */}
+            <div className="absolute right-0 bottom-0 w-[350px] h-[600px]">
+              <div className="w-full h-full bg-gradient-to-t from-zinc-800/40 via-zinc-700/20 to-transparent rounded-t-full opacity-30" />
             </div>
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 stagger-fade-in">
-                {currentProducts.map((product) => (
-                  <ProductCard
-                    key={product.id}
-                    id={product.id}
-                    name={product.name}
-                    image={product.image_url || ""}
-                    price={product.price}
-                    category={product.type}
-                  />
-                ))}
-              </div>
-            
-            {filteredProducts.length === 0 && (
-              <div className="text-center py-16">
-                <p className="text-muted-foreground text-lg">No products found matching your filters.</p>
-              </div>
-            )}
-
-            {filteredProducts.length > 0 && totalPages > 1 && (
-              <Pagination className="mt-12">
-                <PaginationContent>
-                  <PaginationItem>
-                    <PaginationPrevious 
-                      onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
-                      className={currentPage === 1 ? "pointer-events-none opacity-50" : "cursor-pointer"}
-                    />
-                  </PaginationItem>
-                  
-                  {[...Array(totalPages)].map((_, i) => {
-                    const pageNum = i + 1;
-                    if (
-                      pageNum === 1 ||
-                      pageNum === totalPages ||
-                      (pageNum >= currentPage - 1 && pageNum <= currentPage + 1)
-                    ) {
-                      return (
-                        <PaginationItem key={pageNum}>
-                          <PaginationLink
-                            onClick={() => setCurrentPage(pageNum)}
-                            isActive={currentPage === pageNum}
-                            className="cursor-pointer"
-                          >
-                            {pageNum}
-                          </PaginationLink>
-                        </PaginationItem>
-                      );
-                    } else if (
-                      pageNum === currentPage - 2 ||
-                      pageNum === currentPage + 2
-                    ) {
-                      return (
-                        <PaginationItem key={pageNum}>
-                          <PaginationEllipsis />
-                        </PaginationItem>
-                      );
-                    }
-                    return null;
-                  })}
-                  
-                  <PaginationItem>
-                    <PaginationNext 
-                      onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
-                      className={currentPage === totalPages ? "pointer-events-none opacity-50" : "cursor-pointer"}
-                    />
-                  </PaginationItem>
-                </PaginationContent>
-              </Pagination>
-            )}
           </div>
-        )}
-      </main>
+        </div>
+
+        {/* Main Content - Centered */}
+        <div className="container mx-auto px-6 relative z-10 text-center pt-20">
+          {/* Badge */}
+          <div className="inline-flex items-center gap-2 px-5 py-2.5 rounded-full border border-zinc-700/50 bg-zinc-900/50 mb-10 animate-fade-in">
+            <div className="w-2 h-2 rounded-full bg-green-500" />
+            <span className="text-xs text-zinc-300 tracking-[0.2em] uppercase font-medium">
+              New Collection Available
+            </span>
+          </div>
+
+          {/* Main Heading */}
+          <h1 className="font-display text-6xl sm:text-7xl md:text-8xl lg:text-[120px] font-bold mb-8 tracking-tight leading-[0.9] animate-fade-in-up" style={{ animationDelay: '0.1s' }}>
+            <span className="block text-white">Discover</span>
+            <span className="block text-white">Exceptional</span>
+            <span className="block text-white">Fashion</span>
+          </h1>
+
+          {/* Subtitle */}
+          <p className="text-lg sm:text-xl text-zinc-400 max-w-2xl mx-auto mb-12 leading-relaxed animate-fade-in-up" style={{ animationDelay: '0.2s' }}>
+            Curated collections from the world's most innovative designers. Where style meets artistry.
+          </p>
+
+          {/* CTA Buttons - Clean solid style like reference */}
+          <div className="flex flex-col sm:flex-row items-center justify-center gap-4 mb-20 animate-fade-in-up" style={{ animationDelay: '0.3s' }}>
+            {/* Primary Button - White filled */}
+            <button 
+              onClick={() => navigate("/products")}
+              className="group px-8 py-4 rounded-full bg-white text-black font-medium text-sm tracking-wide hover:bg-zinc-200 transition-all duration-300 flex items-center gap-2"
+            >
+              Explore Collections
+              <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
+            </button>
+            
+            {/* Secondary Button - Dark filled */}
+            <button 
+              onClick={() => navigate("/stores")}
+              className="px-8 py-4 rounded-full bg-zinc-800 text-white font-medium text-sm tracking-wide hover:bg-zinc-700 transition-all duration-300 border border-zinc-700"
+            >
+              View Stores
+            </button>
+          </div>
+
+          {/* Stats */}
+          <div className="flex justify-center gap-16 sm:gap-24 animate-fade-in-up" style={{ animationDelay: '0.4s' }}>
+            <div className="text-center">
+              <p className="font-display text-4xl sm:text-5xl font-bold mb-2 text-white">500+</p>
+              <p className="text-xs text-zinc-500 uppercase tracking-[0.2em]">Brands</p>
+            </div>
+            <div className="text-center">
+              <p className="font-display text-4xl sm:text-5xl font-bold mb-2 text-white">10K+</p>
+              <p className="text-xs text-zinc-500 uppercase tracking-[0.2em]">Products</p>
+            </div>
+            <div className="text-center">
+              <p className="font-display text-4xl sm:text-5xl font-bold mb-2 text-white">50+</p>
+              <p className="text-xs text-zinc-500 uppercase tracking-[0.2em]">Stores</p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* Features Section */}
+      <section className="py-16 border-y border-border/20">
+        <div className="container mx-auto px-6">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+            {features.map((feature, index) => (
+              <div 
+                key={feature.title}
+                className="p-6 rounded-2xl border border-border/30 bg-card/20 backdrop-blur-sm hover:bg-card/40 transition-all duration-300 group"
+              >
+                <div className="w-12 h-12 rounded-xl border border-border/50 bg-card/50 flex items-center justify-center mb-4 group-hover:border-foreground/30 transition-colors">
+                  <feature.icon className="w-5 h-5 text-muted-foreground group-hover:text-foreground transition-colors" />
+                </div>
+                <h3 className="font-display font-semibold text-lg mb-2">{feature.title}</h3>
+                <p className="text-sm text-muted-foreground leading-relaxed">{feature.description}</p>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* New Arrivals Section */}
+      <section className="py-20">
+        <div className="container mx-auto px-6">
+          {/* Section Header */}
+          <div className="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-6 mb-10">
+            <div>
+              <div className="inline-flex items-center gap-2 mb-3">
+                <div className="w-2 h-2 rounded-full bg-green-500" />
+                <span className="text-xs text-muted-foreground uppercase tracking-wider">Just In</span>
+              </div>
+              <h2 className="font-display text-4xl sm:text-5xl font-bold">New Arrivals</h2>
+            </div>
+            
+            {/* Category Filters */}
+            <div className="flex items-center gap-2">
+              {categories.map((category) => (
+                <button
+                  key={category}
+                  onClick={() => setActiveCategory(category)}
+                  className={`px-4 py-2 rounded-full text-sm font-medium transition-all ${
+                    activeCategory === category
+                      ? "bg-foreground text-background"
+                      : "bg-card/50 text-muted-foreground hover:text-foreground hover:bg-card"
+                  }`}
+                >
+                  {category}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          {/* Products Grid */}
+          {loading ? (
+            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
+              {[...Array(8)].map((_, i) => (
+                <div key={i} className="aspect-[3/4] rounded-2xl bg-card/50 animate-pulse" />
+              ))}
+            </div>
+          ) : (
+            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
+              {products.map((product, index) => (
+                <ProductCard
+                  key={product.id}
+                  id={product.id}
+                  name={product.name}
+                  image={product.image}
+                  price={product.price}
+                  category={product.type}
+                />
+              ))}
+            </div>
+          )}
+
+          {/* View All Button */}
+          <div className="text-center mt-12">
+            <Button 
+              variant="outline" 
+              size="lg" 
+              className="px-8 rounded-full"
+              onClick={() => navigate("/products")}
+            >
+              View All Products
+            </Button>
+          </div>
+        </div>
+      </section>
+
+      {/* Vision Section */}
+      <section className="py-32 relative overflow-hidden bg-[#0a0a0a]">
+        {/* Decorative dark spheres */}
+        <div className="absolute inset-0 overflow-hidden pointer-events-none">
+          <div className="absolute top-[20%] left-[10%] w-40 h-40 rounded-full bg-gradient-to-br from-zinc-800/50 to-zinc-900/60" />
+          <div className="absolute bottom-[15%] right-[8%] w-64 h-64 rounded-full bg-gradient-to-br from-zinc-800/40 to-zinc-900/50" />
+          <div className="absolute top-[60%] left-[5%] w-20 h-20 rounded-full bg-gradient-to-br from-zinc-700/40 to-zinc-800/50" />
+        </div>
+
+        {/* Curved decorative lines */}
+        <div className="absolute inset-0 overflow-hidden pointer-events-none opacity-15">
+          <svg className="absolute top-0 left-0 w-full h-full" viewBox="0 0 1200 600" fill="none" preserveAspectRatio="xMidYMid slice">
+            <path d="M0 300 Q 300 100, 600 300 T 1200 300" stroke="white" strokeWidth="1" fill="none"/>
+            <path d="M0 350 Q 350 150, 650 350 T 1250 350" stroke="white" strokeWidth="1" fill="none" opacity="0.5"/>
+          </svg>
+        </div>
+        
+        <div className="container mx-auto px-6 relative z-10 text-center">
+          <div className="inline-flex items-center gap-2 px-5 py-2.5 rounded-full border border-zinc-700/50 bg-zinc-900/50 mb-10">
+            <Sparkles className="w-4 h-4 text-zinc-400" />
+            <span className="text-xs text-zinc-300 tracking-[0.15em] uppercase font-medium">Curated Excellence</span>
+          </div>
+          
+          <h2 className="font-display text-5xl sm:text-6xl md:text-7xl font-bold mb-8 text-white leading-[1.1]">
+            <span className="block">Where Style</span>
+            <span className="block">Meets Vision</span>
+          </h2>
+          
+          <p className="text-lg text-zinc-400 max-w-2xl mx-auto mb-12 leading-relaxed">
+            Discover exclusive collections from the world's most innovative designers. 
+            Every piece tells a story of craftsmanship and creativity.
+          </p>
+          
+          <button 
+            onClick={() => navigate("/products")}
+            className="px-8 py-4 rounded-full bg-zinc-800 text-white font-medium text-sm tracking-wide hover:bg-zinc-700 transition-all duration-300 border border-zinc-700"
+          >
+            Explore Collections
+          </button>
+        </div>
+      </section>
+
+      <Footer />
     </div>
   );
 };

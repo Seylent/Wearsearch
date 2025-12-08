@@ -1,0 +1,55 @@
+<svg width="320" height="55" viewBox="0 0 320 55" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <style>
+      .letter { fill: #ffffff; }
+    </style>
+  </defs>
+  
+  <g transform="skewX(-10)">
+    <!-- W -->
+    <polygon class="letter" points="12,14 18,14 22,34 26,14 32,14 36,34 40,14 46,14 40,40 33,40 29,20 25,40 18,40"/>
+    
+    <!-- E - three horizontal bars -->
+    <rect class="letter" x="54" y="14" width="4" height="26"/>
+    <rect class="letter" x="54" y="14" width="20" height="4"/>
+    <rect class="letter" x="54" y="25" width="18" height="4"/>
+    <rect class="letter" x="54" y="36" width="20" height="4"/>
+    
+    <!-- A -->
+    <polygon class="letter" points="82,40 87,40 91,28 99,28 103,40 108,40 98,14 92,14"/>
+    <polygon class="letter" points="93,24 97,24 95,17"/>
+    
+    <!-- R -->
+    <rect class="letter" x="116" y="14" width="4" height="26"/>
+    <path class="letter" d="M 116 14 L 130 14 Q 136 14 136 20 Q 136 26 130 26 L 116 26 Z"/>
+    <polygon class="letter" points="126,26 136,40 130,40 120,26"/>
+    
+    <!-- S -->
+    <path class="letter" d="M 154 16 Q 144 14 144 19 Q 144 24 154 25 Q 164 26 164 31 Q 164 38 154 38 Q 146 38 144 34 L 148 30 Q 149 34 154 34 Q 158 34 158 31 Q 158 28 154 27 Q 144 26 144 19 Q 144 12 154 12 Q 162 12 164 16 Z"/>
+    
+    <!-- E - three horizontal bars -->
+    <rect class="letter" x="172" y="14" width="4" height="26"/>
+    <rect class="letter" x="172" y="14" width="20" height="4"/>
+    <rect class="letter" x="172" y="25" width="18" height="4"/>
+    <rect class="letter" x="172" y="36" width="20" height="4"/>
+    
+    <!-- A -->
+    <polygon class="letter" points="200,40 205,40 209,28 217,28 221,40 226,40 216,14 210,14"/>
+    <polygon class="letter" points="211,24 215,24 213,17"/>
+    
+    <!-- R -->
+    <rect class="letter" x="234" y="14" width="4" height="26"/>
+    <path class="letter" d="M 234 14 L 248 14 Q 254 14 254 20 Q 254 26 248 26 L 234 26 Z"/>
+    <polygon class="letter" points="244,26 254,40 248,40 238,26"/>
+    
+    <!-- C -->
+    <path class="letter" d="M 274 14 Q 262 14 262 27 Q 262 40 274 40 Q 280 40 282 36 L 278 32 Q 277 36 274 36 Q 266 36 266 27 Q 266 18 274 18 Q 277 18 278 22 L 282 18 Q 280 14 274 14 Z"/>
+    
+    <!-- H -->
+    <rect class="letter" x="290" y="14" width="4" height="26"/>
+    <rect class="letter" x="302" y="14" width="4" height="26"/>
+    <rect class="letter" x="290" y="25" width="16" height="4"/>
+  </g>
+</svg>
+
+

@@ -1,711 +1,1417 @@
-  import { useState, useEffect } from "react";
-import { supabase } from "@/integrations/supabase/client";
+import { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
-import { useNavigate, useSearchParams } from "react-router-dom";
-import Header from "@/components/Header";
-import { StoreManagement } from "@/components/StoreManagement";
+import Navigation from "@/components/layout/Navigation";
+import { Footer } from "@/components/layout/Footer";
+import { Package, Store, Plus, Edit, Trash2, Search, ShieldCheck } from "lucide-react";
 import { ImageUploader } from "@/components/ImageUploader";
-import { z } from "zod";
-
-const productSchema = z.object({
-  name: z.string().trim().min(1, "Product name is required").max(200),
-  color: z.string().trim().min(1, "Color is required").max(100),
-  type: z.string().min(1, "Type is required"),
-  price: z.number().positive("Price must be positive"),
-  description: z.string().max(1000).optional(),
-  image_url: z.string().trim().refine((val) => val === "" || z.string().url().safeParse(val).success, {
-    message: "Must be a valid URL or empty"
-  }).optional(),
-});
-
-const storeSchema = z.object({
-  name: z.string().trim().min(1, "Store name is required").max(200),
-  telegram_url: z.string().trim().refine((val) => val === "" || z.string().url().safeParse(val).success, {
-    message: "Must be a valid URL or empty"
-  }).optional(),
-  instagram_url: z.string().trim().refine((val) => val === "" || z.string().url().safeParse(val).success, {
-    message: "Must be a valid URL or empty"
-  }).optional(),
-  shipping_info: z.string().optional(),
-});
+import { productService } from "@/services/productService";
+import { storeService } from "@/services/storeService";
 
 const Admin = () => {
-  const { toast } = useToast();
   const navigate = useNavigate();
-  const [searchParams] = useSearchParams();
-  const [searchQuery, setSearchQuery] = useState("");
-  const [activeTab, setActiveTab] = useState("add-product");
-
-  // Product form state
-  const [productName, setProductName] = useState("");
-  const [productColor, setProductColor] = useState("");
-  const [productType, setProductType] = useState("");
-  const [productPrice, setProductPrice] = useState("");
-  const [productDescription, setProductDescription] = useState("");
-  const [productImageUrl, setProductImageUrl] = useState("");
-
-  // Store info for each product - supports multiple stores
-  const [productStores, setProductStores] = useState<Array<{
-    name: string;
-    telegram: string;
-    instagram: string;
-    shipping: string;
-  }>>([{ name: "", telegram: "", instagram: "", shipping: "" }]);
-  
-  // Products list
+  const { toast } = useToast();
+  const [loading, setLoading] = useState(true);
   const [products, setProducts] = useState<any[]>([]);
+  const [stores, setStores] = useState<any[]>([]);
+  const [brands, setBrands] = useState<any[]>([]);
   
-  // Edit mode states
+  // Product form state - always initialize with empty string to avoid controlled/uncontrolled issues
+  const [productName, setProductName] = useState<string>("");
+  const [productType, setProductType] = useState<string>("");
+  const [productColor, setProductColor] = useState<string>("");
+  const [productGender, setProductGender] = useState<string>("");
+  const [productBrandId, setProductBrandId] = useState<string>("");
+  const [productDescription, setProductDescription] = useState<string>("");
+  const [productImageUrl, setProductImageUrl] = useState<string>("");
+  
+  // Multi-store selection state
+  const [selectedStores, setSelectedStores] = useState<Array<{ store_id: string; store_name: string; price: number }>>([]);
+  const [currentStore, setCurrentStore] = useState<string>("");
+  const [currentStorePrice, setCurrentStorePrice] = useState<string>("");
+  
+  // Editing state (for tracking which product is being edited)
   const [editingProductId, setEditingProductId] = useState<string | null>(null);
+  
+  // Tab state
+  const [activeTab, setActiveTab] = useState("add-product");
+  
+  // Hero images state
+  const [heroImages, setHeroImages] = useState<any[]>([]);
+  const [heroImageUrl, setHeroImageUrl] = useState("");
+  const [uploadingHeroImage, setUploadingHeroImage] = useState(false);
+  
+  // Store form state
+  const [storeName, setStoreName] = useState<string>("");
+  const [storeTelegram, setStoreTelegram] = useState<string>("");
+  const [storeInstagram, setStoreInstagram] = useState<string>("");
+  const [storeShipping, setStoreShipping] = useState<string>("");
+  const [storeLogoUrl, setStoreLogoUrl] = useState<string>("");
+  const [editingStore, setEditingStore] = useState<any | null>(null);
+  
+  const [submitting, setSubmitting] = useState(false);
+  
+  // Predefined colors
+  const COLORS = [
+    "Black", "White", "Gray", "Beige", "Brown",
+    "Red", "Blue", "Navy", "Green", "Olive",
+    "Yellow", "Orange", "Pink", "Purple", "Cream"
+  ];
 
   useEffect(() => {
-    fetchProducts();
+    checkAdmin();
+    fetchData();
+    fetchHeroImages();
     
     // Check if we should edit a product from URL
-    const editProductId = searchParams.get('editProduct');
+    const urlParams = new URLSearchParams(window.location.search);
+    const editProductId = urlParams.get('editProduct');
     if (editProductId) {
       loadProductForEdit(editProductId);
     }
-  }, [searchParams]);
+  }, []);
 
-  const fetchProducts = async () => {
-    const { data } = await supabase
-      .from("products")
-      .select(`
-        *,
-        product_stores(
-          stores(*)
-        )
-      `)
-      .order("created_at", { ascending: false });
-    if (data) setProducts(data);
+  const checkAdmin = async () => {
+    const token = localStorage.getItem('access_token');
+    if (!token) {
+      console.log('🔒 No token, redirecting to auth');
+      navigate('/auth');
+      return;
+    }
+
+    // Try to use cached user data first
+    const cachedUser = localStorage.getItem('user');
+    if (cachedUser) {
+      try {
+        const userData = JSON.parse(cachedUser);
+        console.log('✅ [checkAdmin] Using cached user data - NO /me REQUEST');
+        if (userData.role === 'admin') {
+          return; // Already admin, no need to fetch
+        } else {
+          toast({
+            title: "Access Denied",
+            description: "Admin access required",
+            variant: "destructive",
+          });
+          navigate('/');
+          return;
+        }
+      } catch (e) {
+        console.warn('⚠️ Cache invalid, will fetch from API');
+        // Cache invalid, continue to API call
+      }
+    }
+
+    // Only fetch from API if no valid cache
+    console.log('🔍 [checkAdmin] No cache, fetching /me from API (should happen only ONCE)');
+    console.trace('Called from:'); // See where this was called from
+    try {
+      const response = await fetch('http://localhost:3000/api/auth/me', {
+        headers: { 'Authorization': `Bearer ${token}` },
+      });
+      
+      if (!response.ok) {
+        console.error(`❌ /me request failed with status: ${response.status}`);
+        if (response.status === 401) {
+          console.error('🚨 Token is invalid! Clearing and redirecting...');
+          localStorage.removeItem('access_token');
+          localStorage.removeItem('user');
+          navigate('/auth');
+          return;
+        }
+      }
+      
+      const data = await response.json();
+      const userData = data.data || data.user || data;
+      
+      console.log('💾 [checkAdmin] Caching user data:', userData);
+      // Cache user data
+      localStorage.setItem('user', JSON.stringify(userData));
+      
+      if (userData.role !== 'admin') {
+        toast({
+          title: "Access Denied",
+          description: "Admin access required",
+          variant: "destructive",
+        });
+        navigate('/');
+      }
+    } catch (error) {
+      console.error('❌ Failed to check admin:', error);
+      localStorage.removeItem('access_token');
+      localStorage.removeItem('user');
+      navigate('/auth');
+    }
+  };
+
+  const fetchData = async () => {
+    setLoading(true);
+    try {
+      const [productsRes, storesRes, brandsRes] = await Promise.all([
+        fetch('http://localhost:3000/api/admin/products', {
+          headers: { 'Authorization': `Bearer ${localStorage.getItem('access_token')}` }
+        }),
+        fetch('http://localhost:3000/api/stores'),
+        fetch('http://localhost:3000/api/brands')
+      ]);
+
+      const productsData = await productsRes.json();
+      const storesData = await storesRes.json();
+      const brandsData = await brandsRes.json();
+
+      if (productsData.success) setProducts(productsData.data || []);
+      if (storesData.success || Array.isArray(storesData)) {
+        setStores(Array.isArray(storesData) ? storesData : storesData.data || []);
+      }
+      if (brandsData.success || Array.isArray(brandsData)) {
+        setBrands(Array.isArray(brandsData) ? brandsData : brandsData.data || []);
+      }
+    } catch (error) {
+      console.error("Error fetching data:", error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const fetchHeroImages = async () => {
+    try {
+      const response = await fetch('http://localhost:3000/api/admin/hero-images', {
+        headers: { 'Authorization': `Bearer ${localStorage.getItem('access_token')}` }
+      });
+      const data = await response.json();
+      if (data.success) {
+        setHeroImages(data.data || []);
+      }
+    } catch (error) {
+      console.error("Error fetching hero images:", error);
+    }
+  };
+
+  const handleUploadHeroImage = async () => {
+    if (!heroImageUrl.trim()) {
+      toast({
+        title: "Error",
+        description: "Please enter an image URL",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    setUploadingHeroImage(true);
+    try {
+      const response = await fetch('http://localhost:3000/api/admin/hero-images', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${localStorage.getItem('access_token')}`
+        },
+        body: JSON.stringify({
+          image_url: heroImageUrl,
+          is_active: true,
+          sort_order: heroImages.length
+        }),
+      });
+
+      const result = await response.json();
+      if (result.success) {
+        toast({
+          title: "Success",
+          description: "Hero image added successfully!",
+        });
+        setHeroImageUrl("");
+        fetchHeroImages();
+      } else {
+        throw new Error(result.error || 'Failed to add hero image');
+      }
+    } catch (error: any) {
+      toast({
+        variant: "destructive",
+        title: "Error",
+        description: error.message || "Failed to add hero image",
+      });
+    } finally {
+      setUploadingHeroImage(false);
+    }
+  };
+
+  const handleDeleteHeroImage = async (id: string) => {
+    if (!window.confirm('Delete this hero image?')) return;
+
+    try {
+      const response = await fetch(`http://localhost:3000/api/admin/hero-images/${id}`, {
+        method: 'DELETE',
+        headers: { 'Authorization': `Bearer ${localStorage.getItem('access_token')}` }
+      });
+
+      const result = await response.json();
+      if (result.success) {
+        toast({
+          title: "Success",
+          description: "Hero image deleted successfully",
+        });
+        fetchHeroImages();
+      } else {
+        throw new Error(result.error || 'Failed to delete');
+      }
+    } catch (error: any) {
+      toast({
+        variant: "destructive",
+        title: "Error",
+        description: error.message || "Failed to delete hero image",
+      });
+    }
+  };
+
+  const handleImportExistingHeroImages = async () => {
+    if (!window.confirm('Import all 13 existing images from /public/hero/ folder?')) return;
+
+    setUploadingHeroImage(true);
+    try {
+      const existingImages = Array.from({ length: 13 }, (_, i) => ({
+        image_url: `/hero/IMG_${5814 + i}.png`,
+        is_active: true,
+        sort_order: i
+      }));
+
+      const results = await Promise.all(
+        existingImages.map(async (img) => {
+          const response = await fetch('http://localhost:3000/api/admin/hero-images', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              'Authorization': `Bearer ${localStorage.getItem('access_token')}`
+            },
+            body: JSON.stringify(img),
+          });
+          return await response.json();
+        })
+      );
+
+      const successCount = results.filter(r => r.success).length;
+      toast({
+        title: "Success",
+        description: `Imported ${successCount} hero images!`,
+      });
+      fetchHeroImages();
+    } catch (error: any) {
+      toast({
+        variant: "destructive",
+        title: "Error",
+        description: error.message || "Failed to import images",
+      });
+    } finally {
+      setUploadingHeroImage(false);
+    }
   };
 
   const loadProductForEdit = async (productId: string) => {
-    const { data: product } = await supabase
-      .from("products")
-      .select(`
-        *,
-        product_stores(
-          stores(*)
-        )
-      `)
-      .eq("id", productId)
-      .single();
-    
-    if (product) {
-      handleEditProduct(product);
-      setActiveTab("add-product");
-    }
-  };
-
-  const handleAddProduct = async (e: React.FormEvent) => {
-    e.preventDefault();
-
     try {
-      // Use the image URL directly from the input
-      const imageUrl = productImageUrl;
-
-      // Validate product data
-      const validatedProduct = productSchema.parse({
-        name: productName,
-        color: productColor,
-        type: productType,
-        price: parseFloat(productPrice),
-        description: productDescription.trim() || undefined,
-        image_url: imageUrl.trim() || undefined,
-      });
-
-      // Validate and create stores
-      const storeIds: string[] = [];
+      // Always fetch from API to get fresh data including stores
+      const [productRes, storesRes] = await Promise.all([
+        fetch(`http://localhost:3000/api/items/${productId}`),
+        fetch(`http://localhost:3000/api/items/${productId}/stores`)
+      ]);
       
-      for (const store of productStores) {
-        // Skip empty stores
-        if (!store.name.trim()) continue;
+      const productResult = await productRes.json();
+      const storesResult = await storesRes.json();
+      
+      if (productResult.success || productResult.id) {
+        const productData = productResult.data || productResult;
         
-        const validatedStore = storeSchema.parse({
-          name: store.name,
-          telegram_url: store.telegram.trim() || undefined,
-          instagram_url: store.instagram.trim() || undefined,
-          shipping_info: store.shipping || undefined,
-        });
-
-        // Find or create the store
-        const { data: existingStore } = await supabase
-          .from("stores")
-          .select("id")
-          .eq("name", validatedStore.name)
-          .maybeSingle();
-
-        if (existingStore) {
-          // Update existing store with new information
-          const { error: updateError } = await supabase
-            .from("stores")
-            .update({
-              telegram_url: validatedStore.telegram_url,
-              instagram_url: validatedStore.instagram_url,
-              shipping_info: validatedStore.shipping_info,
-            })
-            .eq("id", existingStore.id);
-          
-          if (updateError) throw updateError;
-          storeIds.push(existingStore.id);
-        } else {
-          const { data: newStore, error: storeError } = await supabase
-            .from("stores")
-            .insert([{
-              name: validatedStore.name,
-              telegram_url: validatedStore.telegram_url,
-              instagram_url: validatedStore.instagram_url,
-              shipping_info: validatedStore.shipping_info,
-            }])
-            .select("id")
-            .single();
-
-          if (storeError) throw storeError;
-          storeIds.push(newStore.id);
+        // Attach stores to product
+        if (storesResult.success && storesResult.stores) {
+          productData.product_stores = storesResult.stores.map((store: any) => ({
+            store_id: store.id,
+            store_name: store.name,
+            price: store.price,
+            stores: store
+          }));
         }
+        
+        editProduct(productData);
       }
-
-      if (storeIds.length === 0) {
-        throw new Error("At least one store is required");
-      }
-
-      // Create the product
-      const { data: newProduct, error: productError } = await supabase
-        .from("products")
-        .insert([{
-          name: validatedProduct.name,
-          color: validatedProduct.color,
-          type: validatedProduct.type,
-          price: validatedProduct.price,
-          description: validatedProduct.description,
-          image_url: validatedProduct.image_url,
-        }])
-        .select("id")
-        .single();
-
-      if (productError) throw productError;
-
-      // Link product to all stores
-      const productStoreLinks = storeIds.map(storeId => ({
-        product_id: newProduct.id,
-        store_id: storeId,
-      }));
-
-      const { error: linkError } = await supabase
-        .from("product_stores")
-        .insert(productStoreLinks);
-
-      if (linkError) throw linkError;
-
+    } catch (error) {
+      console.error('Failed to load product:', error);
       toast({
-        title: "Success",
-        description: "Product added successfully!",
-      });
-
-      // Reset form
-      setProductName("");
-      setProductColor("");
-      setProductType("");
-      setProductPrice("");
-      setProductDescription("");
-      setProductImageUrl("");
-      setProductStores([{ name: "", telegram: "", instagram: "", shipping: "" }]);
-      fetchProducts();
-    } catch (error: any) {
-      toast({
-        title: "Error",
-        description: error.message || "Failed to add product",
-        variant: "destructive",
+        title: 'Error',
+        description: 'Failed to load product for editing',
+        variant: 'destructive',
       });
     }
   };
 
-  const handleEditProduct = (product: any) => {
-    setEditingProductId(product.id);
+  const editProduct = (product: any) => {
+    console.log('✏️ Editing product:', product);
+    console.log('🏷️ Brand ID:', product.brand_id);
+    console.log('🏪 Stores:', product.product_stores);
+    
+    // Load product data into form
     setProductName(product.name);
-    setProductColor(product.color);
     setProductType(product.type);
-    setProductPrice(product.price.toString());
+    setProductColor(product.color);
+    setProductGender(product.gender || "");
+    setProductBrandId(product.brand_id || "");
     setProductDescription(product.description || "");
     setProductImageUrl(product.image_url || "");
     
-    // Load all stores
+    // Load stores from product_stores
     if (product.product_stores && product.product_stores.length > 0) {
-      const stores = product.product_stores.map((ps: any) => ({
-        name: ps.stores.name,
-        telegram: ps.stores.telegram_url || "",
-        instagram: ps.stores.instagram_url || "",
-        shipping: ps.stores.shipping_info || "",
+      const productStores = product.product_stores.map((ps: any) => ({
+        store_id: ps.store_id,
+        store_name: ps.stores?.name || ps.store_name || 'Unknown Store',
+        price: ps.price || ps.stores?.price || 0
       }));
-      setProductStores(stores);
+      setSelectedStores(productStores);
     } else {
-      setProductStores([{ name: "", telegram: "", instagram: "", shipping: "" }]);
+      setSelectedStores([]);
     }
+    
+    // Store product ID for update
+    setEditingProductId(product.id);
+    
+    // Switch to "Add Product" tab (which is now dual-purpose)
+    setActiveTab("add-product");
+    
+    // Scroll to form
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
+
+  const addStoreToProduct = () => {
+    if (!currentStore || !currentStorePrice) {
+      toast({
+        title: "Error",
+        description: "Please select a store and enter a price",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    const store = stores.find(s => s.name === currentStore);
+    if (!store) {
+      toast({
+        title: "Error",
+        description: "Store not found",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    // Check if store already added
+    if (selectedStores.some(s => s.store_id === store.id)) {
+      toast({
+        title: "Error",
+        description: "This store is already added",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    setSelectedStores([
+      ...selectedStores,
+      {
+        store_id: store.id,
+        store_name: store.name,
+        price: parseFloat(currentStorePrice)
+      }
+    ]);
+
+    // Reset current selection
+    setCurrentStore("");
+    setCurrentStorePrice("");
+  };
+
+  const removeStoreFromProduct = (storeId: string) => {
+    setSelectedStores(selectedStores.filter(s => s.store_id !== storeId));
   };
 
   const handleUpdateProduct = async (e: React.FormEvent) => {
     e.preventDefault();
+    
     if (!editingProductId) return;
 
-    try {
-      // Use the image URL directly from the input
-      const imageUrl = productImageUrl;
+    if (selectedStores.length === 0) {
+      toast({
+        title: "Error",
+        description: "Please add at least one store",
+        variant: "destructive",
+      });
+      return;
+    }
 
-      const validatedProduct = productSchema.parse({
-        name: productName,
-        color: productColor,
-        type: productType,
-        price: parseFloat(productPrice),
-        description: productDescription.trim() || undefined,
-        image_url: imageUrl.trim() || undefined,
+    setSubmitting(true);
+
+    try {
+      const avgPrice = selectedStores.reduce((sum, store) => sum + store.price, 0) / selectedStores.length;
+
+      const response = await fetch(`http://localhost:3000/api/admin/products/${editingProductId}`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${localStorage.getItem('access_token')}`
+        },
+        body: JSON.stringify({
+          name: productName,
+          price: avgPrice,
+          type: productType,
+          color: productColor,
+          gender: productGender || null,
+          brand_id: productBrandId || null,
+          description: productDescription || null,
+          image_url: productImageUrl,
+          stores: selectedStores.map(store => ({
+            store_id: store.store_id,
+            price: store.price
+          }))
+        }),
       });
 
-      // Validate and update/create stores
-      const storeIds: string[] = [];
-      
-      for (const store of productStores) {
-        // Skip empty stores
-        if (!store.name.trim()) continue;
-        
-        const validatedStore = storeSchema.parse({
-          name: store.name,
-          telegram_url: store.telegram.trim() || undefined,
-          instagram_url: store.instagram.trim() || undefined,
-          shipping_info: store.shipping || undefined,
+      const result = await response.json();
+      console.log('📥 Update response:', result);
+
+      if (result.success) {
+        toast({
+          title: "Success",
+          description: "Product updated successfully!",
         });
 
-        // Find or create the store
-        const { data: existingStore } = await supabase
-          .from("stores")
-          .select("id")
-          .eq("name", validatedStore.name)
-          .maybeSingle();
-
-        if (existingStore) {
-          // Update existing store
-          const { error: updateError } = await supabase
-            .from("stores")
-            .update({
-              telegram_url: validatedStore.telegram_url,
-              instagram_url: validatedStore.instagram_url,
-              shipping_info: validatedStore.shipping_info,
-            })
-            .eq("id", existingStore.id);
-          
-          if (updateError) throw updateError;
-          storeIds.push(existingStore.id);
-        } else {
-          const { data: newStore, error: storeError } = await supabase
-            .from("stores")
-            .insert([{
-              name: validatedStore.name,
-              telegram_url: validatedStore.telegram_url,
-              instagram_url: validatedStore.instagram_url,
-              shipping_info: validatedStore.shipping_info,
-            }])
-            .select("id")
-            .single();
-
-          if (storeError) throw storeError;
-          storeIds.push(newStore.id);
-        }
+        // Reset form
+        setEditingProductId(null);
+        setProductName("");
+        setProductType("");
+        setProductColor("");
+        setProductGender("");
+        setProductBrandId("");
+        setProductDescription("");
+        setProductImageUrl("");
+        setSelectedStores([]);
+        setCurrentStore("");
+        setCurrentStorePrice("");
+        fetchData();
+        
+        // Clear URL param
+        window.history.replaceState({}, '', '/admin');
+      } else {
+        throw new Error(result.error || 'Failed to update product');
       }
-
-      if (storeIds.length === 0) {
-        throw new Error("At least one store is required");
-      }
-
-      // Update product
-      const { error: productError } = await supabase
-        .from("products")
-        .update({
-          name: validatedProduct.name,
-          color: validatedProduct.color,
-          type: validatedProduct.type,
-          price: validatedProduct.price,
-          description: validatedProduct.description,
-          image_url: validatedProduct.image_url,
-        })
-        .eq("id", editingProductId);
-
-      if (productError) throw productError;
-
-      // Delete old product_stores links
-      const { error: deleteError } = await supabase
-        .from("product_stores")
-        .delete()
-        .eq("product_id", editingProductId);
-
-      if (deleteError) throw deleteError;
-
-      // Create new product_stores links
-      const productStoreLinks = storeIds.map(storeId => ({
-        product_id: editingProductId,
-        store_id: storeId,
-      }));
-
-      const { error: linkError } = await supabase
-        .from("product_stores")
-        .insert(productStoreLinks);
-
-      if (linkError) throw linkError;
-
-      toast({
-        title: "Success",
-        description: "Product updated successfully!",
-      });
-
-      // Reset form
-      setEditingProductId(null);
-      setProductName("");
-      setProductColor("");
-      setProductType("");
-      setProductPrice("");
-      setProductDescription("");
-      setProductImageUrl("");
-      setProductStores([{ name: "", telegram: "", instagram: "", shipping: "" }]);
-      fetchProducts();
     } catch (error: any) {
       toast({
+        variant: "destructive",
         title: "Error",
         description: error.message || "Failed to update product",
-        variant: "destructive",
       });
-    }
-  };
-
-  const handleDeleteProduct = async (productId: string) => {
-    if (!confirm("Are you sure you want to delete this product?")) return;
-
-    try {
-      const { error } = await supabase.from("products").delete().eq("id", productId);
-      if (error) throw error;
-
-      toast({
-        title: "Success",
-        description: "Product deleted successfully!",
-      });
-      fetchProducts();
-    } catch (error: any) {
-      toast({
-        title: "Error",
-        description: error.message || "Failed to delete product",
-        variant: "destructive",
-      });
+    } finally {
+      setSubmitting(false);
     }
   };
 
   const cancelEdit = () => {
     setEditingProductId(null);
     setProductName("");
-    setProductColor("");
     setProductType("");
-    setProductPrice("");
+    setProductColor("");
+    setProductGender("");
+    setProductBrandId("");
     setProductDescription("");
     setProductImageUrl("");
-    setProductStores([{ name: "", telegram: "", instagram: "", shipping: "" }]);
+    setSelectedStores([]);
+    setCurrentStore("");
+    setCurrentStorePrice("");
+    window.history.replaceState({}, '', '/admin');
   };
 
+  const handleCreateProduct = async (e: React.FormEvent) => {
+    e.preventDefault();
+
+    if (selectedStores.length === 0) {
+      toast({
+        title: "Error",
+        description: "Please add at least one store",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    console.log('🚀 Creating product with stores:', selectedStores);
+    setSubmitting(true);
+
+    try {
+      // Calculate average price for the main product record
+      const avgPrice = selectedStores.reduce((sum, store) => sum + store.price, 0) / selectedStores.length;
+
+      console.log('📤 Sending request to backend...');
+      // Try NEW format first: Create ONE product with multiple stores
+      const response = await fetch('http://localhost:3000/api/admin/products', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${localStorage.getItem('access_token')}`
+        },
+        body: JSON.stringify({
+          name: productName,
+          price: avgPrice,
+          type: productType,
+          color: productColor,
+          gender: productGender || null,
+          brand_id: productBrandId || null,
+          description: productDescription || null,
+          image_url: productImageUrl,
+          stores: selectedStores.map(store => ({
+            store_id: store.store_id,
+            price: store.price
+          }))
+        }),
+      });
+
+      const result = await response.json();
+      console.log('📥 Create product response:', result);
+
+      // Check if successful
+      if (result.success) {
+        console.log('✅ Product created successfully with backend!');
+        toast({
+          title: "Success",
+          description: `Product created and added to ${selectedStores.length} store(s)!`,
+        });
+
+        // Reset form
+        setEditingProductId(null);
+        setProductName("");
+        setProductType("");
+        setProductColor("");
+        setProductGender("");
+        setProductBrandId("");
+        setProductDescription("");
+        setProductImageUrl("");
+        setSelectedStores([]);
+        setCurrentStore("");
+        setCurrentStorePrice("");
+        fetchData();
+        
+        // Clear URL param if editing
+        window.history.replaceState({}, '', '/admin');
+        return;
+      }
+
+      // If backend doesn't support new format, use OLD format (separate products per store)
+      if (!result.success && (result.error?.includes('stores') || result.error?.includes('store_id'))) {
+        console.warn('⚠️ Backend doesn\'t support multi-store format, using fallback...');
+        
+        // OLD FORMAT: Create separate product for each store
+        const results = await Promise.all(
+          selectedStores.map(async (store) => {
+            const storeResponse = await fetch('http://localhost:3000/api/admin/products', {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${localStorage.getItem('access_token')}`
+              },
+              body: JSON.stringify({
+                name: productName,
+                price: store.price,
+                store_price: store.price,
+                type: productType,
+                color: productColor,
+                gender: productGender || null,
+                brand_id: productBrandId || null,
+                description: productDescription || null,
+                image_url: productImageUrl,
+                store_id: store.store_id,
+              }),
+            });
+            return await storeResponse.json();
+          })
+        );
+
+        const successCount = results.filter(r => r.success).length;
+        console.log(`📊 Fallback results: ${successCount}/${results.length} successful`);
+        
+        if (successCount > 0) {
+          toast({
+            title: "Success",
+            description: `Product created in ${successCount} store(s) using fallback`,
+          });
+          
+          // Reset form
+          setEditingProductId(null);
+          setProductName("");
+          setProductType("");
+          setProductColor("");
+          setProductGender("");
+          setProductBrandId("");
+          setProductDescription("");
+          setProductImageUrl("");
+          setSelectedStores([]);
+          setCurrentStore("");
+          setCurrentStorePrice("");
+          fetchData();
+          
+          // Clear URL param if editing
+          window.history.replaceState({}, '', '/admin');
+        } else {
+          console.error('❌ All fallback attempts failed');
+          throw new Error('Failed to create products in any store');
+        }
+      } else {
+        console.error('❌ Unexpected error from backend:', result);
+        throw new Error(result.error || result.message || 'Failed to create product');
+      }
+      
+      // Clear URL param if editing
+      window.history.replaceState({}, '', '/admin');
+    } catch (error: any) {
+      toast({
+        variant: "destructive",
+        title: "Error",
+        description: error.message || "Failed to create product",
+      });
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  const loadStoreForEdit = (store: any) => {
+    setEditingStore(store);
+    setStoreName(store.name);
+    setStoreTelegram(store.telegram_url || "");
+    setStoreInstagram(store.instagram_url || "");
+    setStoreShipping(store.shipping_info || "");
+    setStoreLogoUrl(store.logo_url || "");
+    // Scroll to form
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
+
+  const cancelStoreEdit = () => {
+    setEditingStore(null);
+    setStoreName("");
+    setStoreTelegram("");
+    setStoreInstagram("");
+    setStoreShipping("");
+    setStoreLogoUrl("");
+  };
+
+  const handleCreateStore = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setSubmitting(true);
+
+    try {
+      const url = editingStore 
+        ? `http://localhost:3000/api/admin/stores/${editingStore.id}`
+        : 'http://localhost:3000/api/admin/stores';
+      
+      const method = editingStore ? 'PUT' : 'POST';
+
+      const response = await fetch(url, {
+        method: method,
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${localStorage.getItem('access_token')}`
+        },
+        body: JSON.stringify({
+          name: storeName,
+          telegram_url: storeTelegram || null,
+          instagram_url: storeInstagram || null,
+          shipping_info: storeShipping || null,
+          logo_url: storeLogoUrl || null,
+        }),
+      });
+
+      const result = await response.json();
+
+      if (result.success) {
+        toast({
+          title: "Success",
+          description: editingStore ? "Store updated successfully" : "Store created successfully",
+        });
+        // Reset form
+        setEditingStore(null);
+        setStoreName("");
+      setStoreTelegram("");
+      setStoreInstagram("");
+      setStoreShipping("");
+      setStoreLogoUrl("");
+      fetchData();
+      } else {
+        throw new Error(result.error || `Failed to ${editingStore ? 'update' : 'create'} store`);
+      }
+    } catch (error: any) {
+      toast({
+        variant: "destructive",
+        title: "Error",
+        description: error.message || `Failed to ${editingStore ? 'update' : 'create'} store`,
+      });
+    } finally {
+      setSubmitting(false);
+    }
+  };
 
   return (
-    <div className="min-h-screen bg-background">
-      <Header searchQuery={searchQuery} onSearchChange={setSearchQuery} />
-      <div className="container mx-auto px-4 py-8">
-        <div className="flex justify-between items-center mb-8">
-          <h1 className="text-4xl font-serif font-bold">Admin Panel</h1>
-          <Button onClick={() => navigate("/")} variant="outline">
-            Back to Main Menu
-          </Button>
+    <div className="min-h-screen bg-background text-foreground font-sans">
+      <Navigation />
+      
+      {/* Header */}
+      <section className="relative pt-28 pb-12 border-b border-border/30 overflow-hidden">
+        <div className="absolute inset-0 opacity-30 pointer-events-none">
+          <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] bg-foreground/5 rounded-full blur-[120px]" />
         </div>
-        
-        <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-4">
-          <TabsList className="grid w-full grid-cols-3">
-            <TabsTrigger value="add-product">Add Product</TabsTrigger>
-            <TabsTrigger value="manage-products">Manage Products</TabsTrigger>
-            <TabsTrigger value="manage-stores">Manage Stores</TabsTrigger>
-          </TabsList>
 
-          <TabsContent value="add-product">
-            <Card>
-              <CardHeader>
-                <CardTitle>{editingProductId ? "Edit Product" : "Add New Product"}</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <form onSubmit={editingProductId ? handleUpdateProduct : handleAddProduct} className="space-y-4">
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div className="container mx-auto px-6 relative z-10">
+          <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full border border-border/50 bg-card/30 backdrop-blur-sm mb-6">
+            <ShieldCheck className="w-4 h-4" />
+            <span className="text-xs text-foreground tracking-wider uppercase font-medium">Admin Panel</span>
+          </div>
+          <h1 className="font-display text-4xl sm:text-5xl font-bold mb-3">
+            Dashboard
+          </h1>
+          <p className="text-lg text-muted-foreground">
+            Manage products, stores, and marketplace content
+          </p>
+        </div>
+      </section>
+
+      {/* Admin Tabs */}
+      <section className="py-12">
+        <div className="container mx-auto px-6">
+          <Tabs defaultValue="add-product" className="max-w-6xl mx-auto" value={activeTab} onValueChange={setActiveTab}>
+            <TabsList className="grid w-full grid-cols-5 bg-card/40 border border-border/50 backdrop-blur-sm mb-8 p-1 rounded-xl">
+              <TabsTrigger 
+                value="add-product"
+                className="data-[state=active]:bg-foreground data-[state=active]:text-background rounded-lg transition-all text-xs md:text-sm"
+              >
+                <Plus className="w-4 h-4 mr-1 md:mr-2" />
+                Add Product
+              </TabsTrigger>
+              <TabsTrigger 
+                value="manage-products"
+                className="data-[state=active]:bg-foreground data-[state=active]:text-background rounded-lg transition-all text-xs md:text-sm"
+              >
+                <Package className="w-4 h-4 mr-1 md:mr-2" />
+                Products ({products.length})
+              </TabsTrigger>
+              <TabsTrigger 
+                value="stores"
+                className="data-[state=active]:bg-foreground data-[state=active]:text-background rounded-lg transition-all text-xs md:text-sm"
+              >
+                <Store className="w-4 h-4 mr-1 md:mr-2" />
+                Stores
+              </TabsTrigger>
+              <TabsTrigger 
+                value="brands"
+                onClick={() => window.location.href = '/admin/brands'}
+                className="data-[state=active]:bg-foreground data-[state=active]:text-background rounded-lg transition-all text-xs md:text-sm"
+              >
+                <Package className="w-4 h-4 mr-1 md:mr-2" />
+                Brands
+              </TabsTrigger>
+              <TabsTrigger 
+                value="hero-images"
+                className="data-[state=active]:bg-foreground data-[state=active]:text-background rounded-lg transition-all text-xs md:text-sm"
+              >
+                <Package className="w-4 h-4 mr-1 md:mr-2" />
+                Hero Images
+              </TabsTrigger>
+            </TabsList>
+
+            {/* ADD/EDIT PRODUCT TAB */}
+            <TabsContent value="add-product" className="space-y-8">
+              {/* Add/Edit Product Form */}
+              <div className="p-8 rounded-2xl border border-border/50 bg-card/40 backdrop-blur-sm">
+                <div className="flex items-center justify-between mb-2">
+                  <h2 className="font-display text-2xl font-bold flex items-center gap-2">
+                    {editingProductId ? <Edit className="w-6 h-6" /> : <Plus className="w-6 h-6" />}
+                    {editingProductId ? 'Edit Product' : 'Add New Product'}
+                </h2>
+                  {editingProductId && (
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      onClick={cancelEdit}
+                      className="text-muted-foreground hover:text-foreground"
+                    >
+                      Cancel Edit
+                    </Button>
+                  )}
+                </div>
+                <p className="text-muted-foreground mb-6">
+                  {editingProductId ? 'Update product information and prices' : 'Create a new product with multiple stores and prices'}
+                </p>
+
+                <form onSubmit={editingProductId ? handleUpdateProduct : handleCreateProduct} className="space-y-6">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                     <div className="space-y-2">
-                      <Label htmlFor="product-name">Product Name</Label>
+                      <Label>Product Name</Label>
                       <Input
-                        id="product-name"
                         value={productName}
                         onChange={(e) => setProductName(e.target.value)}
+                        placeholder="Oversized Cotton Blazer"
                         required
+                        className="h-12 bg-card/50 border-border/50 rounded-lg"
                       />
                     </div>
+
                     <div className="space-y-2">
-                      <Label htmlFor="product-color">Color</Label>
-                      <Input
-                        id="product-color"
-                        value={productColor}
-                        onChange={(e) => setProductColor(e.target.value)}
-                        required
-                      />
-                    </div>
-                    <div className="space-y-2">
-                      <Label htmlFor="product-type">Type</Label>
+                      <Label>Type</Label>
                       <Select value={productType} onValueChange={setProductType} required>
-                        <SelectTrigger>
+                        <SelectTrigger className="h-12 bg-card/50 border-border/50 rounded-lg">
                           <SelectValue placeholder="Select type" />
                         </SelectTrigger>
-                        <SelectContent>
+                        <SelectContent className="bg-card border-border/50">
                           <SelectItem value="Outerwear">Outerwear</SelectItem>
-                          <SelectItem value="Bottoms">Bottoms</SelectItem>
-                          <SelectItem value="Hats">Hats</SelectItem>
-                          <SelectItem value="Shoes">Shoes</SelectItem>
                           <SelectItem value="Tops">Tops</SelectItem>
+                          <SelectItem value="Bottoms">Bottoms</SelectItem>
+                          <SelectItem value="Dresses">Dresses</SelectItem>
+                          <SelectItem value="Shoes">Shoes</SelectItem>
                           <SelectItem value="Accessories">Accessories</SelectItem>
                         </SelectContent>
                       </Select>
                     </div>
+
                     <div className="space-y-2">
-                      <Label htmlFor="product-price">Price</Label>
-                      <Input
-                        id="product-price"
-                        type="number"
-                        step="0.01"
-                        value={productPrice}
-                        onChange={(e) => setProductPrice(e.target.value)}
-                        required
-                      />
-                    </div>
-                    
-                    {/* Image Upload Section */}
-                    <div className="space-y-2 md:col-span-2">
-                      <ImageUploader
-                        onImageUpload={(url) => setProductImageUrl(url)}
-                        currentImage={productImageUrl}
-                        label="Product Image"
-                      />
+                      <Label>Color</Label>
+                      <Select value={productColor} onValueChange={setProductColor} required>
+                        <SelectTrigger className="h-12 bg-card/50 border-border/50 rounded-lg">
+                          <SelectValue placeholder="Select color" />
+                        </SelectTrigger>
+                        <SelectContent className="bg-card border-border/50">
+                          {COLORS.map((color) => (
+                            <SelectItem key={color} value={color}>
+                              {color}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
                     </div>
 
-                    <div className="space-y-2 md:col-span-2">
-                      <Label htmlFor="product-image">Or paste Image URL directly</Label>
-                      <Input
-                        id="product-image"
-                        value={productImageUrl}
-                        onChange={(e) => setProductImageUrl(e.target.value)}
-                        placeholder="https://... or s3://..."
-                      />
-                      <p className="text-xs text-muted-foreground select-none">
-                        Alternative: Paste direct URL if you have image hosted elsewhere
-                      </p>
+                    <div className="space-y-2">
+                      <Label>Gender</Label>
+                      <Select value={productGender} onValueChange={setProductGender}>
+                        <SelectTrigger className="h-12 bg-card/50 border-border/50 rounded-lg">
+                          <SelectValue placeholder="Select gender" />
+                        </SelectTrigger>
+                        <SelectContent className="bg-card border-border/50">
+                          <SelectItem value="men">Men</SelectItem>
+                          <SelectItem value="women">Women</SelectItem>
+                          <SelectItem value="unisex">Unisex</SelectItem>
+                        </SelectContent>
+                      </Select>
                     </div>
 
-                    <div className="space-y-2 md:col-span-2">
-                      <Label htmlFor="product-description">Description</Label>
-                      <Textarea
-                        id="product-description"
-                        value={productDescription}
-                        onChange={(e) => setProductDescription(e.target.value)}
-                        rows={4}
-                      />
+                    <div className="space-y-2">
+                      <Label>Brand (Optional)</Label>
+                      <Select value={productBrandId || undefined} onValueChange={(value) => setProductBrandId(value === "none" ? "" : value)}>
+                        <SelectTrigger className="h-12 bg-card/50 border-border/50 rounded-lg">
+                          <SelectValue placeholder="Select brand (optional)" />
+                        </SelectTrigger>
+                        <SelectContent className="bg-card border-border/50">
+                          <SelectItem value="none">No Brand</SelectItem>
+                          {brands.map((brand) => (
+                            <SelectItem key={brand.id} value={brand.id}>
+                              {brand.name}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
                     </div>
-                    
-                    {/* Stores Section */}
-                    <div className="space-y-4 md:col-span-2">
-                      <div className="flex justify-between items-center">
-                        <Label className="text-lg font-semibold">Stores</Label>
-                        <Button
-                          type="button"
-                          variant="outline"
-                          size="sm"
-                          onClick={() => setProductStores([...productStores, { name: "", telegram: "", instagram: "", shipping: "" }])}
-                        >
-                          + Add Store
-                        </Button>
-                      </div>
-                      
-                      {productStores.map((store, index) => (
-                        <Card key={index} className="p-4">
-                          <div className="space-y-3">
-                            <div className="flex justify-between items-center">
-                              <h4 className="font-medium">Store {index + 1}</h4>
-                              {productStores.length > 1 && (
-                                <Button
-                                  type="button"
-                                  variant="ghost"
-                                  size="sm"
-                                  onClick={() => setProductStores(productStores.filter((_, i) => i !== index))}
-                                >
-                                  Remove
-                                </Button>
-                              )}
-                            </div>
-                            <div className="space-y-2">
-                              <Label htmlFor={`store-name-${index}`}>Store Name *</Label>
-                              <Input
-                                id={`store-name-${index}`}
-                                value={store.name}
-                                onChange={(e) => {
-                                  const newStores = [...productStores];
-                                  newStores[index].name = e.target.value;
-                                  setProductStores(newStores);
-                                }}
-                                required
-                              />
-                            </div>
-                            <div className="space-y-2">
-                              <Label htmlFor={`store-telegram-${index}`}>Telegram URL</Label>
-                              <Input
-                                id={`store-telegram-${index}`}
-                                value={store.telegram}
-                                onChange={(e) => {
-                                  const newStores = [...productStores];
-                                  newStores[index].telegram = e.target.value;
-                                  setProductStores(newStores);
-                                }}
-                                placeholder="https://t.me/..."
-                              />
-                            </div>
-                            <div className="space-y-2">
-                              <Label htmlFor={`store-instagram-${index}`}>Instagram URL</Label>
-                              <Input
-                                id={`store-instagram-${index}`}
-                                value={store.instagram}
-                                onChange={(e) => {
-                                  const newStores = [...productStores];
-                                  newStores[index].instagram = e.target.value;
-                                  setProductStores(newStores);
-                                }}
-                                placeholder="https://instagram.com/..."
-                              />
-                            </div>
-                            <div className="space-y-2">
-                              <Label htmlFor={`store-shipping-${index}`}>Shipping Region</Label>
-                              <Select
-                                key={`shipping-select-${index}`}
-                                value={store.shipping || ""}
-                                onValueChange={(value) => {
-                                  const newStores = [...productStores];
-                                  newStores[index].shipping = value;
-                                  setProductStores(newStores);
-                                }}
-                              >
-                                <SelectTrigger id={`store-shipping-${index}`}>
-                                  <SelectValue placeholder="Select shipping region" />
-                                </SelectTrigger>
-                                <SelectContent>
-                                  <SelectItem value="Worldwide">Worldwide</SelectItem>
-                                  <SelectItem value="Europe">Europe</SelectItem>
-                                  <SelectItem value="Ukraine">Ukraine Only</SelectItem>
-                                </SelectContent>
-                              </Select>
-                            </div>
-                          </div>
-                        </Card>
-                      ))}
-                    </div>
+
                   </div>
-                  <div className="flex gap-2">
-                    <Button type="submit" className="flex-1">
-                      {editingProductId ? "Update Product" : "Add Product"}
+
+                  {/* Store Selection Section */}
+                  <div className="space-y-4 p-6 rounded-xl border border-border/50 bg-card/20">
+                    <Label className="text-lg font-semibold">Add Stores & Prices</Label>
+                    <p className="text-sm text-muted-foreground">
+                      Select stores where this product will be available and set the price for each store
+                    </p>
+
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                      <div className="md:col-span-2 space-y-2">
+                        <Label>Select Store</Label>
+                        <Select value={currentStore} onValueChange={setCurrentStore}>
+                          <SelectTrigger className="h-12 bg-card/50 border-border/50 rounded-lg">
+                            <SelectValue placeholder="Choose a store" />
+                          </SelectTrigger>
+                          <SelectContent className="bg-card border-border/50">
+                            {stores
+                              .filter(store => !selectedStores.some(s => s.store_id === store.id))
+                              .map((store) => (
+                                <SelectItem key={store.id} value={store.name}>
+                                  {store.name}
+                                </SelectItem>
+                              ))}
+                          </SelectContent>
+                        </Select>
+                      </div>
+
+                      <div className="space-y-2">
+                        <Label>Store Price ($)</Label>
+                        <Input
+                          type="number"
+                          step="0.01"
+                          value={currentStorePrice}
+                          onChange={(e) => setCurrentStorePrice(e.target.value)}
+                          placeholder="e.g. 420"
+                          className="h-12 bg-card/50 border-border/50 rounded-lg"
+                        />
+                      </div>
+                    </div>
+
+                    <Button
+                      type="button"
+                      onClick={addStoreToProduct}
+                      className="w-full md:w-auto bg-primary hover:bg-primary/90 text-primary-foreground"
+                      disabled={!currentStore || !currentStorePrice}
+                    >
+                      <Plus className="w-4 h-4 mr-2" />
+                      Add Store
                     </Button>
-                    {editingProductId && (
-                      <>
-                        <Button type="button" variant="outline" onClick={cancelEdit}>
-                          Cancel
-                        </Button>
-                        <Button 
-                          type="button" 
-                          variant="destructive" 
-                          onClick={() => {
-                            if (window.confirm('Are you sure you want to delete this product?')) {
-                              handleDeleteProduct(editingProductId);
-                            }
-                          }}
-                        >
-                          Delete
-                        </Button>
-                      </>
+
+                    {/* List of added stores */}
+                    {selectedStores.length > 0 && (
+                      <div className="space-y-2 mt-4">
+                        <Label className="text-sm text-muted-foreground">Added Stores ({selectedStores.length})</Label>
+                        <div className="space-y-2">
+                          {selectedStores.map((store) => (
+                            <div
+                              key={store.store_id}
+                              className="flex items-center justify-between p-3 rounded-lg bg-card/40 border border-border/50"
+                            >
+                              <div className="flex items-center gap-3">
+                                <Store className="w-4 h-4 text-primary" />
+                                <div>
+                                  <p className="font-medium">{store.store_name}</p>
+                                  <p className="text-sm text-muted-foreground">${store.price}</p>
+                                </div>
+                              </div>
+                              <Button
+                                type="button"
+                                variant="ghost"
+                                size="sm"
+                                onClick={() => removeStoreFromProduct(store.store_id)}
+                                className="text-destructive hover:text-destructive hover:bg-destructive/10"
+                              >
+                                <Trash2 className="w-4 h-4" />
+                              </Button>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
                     )}
                   </div>
-                </form>
-              </CardContent>
-            </Card>
-          </TabsContent>
 
-          <TabsContent value="manage-products">
-            <Card>
-              <CardHeader>
-                <CardTitle>Manage Products</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-4">
-                  {products.map((product) => (
-                    <div key={product.id} className="border rounded-lg p-4 space-y-2">
-                      <div className="flex justify-between items-start">
-                        <div className="flex-1">
-                          <h3 className="font-semibold text-lg">{product.name}</h3>
-                          <p className="text-sm text-muted-foreground">
-                            {product.color} • {product.type} • ${product.price}
-                          </p>
-                          {product.description && (
-                            <p className="text-sm mt-2">{product.description}</p>
-                          )}
-                          {product.image_url && (
-                            <img src={product.image_url} alt={product.name} className="mt-2 h-20 object-cover rounded" />
-                          )}
-                          {product.product_stores && product.product_stores.length > 0 && (
-                            <div className="mt-2">
-                              <p className="text-sm font-medium">Stores:</p>
-                              {product.product_stores.map((ps: any) => (
-                                <p key={ps.stores.id} className="text-sm text-muted-foreground">
-                                  • {ps.stores.name}
-                                </p>
-                              ))}
-                            </div>
-                          )}
+                  <div className="space-y-2">
+                    <Label>Description</Label>
+                    <Textarea
+                      value={productDescription}
+                      onChange={(e) => setProductDescription(e.target.value)}
+                      placeholder="Detailed product description..."
+                      className="min-h-24 bg-card/50 border-border/50 rounded-lg"
+                    />
+                  </div>
+
+                  <div className="space-y-2">
+                    <ImageUploader
+                      onImageUpload={setProductImageUrl}
+                      currentImage={productImageUrl}
+                      label="Product Image"
+                    />
+                  </div>
+                  
+                  <div className="space-y-2">
+                    <Label>Or paste Image URL directly</Label>
+                    <Input
+                      placeholder="https://example.com/image.jpg"
+                      value={productImageUrl}
+                      onChange={(e) => setProductImageUrl(e.target.value)}
+                      className="bg-card/50 border-border/50 rounded-lg"
+                    />
+                  </div>
+
+                  <Button
+                    type="submit"
+                    disabled={submitting}
+                    className="w-full h-12 bg-foreground text-background hover:bg-foreground/90 hover:shadow-[0_0_30px_rgba(255,255,255,0.3)] rounded-lg font-medium transition-all"
+                  >
+                    {submitting 
+                      ? (editingProductId ? 'Updating Product...' : 'Creating Product...') 
+                      : (editingProductId ? 'Update Product' : 'Create Product')
+                    }
+                  </Button>
+                </form>
+              </div>
+
+            </TabsContent>
+
+            {/* MANAGE PRODUCTS TAB - List with search and multi-select delete */}
+            <TabsContent value="manage-products" className="space-y-6">
+              <div className="p-8 rounded-2xl border border-border/50 bg-card/40 backdrop-blur-sm">
+                <div className="flex flex-col md:flex-row gap-4 items-start md:items-center justify-between mb-6">
+                  <div>
+                    <h3 className="font-display text-2xl font-bold mb-2">All Products</h3>
+                    <p className="text-muted-foreground">{products.length} total products</p>
+                  </div>
+                  <div className="flex gap-3 w-full md:w-auto">
+                    <div className="relative flex-1 md:w-64">
+                      <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                      <Input
+                        placeholder="Search products..."
+                        className="pl-10 bg-card/50 border-border/50"
+                      />
+                    </div>
+                  </div>
+                </div>
+                
+                {products.length > 0 ? (
+                  <div className="space-y-3">
+                    {products.map((product) => (
+                      <div
+                        key={product.id}
+                        className="group flex items-center gap-4 p-4 rounded-xl border border-border/50 bg-card/20 hover:bg-card/40 hover:border-foreground/30 transition-all"
+                      >
+                        {product.image_url && (
+                          <div className="w-20 h-24 rounded-lg overflow-hidden bg-muted/30 flex-shrink-0 border border-border/50">
+                            <img
+                              src={product.image_url}
+                              alt={product.name}
+                              className="w-full h-full object-cover"
+                            />
+                          </div>
+                        )}
+                        <div className="flex-1 min-w-0">
+                          <h4 className="font-semibold text-lg mb-1">{product.name}</h4>
+                          <div className="flex flex-wrap gap-2 text-sm text-muted-foreground">
+                            <span className="px-2 py-0.5 rounded bg-foreground/10">${product.price}</span>
+                            <span className="px-2 py-0.5 rounded bg-foreground/10">{product.type}</span>
+                            <span className="px-2 py-0.5 rounded bg-foreground/10">{product.color}</span>
+                            {product.brand && <span className="px-2 py-0.5 rounded bg-foreground/10">{product.brand}</span>}
+                          </div>
                         </div>
-                        <div className="flex gap-2">
-                          <Button size="sm" variant="outline" onClick={() => handleEditProduct(product)}>
+                        <div className="flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            className="hover:bg-foreground/10 border-border/50"
+                            onClick={() => {
+                              // Fetch fresh product data with stores
+                              loadProductForEdit(product.id);
+                              // Switch to add-product tab
+                              setActiveTab("add-product");
+                            }}
+                          >
+                            <Edit className="w-4 h-4 mr-2" />
                             Edit
                           </Button>
-                          <Button size="sm" variant="destructive" onClick={() => handleDeleteProduct(product.id)}>
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            className="hover:bg-red-500/20 hover:text-red-400 border-border/50"
+                            onClick={async () => {
+                              if (window.confirm(`Delete "${product.name}"?`)) {
+                                try {
+                                  await productService.deleteProduct(product.id);
+                                  toast({
+                                    title: "Success",
+                                    description: "Product deleted",
+                                  });
+                                  fetchData();
+                                } catch (error: any) {
+                                  toast({
+                                    variant: "destructive",
+                                    title: "Error",
+                                    description: error.message || "Failed to delete",
+                                  });
+                                }
+                              }
+                            }}
+                          >
+                            <Trash2 className="w-4 h-4" />
+                          </Button>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <div className="text-center py-20 border border-dashed border-border/50 rounded-xl">
+                    <Package className="w-16 h-16 mx-auto mb-4 text-muted-foreground opacity-50" />
+                    <p className="text-muted-foreground text-lg mb-2">No products yet</p>
+                    <p className="text-sm text-muted-foreground">Create your first product in the Add Product tab</p>
+                  </div>
+                )}
+              </div>
+            </TabsContent>
+
+            {/* Stores Tab */}
+            <TabsContent value="stores" className="space-y-8">
+              {/* Create/Edit Store Form */}
+              <div className="p-8 rounded-2xl border border-border/50 bg-card/40 backdrop-blur-sm">
+                <div className="flex items-center justify-between mb-6">
+                  <h2 className="font-display text-2xl font-bold flex items-center gap-2">
+                    {editingStore ? <Edit className="w-6 h-6" /> : <Plus className="w-6 h-6" />}
+                    {editingStore ? 'Edit Store' : 'Add New Store'}
+                </h2>
+                  {editingStore && (
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      onClick={cancelStoreEdit}
+                      className="text-muted-foreground hover:text-foreground"
+                    >
+                      Cancel Edit
+                    </Button>
+                  )}
+                </div>
+
+                <form onSubmit={handleCreateStore} className="space-y-6">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div className="space-y-2">
+                      <Label>Store Name</Label>
+                      <Input
+                        value={storeName}
+                        onChange={(e) => setStoreName(e.target.value)}
+                        placeholder="Atlas Studio"
+                        required
+                        className="h-12 bg-card/50 border-border/50 rounded-lg"
+                      />
+                    </div>
+
+                    <div className="space-y-2">
+                      <Label>Telegram URL</Label>
+                      <Input
+                        value={storeTelegram}
+                        onChange={(e) => setStoreTelegram(e.target.value)}
+                        placeholder="https://t.me/storename"
+                        className="h-12 bg-card/50 border-border/50 rounded-lg"
+                      />
+                    </div>
+
+                    <div className="space-y-2">
+                      <Label>Instagram URL</Label>
+                      <Input
+                        value={storeInstagram}
+                        onChange={(e) => setStoreInstagram(e.target.value)}
+                        placeholder="https://instagram.com/storename"
+                        className="h-12 bg-card/50 border-border/50 rounded-lg"
+                      />
+                    </div>
+
+                    <div className="space-y-2">
+                      <Label>Shipping Info</Label>
+                      <Input
+                        value={storeShipping}
+                        onChange={(e) => setStoreShipping(e.target.value)}
+                        placeholder="Worldwide shipping"
+                        className="h-12 bg-card/50 border-border/50 rounded-lg"
+                      />
+                    </div>
+                    
+                    {/* Store Logo Field */}
+                    <div className="space-y-2 md:col-span-2">
+                      <Label>Store Logo (Optional)</Label>
+                      <ImageUploader
+                        onImageUpload={(url) => setStoreLogoUrl(url)}
+                        currentImage={storeLogoUrl}
+                        label=""
+                      />
+                      <Input
+                        value={storeLogoUrl}
+                        onChange={(e) => setStoreLogoUrl(e.target.value)}
+                        placeholder="Or paste image URL"
+                        className="h-12 bg-card/50 border-border/50 rounded-lg mt-2"
+                      />
+                    </div>
+                  </div>
+
+                  <Button
+                    type="submit"
+                    disabled={submitting}
+                    className="w-full h-12 bg-foreground text-background hover:bg-foreground/90 hover:shadow-[0_0_30px_rgba(255,255,255,0.3)] rounded-lg font-medium transition-all"
+                  >
+                    {submitting ? (editingStore ? 'Updating...' : 'Creating...') : (editingStore ? 'Update Store' : 'Create Store')}
+                  </Button>
+                </form>
+              </div>
+
+              {/* Stores List */}
+              <div className="p-8 rounded-2xl border border-border/50 bg-card/40 backdrop-blur-sm">
+                <h3 className="font-display text-xl font-bold mb-6">
+                  All Stores ({stores.length})
+                </h3>
+                
+                {stores.length > 0 ? (
+                  <div className="space-y-4">
+                    {stores.map((store) => (
+                      <div
+                        key={store.id}
+                        className="flex items-center gap-4 p-4 rounded-lg border border-border/50 bg-card/20 hover:bg-card/40 transition-colors"
+                      >
+                        <div className="flex-1 min-w-0">
+                          <h4 className="font-semibold">{store.name}</h4>
+                          <p className="text-sm text-muted-foreground">
+                            {store.shipping_info || 'No shipping info'}
+                          </p>
+                        </div>
+                        <div className="flex gap-2">
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            className="hover:bg-white/10 hover:text-white border border-white/20"
+                            onClick={() => loadStoreForEdit(store)}
+                          >
+                            <Edit className="w-4 h-4" />
+                          </Button>
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            className="hover:bg-red-500/20 hover:text-red-400 border border-white/20"
+                            onClick={async () => {
+                              if (window.confirm(`Delete "${store.name}"?`)) {
+                                try {
+                                  await storeService.deleteStore(store.id);
+                                  toast({
+                                    title: "Success",
+                                    description: "Store deleted successfully",
+                                  });
+                                  fetchData();
+                                } catch (error: any) {
+                                  toast({
+                                    variant: "destructive",
+                                    title: "Error",
+                                    description: error.message || "Failed to delete store",
+                                  });
+                                }
+                              }
+                            }}
+                          >
+                            <Trash2 className="w-4 h-4" />
+                          </Button>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <div className="text-center py-12 text-muted-foreground">
+                    No stores yet
+                  </div>
+                )}
+              </div>
+            </TabsContent>
+
+            {/* HERO IMAGES TAB - Manage carousel images */}
+            <TabsContent value="hero-images" className="space-y-6">
+              <div className="p-8 rounded-2xl border border-border/50 bg-card/40 backdrop-blur-sm">
+                <div className="flex items-start justify-between mb-6">
+                  <div>
+                    <h3 className="font-display text-2xl font-bold mb-2">Hero Carousel Images</h3>
+                    <p className="text-muted-foreground">Manage images displayed in the homepage carousel ({heroImages.length} images)</p>
+                  </div>
+                  {heroImages.length === 0 && (
+                    <Button
+                      variant="outline"
+                      onClick={handleImportExistingHeroImages}
+                      disabled={uploadingHeroImage}
+                      className="gap-2"
+                    >
+                      <Package className="w-4 h-4" />
+                      Import Existing 13 Images
+                    </Button>
+                  )}
+                </div>
+
+                {/* Upload Section */}
+                <div className="mb-8 p-6 rounded-xl border-2 border-dashed border-border/50 bg-card/10">
+                  <div className="space-y-4">
+                    <div>
+                      <h4 className="font-semibold mb-2 flex items-center gap-2">
+                        <Plus className="w-5 h-5" />
+                        Add New Hero Image
+                      </h4>
+                      <p className="text-sm text-muted-foreground mb-4">Upload image to S3 first, then paste the URL here</p>
+                    </div>
+                    
+                    <div className="space-y-3">
+                      <ImageUploader
+                        onImageUpload={(url) => setHeroImageUrl(url)}
+                        currentImage={heroImageUrl}
+                        label="Upload Hero Image"
+                      />
+                      
+                      <div className="relative">
+                        <Label>Or paste Image URL</Label>
+                        <Input
+                          placeholder="https://... or s3://..."
+                          value={heroImageUrl}
+                          onChange={(e) => setHeroImageUrl(e.target.value)}
+                          className="bg-card/50 border-border/50"
+                        />
+                      </div>
+                      
+                      <Button
+                        onClick={handleUploadHeroImage}
+                        disabled={uploadingHeroImage || !heroImageUrl}
+                        className="w-full bg-foreground text-background hover:bg-foreground/90"
+                      >
+                        {uploadingHeroImage ? 'Adding...' : 'Add to Carousel'}
+                      </Button>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Images Grid */}
+                <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+                  {heroImages.length > 0 ? (
+                    heroImages.map((image, index) => (
+                      <div key={image.id} className="relative group aspect-[3/4] rounded-xl overflow-hidden border border-border/50 bg-card/20 hover:border-foreground/30 transition-all">
+                        <img
+                          src={image.image_url}
+                          alt={image.title || `Hero ${index + 1}`}
+                          className="w-full h-full object-cover"
+                        />
+                        <div className="absolute inset-0 bg-black/70 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                          <Button
+                            variant="destructive"
+                            size="sm"
+                            onClick={() => handleDeleteHeroImage(image.id)}
+                          >
+                            <Trash2 className="w-4 h-4 mr-2" />
                             Delete
                           </Button>
                         </div>
+                        <div className="absolute top-2 left-2 px-2 py-1 rounded-md bg-black/80 text-xs font-medium">
+                          #{image.sort_order ?? index + 1}
+                        </div>
+                        {!image.is_active && (
+                          <div className="absolute top-2 right-2 px-2 py-1 rounded-md bg-red-500/80 text-xs font-medium">
+                            Inactive
+                          </div>
+                        )}
                       </div>
+                    ))
+                  ) : (
+                    <div className="col-span-full text-center py-16 border border-dashed border-border/50 rounded-xl">
+                      <Package className="w-16 h-16 mx-auto mb-4 text-muted-foreground opacity-50" />
+                      <p className="text-muted-foreground">No hero images yet</p>
+                      <p className="text-sm text-muted-foreground mt-2">Upload your first image above</p>
                     </div>
-                  ))}
-                  {products.length === 0 && (
-                    <p className="text-center text-muted-foreground py-8">No products yet</p>
                   )}
                 </div>
-              </CardContent>
-            </Card>
-          </TabsContent>
 
-          <TabsContent value="manage-stores">
-            <Card>
-              <CardHeader>
-                <CardTitle>Manage Stores</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <StoreManagement />
-              </CardContent>
-            </Card>
-          </TabsContent>
-        </Tabs>
-      </div>
+                {/* Info */}
+                <div className="mt-6 p-4 rounded-lg bg-foreground/5 border border-foreground/10">
+                  <p className="text-xs text-muted-foreground">
+                    💡 <strong>Tip:</strong> Images are displayed in the order they were added (sort_order). 
+                    For best results, use landscape images with aspect ratio 16:9 or similar.
+                  </p>
+                </div>
+              </div>
+            </TabsContent>
+          </Tabs>
+        </div>
+      </section>
+
+      <Footer />
     </div>
   );
 };

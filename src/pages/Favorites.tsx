@@ -2,8 +2,12 @@ import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
-import Header from "@/components/Header";
+import Navigation from "@/components/layout/Navigation";
+import { Footer } from "@/components/layout/Footer";
 import ProductCard from "@/components/ProductCard";
+import { Input } from "@/components/ui/input";
+import { Button } from "@/components/ui/button";
+import { Search, Heart } from "lucide-react";
 
 const Favorites = () => {
   const navigate = useNavigate();
@@ -73,39 +77,81 @@ const Favorites = () => {
   );
 
   return (
-    <div className="min-h-screen bg-background">
-      <Header searchQuery={searchQuery} onSearchChange={setSearchQuery} />
+    <div className="min-h-screen bg-background text-foreground">
+      <Navigation />
       
-      <div className="container mx-auto px-4 py-8">
-        <h1 className="text-4xl font-serif font-bold mb-8">My Favorites</h1>
+      <main className="container mx-auto px-6 pt-28 pb-16">
+        {/* Header */}
+        <div className="mb-10">
+          <div className="inline-flex items-center gap-2 mb-4">
+            <Heart className="w-4 h-4 text-red-500" />
+            <span className="text-xs text-muted-foreground uppercase tracking-wider">Your Collection</span>
+          </div>
+          <h1 className="font-display text-4xl sm:text-5xl font-bold mb-3">My Favorites</h1>
+          <p className="text-muted-foreground text-lg">Items you've saved for later</p>
+        </div>
 
+        {/* Search */}
+        {favorites.length > 0 && (
+          <div className="relative max-w-md mb-10 group">
+            <div className="absolute -inset-0.5 bg-gradient-to-r from-foreground/10 to-foreground/5 rounded-full blur opacity-0 group-hover:opacity-30 transition duration-500"></div>
+            <div className="relative flex items-center">
+              <Search className="absolute left-4 w-5 h-5 text-muted-foreground group-focus-within:text-foreground transition-colors" />
+              <Input
+                type="text"
+                placeholder="Search your favorites..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="w-full pl-12 pr-4 h-12 bg-card/50 border-border/50 rounded-full text-foreground placeholder:text-muted-foreground focus-visible:ring-1 focus-visible:ring-foreground/30 transition-all backdrop-blur-sm"
+              />
+            </div>
+          </div>
+        )}
+
+        {/* Content */}
         {loading ? (
-          <div className="flex items-center justify-center py-16">
-            <p className="text-xl">Loading...</p>
+          <div className="min-h-[400px] flex items-center justify-center">
+            <div className="animate-spin w-8 h-8 border-2 border-foreground border-t-transparent rounded-full"></div>
           </div>
         ) : filteredFavorites.length === 0 ? (
-          <div className="text-center py-16">
-            <p className="text-xl text-muted-foreground mb-4">
-              {searchQuery ? "No favorites match your search" : "You haven't saved any items yet"}
+          <div className="text-center py-20 border border-dashed border-border/30 rounded-3xl bg-card/10">
+            <div className="w-16 h-16 rounded-full border-2 border-border/30 flex items-center justify-center mx-auto mb-6">
+              <Heart className="w-8 h-8 text-muted-foreground" />
+            </div>
+            <h3 className="font-display text-xl font-semibold mb-2">
+              {searchQuery ? "No favorites match your search" : "No favorites yet"}
+            </h3>
+            <p className="text-muted-foreground mb-6 max-w-md mx-auto">
+              {searchQuery 
+                ? "Try adjusting your search terms" 
+                : "Start exploring and save items you love to see them here"}
             </p>
+            <Button 
+              onClick={() => navigate("/products")}
+              className="rounded-full"
+            >
+              Browse Products
+            </Button>
           </div>
         ) : (
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
             {filteredFavorites.map((fav) => 
               fav.products ? (
                 <ProductCard
                   key={fav.id}
                   id={fav.products.id}
                   name={fav.products.name}
-                  image={fav.products.image_url || "/placeholder.svg"}
-                  price={`$${fav.products.price}`}
+                  image={fav.products.image_url || ""}
+                  price={fav.products.price}
                   category={fav.products.type}
                 />
               ) : null
             )}
           </div>
         )}
-      </div>
+      </main>
+
+      <Footer />
     </div>
   );
 };

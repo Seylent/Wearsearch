@@ -1,47 +1,25 @@
-import { useState } from "react";
+import React from 'react';
 
-interface ImageDebuggerProps {
+interface ImageDebuggerProps extends React.ImgHTMLAttributes<HTMLImageElement> {
   src: string;
-  alt: string;
-  className?: string;
 }
 
-const ImageDebugger = ({ src, alt, className }: ImageDebuggerProps) => {
-  const [loadError, setLoadError] = useState<string | null>(null);
-  const [loadSuccess, setLoadSuccess] = useState(false);
-
-  const handleLoad = () => {
-    setLoadSuccess(true);
-    console.log('✅ Image loaded successfully:', src);
-  };
-
-  const handleError = (e: React.SyntheticEvent<HTMLImageElement>) => {
-    const error = `Failed to load: ${src}`;
-    setLoadError(error);
-    console.error('❌ Image load error:', error);
-    console.error('Image details:', {
-      src,
-      naturalWidth: e.currentTarget.naturalWidth,
-      naturalHeight: e.currentTarget.naturalHeight,
-      complete: e.currentTarget.complete
-    });
-    e.currentTarget.src = "/placeholder.svg";
-  };
+const ImageDebugger: React.FC<ImageDebuggerProps> = ({ src, alt = '', className = '', ...rest }) => {
+  const [failed, setFailed] = React.useState(false);
 
   return (
-    <div className="relative">
-      <img
-        src={src || "/placeholder.svg"}
-        alt={alt}
-        className={className}
-        crossOrigin="anonymous"
-        onLoad={handleLoad}
-        onError={handleError}
-      />
-      {loadError && (
-        <div className="absolute inset-0 bg-red-500/10 flex items-center justify-center text-xs text-red-600 p-2">
-          Debug: Check Console
-        </div>
+    <div className={`w-full h-full bg-muted flex items-center justify-center ${className}`}>
+      {!failed ? (
+        // eslint-disable-next-line @next/next/no-img-element
+        <img
+          src={src}
+          alt={alt}
+          className="w-full h-full object-cover"
+          onError={() => setFailed(true)}
+          {...rest}
+        />
+      ) : (
+        <div className="text-sm text-muted-foreground p-4">Image failed to load</div>
       )}
     </div>
   );

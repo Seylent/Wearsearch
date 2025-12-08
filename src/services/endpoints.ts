@@ -17,23 +17,30 @@ export const ENDPOINTS = {
 
   // Product endpoints
   PRODUCTS: {
-    LIST: '/products',
-    DETAIL: (id: string | number) => `/products/${id}`,
-    CREATE: '/products',
-    UPDATE: (id: string | number) => `/products/${id}`,
-    DELETE: (id: string | number) => `/products/${id}`,
-    SEARCH: '/products/search',
-    CATEGORIES: '/products/categories',
-    BY_CATEGORY: (category: string) => `/products/category/${category}`,
+    LIST: '/items',
+    DETAIL: (id: string | number) => `/items/${id}`,
+    STORES: (id: string | number) => `/items/${id}/stores`,
+    CREATE: '/admin/products',
+    UPDATE: (id: string | number) => `/admin/products/${id}`,
+    DELETE: (id: string | number) => `/admin/products/${id}`,
+    SEARCH: '/items/search',
+    CATEGORIES: '/items/categories',
+    BY_CATEGORY: (category: string) => `/items/category/${category}`,
   },
 
   // User endpoints
   USERS: {
-    PROFILE: '/users/profile',
-    UPDATE_PROFILE: '/users/profile',
-    FAVORITES: '/users/favorites',
-    ADD_FAVORITE: (productId: string | number) => `/users/favorites/${productId}`,
-    REMOVE_FAVORITE: (productId: string | number) => `/users/favorites/${productId}`,
+    PROFILE: '/user/profile',
+    UPDATE_PROFILE: '/user/profile',
+    DISPLAY_NAME: '/user/profile/display-name',
+    BIO: '/user/profile/bio',
+    AVATAR: '/user/profile/avatar',
+    PASSWORD: '/user/profile/password',
+    FAVORITES: '/user/favorites',
+    ADD_FAVORITE: (productId: string | number) => `/user/favorites/${productId}`,
+    REMOVE_FAVORITE: (productId: string | number) => `/user/favorites/${productId}`,
+    CHECK_FAVORITE: (productId: string | number) => `/user/favorites/${productId}/check`,
+    STATS: '/user/stats',
   },
 
   // Admin endpoints
@@ -46,8 +53,29 @@ export const ENDPOINTS = {
 
   // Upload endpoints
   UPLOAD: {
-    IMAGE: '/upload/image',
-    IMAGES: '/upload/images',
+    IMAGE: '/supabase-upload/image',
+    AVATAR: '/supabase-upload/avatar',
+    IMAGES: '/supabase-upload/images',
+  },
+
+  // Store endpoints
+  STORES: {
+    LIST: '/stores',
+    DETAIL: (id: string | number) => `/stores/${id}`,
+    CREATE: '/admin/stores',
+    UPDATE: (id: string | number) => `/admin/stores/${id}`,
+    DELETE: (id: string | number) => `/admin/stores/${id}`,
+    ADMIN_LIST: '/admin/stores', // With search parameter
+  },
+
+  // Brand endpoints
+  BRANDS: {
+    LIST: '/brands',
+    DETAIL: (id: string | number) => `/brands/${id}`,
+    PRODUCTS: (id: string | number) => `/brands/${id}/products`,
+    CREATE: '/brands',
+    UPDATE: (id: string | number) => `/brands/${id}`,
+    DELETE: (id: string | number) => `/brands/${id}`,
   },
 } as const;
 

@@ -115,13 +115,37 @@ export const userService = {
   },
 
   /**
-   * Toggle favorite status (add if not favorited, remove if already favorited)
+   * Check favorite status for a product
    */
-  async toggleFavorite(productId: string | number, isFavorited: boolean): Promise<void> {
-    if (isFavorited) {
-      await this.removeFavorite(productId);
-    } else {
-      await this.addFavorite(productId);
+  async checkFavorite(productId: string | number): Promise<{ is_favorited: boolean; favorite_id?: number }> {
+    try {
+      const response: AxiosResponse<{ is_favorited: boolean; favorite_id?: number }> = await api.get(
+        ENDPOINTS.USERS.CHECK_FAVORITE(productId)
+      );
+      return response.data || { is_favorited: false };
+    } catch (error) {
+      // Fallback: determine by listing favorites
+      const isFav = await this.isFavorite(productId);
+      return { is_favorited: isFav };
+    }
+  },
+
+  /**
+   * Toggle favorite status (add if not favorited, remove if already favorited)
+   * Returns an object with the final state and a message
+   */
+  async toggleFavorite(productId: string | number): Promise<{ is_favorited: boolean; message: string }> {
+    try {
+      const current = await this.checkFavorite(productId);
+      if (current.is_favorited) {
+        const res = await this.removeFavorite(productId);
+        return { is_favorited: false, message: res.message || 'Removed from favorites' };
+      } else {
+        const res = await this.addFavorite(productId);
+        return { is_favorited: true, message: res.message || 'Added to favorites' };
+      }
+    } catch (error) {
+      throw new Error(handleApiError(error));
     }
   },
 
