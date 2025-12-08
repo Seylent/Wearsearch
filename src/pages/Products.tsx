@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import Navigation from "@/components/layout/Navigation";
 import { Footer } from "@/components/layout/Footer";
+import { NeonAbstractions } from "@/components/NeonAbstractions";
 import ProductCard from "@/components/ProductCard";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
@@ -8,7 +9,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
-import { Filter, Search } from "lucide-react";
+import { Filter, Search, Sparkles } from "lucide-react";
 import {
   Pagination,
   PaginationContent,
@@ -114,37 +115,47 @@ const Products = () => {
   }, [searchQuery]);
 
   return (
-    <div className="min-h-screen bg-background text-foreground overflow-x-hidden font-sans selection:bg-primary/30 selection:text-white">
+    <div className="min-h-screen bg-black text-white overflow-x-hidden font-sans">
       <Navigation />
       
-      <main className="container mx-auto px-6 pt-28 pb-16">
-        <div className="flex flex-col gap-10">
-          {/* Header with Search */}
-          <div className="space-y-6">
-            <div>
-              <div className="inline-flex items-center gap-2 mb-4">
-                <div className="w-2 h-2 rounded-full bg-green-500" />
-                <span className="text-xs text-muted-foreground uppercase tracking-wider">Browse Collection</span>
-              </div>
-              <h1 className="font-display text-4xl sm:text-5xl font-bold mb-3">All Products</h1>
-              <p className="text-muted-foreground text-lg">Discover our curated selection of premium fashion</p>
-            </div>
-            
-            {/* Search Bar */}
-            <div className="relative max-w-xl group">
-              <div className="absolute -inset-0.5 bg-gradient-to-r from-foreground/10 to-foreground/5 rounded-full blur opacity-0 group-hover:opacity-30 transition duration-500"></div>
-              <div className="relative flex items-center">
-                <Search className="absolute left-4 w-5 h-5 text-muted-foreground group-focus-within:text-foreground transition-colors" />
-                <Input
-                  type="text"
-                  placeholder="Search products..."
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                  className="w-full pl-12 pr-4 h-14 bg-card/50 border-border/50 rounded-full text-foreground placeholder:text-muted-foreground focus-visible:ring-1 focus-visible:ring-foreground/30 focus-visible:border-foreground/30 transition-all backdrop-blur-sm"
-                />
-              </div>
+      {/* Hero Section with NeonAbstractions */}
+      <section className="relative min-h-[40vh] flex items-center justify-center overflow-hidden pt-28 pb-12">
+        <NeonAbstractions />
+        
+        <div className="container mx-auto px-6 relative z-10 text-center">
+          <div className="inline-flex items-center gap-2 px-5 py-2.5 glass-card-strong rounded-full mb-6">
+            <Sparkles className="w-3 h-3" />
+            <span className="text-xs text-foreground/80 tracking-wider uppercase font-medium">
+              Curated Collection
+            </span>
+          </div>
+          
+          <h1 className="font-display text-5xl sm:text-6xl md:text-7xl font-bold mb-4 tracking-tight">
+            <span className="neon-text">Explore</span> Products
+          </h1>
+          
+          <p className="text-lg text-muted-foreground max-w-2xl mx-auto mb-8">
+            Discover our curated selection of premium fashion from world-class designers
+          </p>
+          
+          {/* Search Bar */}
+          <div className="relative max-w-2xl mx-auto">
+            <div className="relative flex items-center">
+              <Search className="absolute left-5 w-5 h-5 text-muted-foreground" />
+              <Input
+                type="text"
+                placeholder="Search products..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="w-full pl-14 pr-5 h-14 glass-card rounded-full text-foreground placeholder:text-muted-foreground focus-visible:ring-2 focus-visible:ring-foreground/20 border-foreground/10"
+              />
             </div>
           </div>
+        </div>
+      </section>
+      
+      <main className="container mx-auto px-6 pb-16">
+        <div className="flex flex-col gap-10">
 
           {/* Filters and Sort */}
           <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">

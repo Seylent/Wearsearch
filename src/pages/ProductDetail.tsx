@@ -1,10 +1,11 @@
 import { useParams, useNavigate } from "react-router-dom";
 import { useState, useEffect } from "react";
-import { ArrowLeft, Edit, Package, Tag, MapPin, Search, Filter, ChevronDown } from "lucide-react";
+import { ArrowLeft, Edit, Package, Tag, MapPin, Search, Filter, ChevronDown, Sparkles } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import Navigation from "@/components/layout/Navigation";
 import { Footer } from "@/components/layout/Footer";
+import { NeonAbstractions } from "@/components/NeonAbstractions";
 import { FaTelegram, FaInstagram } from "react-icons/fa";
 import { useToast } from "@/hooks/use-toast";
 import { convertS3UrlToHttps } from "@/lib/utils";

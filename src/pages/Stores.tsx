@@ -1,8 +1,8 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { Navigation } from "@/components/layout/Navigation";
+import Navigation from "@/components/layout/Navigation";
 import { Footer } from "@/components/layout/Footer";
-import { NeonAbstractions } from "@/components/sections/NeonAbstractions";
+import { NeonAbstractions } from "@/components/NeonAbstractions";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Search, ArrowRight, ExternalLink, Star, Package } from "lucide-react";
@@ -37,7 +37,7 @@ const Stores = () => {
   );
 
   return (
-    <div className="min-h-screen bg-background text-foreground font-sans">
+    <div className="min-h-screen bg-black text-white font-sans">
       <Navigation />
       
       {/* Hero Section */}

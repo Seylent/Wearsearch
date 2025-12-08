@@ -1,5 +1,6 @@
 import { Link } from "react-router-dom";
-import { Instagram, Twitter } from "lucide-react";
+import { Instagram } from "lucide-react";
+import { FaTelegram } from "react-icons/fa";
 
 export const Footer = () => {
   const footerLinks = {
@@ -24,42 +25,42 @@ export const Footer = () => {
   };
 
   return (
-    <footer className="bg-background border-t border-border/20 pt-16 pb-8">
+    <footer className="bg-black border-t border-zinc-800/50 pt-16 pb-8">
       <div className="container mx-auto px-6">
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-10 mb-12">
           {/* Brand */}
           <div className="lg:col-span-2">
-            <Link to="/" className="flex items-center gap-3 mb-5">
-              <div className="w-9 h-9 rounded-lg border border-foreground/30 flex items-center justify-center bg-card/30 backdrop-blur-sm">
-                <span className="font-display font-bold text-base">W</span>
+            <Link to="/" className="flex items-center gap-2.5 mb-6">
+              <div className="w-9 h-9 rounded-lg border border-zinc-700/60 flex items-center justify-center bg-zinc-800/40">
+                <span className="font-display font-bold text-sm text-white">W</span>
               </div>
-              <span className="font-display text-xl font-semibold tracking-tight">
+              <span className="font-display text-lg font-semibold tracking-tight text-white">
                 Wearsearch
               </span>
             </Link>
-            <p className="text-muted-foreground text-sm leading-relaxed mb-5 max-w-xs">
+            <p className="text-zinc-500 text-sm leading-relaxed mb-6 max-w-xs">
               Discover curated fashion from the world's most innovative designers and 
               independent stores.
             </p>
             <div className="flex gap-3">
               <a
                 href="#"
-                className="w-9 h-9 rounded-full border border-border/50 hover:border-foreground/40 flex items-center justify-center transition-all duration-300 hover:bg-foreground/5"
+                className="w-9 h-9 rounded-full border border-zinc-800 hover:border-zinc-600 flex items-center justify-center transition-all duration-300 hover:bg-zinc-800/50"
               >
-                <Instagram className="w-4 h-4" />
+                <Instagram className="w-4 h-4 text-zinc-400" />
               </a>
               <a
                 href="#"
-                className="w-9 h-9 rounded-full border border-border/50 hover:border-foreground/40 flex items-center justify-center transition-all duration-300 hover:bg-foreground/5"
+                className="w-9 h-9 rounded-full border border-zinc-800 hover:border-zinc-600 flex items-center justify-center transition-all duration-300 hover:bg-zinc-800/50"
               >
-                <Twitter className="w-4 h-4" />
+                <FaTelegram className="w-4 h-4 text-zinc-400" />
               </a>
             </div>
           </div>
 
           {/* Links */}
           <div>
-            <h4 className="font-display font-semibold mb-5 text-sm tracking-wider uppercase text-foreground/80">
+            <h4 className="font-display font-semibold mb-5 text-sm tracking-wider uppercase text-white">
               Shop
             </h4>
             <ul className="space-y-3">
@@ -77,7 +78,7 @@ export const Footer = () => {
           </div>
 
           <div>
-            <h4 className="font-display font-semibold mb-5 text-sm tracking-wider uppercase text-foreground/80">
+            <h4 className="font-display font-semibold mb-5 text-sm tracking-wider uppercase text-white">
               Support
             </h4>
             <ul className="space-y-3">
@@ -85,7 +86,7 @@ export const Footer = () => {
                 <li key={link.name}>
                   <a
                     href={link.href}
-                    className="text-sm text-muted-foreground hover:text-foreground transition-colors"
+                    className="text-sm text-zinc-500 hover:text-white transition-colors"
                   >
                     {link.name}
                   </a>
@@ -95,7 +96,7 @@ export const Footer = () => {
           </div>
 
           <div>
-            <h4 className="font-display font-semibold mb-5 text-sm tracking-wider uppercase text-foreground/80">
+            <h4 className="font-display font-semibold mb-5 text-sm tracking-wider uppercase text-white">
               Company
             </h4>
             <ul className="space-y-3">
@@ -114,17 +115,17 @@ export const Footer = () => {
         </div>
 
         {/* Bottom */}
-        <div className="pt-6 border-t border-border/20 flex flex-col sm:flex-row justify-between items-center gap-4">
-          <p className="text-xs text-muted-foreground">
+        <div className="pt-8 border-t border-zinc-800/50 flex flex-col sm:flex-row justify-between items-center gap-4">
+          <p className="text-xs text-zinc-600">
             © 2024 Wearsearch. All rights reserved.
           </p>
           <div className="flex gap-6">
-            <a href="#" className="text-xs text-muted-foreground hover:text-foreground transition-colors">
+            <Link to="#" className="text-xs text-zinc-600 hover:text-zinc-400 transition-colors">
               Privacy Policy
-            </a>
-            <a href="#" className="text-xs text-muted-foreground hover:text-foreground transition-colors">
+            </Link>
+            <Link to="#" className="text-xs text-zinc-600 hover:text-zinc-400 transition-colors">
               Terms of Service
-            </a>
+            </Link>
           </div>
         </div>
       </div>

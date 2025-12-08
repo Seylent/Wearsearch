@@ -61,10 +61,9 @@ export function FavoriteButton({
     if (!token) {
       toast({
         title: 'Login Required',
-        description: 'Please login to save products',
+        description: 'Please login to save products. Click the user icon in the navigation.',
         variant: 'destructive',
       });
-      navigate('/auth');
       return;
     }
 

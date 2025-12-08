@@ -8,7 +8,8 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useToast } from "@/hooks/use-toast";
 import Navigation from "@/components/layout/Navigation";
 import { Footer } from "@/components/layout/Footer";
-import { User, Lock, LogOut } from "lucide-react";
+import { NeonAbstractions } from "@/components/NeonAbstractions";
+import { User, Lock, LogOut, Sparkles, Star } from "lucide-react";
 
 const Profile = () => {
   const navigate = useNavigate();
@@ -129,35 +130,47 @@ const Profile = () => {
   }
 
   return (
-    <div className="min-h-screen bg-background text-foreground">
+    <div className="min-h-screen bg-black text-white">
       <Navigation />
       
-      <main className="container mx-auto px-6 pt-28 pb-16">
+      {/* Hero Section */}
+      <section className="relative min-h-[35vh] flex items-center justify-center overflow-hidden pt-28 pb-8">
+        <NeonAbstractions />
+        
+        <div className="container mx-auto px-6 relative z-10 text-center">
+          <div className="inline-flex items-center gap-2 px-5 py-2.5 glass-card-strong rounded-full mb-6">
+            <Sparkles className="w-3 h-3" />
+            <span className="text-xs text-foreground/80 tracking-wider uppercase font-medium">
+              Account Settings
+            </span>
+          </div>
+          
+          <h1 className="font-display text-4xl sm:text-5xl md:text-6xl font-bold mb-3 tracking-tight">
+            My <span className="neon-text">Profile</span>
+          </h1>
+          
+          <p className="text-lg text-muted-foreground">
+            {email}
+          </p>
+        </div>
+      </section>
+      
+      <main className="container mx-auto px-6 pb-16">
         <div className="max-w-2xl mx-auto">
-          {/* Header */}
-          <div className="mb-10">
-            <div className="inline-flex items-center gap-2 mb-4">
-              <div className="w-2 h-2 rounded-full bg-green-500" />
-              <span className="text-xs text-muted-foreground uppercase tracking-wider">Account Settings</span>
-            </div>
-            <div className="flex justify-between items-start">
-              <div>
-                <h1 className="font-display text-4xl font-bold mb-2">My Account</h1>
-                <p className="text-muted-foreground">{email}</p>
-              </div>
-              <Button 
-                variant="outline" 
-                onClick={handleLogout}
-                className="rounded-full border-border/50 hover:bg-destructive/10 hover:text-destructive hover:border-destructive/50"
-              >
-                <LogOut className="w-4 h-4 mr-2" />
-                Logout
-              </Button>
-            </div>
+          {/* Logout Button */}
+          <div className="flex justify-end mb-6">
+            <Button 
+              variant="outline" 
+              onClick={handleLogout}
+              className="rounded-full border-border/50 hover:bg-destructive/10 hover:text-destructive hover:border-destructive/50"
+            >
+              <LogOut className="w-4 h-4 mr-2" />
+              Logout
+            </Button>
           </div>
 
           <Tabs defaultValue="profile" className="w-full">
-            <TabsList className="grid w-full grid-cols-2 bg-card/40 border border-border/30 p-1 rounded-xl mb-8">
+            <TabsList className="grid w-full grid-cols-2 glass-card p-1 rounded-xl mb-8">
               <TabsTrigger 
                 value="profile"
                 className="data-[state=active]:bg-foreground data-[state=active]:text-background rounded-lg transition-all"
@@ -175,7 +188,7 @@ const Profile = () => {
             </TabsList>
 
             <TabsContent value="profile">
-              <div className="p-8 rounded-2xl border border-border/30 bg-card/20 backdrop-blur-sm">
+              <div className="p-8 rounded-2xl glass-card">
                 <h2 className="font-display text-xl font-semibold mb-6">Profile Information</h2>
                 <form onSubmit={handleUpdateProfile} className="space-y-6">
                   <div className="space-y-2">
@@ -211,7 +224,7 @@ const Profile = () => {
                   <Button 
                     type="submit" 
                     disabled={loading}
-                    className="h-12 px-8 rounded-full"
+                    className="h-12 px-8 rounded-full bg-white text-black hover:bg-zinc-100"
                   >
                     {loading ? "Saving..." : "Save Changes"}
                   </Button>
@@ -220,7 +233,7 @@ const Profile = () => {
             </TabsContent>
 
             <TabsContent value="password">
-              <div className="p-8 rounded-2xl border border-border/30 bg-card/20 backdrop-blur-sm">
+              <div className="p-8 rounded-2xl glass-card">
                 <h2 className="font-display text-xl font-semibold mb-6">Change Password</h2>
                 <form onSubmit={handleChangePassword} className="space-y-6">
                   <div className="space-y-2">
@@ -267,7 +280,7 @@ const Profile = () => {
                   <Button 
                     type="submit" 
                     disabled={loading}
-                    className="h-12 px-8 rounded-full"
+                    className="h-12 px-8 rounded-full bg-white text-black hover:bg-zinc-100"
                   >
                     {loading ? "Changing..." : "Change Password"}
                   </Button>

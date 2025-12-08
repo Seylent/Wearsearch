@@ -2,6 +2,13 @@
 // All endpoints are relative to the API_BASE_URL defined in api.ts
 
 export const ENDPOINTS = {
+    // Ratings endpoints
+    RATINGS: {
+      ADD: '/ratings',
+      BY_STORE: (storeId: string) => `/ratings/store/${storeId}`,
+      BY_USER: (userId: string) => `/ratings/user/${userId}`,
+      DELETE: (ratingId: string) => `/ratings/${ratingId}`,
+    },
   // Authentication endpoints
   AUTH: {
     LOGIN: '/auth/login',

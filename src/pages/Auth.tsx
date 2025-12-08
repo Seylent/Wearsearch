@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
-import { supabase } from '@/integrations/supabase/client';
+import { authService } from '@/services/authService';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -8,7 +8,7 @@ import { useToast } from '@/hooks/use-toast';
 import { ArrowLeft } from 'lucide-react';
 
 const Auth: React.FC = () => {
-  const [email, setEmail] = useState('');
+  const [identifier, setIdentifier] = useState(''); // Can be email or username
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
   const [isSignUp, setIsSignUp] = useState(false);
@@ -18,21 +18,18 @@ const Auth: React.FC = () => {
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
-    
     try {
-      const { data, error } = await supabase.auth.signInWithPassword({
-        email,
-        password,
-      });
-
-      if (error) throw error;
-
-      if (data.user) {
+      const res = await authService.login({ identifier, password });
+      if (res.success && res.access_token) {
         toast({
           title: 'Success',
           description: 'Logged in successfully!',
         });
+        // Trigger auth change event
+        window.dispatchEvent(new Event('authChange'));
         navigate('/');
+      } else {
+        throw new Error(res.error || 'Login failed');
       }
     } catch (err: any) {
       toast({
@@ -48,19 +45,19 @@ const Auth: React.FC = () => {
   const handleSignup = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
-    
     try {
-      const { error } = await supabase.auth.signUp({
-        email,
-        password,
-      });
-
-      if (error) throw error;
-
-      toast({
-        title: 'Check your email',
-        description: 'We sent you a confirmation link!',
-      });
+      const res = await authService.register({ email: identifier, password });
+      if (res.success && res.user) {
+        toast({
+          title: 'Account created',
+          description: 'Registration successful! You can now log in.',
+        });
+        setIsSignUp(false);
+        setIdentifier('');
+        setPassword('');
+      } else {
+        throw new Error(res.error || 'Registration failed');
+      }
     } catch (err: any) {
       toast({
         title: 'Registration Failed',
@@ -118,14 +115,16 @@ const Auth: React.FC = () => {
         <div className="p-8 rounded-2xl border border-border/30 bg-card/20 backdrop-blur-xl">
           <form onSubmit={isSignUp ? handleSignup : handleLogin} className="space-y-6">
             <div className="space-y-2">
-              <Label htmlFor="email" className="text-sm font-medium">Email</Label>
+              <Label htmlFor="identifier" className="text-sm font-medium">
+                {isSignUp ? 'Email' : 'Email or Username'}
+              </Label>
               <Input
-                id="email"
-                type="email"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
+                id="identifier"
+                type={isSignUp ? "email" : "text"}
+                value={identifier}
+                onChange={(e) => setIdentifier(e.target.value)}
                 required
-                placeholder="your@email.com"
+                placeholder={isSignUp ? "your@email.com" : "Email or username"}
                 className="h-12 bg-card/50 border-border/50 rounded-xl focus-visible:ring-1 focus-visible:ring-foreground/30"
               />
             </div>
@@ -138,6 +137,7 @@ const Auth: React.FC = () => {
                 onChange={(e) => setPassword(e.target.value)}
                 required
                 placeholder="Enter your password"
+                minLength={6}
                 className="h-12 bg-card/50 border-border/50 rounded-xl focus-visible:ring-1 focus-visible:ring-foreground/30"
               />
             </div>
