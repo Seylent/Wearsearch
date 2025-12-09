@@ -7,7 +7,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/hooks/use-toast";
 import Navigation from "@/components/layout/Navigation";
 import { Footer } from "@/components/layout/Footer";
-import { Plus, Edit, Trash2, Search, Tag } from "lucide-react";
+import { Plus, Edit, Trash2, Search, Tag, ArrowLeft } from "lucide-react";
 import { ImageUploader } from "@/components/ImageUploader";
 import ENDPOINTS from "@/services/endpoints";
 
@@ -250,6 +250,15 @@ const AdminBrands = () => {
         </div>
 
         <div className="container mx-auto px-6 relative z-10">
+          <Button 
+            variant="ghost" 
+            onClick={() => navigate('/admin')} 
+            className="mb-6 text-muted-foreground hover:text-foreground"
+          >
+            <ArrowLeft className="w-4 h-4 mr-2" />
+            Back to Admin
+          </Button>
+          
           <div className="flex items-center gap-3 mb-6">
             <Tag className="w-8 h-8" />
             <span className="text-sm text-muted-foreground uppercase tracking-[0.2em]">Admin Panel</span>

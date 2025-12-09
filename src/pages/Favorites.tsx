@@ -1,6 +1,5 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import Navigation from "@/components/layout/Navigation";
 import { Footer } from "@/components/layout/Footer";
@@ -8,12 +7,15 @@ import ProductCard from "@/components/ProductCard";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Search, Heart } from "lucide-react";
+import { authService } from "@/services/authService";
+import { userService } from "@/services/userService";
+import { Product } from "@/services/productService";
 
 const Favorites = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
   const [searchQuery, setSearchQuery] = useState("");
-  const [favorites, setFavorites] = useState<any[]>([]);
+  const [favorites, setFavorites] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -21,9 +23,7 @@ const Favorites = () => {
   }, []);
 
   const checkAuthAndFetchFavorites = async () => {
-    const { data: { session } } = await supabase.auth.getSession();
-    
-    if (!session) {
+    if (!authService.isAuthenticated()) {
       toast({
         title: "Login Required",
         description: "Please login to view your favorites",
@@ -38,43 +38,39 @@ const Favorites = () => {
 
   const fetchFavorites = async () => {
     setLoading(true);
-    const { data: { session } } = await supabase.auth.getSession();
     
-    if (!session) return;
-
-    const { data, error } = await supabase
-      .from("favorites")
-      .select(`
-        id,
-        product_id,
-        products (
-          id,
-          name,
-          image_url,
-          price,
-          type,
-          color
-        )
-      `)
-      .eq("user_id", session.user.id)
-      .order("created_at", { ascending: false });
-
-    if (error) {
+    try {
+      const data = await userService.getFavorites();
+      console.log('Favorites data:', data);
+      
+      // Handle different response formats
+      if (Array.isArray(data)) {
+        setFavorites(data);
+      } else if (data && Array.isArray(data.favorites)) {
+        setFavorites(data.favorites);
+      } else if (data && Array.isArray(data.products)) {
+        setFavorites(data.products);
+      } else {
+        setFavorites([]);
+      }
+    } catch (error) {
+      console.error('Error fetching favorites:', error);
+      setFavorites([]);
       toast({
         title: "Error",
         description: "Failed to load favorites",
         variant: "destructive",
       });
-    } else if (data) {
-      setFavorites(data);
+    } finally {
+      setLoading(false);
     }
-
-    setLoading(false);
   };
 
-  const filteredFavorites = favorites.filter(fav => 
-    fav.products?.name.toLowerCase().includes(searchQuery.toLowerCase())
-  );
+  const filteredFavorites = Array.isArray(favorites) 
+    ? favorites.filter(product => 
+        product?.name?.toLowerCase().includes(searchQuery.toLowerCase())
+      )
+    : [];
 
   return (
     <div className="min-h-screen bg-background text-foreground">
@@ -135,18 +131,16 @@ const Favorites = () => {
           </div>
         ) : (
           <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
-            {filteredFavorites.map((fav) => 
-              fav.products ? (
-                <ProductCard
-                  key={fav.id}
-                  id={fav.products.id}
-                  name={fav.products.name}
-                  image={fav.products.image_url || ""}
-                  price={fav.products.price}
-                  category={fav.products.type}
-                />
-              ) : null
-            )}
+            {filteredFavorites.map((product) => (
+              <ProductCard
+                key={product.id}
+                id={product.id}
+                name={product.name}
+                image={product.image_url || product.image || ""}
+                price={product.price}
+                category={product.type}
+              />
+            ))}
           </div>
         )}
       </main>

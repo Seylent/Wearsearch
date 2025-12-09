@@ -4,6 +4,16 @@
 @tailwind components;
 @tailwind utilities;
 
+@layer utilities {
+  .animate-pulse-slow {
+    animation: pulse 4s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+  }
+  
+  .animate-spin-slow {
+    animation: spin 8s linear infinite;
+  }
+}
+
 @layer base {
   :root {
     /* Pure Black/White Theme - NO colored accents */

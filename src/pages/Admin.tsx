@@ -46,6 +46,13 @@ const Admin = () => {
   const [heroImages, setHeroImages] = useState<any[]>([]);
   const [heroImageUrl, setHeroImageUrl] = useState("");
   const [uploadingHeroImage, setUploadingHeroImage] = useState(false);
+  const [selectedHeroImages, setSelectedHeroImages] = useState<string[]>([]);
+  
+  // Contacts state
+  const [contactTelegram, setContactTelegram] = useState<string>("@wearsearch");
+  const [contactInstagram, setContactInstagram] = useState<string>("@wearsearch");
+  const [contactEmail, setContactEmail] = useState<string>("support@wearsearch.com");
+  const [savingContacts, setSavingContacts] = useState(false);
   
   // Store form state
   const [storeName, setStoreName] = useState<string>("");
@@ -68,6 +75,19 @@ const Admin = () => {
     checkAdmin();
     fetchData();
     fetchHeroImages();
+    
+    // Load saved contacts from localStorage
+    const savedContacts = localStorage.getItem('site_contacts');
+    if (savedContacts) {
+      try {
+        const contacts = JSON.parse(savedContacts);
+        if (contacts.telegram) setContactTelegram(contacts.telegram);
+        if (contacts.instagram) setContactInstagram(contacts.instagram);
+        if (contacts.email) setContactEmail(contacts.email);
+      } catch (e) {
+        console.error('Failed to load saved contacts');
+      }
+    }
     
     // Check if we should edit a product from URL
     const urlParams = new URLSearchParams(window.location.search);
@@ -265,6 +285,51 @@ const Admin = () => {
         title: "Error",
         description: error.message || "Failed to delete hero image",
       });
+    }
+  };
+
+  const handleBulkDeleteHeroImages = async () => {
+    if (selectedHeroImages.length === 0) return;
+    if (!window.confirm(`Delete ${selectedHeroImages.length} selected hero image(s)?`)) return;
+
+    try {
+      const deletePromises = selectedHeroImages.map(id =>
+        fetch(`http://localhost:3000/api/admin/hero-images/${id}`, {
+          method: 'DELETE',
+          headers: { 'Authorization': `Bearer ${localStorage.getItem('access_token')}` }
+        }).then(res => res.json())
+      );
+
+      const results = await Promise.all(deletePromises);
+      const successCount = results.filter(r => r.success).length;
+
+      toast({
+        title: "Success",
+        description: `Deleted ${successCount} hero image(s)`,
+      });
+
+      setSelectedHeroImages([]);
+      fetchHeroImages();
+    } catch (error: any) {
+      toast({
+        variant: "destructive",
+        title: "Error",
+        description: error.message || "Failed to delete hero images",
+      });
+    }
+  };
+
+  const toggleHeroImageSelection = (id: string) => {
+    setSelectedHeroImages(prev =>
+      prev.includes(id) ? prev.filter(imgId => imgId !== id) : [...prev, id]
+    );
+  };
+
+  const selectAllHeroImages = () => {
+    if (selectedHeroImages.length === heroImages.length) {
+      setSelectedHeroImages([]);
+    } else {
+      setSelectedHeroImages(heroImages.map(img => img.id));
     }
   };
 
@@ -778,7 +843,7 @@ const Admin = () => {
       <section className="py-12">
         <div className="container mx-auto px-6">
           <Tabs defaultValue="add-product" className="max-w-6xl mx-auto" value={activeTab} onValueChange={setActiveTab}>
-            <TabsList className="grid w-full grid-cols-5 bg-card/40 border border-border/50 backdrop-blur-sm mb-8 p-1 rounded-xl">
+            <TabsList className="grid w-full grid-cols-6 bg-card/40 border border-border/50 backdrop-blur-sm mb-8 p-1 rounded-xl">
               <TabsTrigger 
                 value="add-product"
                 className="data-[state=active]:bg-foreground data-[state=active]:text-background rounded-lg transition-all text-xs md:text-sm"
@@ -814,6 +879,13 @@ const Admin = () => {
               >
                 <Package className="w-4 h-4 mr-1 md:mr-2" />
                 Hero Images
+              </TabsTrigger>
+              <TabsTrigger 
+                value="contacts"
+                className="data-[state=active]:bg-foreground data-[state=active]:text-background rounded-lg transition-all text-xs md:text-sm"
+              >
+                <Package className="w-4 h-4 mr-1 md:mr-2" />
+                Contacts
               </TabsTrigger>
             </TabsList>
 
@@ -930,20 +1002,23 @@ const Admin = () => {
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                       <div className="md:col-span-2 space-y-2">
                         <Label>Select Store</Label>
-                        <Select value={currentStore} onValueChange={setCurrentStore}>
-                          <SelectTrigger className="h-12 bg-card/50 border-border/50 rounded-lg">
-                            <SelectValue placeholder="Choose a store" />
-                          </SelectTrigger>
-                          <SelectContent className="bg-card border-border/50">
-                            {stores
-                              .filter(store => !selectedStores.some(s => s.store_id === store.id))
-                              .map((store) => (
-                                <SelectItem key={store.id} value={store.name}>
-                                  {store.name}
-                                </SelectItem>
-                              ))}
-                          </SelectContent>
-                        </Select>
+                        <div className="relative">
+                          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground pointer-events-none" />
+                          <Select value={currentStore} onValueChange={setCurrentStore}>
+                            <SelectTrigger className="h-12 bg-card/50 border-border/50 rounded-lg pl-10">
+                              <SelectValue placeholder="Search and choose a store" />
+                            </SelectTrigger>
+                            <SelectContent className="bg-card border-border/50">
+                              {stores
+                                .filter(store => !selectedStores.some(s => s.store_id === store.id))
+                                .map((store) => (
+                                  <SelectItem key={store.id} value={store.name}>
+                                    {store.name}
+                                  </SelectItem>
+                                ))}
+                            </SelectContent>
+                          </Select>
+                        </div>
                       </div>
 
                       <div className="space-y-2">
@@ -1307,17 +1382,29 @@ const Admin = () => {
                     <h3 className="font-display text-2xl font-bold mb-2">Hero Carousel Images</h3>
                     <p className="text-muted-foreground">Manage images displayed in the homepage carousel ({heroImages.length} images)</p>
                   </div>
-                  {heroImages.length === 0 && (
-                    <Button
-                      variant="outline"
-                      onClick={handleImportExistingHeroImages}
-                      disabled={uploadingHeroImage}
-                      className="gap-2"
-                    >
-                      <Package className="w-4 h-4" />
-                      Import Existing 13 Images
-                    </Button>
-                  )}
+                  <div className="flex gap-2">
+                    {selectedHeroImages.length > 0 && (
+                      <Button
+                        variant="destructive"
+                        onClick={handleBulkDeleteHeroImages}
+                        className="gap-2"
+                      >
+                        <Trash2 className="w-4 h-4" />
+                        Delete Selected ({selectedHeroImages.length})
+                      </Button>
+                    )}
+                    {heroImages.length === 0 && (
+                      <Button
+                        variant="outline"
+                        onClick={handleImportExistingHeroImages}
+                        disabled={uploadingHeroImage}
+                        className="gap-2"
+                      >
+                        <Package className="w-4 h-4" />
+                        Import Existing 13 Images
+                      </Button>
+                    )}
+                  </div>
                 </div>
 
                 {/* Upload Section */}
@@ -1360,6 +1447,19 @@ const Admin = () => {
                 </div>
 
                 {/* Images Grid */}
+                {heroImages.length > 0 && (
+                  <div className="mb-4 flex items-center gap-4 pb-4 border-b border-border/30">
+                    <input
+                      type="checkbox"
+                      checked={selectedHeroImages.length === heroImages.length && heroImages.length > 0}
+                      onChange={selectAllHeroImages}
+                      className="w-4 h-4 rounded border-border/50"
+                    />
+                    <span className="text-sm text-muted-foreground">
+                      Select All ({selectedHeroImages.length}/{heroImages.length} selected)
+                    </span>
+                  </div>
+                )}
                 <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
                   {heroImages.length > 0 ? (
                     heroImages.map((image, index) => (
@@ -1379,8 +1479,20 @@ const Admin = () => {
                             Delete
                           </Button>
                         </div>
-                        <div className="absolute top-2 left-2 px-2 py-1 rounded-md bg-black/80 text-xs font-medium">
-                          #{image.sort_order ?? index + 1}
+                        <div className="absolute top-2 left-2 flex items-center gap-2">
+                          <input
+                            type="checkbox"
+                            checked={selectedHeroImages.includes(image.id)}
+                            onChange={(e) => {
+                              e.stopPropagation();
+                              toggleHeroImageSelection(image.id);
+                            }}
+                            className="w-4 h-4 rounded border-border/50 bg-black/80 cursor-pointer"
+                            onClick={(e) => e.stopPropagation()}
+                          />
+                          <div className="px-2 py-1 rounded-md bg-black/80 text-xs font-medium">
+                            #{image.sort_order ?? index + 1}
+                          </div>
                         </div>
                         {!image.is_active && (
                           <div className="absolute top-2 right-2 px-2 py-1 rounded-md bg-red-500/80 text-xs font-medium">
@@ -1403,6 +1515,91 @@ const Admin = () => {
                   <p className="text-xs text-muted-foreground">
                     💡 <strong>Tip:</strong> Images are displayed in the order they were added (sort_order). 
                     For best results, use landscape images with aspect ratio 16:9 or similar.
+                  </p>
+                </div>
+              </div>
+            </TabsContent>
+
+            {/* CONTACTS TAB */}
+            <TabsContent value="contacts" className="space-y-6">
+              <div className="p-8 rounded-2xl border border-border/50 bg-card/40 backdrop-blur-sm">
+                <div className="flex items-center gap-3 mb-6">
+                  <div className="w-10 h-10 rounded-lg bg-foreground/5 flex items-center justify-center">
+                    <Package className="w-5 h-5" />
+                  </div>
+                  <div>
+                    <h2 className="text-xl font-bold">Contact Information</h2>
+                    <p className="text-sm text-muted-foreground">Manage site contact details displayed in the Contacts dialog</p>
+                  </div>
+                </div>
+
+                <div className="space-y-4">
+                  <div>
+                    <Label htmlFor="contact-telegram">Telegram Username</Label>
+                    <Input
+                      id="contact-telegram"
+                      type="text"
+                      placeholder="@wearsearch"
+                      value={contactTelegram}
+                      onChange={(e) => setContactTelegram(e.target.value)}
+                      className="mt-1.5"
+                    />
+                    <p className="text-xs text-muted-foreground mt-1">Include the @ symbol</p>
+                  </div>
+
+                  <div>
+                    <Label htmlFor="contact-instagram">Instagram Username</Label>
+                    <Input
+                      id="contact-instagram"
+                      type="text"
+                      placeholder="@wearsearch"
+                      value={contactInstagram}
+                      onChange={(e) => setContactInstagram(e.target.value)}
+                      className="mt-1.5"
+                    />
+                    <p className="text-xs text-muted-foreground mt-1">Include the @ symbol</p>
+                  </div>
+
+                  <div>
+                    <Label htmlFor="contact-email">Support Email</Label>
+                    <Input
+                      id="contact-email"
+                      type="email"
+                      placeholder="support@wearsearch.com"
+                      value={contactEmail}
+                      onChange={(e) => setContactEmail(e.target.value)}
+                      className="mt-1.5"
+                    />
+                  </div>
+
+                  <Button
+                    onClick={() => {
+                      setSavingContacts(true);
+                      // Save to localStorage for now (later can be saved to backend)
+                      localStorage.setItem('site_contacts', JSON.stringify({
+                        telegram: contactTelegram,
+                        instagram: contactInstagram,
+                        email: contactEmail
+                      }));
+                      setTimeout(() => {
+                        setSavingContacts(false);
+                        toast({
+                          title: "Success",
+                          description: "Contact information saved successfully",
+                        });
+                      }, 500);
+                    }}
+                    disabled={savingContacts}
+                    className="w-full"
+                  >
+                    {savingContacts ? "Saving..." : "Save Contact Information"}
+                  </Button>
+                </div>
+
+                <div className="mt-6 p-4 rounded-lg bg-foreground/5 border border-foreground/10">
+                  <p className="text-xs text-muted-foreground">
+                    💡 <strong>Note:</strong> These contact details will be displayed in the Contacts dialog 
+                    accessible from the main navigation menu.
                   </p>
                 </div>
               </div>

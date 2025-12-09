@@ -69,16 +69,21 @@ const Products = () => {
       }
 
       const response = await productService.getAllProducts(params);
+      console.log('Products page response:', response);
       
+      // Handle different response formats
+      let productsData = [];
       if (response && response.products && Array.isArray(response.products)) {
-        setProducts(response.products);
-        setTotalProducts(response.total || response.products.length);
-        setTotalPages(response.totalPages || Math.ceil((response.total || response.products.length) / itemsPerPage));
-      } else {
-        setProducts([]);
-        setTotalProducts(0);
-        setTotalPages(1);
+        productsData = response.products;
+      } else if (Array.isArray(response)) {
+        productsData = response;
+      } else if ((response as any)?.items && Array.isArray((response as any).items)) {
+        productsData = (response as any).items;
       }
+      
+      setProducts(productsData);
+      setTotalProducts(response?.total || productsData.length);
+      setTotalPages(response?.totalPages || Math.ceil((response?.total || productsData.length) / itemsPerPage));
     } catch (error) {
       console.error("Error fetching products:", error);
       setProducts([]);
@@ -280,7 +285,7 @@ const Products = () => {
                     key={product.id}
                     id={product.id}
                     name={product.name}
-                    image={product.image || ""}
+                    image={product.image_url || product.image || ""}
                     price={String(product.price)}
                     category={product.type || product.category}
                   />

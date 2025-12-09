@@ -136,14 +136,11 @@ export const userService = {
    */
   async toggleFavorite(productId: string | number): Promise<{ is_favorited: boolean; message: string }> {
     try {
-      const current = await this.checkFavorite(productId);
-      if (current.is_favorited) {
-        const res = await this.removeFavorite(productId);
-        return { is_favorited: false, message: res.message || 'Removed from favorites' };
-      } else {
-        const res = await this.addFavorite(productId);
-        return { is_favorited: true, message: res.message || 'Added to favorites' };
-      }
+      const response: AxiosResponse<{ is_favorited: boolean; message: string }> = await api.post(
+        ENDPOINTS.USERS.TOGGLE_FAVORITE,
+        { product_id: productId }
+      );
+      return response.data;
     } catch (error) {
       throw new Error(handleApiError(error));
     }

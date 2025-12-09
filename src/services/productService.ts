@@ -8,12 +8,16 @@ export interface Product {
   name: string;
   category: string;
   price: string;
-  image: string;
-  images: string[];
+  image?: string;        // Frontend field
+  image_url?: string;    // Backend field
+  images?: string[];
   description: string;
-  stores: Store[];
+  stores?: Store[];
   color: string;
   type: string;
+  brand_id?: number;
+  brand?: string;
+  gender?: string;
 }
 
 export interface Store {

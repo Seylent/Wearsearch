@@ -15,8 +15,8 @@ export const api: AxiosInstance = axios.create({
 // Request interceptor - adds auth token to requests
 api.interceptors.request.use(
   (config: InternalAxiosRequestConfig) => {
-    // Get token from localStorage (adjust based on your auth implementation)
-    const token = localStorage.getItem('authToken');
+    // Get token from localStorage (using access_token key)
+    const token = localStorage.getItem('access_token');
     
     if (token && config.headers) {
       config.headers.Authorization = `Bearer ${token}`;
@@ -29,9 +29,18 @@ api.interceptors.request.use(
   }
 );
 
-// Response interceptor - handles common errors
+// Response interceptor - handles common errors and unwraps responses
 api.interceptors.response.use(
   (response) => {
+    // Unwrap backend response if it has success/data structure
+    if (response.data && typeof response.data === 'object') {
+      // If response has { success: true, data: {...} }, unwrap it
+      if ('success' in response.data && 'data' in response.data && response.data.success) {
+        response.data = response.data.data;
+      }
+      // If response has { success: true, items: [...] }, keep as is (list responses)
+      // If response has { products: [...] }, keep as is
+    }
     return response;
   },
   (error: AxiosError) => {
@@ -40,7 +49,8 @@ api.interceptors.response.use(
       switch (error.response.status) {
         case 401:
           // Unauthorized - clear token but don't redirect (let pages handle it)
-          localStorage.removeItem('authToken');
+          localStorage.removeItem('access_token');
+          localStorage.removeItem('refresh_token');
           console.warn('Unauthorized request - token cleared');
           break;
         case 403:
