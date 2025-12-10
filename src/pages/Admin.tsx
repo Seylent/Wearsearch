@@ -58,6 +58,7 @@ const Admin = () => {
   const [storeName, setStoreName] = useState<string>("");
   const [storeTelegram, setStoreTelegram] = useState<string>("");
   const [storeInstagram, setStoreInstagram] = useState<string>("");
+  const [storeSearchQuery, setStoreSearchQuery] = useState<string>("");
   const [storeShipping, setStoreShipping] = useState<string>("");
   const [storeLogoUrl, setStoreLogoUrl] = useState<string>("");
   const [editingStore, setEditingStore] = useState<any | null>(null);
@@ -185,13 +186,29 @@ const Admin = () => {
       const storesData = await storesRes.json();
       const brandsData = await brandsRes.json();
 
+      console.log('Brands API response:', brandsData);
+
       if (productsData.success) setProducts(productsData.data || []);
       if (storesData.success || Array.isArray(storesData)) {
         setStores(Array.isArray(storesData) ? storesData : storesData.data || []);
       }
-      if (brandsData.success || Array.isArray(brandsData)) {
-        setBrands(Array.isArray(brandsData) ? brandsData : brandsData.data || []);
+      
+      // Better handle brands response format
+      let brandsArray = [];
+      if (Array.isArray(brandsData)) {
+        brandsArray = brandsData;
+      } else if (brandsData?.data?.brands && Array.isArray(brandsData.data.brands)) {
+        brandsArray = brandsData.data.brands;
+      } else if (brandsData?.brands && Array.isArray(brandsData.brands)) {
+        brandsArray = brandsData.brands;
+      } else if (brandsData?.data && Array.isArray(brandsData.data)) {
+        brandsArray = brandsData.data;
+      } else if (brandsData?.success && brandsData?.data) {
+        brandsArray = Array.isArray(brandsData.data) ? brandsData.data : [];
       }
+      
+      console.log('Brands array set to:', brandsArray);
+      setBrands(brandsArray);
     } catch (error) {
       console.error("Error fetching data:", error);
     } finally {
@@ -867,7 +884,6 @@ const Admin = () => {
               </TabsTrigger>
               <TabsTrigger 
                 value="brands"
-                onClick={() => window.location.href = '/admin/brands'}
                 className="data-[state=active]:bg-foreground data-[state=active]:text-background rounded-lg transition-all text-xs md:text-sm"
               >
                 <Package className="w-4 h-4 mr-1 md:mr-2" />
@@ -1311,13 +1327,28 @@ const Admin = () => {
 
               {/* Stores List */}
               <div className="p-8 rounded-2xl border border-border/50 bg-card/40 backdrop-blur-sm">
-                <h3 className="font-display text-xl font-bold mb-6">
-                  All Stores ({stores.length})
-                </h3>
+                <div className="flex items-center justify-between mb-6">
+                  <h3 className="font-display text-xl font-bold">
+                    All Stores ({stores.length})
+                  </h3>
+                  <div className="relative w-64">
+                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                    <Input
+                      placeholder="Search stores..."
+                      value={storeSearchQuery}
+                      onChange={(e) => setStoreSearchQuery(e.target.value)}
+                      className="h-10 pl-10 bg-card/50 border-border/50 rounded-lg"
+                    />
+                  </div>
+                </div>
                 
-                {stores.length > 0 ? (
+                {stores.filter(store => 
+                  store.name.toLowerCase().includes(storeSearchQuery.toLowerCase())
+                ).length > 0 ? (
                   <div className="space-y-4">
-                    {stores.map((store) => (
+                    {stores.filter(store => 
+                      store.name.toLowerCase().includes(storeSearchQuery.toLowerCase())
+                    ).map((store) => (
                       <div
                         key={store.id}
                         className="flex items-center gap-4 p-4 rounded-lg border border-border/50 bg-card/20 hover:bg-card/40 transition-colors"
@@ -1369,6 +1400,138 @@ const Admin = () => {
                 ) : (
                   <div className="text-center py-12 text-muted-foreground">
                     No stores yet
+                  </div>
+                )}
+              </div>
+            </TabsContent>
+
+            {/* BRANDS TAB - Manage brands */}
+            <TabsContent value="brands" className="space-y-8">
+              {/* Create Brand Form */}
+              <div className="p-8 rounded-2xl border border-border/50 bg-card/40 backdrop-blur-sm">
+                <h2 className="font-display text-2xl font-bold mb-6 flex items-center gap-2">
+                  <Plus className="w-6 h-6" />
+                  Add New Brand
+                </h2>
+
+                <form onSubmit={async (e) => {
+                  e.preventDefault();
+                  const brandName = (e.currentTarget.elements.namedItem('brandName') as HTMLInputElement).value;
+                  
+                  if (!brandName.trim()) {
+                    toast({
+                      variant: "destructive",
+                      title: "Error",
+                      description: "Brand name is required",
+                    });
+                    return;
+                  }
+
+                  try {
+                    const response = await fetch('http://localhost:3000/api/brands', {
+                      method: 'POST',
+                      headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${localStorage.getItem('access_token')}`
+                      },
+                      body: JSON.stringify({ name: brandName })
+                    });
+
+                    if (response.ok) {
+                      toast({
+                        title: "Success",
+                        description: "Brand created successfully",
+                      });
+                      fetchData();
+                      (e.currentTarget.elements.namedItem('brandName') as HTMLInputElement).value = '';
+                    } else {
+                      throw new Error('Failed to create brand');
+                    }
+                  } catch (error: any) {
+                    toast({
+                      variant: "destructive",
+                      title: "Error",
+                      description: error.message || "Failed to create brand",
+                    });
+                  }
+                }} className="space-y-6">
+                  <div className="space-y-2">
+                    <Label>Brand Name</Label>
+                    <Input
+                      name="brandName"
+                      placeholder="Nike, Adidas, Supreme..."
+                      required
+                      className="h-12 bg-card/50 border-border/50 rounded-lg"
+                    />
+                  </div>
+
+                  <Button
+                    type="submit"
+                    className="w-full h-12 bg-foreground text-background hover:bg-foreground/90 hover:shadow-[0_0_30px_rgba(255,255,255,0.3)] rounded-lg font-medium transition-all"
+                  >
+                    Create Brand
+                  </Button>
+                </form>
+              </div>
+
+              {/* Brands List */}
+              <div className="p-8 rounded-2xl border border-border/50 bg-card/40 backdrop-blur-sm">
+                <h3 className="font-display text-xl font-bold mb-6">
+                  All Brands ({brands.length})
+                </h3>
+                
+                {brands.length > 0 ? (
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                    {brands.map((brand) => (
+                      <div
+                        key={brand.id}
+                        className="flex items-center justify-between p-4 rounded-lg border border-border/50 bg-card/20 hover:bg-card/40 transition-colors"
+                      >
+                        <div className="flex-1 min-w-0">
+                          <h4 className="font-semibold truncate">{brand.name}</h4>
+                          <p className="text-xs text-muted-foreground">ID: {brand.id}</p>
+                        </div>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          className="hover:bg-red-500/20 hover:text-red-400 border border-white/20 ml-2"
+                          onClick={async () => {
+                            if (window.confirm(`Delete brand "${brand.name}"?`)) {
+                              try {
+                                const response = await fetch(`http://localhost:3000/api/brands/${brand.id}`, {
+                                  method: 'DELETE',
+                                  headers: {
+                                    'Authorization': `Bearer ${localStorage.getItem('access_token')}`
+                                  }
+                                });
+
+                                if (response.ok) {
+                                  toast({
+                                    title: "Success",
+                                    description: "Brand deleted successfully",
+                                  });
+                                  fetchData();
+                                } else {
+                                  throw new Error('Failed to delete brand');
+                                }
+                              } catch (error: any) {
+                                toast({
+                                  variant: "destructive",
+                                  title: "Error",
+                                  description: error.message || "Failed to delete brand",
+                                });
+                              }
+                            }
+                          }}
+                        >
+                          <Trash2 className="w-4 h-4" />
+                        </Button>
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <div className="text-center py-12 text-muted-foreground">
+                    No brands yet
                   </div>
                 )}
               </div>

@@ -35,6 +35,8 @@ const ProductDetail = () => {
   const [storeSearch, setStoreSearch] = useState("");
   const [sortBy, setSortBy] = useState<"name" | "price-asc" | "price-desc" | "rating">("name");
   const [showVerifiedOnly, setShowVerifiedOnly] = useState(false);
+  const [currentStorePage, setCurrentStorePage] = useState(1);
+  const storesPerPage = 3;
 
   useEffect(() => {
     fetchProduct();
@@ -388,11 +390,14 @@ const ProductDetail = () => {
               {/* Stores List */}
               <div className="space-y-4 max-h-[600px] overflow-y-auto pr-2">
                 {filteredStores.length > 0 ? (
-                  filteredStores.map((store) => (
-                    <div
-                      key={store.id}
-                      className="p-4 rounded-xl border border-white/6 bg-black/20 hover:bg-white/6 transition-colors"
-                    >
+                  <>
+                    {filteredStores
+                      .slice((currentStorePage - 1) * storesPerPage, currentStorePage * storesPerPage)
+                      .map((store) => (
+                      <div
+                        key={store.id}
+                        className="p-4 rounded-xl border border-white/6 bg-black/20 hover:bg-white/6 transition-colors"
+                      >
                       {/* Store Header */}
                       <div className="flex items-start gap-3 mb-3">
                         {/* Store Logo */}
@@ -478,6 +483,35 @@ const ProductDetail = () => {
                       </div>
                     </div>
                   ))
+                }
+                
+                {/* Pagination Controls */}
+                {filteredStores.length > storesPerPage && (
+                  <div className="flex items-center justify-between pt-4 border-t border-white/6">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => setCurrentStorePage(prev => Math.max(1, prev - 1))}
+                      disabled={currentStorePage === 1}
+                      className="gap-2"
+                    >
+                      ← Previous
+                    </Button>
+                    <span className="text-sm text-white/70">
+                      Page {currentStorePage} of {Math.ceil(filteredStores.length / storesPerPage)}
+                    </span>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => setCurrentStorePage(prev => Math.min(Math.ceil(filteredStores.length / storesPerPage), prev + 1))}
+                      disabled={currentStorePage === Math.ceil(filteredStores.length / storesPerPage)}
+                      className="gap-2"
+                    >
+                      Next →
+                    </Button>
+                  </div>
+                )}
+              </>
                 ) : stores.length > 0 ? (
                   <div className="text-center py-8 text-muted-foreground select-none">
                     <p>No stores match your filters</p>

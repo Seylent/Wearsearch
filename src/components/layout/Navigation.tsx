@@ -3,6 +3,7 @@ import { useNavigate, useLocation, Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { UserProfileMenu } from "@/components/UserProfileMenu";
 import { ContactsDialog } from "@/components/ContactsDialog";
+import { SearchDropdown } from "@/components/SearchDropdown";
 import { authService, User } from "@/services/authService";
 import { Search, User as UserIcon } from "lucide-react";
 
@@ -11,6 +12,7 @@ const Navigation: React.FC = () => {
   const location = useLocation();
   const [user, setUser] = useState<User | null>(null);
   const [isAdmin, setIsAdmin] = useState(false);
+  const [showSearch, setShowSearch] = useState(false);
 
   useEffect(() => {
     checkAuth();
@@ -43,7 +45,6 @@ const Navigation: React.FC = () => {
 
   const navLinks = [
     { name: "New Arrivals", href: "/" },
-    { name: "Collections", href: "/products" },
     { name: "Stores", href: "/stores" },
     { name: "About", href: "/about" },
   ];
@@ -98,7 +99,7 @@ const Navigation: React.FC = () => {
         <div className="flex items-center gap-2">
           <button 
             className="w-9 h-9 rounded-full flex items-center justify-center hover:bg-zinc-800/60 hover:shadow-md hover:shadow-white/10 transition-all duration-300"
-            onClick={() => navigate("/products")}
+            onClick={() => setShowSearch(true)}
           >
             <Search className="w-4 h-4 text-zinc-400" />
           </button>
@@ -115,6 +116,9 @@ const Navigation: React.FC = () => {
           )}
         </div>
       </nav>
+      
+      {/* Search Dropdown */}
+      {showSearch && <SearchDropdown onClose={() => setShowSearch(false)} />}
     </header>
   );
 };

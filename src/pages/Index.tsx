@@ -5,23 +5,73 @@ import { Footer } from "@/components/layout/Footer";
 import ProductCard from "@/components/ProductCard";
 import { Button } from "@/components/ui/button";
 import { Sparkles, Shield, Package, Clock, ArrowRight } from "lucide-react";
-import { productService, Product } from "@/services/productService";
-import { storeService } from "@/services/storeService";
+import { Product } from "@/services/productService";
 import { NeonAbstractions } from "@/components/NeonAbstractions";
+import { useProducts, useStats, useHeroImages, useStores, useBrands } from "@/hooks/useApi";
 
 const Index: React.FC = () => {
   const navigate = useNavigate();
-  const [products, setProducts] = useState<Product[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [stats, setStats] = useState({ brands: 0, products: 0, stores: 0 });
-  const [heroImages, setHeroImages] = useState<any[]>([]);
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
+  
+  // Use React Query hooks
+  const { data: productsData, isLoading: productsLoading } = useProducts();
+  const { data: statsData } = useStats();
+  const { data: heroImagesData } = useHeroImages();
+  const { data: storesData } = useStores();
+  const { data: brandsData } = useBrands();
 
-  useEffect(() => {
-    fetchProducts();
-    fetchStats();
-    fetchHeroImages();
-  }, []);
+  // Process products data
+  const products = React.useMemo(() => {
+    if (!productsData) return [];
+    
+    let productsList: Product[] = [];
+    if (Array.isArray(productsData)) {
+      productsList = productsData;
+    } else if (productsData.products && Array.isArray(productsData.products)) {
+      productsList = productsData.products;
+    } else if ((productsData as any).items && Array.isArray((productsData as any).items)) {
+      productsList = (productsData as any).items;
+    }
+    
+    return productsList.slice(0, 6);
+  }, [productsData]);
+
+  // Process stats data
+  const stats = React.useMemo(() => {
+    const productsCount = Array.isArray(productsData) 
+      ? productsData.length 
+      : (productsData?.products?.length || 0);
+    
+    const storesCount = Array.isArray(storesData) 
+      ? storesData.length 
+      : (storesData?.stores?.length || 0);
+    
+    const brandsCount = Array.isArray(brandsData) 
+      ? brandsData.length 
+      : 0;
+
+    return {
+      brands: brandsCount,
+      products: productsCount,
+      stores: storesCount
+    };
+  }, [productsData, storesData, brandsData]);
+
+  // Process hero images
+  const heroImages = React.useMemo(() => {
+    if (!heroImagesData) return [];
+    
+    let images = [];
+    if (Array.isArray(heroImagesData)) {
+      images = heroImagesData;
+    } else if (heroImagesData.images && Array.isArray(heroImagesData.images)) {
+      images = heroImagesData.images;
+    } else if (heroImagesData.data && Array.isArray(heroImagesData.data)) {
+      images = heroImagesData.data;
+    }
+    
+    return images.filter((img: any) => img.is_active !== false);
+  }, [heroImagesData]);
 
   useEffect(() => {
     if (heroImages.length > 1) {
@@ -31,98 +81,6 @@ const Index: React.FC = () => {
       return () => clearInterval(interval);
     }
   }, [heroImages]);
-
-  const fetchProducts = async () => {
-    try {
-      const response = await productService.getAllProducts(undefined, { limit: 6 });
-      console.log('Products response:', response);
-      
-      // Handle different response formats from backend
-      if (response) {
-        if (response.products && Array.isArray(response.products)) {
-          setProducts(response.products);
-        } else if (Array.isArray(response)) {
-          // Backend might return array directly
-          setProducts(response as any);
-        } else if ((response as any).items && Array.isArray((response as any).items)) {
-          // Backend might use 'items' instead of 'products'
-          setProducts((response as any).items);
-        }
-      }
-    } catch (error) {
-      console.error("Error fetching products:", error);
-      // Show toast to user
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const fetchStats = async () => {
-    try {
-      const [productsRes, storesRes] = await Promise.all([
-        productService.getAllProducts().catch(() => ({ products: [], total: 0 })),
-        storeService.getAllStores().catch(() => [] as any)
-      ]);
-
-      // Fetch brands count from admin endpoint if available
-      let brandsCount = 0;
-      try {
-        const brandsRes = await fetch(`${import.meta.env.VITE_API_BASE_URL || 'http://localhost:3000/api'}/brands`);
-        if (brandsRes.ok) {
-          const brandsData = await brandsRes.json();
-          brandsCount = brandsData?.brands?.length || brandsData?.length || 0;
-        }
-      } catch (e) {
-        console.log('Brands endpoint not available, using 0');
-      }
-
-      const storesCount = Array.isArray(storesRes) 
-        ? storesRes.length 
-        : (storesRes as any)?.stores?.length || 0;
-
-      setStats({
-        brands: brandsCount,
-        products: productsRes?.total || productsRes?.products?.length || 0,
-        stores: storesCount
-      });
-      
-      console.log('Stats updated:', {
-        brands: brandsCount,
-        products: productsRes?.total || productsRes?.products?.length || 0,
-        stores: storesCount
-      });
-    } catch (error) {
-      console.error("Error fetching stats:", error);
-      // Set default values on error
-      setStats({ brands: 0, products: 0, stores: 0 });
-    }
-  };
-
-  const fetchHeroImages = async () => {
-    try {
-      const response = await fetch(`${import.meta.env.VITE_API_BASE_URL || 'http://localhost:3000/api'}/hero-images`);
-      if (response.ok) {
-        const data = await response.json();
-        console.log('Hero images response:', data);
-        
-        // Handle different response formats
-        let images = [];
-        if (data.images && Array.isArray(data.images)) {
-          images = data.images;
-        } else if (Array.isArray(data)) {
-          images = data;
-        } else if (data.data && Array.isArray(data.data)) {
-          images = data.data;
-        }
-        
-        const activeImages = images.filter((img: any) => img.is_active !== false);
-        console.log('Active hero images:', activeImages);
-        setHeroImages(activeImages);
-      }
-    } catch (error) {
-      console.log('Hero images not available:', error);
-    }
-  };
 
   const features = [
     {
@@ -169,18 +127,13 @@ const Index: React.FC = () => {
                   transform: `translateY(-50%) rotate(${index % 2 === 0 ? '-5deg' : '5deg'})`,
                 }}
               >
-                <div className="relative w-[380px] h-[480px]">
-                  {/* Neon glow effect - multiple layers */}
-                  <div className="absolute inset-0 bg-white/20 blur-3xl animate-pulse-slow" />
-                  <div className="absolute inset-0 bg-cyan-400/10 blur-2xl" />
-                  <div className="absolute inset-0 bg-purple-400/10 blur-2xl" />
-                  
+                <div className="relative w-[380px] h-[480px] overflow-hidden rounded-2xl">
                   <img
                     src={image.image_url}
                     alt={image.title || `Hero ${index + 1}`}
-                    className="w-full h-full object-contain drop-shadow-[0_0_30px_rgba(255,255,255,0.3)]"
+                    className="w-full h-full object-cover"
                     style={{
-                      filter: 'brightness(1.1) contrast(1.3) saturate(1.2)',
+                      filter: 'brightness(1.4) contrast(1.3) saturate(0) drop-shadow(0 0 8px rgba(255,255,255,0.9)) drop-shadow(0 0 3px rgba(255,255,255,1))',
                       mixBlendMode: 'screen',
                     }}
                     onError={(e) => {
@@ -203,60 +156,63 @@ const Index: React.FC = () => {
           <div className="max-w-4xl mx-auto text-center mt-20">
             {/* Main headline */}
             <h1 className="font-display text-5xl sm:text-6xl md:text-7xl lg:text-8xl font-bold mb-6 tracking-tight">
-              <span className="block drop-shadow-[0_0_15px_rgba(255,255,255,0.5)]">Discover</span>
+              <span className="block text-white drop-shadow-[0_0_20px_rgba(255,255,255,0.8)] filter brightness-125">Discover</span>
               <span className="block relative inline-block">
-                <span className="neon-text drop-shadow-[0_0_25px_rgba(255,255,255,0.8)]">Exceptional</span>
+                <span className="text-white drop-shadow-[0_0_35px_rgba(255,255,255,1)] filter brightness-150">Exceptional</span>
                 {/* Decorative underline */}
                 <svg className="absolute -bottom-2 left-0 w-full h-3" viewBox="0 0 300 12" preserveAspectRatio="none">
                   <path
                     d="M0,6 Q75,0 150,6 T300,6"
                     fill="none"
-                    stroke="rgba(255,255,255,0.3)"
+                    stroke="rgba(255,255,255,0.6)"
                     strokeWidth="2"
                   />
                 </svg>
               </span>
-              <span className="block text-gradient drop-shadow-[0_0_20px_rgba(255,255,255,0.6)]">Fashion</span>
+              <span className="block text-white drop-shadow-[0_0_25px_rgba(255,255,255,0.9)] filter brightness-125">Fashion</span>
             </h1>
 
             {/* Subheadline */}
-            <p className="text-lg sm:text-xl text-zinc-300 max-w-2xl mx-auto mb-10 leading-relaxed drop-shadow-[0_0_10px_rgba(255,255,255,0.3)]">
+            <p className="text-lg sm:text-xl text-white/80 max-w-2xl mx-auto mb-10 leading-relaxed drop-shadow-[0_0_15px_rgba(255,255,255,0.4)] backdrop-blur-sm">
               Curated collections from the world's most innovative designers
             </p>
 
-            {/* Decorative illustration element */}
+            {/* Decorative illustration element - monochrome with strong neon */}
             <div className="flex justify-center mb-10">
               <div className="relative w-32 h-32">
-                <div className="absolute inset-0 rounded-full border border-white/10 animate-pulse-slow" />
-                <div className="absolute inset-4 rounded-full border border-white/20 animate-spin-slow" />
-                <div className="absolute inset-8 rounded-full bg-white/5 backdrop-blur-sm flex items-center justify-center">
-                  <Sparkles className="w-8 h-8 text-white/60" />
+                <div className="absolute inset-0 rounded-full border-2 border-white/40 animate-pulse-slow shadow-[0_0_35px_rgba(255,255,255,0.5)]\" />
+                <div className="absolute inset-4 rounded-full border-2 border-white/50 animate-spin-slow shadow-[0_0_25px_rgba(255,255,255,0.6)]\" />
+                <div className="absolute inset-8 rounded-full bg-white/20 backdrop-blur-md flex items-center justify-center shadow-[0_0_40px_rgba(255,255,255,0.7)]\">\n                  <Sparkles className="w-8 h-8 text-white filter drop-shadow-[0_0_15px_rgba(255,255,255,1)] brightness-150" />
                 </div>
               </div>
             </div>
 
-            {/* CTAs */}
+            {/* CTAs - Glassmorphism */}
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
               <Button 
                 onClick={() => navigate("/stores")}
                 size="lg" 
                 variant="outline"
-                className="border-zinc-700 text-white hover:bg-zinc-800 hover:shadow-[0_0_30px_rgba(255,255,255,0.2)] transition-all"
+                className="relative border border-white/20 text-white bg-white/5 backdrop-blur-xl hover:bg-white/10 hover:border-white/40 shadow-[0_0_30px_rgba(255,255,255,0.2)] hover:shadow-[0_0_40px_rgba(255,255,255,0.4)] transition-all overflow-hidden group"
               >
+                {/* Vertical light streak */}
+                <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/10 to-transparent translate-x-[-200%] group-hover:translate-x-[200%] transition-transform duration-1000" />
                 View Stores
               </Button>
             </div>
 
-            {/* Stats - with glass cards */}
+            {/* Stats - Glassmorphism cards */}
             <div className="flex justify-center gap-6 sm:gap-10 mt-20">
               {[
                 { value: `${stats.brands > 0 ? stats.brands : 4}+`, label: "Brands" },
                 { value: stats.products >= 1000 ? `${Math.floor(stats.products / 1000)}K+` : `${stats.products > 0 ? stats.products : 5}+`, label: "Products" },
                 { value: `${stats.stores > 0 ? stats.stores : 4}+`, label: "Stores" },
               ].map((stat) => (
-                <div key={stat.label} className="text-center px-6 py-4 glass-card rounded-2xl shadow-[0_0_20px_rgba(255,255,255,0.1)]">
-                  <p className="font-display text-2xl sm:text-3xl font-bold mb-1 drop-shadow-[0_0_15px_rgba(255,255,255,0.5)]">{stat.value}</p>
-                  <p className="text-xs text-zinc-400 uppercase tracking-wider drop-shadow-[0_0_8px_rgba(255,255,255,0.3)]">{stat.label}</p>
+                <div key={stat.label} className="relative text-center px-8 py-5 rounded-2xl bg-white/5 backdrop-blur-[30px] border border-white/20 shadow-[0_0_30px_rgba(255,255,255,0.15)] overflow-hidden group hover:bg-white/10 hover:border-white/30 hover:shadow-[0_0_40px_rgba(255,255,255,0.25)] transition-all">
+                  {/* Vertical light streak */}
+                  <div className="absolute inset-0 bg-gradient-to-b from-transparent via-white/10 to-transparent translate-y-[-200%] group-hover:translate-y-[200%] transition-transform duration-1000" />
+                  <p className="relative font-display text-2xl sm:text-3xl font-bold mb-1 text-white drop-shadow-[0_0_20px_rgba(255,255,255,0.8)] filter brightness-125">{stat.value}</p>
+                  <p className="relative text-xs text-white/70 uppercase tracking-wider drop-shadow-[0_0_10px_rgba(255,255,255,0.4)]">{stat.label}</p>
                 </div>
               ))}
             </div>
@@ -272,19 +228,21 @@ const Index: React.FC = () => {
       </section>
 
       {/* Features Section */}
-      <section className="py-12 border-y border-zinc-800/50 bg-zinc-900/20">
+      <section className="py-12 border-y border-white/10 bg-black/40">
         <div className="container mx-auto px-6">
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
             {features.map((feature) => (
               <div 
                 key={feature.title}
-                className="p-6 rounded-2xl border border-zinc-800/40 bg-zinc-900/20 backdrop-blur-sm hover:bg-zinc-800/30 transition-all duration-300"
+                className="group relative p-6 rounded-2xl border border-white/10 bg-white/5 backdrop-blur-[25px] hover:border-white/25 hover:bg-white/10 transition-all duration-300 shadow-[0_0_20px_rgba(255,255,255,0.1)] hover:shadow-[0_0_30px_rgba(255,255,255,0.2)] overflow-hidden"
               >
-                <div className="w-12 h-12 rounded-xl border border-zinc-700/50 bg-zinc-800/30 flex items-center justify-center mb-4">
-                  <feature.icon className="w-5 h-5 text-zinc-400" />
+                {/* Vertical light streak */}
+                <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/5 to-transparent translate-x-[-200%] group-hover:translate-x-[200%] transition-transform duration-1000" />
+                <div className="relative w-12 h-12 rounded-xl bg-white/10 backdrop-blur-sm border border-white/20 flex items-center justify-center mb-4 group-hover:bg-white/15 transition-colors shadow-[0_0_15px_rgba(255,255,255,0.2)] group-hover:shadow-[0_0_20px_rgba(255,255,255,0.3)]">
+                  <feature.icon className="w-6 h-6 text-white filter drop-shadow-[0_0_8px_rgba(255,255,255,0.6)]" />
                 </div>
-                <h3 className="font-display font-semibold text-base mb-2 text-white">{feature.title}</h3>
-                <p className="text-sm text-zinc-400 leading-relaxed">{feature.description}</p>
+                <h3 className="relative font-display font-semibold text-base mb-2 text-white drop-shadow-[0_0_10px_rgba(255,255,255,0.5)]">{feature.title}</h3>
+                <p className="relative text-sm text-white/70 leading-relaxed">{feature.description}</p>
               </div>
             ))}
           </div>
@@ -298,16 +256,16 @@ const Index: React.FC = () => {
           <div className="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-6 mb-10">
             <div>
               <div className="inline-flex items-center gap-2 mb-3">
-                <div className="w-1.5 h-1.5 rounded-full bg-white" />
-                <span className="text-xs text-zinc-500 uppercase tracking-wider">Just In</span>
+                <div className="w-1.5 h-1.5 rounded-full bg-white shadow-[0_0_8px_rgba(255,255,255,0.8)]" />
+                <span className="text-xs text-white/60 uppercase tracking-wider drop-shadow-[0_0_8px_rgba(255,255,255,0.3)]">Just In</span>
               </div>
-              <h2 className="font-display text-4xl sm:text-5xl font-bold text-white">New Arrivals</h2>
-              <p className="text-zinc-400 mt-2">Fresh pieces just added to the collection</p>
+              <h2 className="font-display text-4xl sm:text-5xl font-bold text-white drop-shadow-[0_0_20px_rgba(255,255,255,0.6)]">New Arrivals</h2>
+              <p className="text-white/70 mt-2 drop-shadow-[0_0_10px_rgba(255,255,255,0.3)]">Fresh pieces just added to the collection</p>
             </div>
           </div>
 
           {/* Products Grid - 2 rows of 3 */}
-          {loading ? (
+          {productsLoading ? (
             <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6">
               {[...Array(6)].map((_, i) => (
                 <div key={i} className="aspect-[3/4] rounded-2xl bg-card/50 animate-pulse" />
@@ -328,13 +286,15 @@ const Index: React.FC = () => {
             </div>
           )}
 
-          {/* View All Button */}
+          {/* View All Button - Glassmorphism */}
           <div className="text-center mt-12">
             <button 
               onClick={() => navigate("/products")}
-              className="px-8 py-3 rounded-full border border-zinc-700 text-white font-medium text-sm hover:bg-zinc-800 transition-all duration-300 shadow-[0_0_20px_rgba(255,255,255,0.15)] hover:shadow-[0_0_30px_rgba(255,255,255,0.25)]"
+              className="relative px-8 py-3 rounded-full border border-white/20 bg-white/5 backdrop-blur-[30px] text-white font-medium text-sm hover:bg-white/10 hover:border-white/40 transition-all duration-300 shadow-[0_0_25px_rgba(255,255,255,0.2)] hover:shadow-[0_0_35px_rgba(255,255,255,0.3)] overflow-hidden group"
             >
-              View All Products
+              {/* Vertical light streak */}
+              <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/10 to-transparent translate-x-[-200%] group-hover:translate-x-[200%] transition-transform duration-1000" />
+              <span className="relative">View All Products</span>
             </button>
           </div>
         </div>

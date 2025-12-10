@@ -44,13 +44,13 @@ export const ContactsDialog: React.FC<ContactsDialogProps> = ({ contacts }) => {
   return (
     <Dialog>
       <DialogTrigger asChild>
-        <button className="px-4 py-2 text-sm font-medium transition-all duration-300 rounded-full text-zinc-400 hover:text-white hover:bg-zinc-800/50 hover:shadow-md hover:shadow-white/5">
+        <button className="px-4 py-2 text-sm font-medium transition-all duration-300 rounded-full text-white/70 hover:text-white hover:bg-white/10 hover:shadow-[0_0_15px_rgba(255,255,255,0.2)]">
           Contacts
         </button>
       </DialogTrigger>
-      <DialogContent className="sm:max-w-md bg-zinc-950/95 border-zinc-800/50 backdrop-blur-2xl shadow-2xl">
+      <DialogContent className="sm:max-w-md bg-black/95 border-white/20 backdrop-blur-2xl shadow-[0_0_50px_rgba(255,255,255,0.1)]">
         <DialogHeader>
-          <DialogTitle className="text-2xl font-display text-white">Contact Us</DialogTitle>
+          <DialogTitle className="text-2xl font-display text-white drop-shadow-[0_0_15px_rgba(255,255,255,0.5)]">Contact Us</DialogTitle>
         </DialogHeader>
         <div className="space-y-4 py-4">
           {activeContacts.telegram && (
@@ -58,14 +58,14 @@ export const ContactsDialog: React.FC<ContactsDialogProps> = ({ contacts }) => {
               href={`https://t.me/${activeContacts.telegram.replace('@', '')}`}
               target="_blank"
               rel="noopener noreferrer"
-              className="flex items-center gap-4 p-4 rounded-lg border border-zinc-800/50 bg-zinc-900/50 backdrop-blur-sm hover:bg-zinc-800/70 hover:border-zinc-700/80 transition-all duration-300 group"
+              className="flex items-center gap-4 p-4 rounded-lg border border-white/20 bg-white/5 backdrop-blur-sm hover:bg-white/10 hover:border-white/40 hover:shadow-[0_0_20px_rgba(255,255,255,0.2)] transition-all duration-300 group"
             >
-              <div className="w-12 h-12 rounded-full bg-blue-500/10 flex items-center justify-center group-hover:bg-blue-500/20 transition-colors">
-                <Send className="w-6 h-6 text-blue-400" />
+              <div className="w-12 h-12 rounded-full bg-white/10 backdrop-blur-md border border-white/20 flex items-center justify-center group-hover:bg-white/20 group-hover:shadow-[0_0_15px_rgba(255,255,255,0.3)] transition-all">
+                <Send className="w-6 h-6 text-white drop-shadow-[0_0_8px_rgba(255,255,255,0.6)]" />
               </div>
               <div className="flex-1">
-                <h3 className="font-semibold text-white mb-1">Telegram</h3>
-                <p className="text-sm text-zinc-400">{activeContacts.telegram}</p>
+                <h3 className="font-semibold text-white mb-1 drop-shadow-[0_0_10px_rgba(255,255,255,0.3)]">Telegram</h3>
+                <p className="text-sm text-white/70">{activeContacts.telegram}</p>
               </div>
             </a>
           )}
@@ -75,14 +75,14 @@ export const ContactsDialog: React.FC<ContactsDialogProps> = ({ contacts }) => {
               href={`https://instagram.com/${activeContacts.instagram.replace('@', '')}`}
               target="_blank"
               rel="noopener noreferrer"
-              className="flex items-center gap-4 p-4 rounded-lg border border-zinc-800/50 bg-zinc-900/50 backdrop-blur-sm hover:bg-zinc-800/70 hover:border-zinc-700/80 transition-all duration-300 group"
+              className="flex items-center gap-4 p-4 rounded-lg border border-white/20 bg-white/5 backdrop-blur-sm hover:bg-white/10 hover:border-white/40 hover:shadow-[0_0_20px_rgba(255,255,255,0.2)] transition-all duration-300 group"
             >
-              <div className="w-12 h-12 rounded-full bg-pink-500/10 flex items-center justify-center group-hover:bg-pink-500/20 transition-colors">
-                <Instagram className="w-6 h-6 text-pink-400" />
+              <div className="w-12 h-12 rounded-full bg-white/10 backdrop-blur-md border border-white/20 flex items-center justify-center group-hover:bg-white/20 group-hover:shadow-[0_0_15px_rgba(255,255,255,0.3)] transition-all">
+                <Instagram className="w-6 h-6 text-white drop-shadow-[0_0_8px_rgba(255,255,255,0.6)]" />
               </div>
               <div className="flex-1">
-                <h3 className="font-semibold text-white mb-1">Instagram</h3>
-                <p className="text-sm text-zinc-400">{activeContacts.instagram}</p>
+                <h3 className="font-semibold text-white mb-1 drop-shadow-[0_0_10px_rgba(255,255,255,0.3)]">Instagram</h3>
+                <p className="text-sm text-white/70">{activeContacts.instagram}</p>
               </div>
             </a>
           )}
@@ -90,14 +90,14 @@ export const ContactsDialog: React.FC<ContactsDialogProps> = ({ contacts }) => {
           {activeContacts.email && (
             <a
               href={`mailto:${activeContacts.email}`}
-              className="flex items-center gap-4 p-4 rounded-lg border border-zinc-800/50 bg-zinc-900/50 backdrop-blur-sm hover:bg-zinc-800/70 hover:border-zinc-700/80 transition-all duration-300 group"
+              className="flex items-center gap-4 p-4 rounded-lg border border-white/20 bg-white/5 backdrop-blur-sm hover:bg-white/10 hover:border-white/40 hover:shadow-[0_0_20px_rgba(255,255,255,0.2)] transition-all duration-300 group"
             >
-              <div className="w-12 h-12 rounded-full bg-green-500/10 flex items-center justify-center group-hover:bg-green-500/20 transition-colors">
-                <Mail className="w-6 h-6 text-green-400" />
+              <div className="w-12 h-12 rounded-full bg-white/10 backdrop-blur-md border border-white/20 flex items-center justify-center group-hover:bg-white/20 group-hover:shadow-[0_0_15px_rgba(255,255,255,0.3)] transition-all">
+                <Mail className="w-6 h-6 text-white drop-shadow-[0_0_8px_rgba(255,255,255,0.6)]" />
               </div>
               <div className="flex-1">
-                <h3 className="font-semibold text-white mb-1">Email</h3>
-                <p className="text-sm text-zinc-400">{activeContacts.email}</p>
+                <h3 className="font-semibold text-white mb-1 drop-shadow-[0_0_10px_rgba(255,255,255,0.3)]">Email</h3>
+                <p className="text-sm text-white/70">{activeContacts.email}</p>
               </div>
             </a>
           )}
