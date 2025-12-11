@@ -4,7 +4,8 @@ import { Button } from "@/components/ui/button";
 import { UserProfileMenu } from "@/components/UserProfileMenu";
 import { ContactsDialog } from "@/components/ContactsDialog";
 import { SearchDropdown } from "@/components/SearchDropdown";
-import { authService, User } from "@/services/authService";
+import { authService } from "@/services/authService";
+import type { User } from "@/types";
 import { Search, User as UserIcon } from "lucide-react";
 
 const Navigation: React.FC = () => {
@@ -44,7 +45,7 @@ const Navigation: React.FC = () => {
   };
 
   const navLinks = [
-    { name: "New Arrivals", href: "/" },
+    { name: "All Items", href: "/products" },
     { name: "Stores", href: "/stores" },
     { name: "About", href: "/about" },
   ];

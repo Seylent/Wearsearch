@@ -1,230 +1,151 @@
-import api, { handleApiError } from './api';
-import ENDPOINTS from './endpoints';
-import { AxiosResponse } from 'axios';
+/**
+ * Authentication Service
+ * Refactored to use unified API and auth storage
+ */
 
-// Type definitions for authentication
-export interface User {
-  id: string;
-  email: string;
-  username?: string; // NEW: Support for username
-  display_name?: string;
-  role?: 'user' | 'admin';
-  created_at?: string;
-  updated_at?: string;
-}
+import { api, handleApiError } from './api';
+import { setAuth, clearAuth, isAuthenticated } from '@/utils/authStorage';
+import type { User, LoginCredentials, RegisterData, AuthResponse } from '@/types';
 
-export interface LoginCredentials {
-  identifier?: string; // Email OR Username
-  email?: string; // Backward compatibility
-  password: string;
-}
+const ENDPOINTS = {
+  LOGIN: '/auth/login',
+  REGISTER: '/auth/register',
+  LOGOUT: '/auth/logout',
+  ME: '/auth/me',
+  FORGOT_PASSWORD: '/auth/forgot-password',
+  RESET_PASSWORD: '/auth/reset-password',
+};
 
-export interface RegisterData {
-  email: string;
-  username?: string; // NEW: Optional username during registration
-  password: string;
-  display_name?: string;
-}
-
-export interface AuthResponse {
-  success: boolean;
-  access_token: string;
-  refresh_token?: string;
-  token_type?: string;
-  expires_in?: number;
-  user: User;
-}
-
-export interface ForgotPasswordData {
-  email: string;
-}
-
-export interface ResetPasswordData {
-  token: string;
-  newPassword: string;
-}
-
-// Authentication Service - handles all auth-related API calls
 export const authService = {
   /**
    * Login user with email/username and password
    */
   async login(credentials: LoginCredentials): Promise<AuthResponse> {
     try {
-      // Prepare payload - use identifier if provided, otherwise use email for backward compatibility
-      const payload = {
-        identifier: credentials.identifier || credentials.email,
-        password: credentials.password
-      };
+      const response = await api.post(ENDPOINTS.LOGIN, credentials);
+      const data = response.data;
 
-      const response: AxiosResponse<AuthResponse> = await api.post(
-        ENDPOINTS.AUTH.LOGIN,
-        payload
-      );
-      
-      // Store token in localStorage
-      if (response.data.access_token) {
-        localStorage.setItem('access_token', response.data.access_token);
-        if (response.data.refresh_token) {
-          localStorage.setItem('refresh_token', response.data.refresh_token);
+      // Store auth token
+      if (data.access_token || data.token) {
+        const token = data.access_token || data.token;
+        const userId = data.user?.id;
+        const expiresIn = data.expires_in;
+        const expiresAt = expiresIn ? Date.now() + expiresIn * 1000 : undefined;
+
+        setAuth(token, userId, expiresAt);
+        
+        // Store user data for profile display
+        if (data.user) {
+          localStorage.setItem('user', JSON.stringify(data.user));
         }
       }
-      
-      // Dispatch auth change event
-      window.dispatchEvent(new Event('authChange'));
-      
-      return response.data;
+
+      return data;
     } catch (error) {
-      throw new Error(handleApiError(error));
+      const apiError = handleApiError(error);
+      throw new Error(apiError.message);
     }
   },
 
   /**
-   * Register a new user
+   * Register new user
    */
-  async register(data: RegisterData): Promise<{ success: boolean; user: User }> {
+  async register(registerData: RegisterData): Promise<AuthResponse> {
     try {
-      const response: AxiosResponse<{ success: boolean; user: User }> = await api.post(
-        ENDPOINTS.AUTH.REGISTER,
-        data
-      );
-      
-      // Note: Registration doesn't return tokens - user needs to login
-      return response.data;
+      const response = await api.post(ENDPOINTS.REGISTER, registerData);
+      const data = response.data;
+
+      // Store auth token
+      if (data.access_token || data.token) {
+        const token = data.access_token || data.token;
+        const userId = data.user?.id;
+        const expiresIn = data.expires_in;
+        const expiresAt = expiresIn ? Date.now() + expiresIn * 1000 : undefined;
+
+        setAuth(token, userId, expiresAt);
+        
+        // Store user data for profile display
+        if (data.user) {
+          localStorage.setItem('user', JSON.stringify(data.user));
+        }
+      }
+
+      return data;
     } catch (error) {
-      throw new Error(handleApiError(error));
+      const apiError = handleApiError(error);
+      throw new Error(apiError.message);
     }
   },
 
   /**
-   * Logout current user
+   * Logout user
    */
   async logout(): Promise<void> {
     try {
-      await api.post(ENDPOINTS.AUTH.LOGOUT);
+      await api.post(ENDPOINTS.LOGOUT);
     } catch (error) {
-      console.error('Logout error:', handleApiError(error));
+      console.error('Logout error:', error);
     } finally {
-      // Always clear tokens from localStorage
-      localStorage.removeItem('access_token');
-      localStorage.removeItem('refresh_token');
-      
-      // Dispatch auth change event
-      window.dispatchEvent(new Event('authChange'));
+      clearAuth();
     }
   },
 
   /**
-   * Get current user profile
+   * Get current user
    */
   async getCurrentUser(): Promise<User> {
     try {
-      const response: AxiosResponse<User> = await api.get(ENDPOINTS.AUTH.ME);
-      // Backend returns user object directly (no wrapper)
+      const response = await api.get(ENDPOINTS.ME);
       return response.data;
     } catch (error) {
-      throw new Error(handleApiError(error));
+      const apiError = handleApiError(error);
+      throw new Error(apiError.message);
     }
   },
 
   /**
-   * Refresh authentication token
+   * Request password reset
    */
-  async refreshToken(): Promise<{ token: string }> {
+  async forgotPassword(email: string): Promise<{ message: string }> {
     try {
-      const refreshToken = localStorage.getItem('refreshToken');
-      const response: AxiosResponse<{ token: string }> = await api.post(
-        ENDPOINTS.AUTH.REFRESH,
-        { refreshToken }
-      );
-      
-      // Update token in localStorage
-      if (response.data.token) {
-        localStorage.setItem('authToken', response.data.token);
-      }
-      
+      const response = await api.post(ENDPOINTS.FORGOT_PASSWORD, { email });
       return response.data;
     } catch (error) {
-      // If refresh fails, clear tokens and redirect to login
-      localStorage.removeItem('authToken');
-      localStorage.removeItem('refreshToken');
-      throw new Error(handleApiError(error));
-    }
-  },
-
-  /**
-   * Send password reset email
-   */
-  async forgotPassword(data: ForgotPasswordData): Promise<{ message: string }> {
-    try {
-      const response: AxiosResponse<{ message: string }> = await api.post(
-        ENDPOINTS.AUTH.FORGOT_PASSWORD,
-        data
-      );
-      return response.data;
-    } catch (error) {
-      throw new Error(handleApiError(error));
+      const apiError = handleApiError(error);
+      throw new Error(apiError.message);
     }
   },
 
   /**
    * Reset password with token
    */
-  async resetPassword(data: ResetPasswordData): Promise<{ message: string }> {
+  async resetPassword(token: string, newPassword: string): Promise<{ message: string }> {
     try {
-      const response: AxiosResponse<{ message: string }> = await api.post(
-        ENDPOINTS.AUTH.RESET_PASSWORD,
-        data
-      );
+      const response = await api.post(ENDPOINTS.RESET_PASSWORD, {
+        token,
+        newPassword,
+      });
       return response.data;
     } catch (error) {
-      throw new Error(handleApiError(error));
+      const apiError = handleApiError(error);
+      throw new Error(apiError.message);
     }
   },
 
   /**
-   * Update user profile (display name)
+   * Check if user is admin
    */
-  async updateProfile(data: { display_name: string }): Promise<User> {
+  async checkAdmin(): Promise<boolean> {
     try {
-      const response: AxiosResponse<User> = await api.put(
-        ENDPOINTS.AUTH.PROFILE,
-        data
-      );
-      return response.data;
+      const user = await this.getCurrentUser();
+      return user.role === 'admin';
     } catch (error) {
-      throw new Error(handleApiError(error));
+      return false;
     }
   },
 
   /**
-   * Change user password
+   * Check if user is authenticated (synchronous)
    */
-  async changePassword(data: { current_password: string; new_password: string }): Promise<{ message: string }> {
-    try {
-      const response: AxiosResponse<{ message: string }> = await api.put(
-        ENDPOINTS.AUTH.PASSWORD,
-        data
-      );
-      return response.data;
-    } catch (error) {
-      throw new Error(handleApiError(error));
-    }
-  },
-
-  /**
-   * Check if user is authenticated
-   */
-  isAuthenticated(): boolean {
-    return !!localStorage.getItem('access_token');
-  },
-
-  /**
-   * Get stored auth token
-   */
-  getToken(): string | null {
-    return localStorage.getItem('access_token');
-  },
+  isAuthenticated,
 };
-
-export default authService;

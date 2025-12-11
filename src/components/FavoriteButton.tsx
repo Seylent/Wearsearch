@@ -1,9 +1,9 @@
-import { useState, useEffect } from 'react';
 import { Heart } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
 import { useFavorites, useAddFavorite, useRemoveFavorite } from '@/hooks/useApi';
+import { isAuthenticated } from '@/utils/authStorage';
 
 interface FavoriteButtonProps {
   productId: string;
@@ -24,21 +24,29 @@ export function FavoriteButton({
   const navigate = useNavigate();
   
   // Use React Query hooks
-  const { data: favorites = [], isLoading: isFavoritesLoading } = useFavorites();
+  const { data: favoritesData, isLoading: isFavoritesLoading } = useFavorites();
   const addFavorite = useAddFavorite();
   const removeFavorite = useRemoveFavorite();
 
+  // Extract favorites array from response
+  const favorites = favoritesData?.favorites || favoritesData || [];
+
   // Check if current product is in favorites
+  // Handle different response formats from backend
   const isFavorited = Array.isArray(favorites) && favorites.some(
-    (fav: any) => fav.product_id === productId || fav.id === productId
+    (fav: any) => {
+      // Handle different possible field names
+      const favProductId = fav.product_id || fav.productId || fav.item_id || fav.id;
+      const match = String(favProductId) === String(productId);
+      return match;
+    }
   );
 
   const handleToggleFavorite = async (e: React.MouseEvent) => {
     e.preventDefault();
     e.stopPropagation();
 
-    const token = localStorage.getItem('access_token');
-    if (!token) {
+    if (!isAuthenticated()) {
       toast({
         title: 'Login Required',
         description: 'Please login to save products. Click the user icon in the navigation.',
@@ -77,13 +85,15 @@ export function FavoriteButton({
       disabled={addFavorite.isPending || removeFavorite.isPending || isFavoritesLoading}
       variant={variant}
       size={size}
-      className={`${className} ${isFavorited ? 'text-red-500' : ''}`}
+      className={`${className} transition-all ${isFavorited ? 'text-red-500 hover:text-red-600' : 'hover:text-red-400'}`}
       title={isFavorited ? 'Remove from favorites' : 'Add to favorites'}
     >
       <Heart 
-        className={`h-5 w-5 ${showText ? 'mr-2' : ''} ${isFavorited ? 'fill-red-500' : ''}`}
+        className={`h-5 w-5 ${showText ? 'mr-2' : ''} transition-all ${
+          isFavorited ? 'fill-red-500 scale-110' : 'hover:scale-110'
+        }`}
       />
-      {showText && (isFavorited ? 'Saved' : 'Save')}
+      {showText && (isFavorited ? '❤️ Saved' : 'Save')}
     </Button>
   );
 }

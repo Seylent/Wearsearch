@@ -192,8 +192,8 @@ const ProductDetail = () => {
     const min = Math.min(...prices);
     const max = Math.max(...prices);
     
-    if (min === max) return `$${min}`;
-    return `$${min} - $${max}`;
+    if (min === max) return `₴${min}`;
+    return `₴${min} - ₴${max}`;
   };
 
   if (loading) {
@@ -227,7 +227,7 @@ const ProductDetail = () => {
           <Button
             variant="ghost"
             onClick={() => navigate(-1)}
-            className="group"
+            className="group select-none"
           >
             <ArrowLeft className="w-4 h-4 mr-2 group-hover:-translate-x-1 transition-transform" />
             Back
@@ -237,7 +237,7 @@ const ProductDetail = () => {
             <Button
               variant="outline"
               onClick={() => navigate(`/admin?editProduct=${id}`)}
-              className="gap-2"
+              className="gap-2 select-none"
             >
               <Edit className="w-4 h-4" />
               Edit Product
@@ -261,7 +261,9 @@ const ProductDetail = () => {
                     />
                   </div>
                 )}
-                <div className="w-full bg-[#0b0b0c] rounded-3xl flex items-center justify-center p-8">
+                <div className="w-full rounded-3xl flex items-center justify-center p-8" style={{
+                  background: 'radial-gradient(circle at 20% 30%, rgba(255,255,255,0.08) 0%, transparent 50%), radial-gradient(circle at 80% 70%, rgba(255,255,255,0.06) 0%, transparent 50%), linear-gradient(135deg, rgba(0,0,0,0.9) 0%, rgba(20,20,20,0.95) 100%)'
+                }}>
                   <img
                     src={httpsImageUrl}
                     alt={product.name}
@@ -282,7 +284,7 @@ const ProductDetail = () => {
               )}
 
               {/* Title */}
-              <h1 className="font-display text-4xl md:text-5xl font-bold mb-4 tracking-tight">
+              <h1 className="font-display text-4xl md:text-5xl font-bold mb-4 tracking-tight select-none">
                 {product.name}
               </h1>
 
@@ -317,7 +319,7 @@ const ProductDetail = () => {
               {product.description && (
                 <div className="mb-8 p-6 rounded-xl border border-border/50 bg-card/40 backdrop-blur-sm">
                   <h3 className="font-semibold mb-2 select-none">Description</h3>
-                  <p className="text-muted-foreground leading-relaxed">{product.description}</p>
+                  <p className="text-muted-foreground leading-relaxed select-none">{product.description}</p>
                 </div>
               )}
             </div>
@@ -412,7 +414,7 @@ const ProductDetail = () => {
                         )}
                         
                         <div className="flex-1">
-                          <h3 className="font-semibold mb-1">{store.name}</h3>
+                          <h3 className="font-semibold mb-1 select-none">{store.name}</h3>
                           {store.is_verified && (
                             <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-green-500/10 border border-green-500/20 text-xs text-green-400 select-none">
                               ✓ Verified
@@ -424,22 +426,22 @@ const ProductDetail = () => {
                       {/* Price */}
                       {store.price && (
                         <div className="mb-3">
-                          <p className="font-display text-2xl font-bold">${store.price}</p>
+                          <p className="font-display text-2xl font-bold select-none">₴{store.price}</p>
                         </div>
                       )}
 
-                      {/* Interactive Rating Component */}
+                      {/* Store Rating */}
                       <div className="mb-3">
                         <StoreRating
                           storeId={store.id}
                           storeName={store.name}
                           productId={id}
                         />
-                        </div>
+                      </div>
 
                       {/* Shipping Info */}
                       {store.shipping_info && (
-                        <p className="text-sm text-muted-foreground mb-3 line-clamp-2">
+                        <p className="text-sm text-muted-foreground mb-3 line-clamp-2 select-none">
                           {store.shipping_info}
                         </p>
                       )}

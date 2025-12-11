@@ -90,8 +90,8 @@ const Index: React.FC = () => {
     },
     {
       icon: Shield,
-      title: "Authenticity Guaranteed",
-      description: "Every item verified by our expert team",
+      title: "Recommended Stores",
+      description: "Every store verified by our expert team",
     },
     {
       icon: Package,
@@ -155,7 +155,7 @@ const Index: React.FC = () => {
         <div className="container mx-auto px-6 relative z-10">
           <div className="max-w-4xl mx-auto text-center mt-20">
             {/* Main headline */}
-            <h1 className="font-display text-5xl sm:text-6xl md:text-7xl lg:text-8xl font-bold mb-6 tracking-tight">
+            <h1 className="font-display text-5xl sm:text-6xl md:text-7xl lg:text-8xl font-bold mb-6 tracking-tight select-none">
               <span className="block text-white drop-shadow-[0_0_20px_rgba(255,255,255,0.8)] filter brightness-125">Discover</span>
               <span className="block relative inline-block">
                 <span className="text-white drop-shadow-[0_0_35px_rgba(255,255,255,1)] filter brightness-150">Exceptional</span>
@@ -173,18 +173,32 @@ const Index: React.FC = () => {
             </h1>
 
             {/* Subheadline */}
-            <p className="text-lg sm:text-xl text-white/80 max-w-2xl mx-auto mb-10 leading-relaxed drop-shadow-[0_0_15px_rgba(255,255,255,0.4)] backdrop-blur-sm">
+            <p className="text-lg sm:text-xl text-white/80 max-w-2xl mx-auto mb-10 leading-relaxed drop-shadow-[0_0_15px_rgba(255,255,255,0.4)] backdrop-blur-sm select-none">
               Curated collections from the world's most innovative designers
             </p>
 
-            {/* Decorative illustration element - monochrome with strong neon */}
+            {/* Scroll down button */}
             <div className="flex justify-center mb-10">
-              <div className="relative w-32 h-32">
-                <div className="absolute inset-0 rounded-full border-2 border-white/40 animate-pulse-slow shadow-[0_0_35px_rgba(255,255,255,0.5)]\" />
-                <div className="absolute inset-4 rounded-full border-2 border-white/50 animate-spin-slow shadow-[0_0_25px_rgba(255,255,255,0.6)]\" />
-                <div className="absolute inset-8 rounded-full bg-white/20 backdrop-blur-md flex items-center justify-center shadow-[0_0_40px_rgba(255,255,255,0.7)]\">\n                  <Sparkles className="w-8 h-8 text-white filter drop-shadow-[0_0_15px_rgba(255,255,255,1)] brightness-150" />
-                </div>
-              </div>
+              <button
+                onClick={() => {
+                  const productsSection = document.getElementById('products-section');
+                  productsSection?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                }}
+                className="relative w-16 h-16 rounded-full border-2 border-white/40 bg-white/10 backdrop-blur-md hover:bg-white/20 hover:border-white/60 transition-all duration-300 flex items-center justify-center group shadow-[0_0_35px_rgba(255,255,255,0.3)] hover:shadow-[0_0_50px_rgba(255,255,255,0.5)] cursor-pointer select-none"
+                aria-label="Scroll to products"
+              >
+                <svg
+                  className="w-6 h-6 text-white animate-bounce filter drop-shadow-[0_0_10px_rgba(255,255,255,0.8)]"
+                  fill="none"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth="2"
+                  viewBox="0 0 24 24"
+                  stroke="currentColor"
+                >
+                  <path d="M19 14l-7 7m0 0l-7-7m7 7V3"></path>
+                </svg>
+              </button>
             </div>
 
             {/* CTAs - Glassmorphism */}
@@ -234,7 +248,7 @@ const Index: React.FC = () => {
             {features.map((feature) => (
               <div 
                 key={feature.title}
-                className="group relative p-6 rounded-2xl border border-white/10 bg-white/5 backdrop-blur-[25px] hover:border-white/25 hover:bg-white/10 transition-all duration-300 shadow-[0_0_20px_rgba(255,255,255,0.1)] hover:shadow-[0_0_30px_rgba(255,255,255,0.2)] overflow-hidden"
+                className="group relative p-6 rounded-2xl border border-white/10 bg-white/5 backdrop-blur-[25px] hover:border-white/25 hover:bg-white/10 transition-all duration-300 shadow-[0_0_20px_rgba(255,255,255,0.1)] hover:shadow-[0_0_30px_rgba(255,255,255,0.2)] overflow-hidden select-none"
               >
                 {/* Vertical light streak */}
                 <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/5 to-transparent translate-x-[-200%] group-hover:translate-x-[200%] transition-transform duration-1000" />
@@ -250,17 +264,17 @@ const Index: React.FC = () => {
       </section>
 
       {/* New Arrivals Section */}
-      <section className="py-20 bg-black">
+      <section id="products-section" className="py-20 bg-black">
         <div className="container mx-auto px-6">
           {/* Section Header */}
           <div className="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-6 mb-10">
             <div>
-              <div className="inline-flex items-center gap-2 mb-3">
+              <div className="inline-flex items-center gap-2 mb-3 select-none">
                 <div className="w-1.5 h-1.5 rounded-full bg-white shadow-[0_0_8px_rgba(255,255,255,0.8)]" />
                 <span className="text-xs text-white/60 uppercase tracking-wider drop-shadow-[0_0_8px_rgba(255,255,255,0.3)]">Just In</span>
               </div>
-              <h2 className="font-display text-4xl sm:text-5xl font-bold text-white drop-shadow-[0_0_20px_rgba(255,255,255,0.6)]">New Arrivals</h2>
-              <p className="text-white/70 mt-2 drop-shadow-[0_0_10px_rgba(255,255,255,0.3)]">Fresh pieces just added to the collection</p>
+              <h2 className="font-display text-4xl sm:text-5xl font-bold text-white drop-shadow-[0_0_20px_rgba(255,255,255,0.6)] select-none">New Arrivals</h2>
+              <p className="text-white/70 mt-2 drop-shadow-[0_0_10px_rgba(255,255,255,0.3)] select-none">Fresh pieces just added to the collection</p>
             </div>
           </div>
 

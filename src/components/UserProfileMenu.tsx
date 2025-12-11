@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { User, Heart, LogOut, Settings, Shield } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
+import { isAuthenticated, clearAuth } from '@/utils/authStorage';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -32,6 +33,12 @@ export function UserProfileMenu() {
   }, []);
 
   const loadUser = () => {
+    // Check if authenticated using unified auth storage
+    if (!isAuthenticated()) {
+      setUser(null);
+      return;
+    }
+    
     const userStr = localStorage.getItem('user');
     if (userStr) {
       try {
@@ -46,9 +53,8 @@ export function UserProfileMenu() {
   };
 
   const handleLogout = () => {
-    localStorage.removeItem('access_token');
-    localStorage.removeItem('refresh_token');
-    localStorage.removeItem('user');
+    clearAuth();
+    setUser(null);
     window.dispatchEvent(new Event('authChange'));
     navigate('/');
   };

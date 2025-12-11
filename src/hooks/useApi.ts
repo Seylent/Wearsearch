@@ -1,30 +1,23 @@
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import axios from 'axios';
+/**
+ * React Query API Hooks
+ * Centralized API hooks using React Query
+ */
 
-const API_BASE_URL = 'http://localhost:3000/api';
-
-// Get auth token
-const getToken = () => localStorage.getItem('access_token');
-
-// Configure axios instance
-const api = axios.create({
-  baseURL: API_BASE_URL,
-});
-
-api.interceptors.request.use((config) => {
-  const token = getToken();
-  if (token) {
-    config.headers.Authorization = `Bearer ${token}`;
-  }
-  return config;
-});
-
-api.interceptors.response.use((response) => {
-  if (response.data?.data) {
-    return { ...response, data: response.data.data };
-  }
-  return response;
-});
+import { useQuery, useMutation, useQueryClient, UseQueryOptions } from '@tanstack/react-query';
+import { api } from '@/services/api';
+import type {
+  Product,
+  ProductsResponse,
+  Store,
+  StoresResponse,
+  Brand,
+  BrandsResponse,
+  HeroImage,
+  HeroImagesResponse,
+  SiteStats,
+  Favorite,
+  FavoritesResponse,
+} from '@/types';
 
 // Query keys
 export const queryKeys = {
@@ -41,14 +34,15 @@ export const queryKeys = {
 };
 
 // Products
-export const useProducts = () => {
+export const useProducts = (options?: UseQueryOptions<any>) => {
   return useQuery({
     queryKey: queryKeys.products,
     queryFn: async () => {
       const response = await api.get('/items');
       return response.data;
     },
-    staleTime: 5 * 60 * 1000, // 5 minutes
+    staleTime: 5 * 60 * 1000,
+    ...options,
   });
 };
 
@@ -134,7 +128,7 @@ export const useHeroImages = () => {
       const response = await api.get('/hero-images');
       return response.data;
     },
-    staleTime: 10 * 60 * 1000, // 10 minutes
+    staleTime: 10 * 60 * 1000,
   });
 };
 
@@ -151,8 +145,8 @@ export const useStats = () => {
         return { brands: 0, products: 0, stores: 0 };
       }
     },
-    staleTime: 2 * 60 * 1000, // 2 minutes
-    retry: false, // Don't retry if endpoint doesn't exist
+    staleTime: 2 * 60 * 1000,
+    retry: false,
   });
 };
 
@@ -163,18 +157,28 @@ export const useFavorites = () => {
     queryFn: async () => {
       try {
         const response = await api.get('/user/favorites');
-        return response.data;
-      } catch (error) {
-        if (axios.isAxiosError(error) && error.response?.status === 401) {
-          console.log('User not authenticated, returning empty favorites');
-          return [];
+        const data = response.data;
+        
+        // Normalize response to always have favorites array
+        if (Array.isArray(data)) {
+          return { favorites: data };
+        } else if (data?.favorites && Array.isArray(data.favorites)) {
+          return data;
+        } else if (data?.data && Array.isArray(data.data)) {
+          return { favorites: data.data };
+        }
+        
+        return { favorites: [] };
+      } catch (error: any) {
+        if (error?.response?.status === 401 || error?.response?.status === 404) {
+          console.log('User not authenticated or no favorites, returning empty');
+          return { favorites: [] };
         }
         throw error;
       }
     },
-    enabled: !!getToken(),
-    staleTime: 1 * 60 * 1000, // 1 minute
-    retry: false, // Don't retry auth failures
+    staleTime: 1 * 60 * 1000,
+    retry: false,
   });
 };
 
@@ -186,7 +190,7 @@ export const useContacts = () => {
       const response = await api.get('/contacts');
       return response.data;
     },
-    staleTime: 30 * 60 * 1000, // 30 minutes
+    staleTime: 30 * 60 * 1000,
   });
 };
 

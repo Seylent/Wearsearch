@@ -1,8 +1,9 @@
 import { useState, useEffect } from "react";
 import { Star } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { supabase } from "@/integrations/supabase/client";
+import api from "@/services/api";
 import { useToast } from "@/hooks/use-toast";
+import { isAuthenticated, getAuthData } from "@/utils/authStorage";
 
 interface StoreRatingProps {
   storeId: string;
@@ -24,57 +25,52 @@ export const StoreRating = ({ storeId, storeName, productId }: StoreRatingProps)
   }, [storeId]);
 
   const checkAuthAndLoadRatings = async () => {
-    const { data: { session } } = await supabase.auth.getSession();
-    setIsLoggedIn(!!session);
+    const authenticated = isAuthenticated();
+    setIsLoggedIn(authenticated);
 
     // Load average rating
     await loadAverageRating();
 
-    // Load user's rating if logged in
-    if (session && productId) {
-      await loadUserRating(session.user.id);
+    // Load user's rating if logged in (rating is per store, not per product)
+    if (authenticated) {
+      const authData = getAuthData();
+      if (authData?.userId) {
+        await loadUserRating(authData.userId);
+      }
     }
   };
 
   const loadAverageRating = async () => {
-    const { data, error } = await supabase
-      .from("store_ratings" as any)
-      .select("rating")
-      .eq("store_id", storeId);
-
-    if (error) {
-      // Table doesn't exist yet - fail silently
-      return;
-    }
-
-    if (data) {
-      const ratings = data.map((r: any) => r.rating);
-      const avg = ratings.length > 0 
-        ? ratings.reduce((sum: number, r: number) => sum + r, 0) / ratings.length 
-        : 0;
-      setAverageRating(Number(avg.toFixed(1)));
-      setTotalRatings(ratings.length);
+    try {
+      const response = await api.get(`/ratings/store/${storeId}`);
+      const data = response.data;
+      
+      if (data && data.ratings) {
+        const ratings = data.ratings.map((r: any) => r.rating);
+        const avg = ratings.length > 0 
+          ? ratings.reduce((sum: number, r: number) => sum + r, 0) / ratings.length 
+          : 0;
+        setAverageRating(Number(avg.toFixed(1)));
+        setTotalRatings(ratings.length);
+      }
+    } catch (error) {
+      // Backend endpoint not ready yet - fail silently
+      console.log('Rating endpoint not available yet');
     }
   };
 
   const loadUserRating = async (userId: string) => {
-    if (!productId) return;
-
-    const { data, error } = await supabase
-      .from("store_ratings" as any)
-      .select("rating")
-      .eq("store_id", storeId)
-      .eq("product_id", productId)
-      .eq("user_id", userId)
-      .maybeSingle();
-
-    if (error) {
-      // Table doesn't exist yet - fail silently
-      return;
-    }
-
-    if (data) {
-      setUserRating((data as any).rating);
+    try {
+      // Get user's rating for this store (global, not per product)
+      const response = await api.get(`/ratings/user/${userId}/store/${storeId}`);
+      const data = response.data;
+      
+      if (data && data.rating) {
+        setUserRating(data.rating);
+      }
+    } catch (error) {
+      // Backend endpoint not ready yet or no rating found - fail silently
+      console.log('User rating not found');
     }
   };
 
@@ -88,43 +84,27 @@ export const StoreRating = ({ storeId, storeName, productId }: StoreRatingProps)
       return;
     }
 
-    if (!productId) {
-      toast({
-        title: "Error",
-        description: "Product information is required to rate",
-        variant: "destructive",
-      });
-      return;
-    }
-
     setLoading(true);
 
-    const { data: { session } } = await supabase.auth.getSession();
-    if (!session) return;
-
-    const { error } = await supabase
-      .from("store_ratings" as any)
-      .upsert({
+    try {
+      // Submit rating (store_id only, no product_id needed)
+      await api.post('/ratings', {
         store_id: storeId,
-        product_id: productId,
-        user_id: session.user.id,
         rating: rating,
-      }, {
-        onConflict: "store_id,product_id,user_id"
       });
 
-    if (error) {
-      toast({
-        title: "Feature Not Available",
-        description: "Store ratings feature is coming soon",
-        variant: "destructive",
-      });
-    } else {
       setUserRating(rating);
+      // Reload average rating immediately to show update
       await loadAverageRating();
       toast({
         title: "Success",
         description: "Rating submitted successfully",
+      });
+    } catch (error: any) {
+      toast({
+        title: "Error",
+        description: error.response?.data?.error || "Failed to submit rating",
+        variant: "destructive",
       });
     }
 
@@ -154,7 +134,7 @@ export const StoreRating = ({ storeId, storeName, productId }: StoreRatingProps)
         </div>
       </div>
 
-      {isLoggedIn && productId && (
+      {isLoggedIn && (
         <div className="space-y-2">
           <p className="text-sm text-muted-foreground select-none">Your rating:</p>
           <div className="flex items-center gap-1">

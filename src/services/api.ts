@@ -1,22 +1,32 @@
-import axios, { AxiosInstance, AxiosError, InternalAxiosRequestConfig } from 'axios';
+/**
+ * Unified API Service
+ * Single axios instance with centralized configuration
+ */
+
+import axios, { AxiosInstance, AxiosError, InternalAxiosRequestConfig, AxiosResponse } from 'axios';
+import { getAuth, clearAuth } from '@/utils/authStorage';
+import type { ApiResponse, ApiError } from '@/types';
 
 // Get API base URL from environment variables
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:3000/api';
 
-// Create axios instance with default configuration
+/**
+ * Create axios instance with default configuration
+ */
 export const api: AxiosInstance = axios.create({
   baseURL: API_BASE_URL,
-  timeout: 10000,
+  timeout: 15000,
   headers: {
     'Content-Type': 'application/json',
   },
 });
 
-// Request interceptor - adds auth token to requests
+/**
+ * Request interceptor - adds auth token to requests
+ */
 api.interceptors.request.use(
   (config: InternalAxiosRequestConfig) => {
-    // Get token from localStorage (using access_token key)
-    const token = localStorage.getItem('access_token');
+    const token = getAuth();
     
     if (token && config.headers) {
       config.headers.Authorization = `Bearer ${token}`;
@@ -29,17 +39,17 @@ api.interceptors.request.use(
   }
 );
 
-// Response interceptor - handles common errors and unwraps responses
+/**
+ * Response interceptor - handles common errors and unwraps responses
+ */
 api.interceptors.response.use(
-  (response) => {
+  (response: AxiosResponse) => {
     // Unwrap backend response if it has success/data structure
     if (response.data && typeof response.data === 'object') {
       // If response has { success: true, data: {...} }, unwrap it
       if ('success' in response.data && 'data' in response.data && response.data.success) {
-        response.data = response.data.data;
+        return { ...response, data: response.data.data };
       }
-      // If response has { success: true, items: [...] }, keep as is (list responses)
-      // If response has { products: [...] }, keep as is
     }
     return response;
   },
@@ -48,47 +58,100 @@ api.interceptors.response.use(
     if (error.response) {
       switch (error.response.status) {
         case 401:
-          // Unauthorized - clear token but don't redirect (let pages handle it)
-          localStorage.removeItem('access_token');
-          localStorage.removeItem('refresh_token');
-          console.warn('Unauthorized request - token cleared');
+          // Unauthorized - clear auth and redirect to login
+          console.log('Unauthorized request - token cleared');
+          clearAuth();
+          
+          // Only redirect if not already on auth page
+          if (!window.location.pathname.includes('/auth')) {
+            window.location.href = '/auth';
+          }
           break;
+          
         case 403:
-          console.error('Access forbidden');
+          // Forbidden
+          console.error('Forbidden access');
           break;
+          
         case 404:
-          console.error('Resource not found');
+          // Not found
+          console.log('Resource not found:', error.config?.url);
           break;
+          
         case 500:
-          console.error('Server error');
+          // Server error
+          console.error('Server error:', error.response.data);
           break;
+          
         default:
-          console.error('API error:', error.response.data);
+          console.error('API error:', error.response.status, error.response.data);
       }
     } else if (error.request) {
+      // Request made but no response received
       console.error('Network error - no response received');
     } else {
-      console.error('Error:', error.message);
+      // Error setting up request
+      console.error('Request setup error:', error.message);
     }
     
     return Promise.reject(error);
   }
 );
 
-// Helper function to handle API errors
-export const handleApiError = (error: unknown): string => {
+/**
+ * Centralized error handler
+ */
+export const handleApiError = (error: unknown): ApiError => {
   if (axios.isAxiosError(error)) {
-    if (error.response?.data?.message) {
-      return error.response.data.message;
-    }
-    if (error.response?.data?.error) {
-      return error.response.data.error;
-    }
-    if (error.message) {
-      return error.message;
-    }
+    const axiosError = error as AxiosError<ApiResponse>;
+    
+    return {
+      message: axiosError.response?.data?.message || 
+               axiosError.response?.data?.error ||
+               axiosError.message || 
+               'An unexpected error occurred',
+      status: axiosError.response?.status,
+      code: axiosError.code,
+    };
   }
-  return 'An unexpected error occurred';
+  
+  if (error instanceof Error) {
+    return {
+      message: error.message,
+    };
+  }
+  
+  return {
+    message: 'An unexpected error occurred',
+  };
+};
+
+/**
+ * Type-safe API wrapper functions
+ */
+export const apiGet = async <T = any>(url: string, config?: any): Promise<T> => {
+  const response = await api.get<T>(url, config);
+  return response.data;
+};
+
+export const apiPost = async <T = any>(url: string, data?: any, config?: any): Promise<T> => {
+  const response = await api.post<T>(url, data, config);
+  return response.data;
+};
+
+export const apiPut = async <T = any>(url: string, data?: any, config?: any): Promise<T> => {
+  const response = await api.put<T>(url, data, config);
+  return response.data;
+};
+
+export const apiPatch = async <T = any>(url: string, data?: any, config?: any): Promise<T> => {
+  const response = await api.patch<T>(url, data, config);
+  return response.data;
+};
+
+export const apiDelete = async <T = any>(url: string, config?: any): Promise<T> => {
+  const response = await api.delete<T>(url, config);
+  return response.data;
 };
 
 export default api;

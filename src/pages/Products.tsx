@@ -163,8 +163,8 @@ const Products = () => {
         <div className="flex flex-col gap-10">
 
           {/* Filters and Sort */}
-          <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
-            <div className="flex items-center gap-4 flex-wrap">
+          <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-6">
+            <div className="flex items-center gap-3 flex-wrap">
               <Dialog open={filterOpen} onOpenChange={setFilterOpen}>
                 <DialogTrigger asChild>
                   <Button variant="outline" size="lg" className="border-foreground/20 bg-card/50 text-foreground hover:bg-card hover:border-foreground/30">
@@ -259,7 +259,7 @@ const Products = () => {
             </div>
 
             <Select value={sortBy} onValueChange={setSortBy}>
-              <SelectTrigger className="w-[200px] border-foreground/20 bg-card/50 text-foreground focus:ring-foreground/20">
+              <SelectTrigger className="w-[200px] h-11 border-foreground/20 bg-card/50 text-foreground focus:ring-foreground/20">
                 <SelectValue />
               </SelectTrigger>
               <SelectContent className="bg-card border-foreground/10 text-foreground">
