@@ -436,6 +436,8 @@ const ProductDetail = () => {
                           storeId={store.id}
                           storeName={store.name}
                           productId={id}
+                          averageRating={store.average_rating}
+                          totalRatings={store.total_ratings}
                         />
                       </div>
 

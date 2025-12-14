@@ -5,7 +5,7 @@ import { Footer } from "@/components/layout/Footer";
 import { NeonAbstractions } from "@/components/NeonAbstractions";
 import { Button } from "@/components/ui/button";
 import { authService } from "@/services/authService";
-import { ratingsService } from "@/services/ratingsService";
+import { useUserRatings, useDeleteRating } from "@/hooks/useApi";
 import { useToast } from "@/hooks/use-toast";
 import { Sparkles, Star, Trash2, Store, Package } from "lucide-react";
 import {
@@ -33,16 +33,18 @@ interface Rating {
 const MyRatings = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
-  const [ratings, setRatings] = useState<Rating[]>([]);
-  const [loading, setLoading] = useState(true);
   const [deleteId, setDeleteId] = useState<string | null>(null);
   const [user, setUser] = useState<any>(null);
+  const [userId, setUserId] = useState<string | null>(null);
+
+  const { data: ratings = [], isLoading: loading } = useUserRatings(userId || '');
+  const deleteRatingMutation = useDeleteRating();
 
   useEffect(() => {
-    checkAuthAndFetchRatings();
+    checkAuth();
   }, []);
 
-  const checkAuthAndFetchRatings = async () => {
+  const checkAuth = async () => {
     if (!authService.isAuthenticated()) {
       navigate("/auth");
       return;
@@ -51,29 +53,10 @@ const MyRatings = () => {
     try {
       const userData = await authService.getCurrentUser();
       setUser(userData);
-      await fetchRatings(userData.id);
+      setUserId(userData.id);
     } catch (error) {
       console.error("Error:", error);
       navigate("/auth");
-    }
-  };
-
-  const fetchRatings = async (userId: string) => {
-    setLoading(true);
-    try {
-      const data = await ratingsService.getUserRatings(userId);
-      if (data && Array.isArray(data)) {
-        setRatings(data);
-      }
-    } catch (error) {
-      console.error("Error fetching ratings:", error);
-      toast({
-        title: "Error",
-        description: "Failed to load your ratings",
-        variant: "destructive",
-      });
-    } finally {
-      setLoading(false);
     }
   };
 
@@ -81,8 +64,7 @@ const MyRatings = () => {
     if (!user) return;
 
     try {
-      await ratingsService.deleteRating(ratingId, user.id);
-      setRatings(ratings.filter(r => r.id !== ratingId));
+      await deleteRatingMutation.mutateAsync({ ratingId, userId: user.id });
       toast({
         title: "Success",
         description: "Rating deleted successfully",

@@ -3,28 +3,10 @@ import { Button } from "@/components/ui/button";
 import { ArrowLeft, Sparkles, Shield, Globe, Heart } from "lucide-react";
 import Navigation from "@/components/layout/Navigation";
 import { Footer } from "@/components/layout/Footer";
-import { useProducts } from "@/hooks/useApi";
-import { useState, useEffect } from "react";
 import { NeonAbstractions } from "@/components/NeonAbstractions";
 
 const About = () => {
   const navigate = useNavigate();
-  const [currentImageIndex, setCurrentImageIndex] = useState(0);
-  const { data: productsData } = useProducts();
-  
-  // Get first 4 products with images for floating display
-  const floatingProducts = (Array.isArray(productsData) ? productsData : productsData?.products || [])
-    .filter((p: any) => p.image_url || p.image)
-    .slice(0, 4);
-  
-  useEffect(() => {
-    if (floatingProducts.length > 1) {
-      const interval = setInterval(() => {
-        setCurrentImageIndex((prev) => (prev + 1) % floatingProducts.length);
-      }, 4000);
-      return () => clearInterval(interval);
-    }
-  }, [floatingProducts.length]);
 
   const values = [
     {
@@ -55,39 +37,8 @@ const About = () => {
       
       {/* Hero Section */}
       <section className="relative pt-32 pb-20 overflow-hidden">
-        {/* Floating Product Images */}
-        {floatingProducts.length > 0 && (
-          <div className="absolute inset-0 z-0 pointer-events-none">
-            {floatingProducts.map((product: any, index: number) => (
-              <div
-                key={product.id}
-                className={`absolute transition-all duration-1000 ${
-                  index === currentImageIndex ? 'opacity-100 scale-100' : 'opacity-0 scale-95'
-                }`}
-                style={{
-                  top: index % 2 === 0 ? '25%' : '45%',
-                  [index % 2 === 0 ? 'left' : 'right']: index % 3 === 0 ? '8%' : index % 3 === 1 ? '45%' : '12%',
-                  transform: `translateY(-50%) rotate(${index % 2 === 0 ? '-8deg' : '8deg'})`,
-                }}
-              >
-                <div className="relative w-[320px] h-[400px] overflow-hidden rounded-2xl">
-                  <img
-                    src={product.image_url || product.image}
-                    alt={product.name}
-                    className="w-full h-full object-cover"
-                    style={{
-                      filter: 'brightness(1.3) contrast(1.2) saturate(0) drop-shadow(0 0 8px rgba(255,255,255,0.8))',
-                      mixBlendMode: 'screen',
-                    }}
-                  />
-                </div>
-              </div>
-            ))}
-          </div>
-        )}
-        
-        {/* NeonAbstractions background - stars and round objects */}
-        <div className="absolute inset-0 z-[5]">
+        {/* NeonAbstractions background - stars and round objects ONLY */}
+        <div className="absolute inset-0 z-0">
           <NeonAbstractions />
         </div>
         

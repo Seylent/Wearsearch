@@ -22,6 +22,7 @@ export function FavoriteButton({
 }: FavoriteButtonProps) {
   const { toast } = useToast();
   const navigate = useNavigate();
+  const isLoggedIn = isAuthenticated();
   
   // Use React Query hooks
   const { data: favoritesData, isLoading: isFavoritesLoading } = useFavorites();
@@ -29,16 +30,14 @@ export function FavoriteButton({
   const removeFavorite = useRemoveFavorite();
 
   // Extract favorites array from response
-  const favorites = favoritesData?.favorites || favoritesData || [];
+  const favorites = favoritesData?.favorites || [];
 
   // Check if current product is in favorites
-  // Handle different response formats from backend
+  // Backend returns: { favorites: [{ id, product_id, created_at, product: {...} }] }
   const isFavorited = Array.isArray(favorites) && favorites.some(
     (fav: any) => {
-      // Handle different possible field names
-      const favProductId = fav.product_id || fav.productId || fav.item_id || fav.id;
-      const match = String(favProductId) === String(productId);
-      return match;
+      const favProductId = fav.product_id || fav.productId;
+      return String(favProductId) === String(productId);
     }
   );
 
@@ -46,10 +45,10 @@ export function FavoriteButton({
     e.preventDefault();
     e.stopPropagation();
 
-    if (!isAuthenticated()) {
+    if (!isLoggedIn) {
       toast({
-        title: 'Login Required',
-        description: 'Please login to save products. Click the user icon in the navigation.',
+        title: 'Необхідна авторизація',
+        description: 'Будь ласка, увійдіть щоб зберігати товари',
         variant: 'destructive',
       });
       return;
@@ -59,25 +58,42 @@ export function FavoriteButton({
       if (isFavorited) {
         await removeFavorite.mutateAsync(productId);
         toast({
-          title: 'Success',
-          description: 'Removed from favorites',
+          title: 'Успішно',
+          description: 'Товар видалено з обраного',
         });
       } else {
         await addFavorite.mutateAsync(productId);
         toast({
-          title: 'Success',
-          description: 'Added to favorites',
+          title: 'Успішно',
+          description: 'Товар додано в обране',
         });
       }
     } catch (error: any) {
-      console.error('Toggle favorite error:', error);
+      console.error('Favorite action failed:', error);
+      const errorMsg = error.response?.data?.error || error.response?.data?.message || error.message || 'Помилка при оновленні обраного';
       toast({
-        title: 'Error',
-        description: error.message || 'Failed to update favorites',
+        title: 'Помилка',
+        description: errorMsg,
         variant: 'destructive',
       });
     }
   };
+
+  // Show empty heart if not logged in
+  if (!isLoggedIn) {
+    return (
+      <Button
+        onClick={handleToggleFavorite}
+        variant={variant}
+        size={size}
+        className={`${className} transition-all hover:text-red-400`}
+        title="Login to add to favorites"
+      >
+        <Heart className={`h-5 w-5 ${showText ? 'mr-2' : ''} transition-all hover:scale-110`} />
+        {showText && 'Save'}
+      </Button>
+    );
+  }
 
   return (
     <Button

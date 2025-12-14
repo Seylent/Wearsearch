@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
 import Navigation from "@/components/layout/Navigation";
 import { Footer } from "@/components/layout/Footer";
@@ -6,34 +6,26 @@ import { NeonAbstractions } from "@/components/NeonAbstractions";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Search, ArrowRight, ExternalLink, Star, Package } from "lucide-react";
-import { storeService, Store } from "@/services/storeService";
+import { useStores } from "@/hooks/useApi";
+import type { Store } from "@/services/storeService";
 import { FaTelegram, FaInstagram } from "react-icons/fa";
 
 const Stores = () => {
   const navigate = useNavigate();
-  const [stores, setStores] = useState<Store[]>([]);
-  const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState("");
 
-  useEffect(() => {
-    fetchStores();
-  }, []);
+  const { data: storesData, isLoading: loading } = useStores();
+  
+  const stores = useMemo(() => {
+    if (!storesData) return [];
+    return Array.isArray(storesData) ? storesData : [];
+  }, [storesData]);
 
-  const fetchStores = async () => {
-    setLoading(true);
-    try {
-      const data = await storeService.getAllStores();
-      if (data && Array.isArray(data)) {
-        setStores(data);
-      }
-    } catch (error) {
-      console.error("Error fetching stores:", error);
-    }
-    setLoading(false);
-  };
-
-  const filteredStores = stores.filter(store => 
-    store.name.toLowerCase().includes(searchQuery.toLowerCase())
+  const filteredStores = useMemo(() => 
+    stores.filter(store => 
+      store.name.toLowerCase().includes(searchQuery.toLowerCase())
+    ),
+    [stores, searchQuery]
   );
 
   return (

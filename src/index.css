@@ -1,5 +1,19 @@
 @import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=Inter:wght@300;400;500;600&display=swap');
 
+@font-face {
+  font-family: 'Youre Gone';
+  src: url('/fonts/Youre Gone.otf') format('opentype');
+  font-weight: normal;
+  font-style: normal;
+}
+
+@font-face {
+  font-family: 'Youre Gone It';
+  src: url('/fonts/Youre Gone It.otf') format('opentype');
+  font-weight: normal;
+  font-style: italic;
+}
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;

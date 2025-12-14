@@ -1,84 +1,58 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { Star } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import api from "@/services/api";
 import { useToast } from "@/hooks/use-toast";
 import { isAuthenticated, getAuthData } from "@/utils/authStorage";
+import { useStoreRatings, useUserStoreRating } from "@/hooks/useApi";
+import { useQueryClient } from "@tanstack/react-query";
 
 interface StoreRatingProps {
   storeId: string;
   storeName: string;
   productId?: string;
+  averageRating?: number;  // Optional: from store data
+  totalRatings?: number;   // Optional: from store data
 }
 
-export const StoreRating = ({ storeId, storeName, productId }: StoreRatingProps) => {
+export const StoreRating = ({ 
+  storeId, 
+  storeName, 
+  productId,
+  averageRating: propsAverageRating,
+  totalRatings: propsTotalRatings 
+}: StoreRatingProps) => {
   const { toast } = useToast();
-  const [userRating, setUserRating] = useState<number>(0);
+  const queryClient = useQueryClient();
   const [hoverRating, setHoverRating] = useState<number>(0);
-  const [averageRating, setAverageRating] = useState<number>(0);
-  const [totalRatings, setTotalRatings] = useState<number>(0);
-  const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [loading, setLoading] = useState(false);
 
-  useEffect(() => {
-    checkAuthAndLoadRatings();
-  }, [storeId]);
-
-  const checkAuthAndLoadRatings = async () => {
-    const authenticated = isAuthenticated();
-    setIsLoggedIn(authenticated);
-
-    // Load average rating
-    await loadAverageRating();
-
-    // Load user's rating if logged in (rating is per store, not per product)
-    if (authenticated) {
-      const authData = getAuthData();
-      if (authData?.userId) {
-        await loadUserRating(authData.userId);
-      }
-    }
-  };
-
-  const loadAverageRating = async () => {
-    try {
-      const response = await api.get(`/ratings/store/${storeId}`);
-      const data = response.data;
-      
-      if (data && data.ratings) {
-        const ratings = data.ratings.map((r: any) => r.rating);
-        const avg = ratings.length > 0 
-          ? ratings.reduce((sum: number, r: number) => sum + r, 0) / ratings.length 
-          : 0;
-        setAverageRating(Number(avg.toFixed(1)));
-        setTotalRatings(ratings.length);
-      }
-    } catch (error) {
-      // Backend endpoint not ready yet - fail silently
-      console.log('Rating endpoint not available yet');
-    }
-  };
-
-  const loadUserRating = async (userId: string) => {
-    try {
-      // Get user's rating for this store (global, not per product)
-      const response = await api.get(`/ratings/user/${userId}/store/${storeId}`);
-      const data = response.data;
-      
-      if (data && data.rating) {
-        setUserRating(data.rating);
-      }
-    } catch (error) {
-      // Backend endpoint not ready yet or no rating found - fail silently
-      console.log('User rating not found');
-    }
-  };
+  const authData = getAuthData();
+  const isLoggedIn = isAuthenticated();
+  
+  // Use React Query hooks for ratings only if not provided via props
+  const shouldFetchRatings = propsAverageRating === undefined || propsTotalRatings === undefined;
+  const { data: storeRatingsData } = useStoreRatings(storeId, { enabled: shouldFetchRatings });
+  const { data: userRating } = useUserStoreRating(authData?.userId, storeId);
+  
+  // Use props if provided, otherwise use fetched data
+  const averageRating = propsAverageRating ?? storeRatingsData?.average ?? 0;
+  const totalRatings = propsTotalRatings ?? storeRatingsData?.count ?? 0;
 
   const submitRating = async (rating: number) => {
     if (!isLoggedIn) {
       toast({
         title: "Login Required",
-        description: "Please login to rate stores",
+        description: "Please login to rate stores. Click the user icon in navigation.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    if (!productId) {
+      toast({
+        title: "Cannot Rate",
+        description: "Product ID is missing. Please try refreshing the page.",
         variant: "destructive",
       });
       return;
@@ -87,28 +61,32 @@ export const StoreRating = ({ storeId, storeName, productId }: StoreRatingProps)
     setLoading(true);
 
     try {
-      // Submit rating (store_id only, no product_id needed)
+      // Backend expects: POST /ratings with { storeId, productId, rating }
       await api.post('/ratings', {
-        store_id: storeId,
+        storeId: storeId,
+        productId: productId,
         rating: rating,
       });
 
-      setUserRating(rating);
-      // Reload average rating immediately to show update
-      await loadAverageRating();
+      // Invalidate to refresh on next access (not immediate refetch)
+      queryClient.invalidateQueries({ queryKey: ['storeRatings', storeId] });
+      queryClient.invalidateQueries({ queryKey: ['userStoreRating', authData?.userId, storeId] });
+      
       toast({
         title: "Success",
-        description: "Rating submitted successfully",
+        description: `You rated ${storeName} ${rating} stars`,
       });
     } catch (error: any) {
+      console.error('Rating failed:', error.response?.data || error.message);
+      const errorMsg = error.response?.data?.error || error.response?.data?.message || "Failed to submit rating. Please try again.";
       toast({
         title: "Error",
-        description: error.response?.data?.error || "Failed to submit rating",
+        description: errorMsg,
         variant: "destructive",
       });
+    } finally {
+      setLoading(false);
     }
-
-    setLoading(false);
   };
 
   return (
@@ -134,9 +112,11 @@ export const StoreRating = ({ storeId, storeName, productId }: StoreRatingProps)
         </div>
       </div>
 
-      {isLoggedIn && (
+      {isLoggedIn && productId && (
         <div className="space-y-2">
-          <p className="text-sm text-muted-foreground select-none">Your rating:</p>
+          <p className="text-sm text-muted-foreground select-none">
+            {userRating > 0 ? 'Update your rating:' : 'Rate this store:'}
+          </p>
           <div className="flex items-center gap-1">
             {[1, 2, 3, 4, 5].map((star) => (
               <button
@@ -145,24 +125,31 @@ export const StoreRating = ({ storeId, storeName, productId }: StoreRatingProps)
                 onMouseEnter={() => setHoverRating(star)}
                 onMouseLeave={() => setHoverRating(0)}
                 disabled={loading}
-                className="transition-transform hover:scale-110 disabled:opacity-50 cursor-pointer"
+                className="transition-all hover:scale-125 disabled:opacity-50 cursor-pointer active:scale-95"
+                title={`Rate ${star} star${star > 1 ? 's' : ''}`}
               >
                 <Star
-                  className={`w-7 h-7 ${
-                    star <= (hoverRating || userRating)
-                      ? "fill-yellow-400 text-yellow-400"
-                      : "text-gray-300"
+                  className={`w-7 h-7 transition-colors ${
+                    star <= (hoverRating || userRating || 0)
+                      ? "fill-yellow-400 text-yellow-400 drop-shadow-[0_0_8px_rgba(250,204,21,0.5)]"
+                      : "text-gray-400 hover:text-gray-300"
                   }`}
                 />
               </button>
             ))}
           </div>
           {userRating > 0 && (
-            <p className="text-xs text-muted-foreground select-none">
-              You rated this store {userRating} stars
+            <p className="text-xs text-green-400 select-none flex items-center gap-1">
+              ✓ You rated this store {userRating} star{userRating > 1 ? 's' : ''}
             </p>
           )}
         </div>
+      )}
+      
+      {!isLoggedIn && (
+        <p className="text-xs text-muted-foreground select-none">
+          Login to rate this store
+        </p>
       )}
     </div>
   );

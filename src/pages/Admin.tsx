@@ -35,6 +35,7 @@ const Admin = () => {
   const [selectedStores, setSelectedStores] = useState<Array<{ store_id: string; store_name: string; price: number }>>([]);
   const [currentStore, setCurrentStore] = useState<string>("");
   const [currentStorePrice, setCurrentStorePrice] = useState<string>("");
+  const [storeSearchQuery, setStoreSearchQuery] = useState<string>("");
   
   // Editing state (for tracking which product is being edited)
   const [editingProductId, setEditingProductId] = useState<string | null>(null);
@@ -58,7 +59,6 @@ const Admin = () => {
   const [storeName, setStoreName] = useState<string>("");
   const [storeTelegram, setStoreTelegram] = useState<string>("");
   const [storeInstagram, setStoreInstagram] = useState<string>("");
-  const [storeSearchQuery, setStoreSearchQuery] = useState<string>("");
   const [storeShipping, setStoreShipping] = useState<string>("");
   const [storeLogoUrl, setStoreLogoUrl] = useState<string>("");
   const [editingStore, setEditingStore] = useState<any | null>(null);
@@ -394,6 +394,7 @@ const Admin = () => {
 
   const loadProductForEdit = async (productId: string) => {
     try {
+      console.log('🔄 Loading product for edit:', productId);
       // Always fetch from API to get fresh data including stores
       const [productRes, storesRes] = await Promise.all([
         fetch(`http://localhost:3000/api/items/${productId}`),
@@ -403,19 +404,32 @@ const Admin = () => {
       const productResult = await productRes.json();
       const storesResult = await storesRes.json();
       
+      console.log('📦 Product data:', productResult);
+      console.log('🏪 Stores data from API:', storesResult);
+      console.log('🏪 Stores array:', storesResult.stores);
+      console.log('🏪 Stores count:', storesResult.stores?.length || 0);
+      
       if (productResult.success || productResult.id) {
         const productData = productResult.data || productResult;
         
         // Attach stores to product
-        if (storesResult.success && storesResult.stores) {
+        if (storesResult.success && storesResult.stores && storesResult.stores.length > 0) {
+          console.log('✅ Found stores:', storesResult.stores.length);
+          console.log('✅ Stores details:', storesResult.stores);
           productData.product_stores = storesResult.stores.map((store: any) => ({
             store_id: store.id,
             store_name: store.name,
             price: store.price,
             stores: store
           }));
+        } else {
+          console.error('❌ NO STORES FOUND! Backend did not save stores to database!');
+          console.error('This means the PUT /api/admin/products/:id endpoint is NOT saving the stores array');
+          productData.product_stores = [];
         }
         
+        console.log('📝 Product with stores to edit:', productData);
+        console.log('📝 product_stores array:', productData.product_stores);
         editProduct(productData);
       }
     } catch (error) {
@@ -531,35 +545,48 @@ const Admin = () => {
     try {
       const avgPrice = selectedStores.reduce((sum, store) => sum + store.price, 0) / selectedStores.length;
 
+      const updateData = {
+        name: productName,
+        price: avgPrice,
+        type: productType,
+        color: productColor,
+        gender: productGender || null,
+        brand_id: productBrandId || null,
+        description: productDescription || null,
+        image_url: productImageUrl,
+        stores: selectedStores.map(store => ({
+          store_id: store.store_id,
+          price: store.price
+        }))
+      };
+
+      console.log('📤 Updating product with data:', {
+        productId: editingProductId,
+        storesCount: selectedStores.length,
+        stores: updateData.stores,
+        fullData: updateData
+      });
+
       const response = await fetch(`http://localhost:3000/api/admin/products/${editingProductId}`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
           'Authorization': `Bearer ${localStorage.getItem('access_token')}`
         },
-        body: JSON.stringify({
-          name: productName,
-          price: avgPrice,
-          type: productType,
-          color: productColor,
-          gender: productGender || null,
-          brand_id: productBrandId || null,
-          description: productDescription || null,
-          image_url: productImageUrl,
-          stores: selectedStores.map(store => ({
-            store_id: store.store_id,
-            price: store.price
-          }))
-        }),
+        body: JSON.stringify(updateData),
       });
 
       const result = await response.json();
       console.log('📥 Update response:', result);
 
       if (result.success) {
+        // Backend не повертає stores в response, використовуємо selectedStores
+        const storesCount = result.data?.stores?.length || result.stores?.length || selectedStores.length;
+        console.log('✅ Product updated with', storesCount, 'stores');
+        
         toast({
           title: "Success",
-          description: "Product updated successfully!",
+          description: `Product and ${storesCount} store(s) updated successfully!`,
         });
 
         // Reset form
@@ -1020,18 +1047,49 @@ const Admin = () => {
                         <Label>Select Store</Label>
                         <div className="relative">
                           <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground pointer-events-none" />
-                          <Select value={currentStore} onValueChange={setCurrentStore}>
+                          <Select 
+                            value={currentStore} 
+                            onValueChange={(value) => {
+                              setCurrentStore(value);
+                              setStoreSearchQuery("");
+                            }}
+                            onOpenChange={(open) => {
+                              if (!open) setStoreSearchQuery("");
+                            }}
+                          >
                             <SelectTrigger className="h-12 bg-card/50 border-border/50 rounded-lg pl-10">
-                              <SelectValue placeholder="Search and choose a store" />
+                              <SelectValue placeholder="Type to search stores" />
                             </SelectTrigger>
                             <SelectContent className="bg-card border-border/50">
+                              <div className="px-2 pb-2 sticky top-0 bg-card z-10">
+                                <Input
+                                  type="text"
+                                  placeholder="Search stores..."
+                                  value={storeSearchQuery}
+                                  onChange={(e) => setStoreSearchQuery(e.target.value)}
+                                  className="h-9"
+                                  onClick={(e) => e.stopPropagation()}
+                                  onKeyDown={(e) => e.stopPropagation()}
+                                />
+                              </div>
                               {stores
-                                .filter(store => !selectedStores.some(s => s.store_id === store.id))
+                                .filter(store => 
+                                  !selectedStores.some(s => s.store_id === store.id) &&
+                                  store.name.toLowerCase().includes(storeSearchQuery.toLowerCase())
+                                )
                                 .map((store) => (
                                   <SelectItem key={store.id} value={store.name}>
                                     {store.name}
                                   </SelectItem>
                                 ))}
+                              {stores.filter(store => 
+                                !selectedStores.some(s => s.store_id === store.id) &&
+                                store.name.toLowerCase().includes(storeSearchQuery.toLowerCase())
+                              ).length === 0 && (
+                                <div className="px-2 py-6 text-center text-sm text-muted-foreground">
+                                  No stores found
+                                </div>
+                              )}
                             </SelectContent>
                           </Select>
                         </div>
@@ -1416,7 +1474,8 @@ const Admin = () => {
 
                 <form onSubmit={async (e) => {
                   e.preventDefault();
-                  const brandName = (e.currentTarget.elements.namedItem('brandName') as HTMLInputElement).value;
+                  const form = e.target as HTMLFormElement;
+                  const brandName = (form.elements.namedItem('brandName') as HTMLInputElement).value;
                   
                   if (!brandName.trim()) {
                     toast({
@@ -1443,7 +1502,7 @@ const Admin = () => {
                         description: "Brand created successfully",
                       });
                       fetchData();
-                      (e.currentTarget.elements.namedItem('brandName') as HTMLInputElement).value = '';
+                      (form.elements.namedItem('brandName') as HTMLInputElement).value = '';
                     } else {
                       throw new Error('Failed to create brand');
                     }

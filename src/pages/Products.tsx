@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import Navigation from "@/components/layout/Navigation";
 import { Footer } from "@/components/layout/Footer";
 import { NeonAbstractions } from "@/components/NeonAbstractions";
@@ -19,7 +19,8 @@ import {
   PaginationPrevious,
   PaginationEllipsis,
 } from "@/components/ui/pagination";
-import { productService, Product } from "@/services/productService";
+import { useProducts } from "@/hooks/useApi";
+import type { Product } from "@/services/productService";
 
 const Products = () => {
   const [searchQuery, setSearchQuery] = useState("");
@@ -27,72 +28,70 @@ const Products = () => {
   const [selectedTypes, setSelectedTypes] = useState<string[]>([]);
   const [sortBy, setSortBy] = useState("default");
   const [currentPage, setCurrentPage] = useState(1);
-  const [products, setProducts] = useState<Product[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [totalProducts, setTotalProducts] = useState(0);
-  const [totalPages, setTotalPages] = useState(1);
   const [filterOpen, setFilterOpen] = useState(false);
   const itemsPerPage = 24;
 
   const colors = ["Black", "White", "Gray", "Beige", "Brown", "Red", "Blue", "Navy", "Green", "Olive", "Yellow", "Orange", "Pink", "Purple", "Cream"];
   const types = ["Outerwear", "Tops", "Bottoms", "Dresses", "Shoes", "Accessories"];
 
-  useEffect(() => {
-    fetchProducts();
-  }, [searchQuery, selectedColors, selectedTypes, currentPage, sortBy]);
+  const { data: productsData, isLoading: loading } = useProducts();
+  
+  const allProducts = useMemo(() => {
+    if (!productsData) return [];
+    return productsData.products || productsData || [];
+  }, [productsData]);
 
-  const fetchProducts = async () => {
-    setLoading(true);
-    
-    try {
-      const params: any = {
-        limit: itemsPerPage,
-        skip: (currentPage - 1) * itemsPerPage,
-      };
+  const filteredAndSortedProducts = useMemo(() => {
+    let filtered = [...allProducts];
 
-      if (searchQuery.trim()) {
-        params.name = searchQuery.trim();
-      }
-
-      if (selectedColors.length > 0) {
-        params.color = selectedColors;
-      }
-
-      if (selectedTypes.length > 0) {
-        params.type = selectedTypes;
-      }
-
-      if (sortBy !== 'default') {
-        const [field, order] = sortBy.split('-');
-        params.sort_by = field;
-        params.order = order;
-      }
-
-      const response = await productService.getAllProducts(params);
-      console.log('Products page response:', response);
-      
-      // Handle different response formats
-      let productsData = [];
-      if (response && response.products && Array.isArray(response.products)) {
-        productsData = response.products;
-      } else if (Array.isArray(response)) {
-        productsData = response;
-      } else if ((response as any)?.items && Array.isArray((response as any).items)) {
-        productsData = (response as any).items;
-      }
-      
-      setProducts(productsData);
-      setTotalProducts(response?.total || productsData.length);
-      setTotalPages(response?.totalPages || Math.ceil((response?.total || productsData.length) / itemsPerPage));
-    } catch (error) {
-      console.error("Error fetching products:", error);
-      setProducts([]);
-      setTotalProducts(0);
-      setTotalPages(1);
+    // Search filter
+    if (searchQuery.trim()) {
+      const query = searchQuery.toLowerCase();
+      filtered = filtered.filter((p: Product) =>
+        p.name?.toLowerCase().includes(query) ||
+        p.type?.toLowerCase().includes(query) ||
+        p.brand?.toLowerCase().includes(query)
+      );
     }
-    
-    setLoading(false);
-  };
+
+    // Color filter
+    if (selectedColors.length > 0) {
+      filtered = filtered.filter((p: Product) =>
+        p.color && selectedColors.includes(p.color)
+      );
+    }
+
+    // Type filter
+    if (selectedTypes.length > 0) {
+      filtered = filtered.filter((p: Product) =>
+        p.type && selectedTypes.includes(p.type)
+      );
+    }
+
+    // Sorting
+    if (sortBy !== 'default') {
+      const [field, order] = sortBy.split('-');
+      filtered.sort((a: any, b: any) => {
+        const aVal = a[field] || '';
+        const bVal = b[field] || '';
+        if (order === 'asc') {
+          return aVal > bVal ? 1 : -1;
+        } else {
+          return aVal < bVal ? 1 : -1;
+        }
+      });
+    }
+
+    return filtered;
+  }, [allProducts, searchQuery, selectedColors, selectedTypes, sortBy]);
+
+  const totalProducts = filteredAndSortedProducts.length;
+  const totalPages = Math.ceil(totalProducts / itemsPerPage);
+  
+  const paginatedProducts = useMemo(() => {
+    const startIndex = (currentPage - 1) * itemsPerPage;
+    return filteredAndSortedProducts.slice(startIndex, startIndex + itemsPerPage);
+  }, [filteredAndSortedProducts, currentPage, itemsPerPage]);
 
   const toggleColor = (color: string) => {
     setSelectedColors(prev => 
@@ -280,7 +279,7 @@ const Products = () => {
           ) : (
             <>
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 xl:grid-cols-6 gap-x-6 gap-y-12">
-                {products.map((product) => (
+                {paginatedProducts.map((product) => (
                   <ProductCard
                     key={product.id}
                     id={product.id}
@@ -292,7 +291,7 @@ const Products = () => {
                 ))}
               </div>
               
-              {products.length === 0 && (
+              {paginatedProducts.length === 0 && (
                 <div className="text-center py-32 border border-dashed border-foreground/10 rounded-3xl bg-card/20">
                   <p className="text-muted-foreground text-lg">No products found matching your filters.</p>
                   <Button variant="link" onClick={clearAllFilters} className="text-primary mt-2">Clear all filters</Button>
@@ -300,7 +299,7 @@ const Products = () => {
               )}
 
               {/* Pagination */}
-              {products.length > 0 && totalPages > 1 && (
+              {paginatedProducts.length > 0 && totalPages > 1 && (
                 <Pagination className="mt-20">
                   <PaginationContent>
                     <PaginationItem>

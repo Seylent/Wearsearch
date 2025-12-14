@@ -5,6 +5,7 @@
 
 import { useQuery, useMutation, useQueryClient, UseQueryOptions } from '@tanstack/react-query';
 import { api } from '@/services/api';
+import { getAuth } from '@/utils/authStorage';
 import type {
   Product,
   ProductsResponse,
@@ -31,6 +32,9 @@ export const queryKeys = {
   stats: ['stats'] as const,
   favorites: ['favorites'] as const,
   contacts: ['contacts'] as const,
+  storeRatings: (storeId: string) => ['storeRatings', storeId] as const,
+  userStoreRating: (userId: string, storeId: string) => ['userStoreRating', userId, storeId] as const,
+  userRatings: (userId: string) => ['userRatings', userId] as const,
 };
 
 // Products
@@ -41,7 +45,8 @@ export const useProducts = (options?: UseQueryOptions<any>) => {
       const response = await api.get('/items');
       return response.data;
     },
-    staleTime: 5 * 60 * 1000,
+    staleTime: 15 * 60 * 1000, // 15 minutes
+    gcTime: 30 * 60 * 1000,
     ...options,
   });
 };
@@ -66,7 +71,8 @@ export const useStores = () => {
       const response = await api.get('/stores');
       return response.data;
     },
-    staleTime: 5 * 60 * 1000,
+    staleTime: 15 * 60 * 1000, // 15 minutes
+    gcTime: 30 * 60 * 1000,
   });
 };
 
@@ -104,7 +110,8 @@ export const useBrands = () => {
       
       return brandsArray;
     },
-    staleTime: 5 * 60 * 1000,
+    staleTime: 15 * 60 * 1000, // 15 minutes
+    gcTime: 30 * 60 * 1000,
   });
 };
 
@@ -138,11 +145,29 @@ export const useStats = () => {
     queryKey: queryKeys.stats,
     queryFn: async () => {
       try {
-        const response = await api.get('/stats');
-        return response.data;
+        const response = await api.get('/statistics');
+        const data = response.data;
+        
+        // Backend returns: { success: true, data: { total_products, total_stores, total_brands, satisfaction_rate } }
+        if (data?.data) {
+          return {
+            products: data.data.total_products || 0,
+            stores: data.data.total_stores || 0,
+            brands: data.data.total_brands || 0,
+            satisfaction_rate: data.data.satisfaction_rate || 0
+          };
+        }
+        
+        // Fallback for old format
+        return {
+          products: data?.products || data?.total_products || 0,
+          stores: data?.stores || data?.total_stores || 0,
+          brands: data?.brands || data?.total_brands || 0,
+          satisfaction_rate: data?.satisfaction_rate || 0
+        };
       } catch (error) {
         console.log('Stats endpoint not available, returning defaults');
-        return { brands: 0, products: 0, stores: 0 };
+        return { products: 0, stores: 0, brands: 0, satisfaction_rate: 0 };
       }
     },
     staleTime: 2 * 60 * 1000,
@@ -159,26 +184,130 @@ export const useFavorites = () => {
         const response = await api.get('/user/favorites');
         const data = response.data;
         
-        // Normalize response to always have favorites array
-        if (Array.isArray(data)) {
-          return { favorites: data };
-        } else if (data?.favorites && Array.isArray(data.favorites)) {
+        // Backend returns: { favorites: [...], total: number }
+        if (data?.favorites && Array.isArray(data.favorites)) {
           return data;
-        } else if (data?.data && Array.isArray(data.data)) {
-          return { favorites: data.data };
+        } else if (Array.isArray(data)) {
+          return { favorites: data, total: data.length };
         }
         
-        return { favorites: [] };
+        return { favorites: [], total: 0 };
       } catch (error: any) {
+        console.error('Favorites fetch error:', error);
+        // Return empty array for auth errors or not found
         if (error?.response?.status === 401 || error?.response?.status === 404) {
-          console.log('User not authenticated or no favorites, returning empty');
-          return { favorites: [] };
+          return { favorites: [], total: 0 };
         }
         throw error;
       }
     },
-    staleTime: 1 * 60 * 1000,
-    retry: false,
+    staleTime: 2 * 60 * 1000, // 2 minutes
+    gcTime: 30 * 60 * 1000,
+    retry: 1,
+    refetchOnMount: true,
+    refetchOnWindowFocus: false,
+    refetchOnReconnect: false,
+    // Only fetch if user is authenticated
+    enabled: typeof window !== 'undefined' && !!getAuth(),
+  });
+};
+
+// Store Ratings
+export const useStoreRatings = (storeId: string, options?: UseQueryOptions<any>) => {
+  return useQuery({
+    queryKey: queryKeys.storeRatings(storeId),
+    queryFn: async () => {
+      const response = await api.get(`/ratings/store/${storeId}`);
+      const data = response.data;
+      
+      // Backend returns: { success: true, data: [...], average: 4.5, count: 10 }
+      if (data?.average !== undefined && data?.count !== undefined) {
+        return { average: Number(data.average.toFixed(1)), count: data.count };
+      } else if (data?.data && Array.isArray(data.data)) {
+        // Fallback: calculate from ratings array
+        const ratings = data.data.map((r: any) => r.rating);
+        const avg = ratings.length > 0 
+          ? ratings.reduce((sum: number, r: number) => sum + r, 0) / ratings.length 
+          : 0;
+        return { average: Number(avg.toFixed(1)), count: ratings.length };
+      }
+      return { average: 0, count: 0 };
+    },
+    staleTime: 10 * 60 * 1000,
+    gcTime: 20 * 60 * 1000,
+    enabled: !!storeId,
+    ...options,
+  });
+};
+
+export const useUserStoreRating = (userId: string | undefined, storeId: string) => {
+  return useQuery({
+    queryKey: queryKeys.userStoreRating(userId || '', storeId),
+    queryFn: async () => {
+      if (!userId) return null;
+      
+      try {
+        const response = await api.get(`/ratings/user/${userId}/store/${storeId}`);
+        const data = response.data;
+        
+        // Backend returns: { success: true, data: { rating, comment, ... } }
+        if (data?.data && data.data.rating) {
+          return data.data.rating;
+        } else if (data && data.rating) {
+          return data.rating;
+        }
+        return null;
+      } catch (error: any) {
+        // Backend returns 500 if multiple ratings exist - ignore
+        if (error.response?.status === 500) {
+          return null;
+        }
+        throw error;
+      }
+    },
+    staleTime: 10 * 60 * 1000,
+    gcTime: 20 * 60 * 1000,
+    enabled: !!userId && !!storeId,
+  });
+};
+
+// User Ratings
+export const useUserRatings = (userId: string) => {
+  return useQuery({
+    queryKey: queryKeys.userRatings(userId),
+    queryFn: async () => {
+      const response = await api.get(`/ratings/user/${userId}`);
+      const data = response.data;
+      
+      // Backend returns: { success: true, count: number, data: Rating[] }
+      if (data?.data && Array.isArray(data.data)) {
+        return data.data;
+      } else if (Array.isArray(data)) {
+        return data;
+      }
+      return [];
+    },
+    staleTime: 5 * 60 * 1000,
+    gcTime: 15 * 60 * 1000,
+    enabled: !!userId,
+  });
+};
+
+// Delete Rating Mutation
+export const useDeleteRating = () => {
+  const queryClient = useQueryClient();
+  
+  return useMutation({
+    mutationFn: async ({ ratingId, userId }: { ratingId: string; userId: string }) => {
+      const response = await api.delete(`/ratings/${ratingId}`, { data: { user_id: userId } });
+      return response.data;
+    },
+    onSuccess: (data, variables) => {
+      // Invalidate user ratings to refresh the list
+      queryClient.invalidateQueries({ queryKey: queryKeys.userRatings(variables.userId) });
+      // Also invalidate store ratings if needed
+      queryClient.invalidateQueries({ queryKey: ['storeRatings'] });
+    },
   });
 };
 
@@ -200,11 +329,16 @@ export const useAddFavorite = () => {
   
   return useMutation({
     mutationFn: async (productId: string) => {
-      const response = await api.post('/user/favorites', { productId });
+      const response = await api.post(`/user/favorites/${productId}`);
       return response.data;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: queryKeys.favorites });
+      // Refetch favorites immediately
+      queryClient.invalidateQueries({ queryKey: queryKeys.favorites, refetchType: 'active' });
+    },
+    onError: (error: any) => {
+      console.error('Add favorite failed:', error.response?.data || error.message);
+      throw error;
     },
   });
 };
@@ -218,7 +352,12 @@ export const useRemoveFavorite = () => {
       return response.data;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: queryKeys.favorites });
+      // Refetch favorites immediately
+      queryClient.invalidateQueries({ queryKey: queryKeys.favorites, refetchType: 'active' });
+    },
+    onError: (error: any) => {
+      console.error('Remove favorite failed:', error.response?.data || error.message);
+      throw error;
     },
   });
 };

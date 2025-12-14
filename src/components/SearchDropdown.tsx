@@ -1,7 +1,7 @@
-import React, { useState, useEffect, useRef } from "react";
+import React, { useState, useEffect, useRef, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
 import { Search, X } from "lucide-react";
-import { productService } from "@/services/productService";
+import { useProducts } from "@/hooks/useApi";
 import { convertS3UrlToHttps } from "@/lib/utils";
 
 interface SearchDropdownProps {
@@ -10,11 +10,12 @@ interface SearchDropdownProps {
 
 export const SearchDropdown: React.FC<SearchDropdownProps> = ({ onClose }) => {
   const [searchQuery, setSearchQuery] = useState("");
-  const [searchResults, setSearchResults] = useState<any[]>([]);
-  const [loading, setLoading] = useState(false);
+  const [debouncedQuery, setDebouncedQuery] = useState("");
   const navigate = useNavigate();
   const inputRef = useRef<HTMLInputElement>(null);
   const dropdownRef = useRef<HTMLDivElement>(null);
+  
+  const { data: productsData, isLoading: loading } = useProducts();
 
   useEffect(() => {
     inputRef.current?.focus();
@@ -41,41 +42,24 @@ export const SearchDropdown: React.FC<SearchDropdownProps> = ({ onClose }) => {
   }, [onClose]);
 
   useEffect(() => {
-    const searchProducts = async () => {
-      if (searchQuery.trim().length < 2) {
-        setSearchResults([]);
-        return;
-      }
-
-      setLoading(true);
-      try {
-        const response = await productService.getAllProducts();
-        let products = [];
-        
-        if (response?.products && Array.isArray(response.products)) {
-          products = response.products;
-        } else if (Array.isArray(response)) {
-          products = response;
-        }
-
-        const filtered = products.filter((product: any) =>
-          product.name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-          product.type?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-          product.brand?.toLowerCase().includes(searchQuery.toLowerCase())
-        ).slice(0, 5);
-
-        setSearchResults(filtered);
-      } catch (error) {
-        console.error("Search error:", error);
-        setSearchResults([]);
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    const debounce = setTimeout(searchProducts, 300);
+    const debounce = setTimeout(() => {
+      setDebouncedQuery(searchQuery);
+    }, 300);
     return () => clearTimeout(debounce);
   }, [searchQuery]);
+
+  const searchResults = useMemo(() => {
+    if (debouncedQuery.trim().length < 2 || !productsData) return [];
+
+    const products = productsData.products || productsData || [];
+    const query = debouncedQuery.toLowerCase();
+
+    return products.filter((product: any) =>
+      product.name?.toLowerCase().includes(query) ||
+      product.type?.toLowerCase().includes(query) ||
+      product.brand?.toLowerCase().includes(query)
+    ).slice(0, 5);
+  }, [debouncedQuery, productsData]);
 
   const handleProductClick = (productId: string) => {
     navigate(`/product/${productId}`);
@@ -192,7 +176,7 @@ export const SearchDropdown: React.FC<SearchDropdownProps> = ({ onClose }) => {
                 </div>
               )}
             </>
-          ) : searchQuery.trim().length >= 2 ? (
+          ) : debouncedQuery.trim().length >= 2 ? (
             <div className="p-12 text-center">
               <Search className="w-12 h-12 mx-auto mb-4 text-white/20" />
               <p className="text-white/50 mb-2">No products found</p>

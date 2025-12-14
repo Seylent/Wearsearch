@@ -58,11 +58,11 @@ const Navigation: React.FC = () => {
           className="flex items-center gap-2.5 cursor-pointer" 
           onClick={handleLogoClick}
         >
-          <div className="w-9 h-9 rounded-lg border border-zinc-600/80 flex items-center justify-center bg-zinc-800/60 shadow-lg shadow-white/5">
-            <span className="font-display font-bold text-sm text-white">W</span>
-          </div>
-          <span className="font-display text-lg font-semibold tracking-tight text-white">
-            Wearsearch
+          <span 
+            className="text-white text-2xl tracking-tight"
+            style={{ fontFamily: "'Youre Gone', sans-serif" }}
+          >
+            wearsearch
           </span>
         </div>
 

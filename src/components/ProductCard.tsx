@@ -45,7 +45,7 @@ const ProductCard: React.FC<ProductCardProps> = ({ id, name, image, price, categ
           )}
           
           {/* Favorite Button */}
-          <div className="absolute top-2 right-2 z-10 opacity-0 group-hover:opacity-100 transition-opacity duration-300 select-none">
+          <div className="absolute top-2 right-2 z-10 transition-all duration-300 select-none">
             <FavoriteButton productId={String(id)} variant="ghost" size="icon" />
           </div>
         </div>

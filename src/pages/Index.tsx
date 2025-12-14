@@ -7,18 +7,16 @@ import { Button } from "@/components/ui/button";
 import { Sparkles, Shield, Package, Clock, ArrowRight } from "lucide-react";
 import { Product } from "@/services/productService";
 import { NeonAbstractions } from "@/components/NeonAbstractions";
-import { useProducts, useStats, useHeroImages, useStores, useBrands } from "@/hooks/useApi";
+import { useProducts, useStats, useHeroImages } from "@/hooks/useApi";
 
 const Index: React.FC = () => {
   const navigate = useNavigate();
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
   
-  // Use React Query hooks
+  // Use React Query hooks - only fetch what's needed for this page
   const { data: productsData, isLoading: productsLoading } = useProducts();
   const { data: statsData } = useStats();
   const { data: heroImagesData } = useHeroImages();
-  const { data: storesData } = useStores();
-  const { data: brandsData } = useBrands();
 
   // Process products data
   const products = React.useMemo(() => {
@@ -36,26 +34,15 @@ const Index: React.FC = () => {
     return productsList.slice(0, 6);
   }, [productsData]);
 
-  // Process stats data
+  // Process stats data - use real-time counts from API
   const stats = React.useMemo(() => {
-    const productsCount = Array.isArray(productsData) 
-      ? productsData.length 
-      : (productsData?.products?.length || 0);
-    
-    const storesCount = Array.isArray(storesData) 
-      ? storesData.length 
-      : (storesData?.stores?.length || 0);
-    
-    const brandsCount = Array.isArray(brandsData) 
-      ? brandsData.length 
-      : 0;
-
+    // Stats from /api/statistics endpoint with real database counts
     return {
-      brands: brandsCount,
-      products: productsCount,
-      stores: storesCount
+      brands: statsData?.brands || 0,
+      products: statsData?.products || 0,
+      stores: statsData?.stores || 0
     };
-  }, [productsData, storesData, brandsData]);
+  }, [statsData]);
 
   // Process hero images
   const heroImages = React.useMemo(() => {
@@ -133,7 +120,7 @@ const Index: React.FC = () => {
                     alt={image.title || `Hero ${index + 1}`}
                     className="w-full h-full object-cover"
                     style={{
-                      filter: 'brightness(1.4) contrast(1.3) saturate(0) drop-shadow(0 0 8px rgba(255,255,255,0.9)) drop-shadow(0 0 3px rgba(255,255,255,1))',
+                      filter: 'brightness(1.4) contrast(1.3) saturate(0) drop-shadow(0 0 22px rgba(255,255,255,0.4)) drop-shadow(0 0 3px rgba(255,255,255,0.2))',
                       mixBlendMode: 'screen',
                     }}
                     onError={(e) => {
@@ -218,9 +205,9 @@ const Index: React.FC = () => {
             {/* Stats - Glassmorphism cards */}
             <div className="flex justify-center gap-6 sm:gap-10 mt-20">
               {[
-                { value: `${stats.brands > 0 ? stats.brands : 4}+`, label: "Brands" },
-                { value: stats.products >= 1000 ? `${Math.floor(stats.products / 1000)}K+` : `${stats.products > 0 ? stats.products : 5}+`, label: "Products" },
-                { value: `${stats.stores > 0 ? stats.stores : 4}+`, label: "Stores" },
+                { value: stats.brands >= 1000 ? `${Math.floor(stats.brands / 1000)}K+` : `${stats.brands}+`, label: "Brands" },
+                { value: stats.products >= 1000 ? `${Math.floor(stats.products / 1000)}K+` : `${stats.products}+`, label: "Products" },
+                { value: stats.stores >= 1000 ? `${Math.floor(stats.stores / 1000)}K+` : `${stats.stores}+`, label: "Stores" },
               ].map((stat) => (
                 <div key={stat.label} className="relative text-center px-8 py-5 rounded-2xl bg-white/5 backdrop-blur-[30px] border border-white/20 shadow-[0_0_30px_rgba(255,255,255,0.15)] overflow-hidden group hover:bg-white/10 hover:border-white/30 hover:shadow-[0_0_40px_rgba(255,255,255,0.25)] transition-all">
                   {/* Vertical light streak */}

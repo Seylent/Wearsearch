@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
 import { useToast } from "@/hooks/use-toast";
 import Navigation from "@/components/layout/Navigation";
@@ -8,27 +8,23 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Search, Heart } from "lucide-react";
 import { isAuthenticated } from "@/utils/authStorage";
-import { useFavorites } from "@/hooks/useApi";
+import { useFavorites, useProducts } from "@/hooks/useApi";
 
 const Favorites = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
   const [searchQuery, setSearchQuery] = useState("");
   
-  // Use React Query hook for favorites
+  // Use React Query hooks for favorites and products
   const { data: favoritesData, isLoading: loading, error } = useFavorites();
+  const { data: productsData } = useProducts();
   
-  // Extract favorites array
+  // Extract favorites array and all products
   const favorites = favoritesData?.favorites || [];
-  
-  // Debug logging
-  console.log('Favorites Debug:', {
-    favoritesData,
-    favorites,
-    loading,
-    error,
-    isAuth: isAuthenticated()
-  });
+  const allProducts = useMemo(() => {
+    if (!productsData) return [];
+    return productsData.products || productsData || [];
+  }, [productsData]);
   
   // Check authentication on mount
   if (!isAuthenticated()) {
@@ -41,8 +37,20 @@ const Favorites = () => {
     return null;
   }
 
-  const filteredFavorites = Array.isArray(favorites) 
-    ? favorites.filter(product => {
+  // Merge favorites with full product data from products query
+  // This is needed because favorites API doesn't return complete product info (e.g. image_url is null)
+  const products = useMemo(() => {
+    return favorites.map((fav: any) => {
+      const favoriteProduct = fav.products || fav.product || fav;
+      // Find the full product data from products query
+      const fullProduct = allProducts.find((p: any) => p.id === favoriteProduct.id);
+      // Merge: use full product data if available, otherwise use favorite product data
+      return fullProduct || favoriteProduct;
+    });
+  }, [favorites, allProducts]);
+
+  const filteredFavorites = Array.isArray(products) 
+    ? products.filter(product => {
         if (!product) return false;
         const name = product.name || product.product_name || product.item_name || '';
         const hasValidData = name && (product.price || product.product_price || product.image_url || product.image);
@@ -114,22 +122,26 @@ const Favorites = () => {
           </div>
         ) : (
           <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
-            {filteredFavorites.map((product: any) => {
-              // Handle different possible ID fields
-              const productId = product.id || product.product_id || product.item_id;
-              const productName = product.name || product.product_name || product.item_name || 'Unknown';
-              const productImage = product.image_url || product.image || product.product_image || '';
-              const productPrice = product.price || product.product_price || '0';
-              const productType = product.type || product.category || product.product_type || '';
+            {filteredFavorites.map((product: any, index: number) => {
+              // Product is already extracted from the nested structure
+              const productId = product.id;
+              const productName = product.name || 'Unknown';
+              
+              // Handle image from various formats - same as Products page
+              const productImage = product.image_url || product.image || '';
+              const productPrice = String(product.price || '0');
+              const productType = product.type || product.category || '';
+              const productBrand = product.brand || (product.brands?.name) || '';
               
               return (
                 <ProductCard
-                  key={productId}
+                  key={`${productId}-${index}`}
                   id={productId}
                   name={productName}
                   image={productImage}
                   price={productPrice}
                   category={productType}
+                  brand={productBrand}
                 />
               );
             })}
