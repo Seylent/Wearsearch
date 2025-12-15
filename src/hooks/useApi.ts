@@ -24,6 +24,7 @@ import type {
 export const queryKeys = {
   products: ['products'] as const,
   product: (id: string) => ['product', id] as const,
+  relatedProducts: (id: string) => ['relatedProducts', id] as const,
   stores: ['stores'] as const,
   store: (id: string) => ['store', id] as const,
   brands: ['brands'] as const,
@@ -60,6 +61,20 @@ export const useProduct = (id: string) => {
     },
     enabled: !!id,
     staleTime: 5 * 60 * 1000,
+  });
+};
+
+// Related Products
+export const useRelatedProducts = (productId: string) => {
+  return useQuery({
+    queryKey: queryKeys.relatedProducts(productId),
+    queryFn: async () => {
+      const response = await api.get(`/items/${productId}/related`);
+      return response.data;
+    },
+    enabled: !!productId,
+    staleTime: 10 * 60 * 1000, // 10 minutes
+    gcTime: 30 * 60 * 1000,
   });
 };
 
@@ -359,6 +374,45 @@ export const useRemoveFavorite = () => {
       console.error('Remove favorite failed:', error.response?.data || error.message);
       throw error;
     },
+  });
+};
+
+// Sync guest favorites after login
+export const useSyncGuestFavorites = () => {
+  const queryClient = useQueryClient();
+  
+  return useMutation({
+    mutationFn: async (guestFavorites: string[]) => {
+      const response = await api.post('/favorites/sync', { guestFavorites });
+      return response.data;
+    },
+    onSuccess: (data) => {
+      // Invalidate favorites cache to refresh with merged data
+      queryClient.invalidateQueries({ queryKey: queryKeys.favorites, refetchType: 'active' });
+      console.log(`✅ Synced ${data.added} favorites. Total: ${data.total}`);
+      return data;
+    },
+    onError: (error: any) => {
+      console.error('❌ Failed to sync guest favorites:', error.response?.data || error.message);
+      throw error;
+    },
+  });
+};
+
+// Check if product is favorited (optional - can use useFavorites instead)
+export const useCheckFavorite = (productId: string, enabled = true) => {
+  return useQuery({
+    queryKey: ['checkFavorite', productId],
+    queryFn: async () => {
+      try {
+        const response = await api.get(`/user/favorites/${productId}/check`);
+        return response.data;
+      } catch (error) {
+        return { is_favorited: false };
+      }
+    },
+    enabled: enabled && !!productId && !!getAuth(),
+    staleTime: 1 * 60 * 1000, // 1 minute
   });
 };
 

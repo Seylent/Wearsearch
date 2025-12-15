@@ -5,6 +5,7 @@
 
 import { api, handleApiError } from './api';
 import { setAuth, clearAuth, isAuthenticated } from '@/utils/authStorage';
+import { getValidGuestFavorites, clearGuestFavorites } from './guestFavorites';
 import type { User, LoginCredentials, RegisterData, AuthResponse } from '@/types';
 
 const ENDPOINTS = {
@@ -38,6 +39,9 @@ export const authService = {
         if (data.user) {
           localStorage.setItem('user', JSON.stringify(data.user));
         }
+
+        // Sync guest favorites after successful login
+        await this.syncGuestFavorites(token);
       }
 
       return data;
@@ -65,6 +69,9 @@ export const authService = {
         setAuth(token, userId, expiresAt);
         
         // Store user data for profile display
+
+        // Sync guest favorites after successful registration
+        await this.syncGuestFavorites(token);
         if (data.user) {
           localStorage.setItem('user', JSON.stringify(data.user));
         }
@@ -141,6 +148,45 @@ export const authService = {
       return user.role === 'admin';
     } catch (error) {
       return false;
+    }
+  },
+
+  /**
+
+  /**
+   * Sync guest favorites after login/register
+   */
+  async syncGuestFavorites(token: string): Promise<void> {
+    try {
+      // Get only valid UUID favorites
+      const guestFavorites = getValidGuestFavorites();
+      
+      // Skip if no guest favorites
+      if (guestFavorites.length === 0) {
+        console.log('ℹ️ No guest favorites to sync');
+        return;
+      }
+
+      console.log(`🔄 Syncing ${guestFavorites.length} valid guest favorites...`);
+
+      const response = await api.post('/favorites/sync', { guestFavorites });
+      const result = response.data;
+
+      if (result.success !== false) {
+        console.log(`✅ Synced ${result.added || 0} favorites. Total: ${result.total || 0}`);
+        
+        // Clear guest favorites after successful sync
+        clearGuestFavorites();
+      }
+    } catch (error: any) {
+      console.error('❌ Failed to sync guest favorites:', error);
+      
+      // Show detailed error message
+      if (error.response?.data?.error) {
+        console.error('Error details:', error.response.data.error);
+      }
+      
+      // Keep guest favorites in localStorage for retry - don't clear on error
     }
   },
 

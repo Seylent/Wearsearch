@@ -43,16 +43,26 @@ export interface Product {
   id: string;
   name: string;
   brand?: string;
+  brand_id?: string;
+  brands?: {
+    id: string;
+    name: string;
+  };
   type?: string;
-  price?: number;
+  category?: string;
+  color?: string;
+  price?: number | string;
   description?: string;
   image?: string;
   image_url?: string;
+  images?: string[] | null;
+  gender?: string;
   created_at?: string;
   updated_at?: string;
 }
 
 export interface ProductsResponse {
+  success?: boolean;
   products: Product[];
   total?: number;
   page?: number;
@@ -65,14 +75,20 @@ export interface Store {
   name: string;
   description?: string;
   image?: string;
+  logo_url?: string;
   website?: string;
+  telegram?: string;
+  instagram?: string;
+  tiktok_url?: string;
   location?: string;
+  shipping?: string;
   rating?: number;
   created_at?: string;
   updated_at?: string;
 }
 
 export interface StoresResponse {
+  success?: boolean;
   stores: Store[];
   total?: number;
 }
@@ -107,18 +123,40 @@ export interface HeroImagesResponse {
   images: HeroImage[];
 }
 
-// Stats Types
-export interface SiteStats {
-  brands: number;
-  products: number;
-  stores: number;
+  satisfaction_rate?: number;
+}
+
+export interface StatisticsResponse {
+  success: boolean;
+  data: {
+    total_products: number;
+    total_stores: number;
+    total_brands: number;
+    satisfaction_rate: number;
+  };
 }
 
 // Favorite Types
+export interface FavoriteProduct {
+  id: string;
+  product_id: string;
+  user_id?: string;
+  created_at?: string;
+  products?: Product;
+  product?: Product;
+}
+
 export interface Favorite {
   id: string;
   user_id: string;
   product_id: string;
+  created_at?: string;
+}
+
+export interface FavoritesResponse {
+  success?: boolean;
+  favorites: FavoriteProduct[];
+  total?: number
   created_at?: string;
 }
 

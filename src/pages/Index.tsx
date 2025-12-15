@@ -143,24 +143,15 @@ const Index: React.FC = () => {
           <div className="max-w-4xl mx-auto text-center mt-20">
             {/* Main headline */}
             <h1 className="font-display text-5xl sm:text-6xl md:text-7xl lg:text-8xl font-bold mb-6 tracking-tight select-none">
-              <span className="block text-white drop-shadow-[0_0_20px_rgba(255,255,255,0.8)] filter brightness-125">Discover</span>
+              <span className="block text-white filter brightness-110">Discover</span>
               <span className="block relative inline-block">
-                <span className="text-white drop-shadow-[0_0_35px_rgba(255,255,255,1)] filter brightness-150">Exceptional</span>
-                {/* Decorative underline */}
-                <svg className="absolute -bottom-2 left-0 w-full h-3" viewBox="0 0 300 12" preserveAspectRatio="none">
-                  <path
-                    d="M0,6 Q75,0 150,6 T300,6"
-                    fill="none"
-                    stroke="rgba(255,255,255,0.6)"
-                    strokeWidth="2"
-                  />
-                </svg>
+                <span className="text-white filter brightness-125">Exceptional</span>
               </span>
-              <span className="block text-white drop-shadow-[0_0_25px_rgba(255,255,255,0.9)] filter brightness-125">Fashion</span>
+              <span className="block text-white filter brightness-110">Fashion</span>
             </h1>
 
             {/* Subheadline */}
-            <p className="text-lg sm:text-xl text-white/80 max-w-2xl mx-auto mb-10 leading-relaxed drop-shadow-[0_0_15px_rgba(255,255,255,0.4)] backdrop-blur-sm select-none">
+            <p className="text-lg sm:text-xl text-white/80 max-w-2xl mx-auto mb-10 leading-relaxed backdrop-blur-sm select-none">
               Curated collections from the world's most innovative designers
             </p>
 
@@ -171,11 +162,11 @@ const Index: React.FC = () => {
                   const productsSection = document.getElementById('products-section');
                   productsSection?.scrollIntoView({ behavior: 'smooth', block: 'start' });
                 }}
-                className="relative w-16 h-16 rounded-full border-2 border-white/40 bg-white/10 backdrop-blur-md hover:bg-white/20 hover:border-white/60 transition-all duration-300 flex items-center justify-center group shadow-[0_0_35px_rgba(255,255,255,0.3)] hover:shadow-[0_0_50px_rgba(255,255,255,0.5)] cursor-pointer select-none"
+                className="relative w-16 h-16 rounded-full border-2 border-white/30 bg-white/5 backdrop-blur-md hover:bg-white/10 hover:border-white/40 transition-all duration-300 flex items-center justify-center group cursor-pointer select-none"
                 aria-label="Scroll to products"
               >
                 <svg
-                  className="w-6 h-6 text-white animate-bounce filter drop-shadow-[0_0_10px_rgba(255,255,255,0.8)]"
+                  className="w-6 h-6 text-white animate-bounce"
                   fill="none"
                   strokeLinecap="round"
                   strokeLinejoin="round"
@@ -194,10 +185,8 @@ const Index: React.FC = () => {
                 onClick={() => navigate("/stores")}
                 size="lg" 
                 variant="outline"
-                className="relative border border-white/20 text-white bg-white/5 backdrop-blur-xl hover:bg-white/10 hover:border-white/40 shadow-[0_0_30px_rgba(255,255,255,0.2)] hover:shadow-[0_0_40px_rgba(255,255,255,0.4)] transition-all overflow-hidden group"
+                className="relative border border-white/20 text-white bg-white/5 backdrop-blur-xl hover:bg-white/10 hover:border-white/30 transition-all overflow-hidden group"
               >
-                {/* Vertical light streak */}
-                <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/10 to-transparent translate-x-[-200%] group-hover:translate-x-[200%] transition-transform duration-1000" />
                 View Stores
               </Button>
             </div>
@@ -209,21 +198,12 @@ const Index: React.FC = () => {
                 { value: stats.products >= 1000 ? `${Math.floor(stats.products / 1000)}K+` : `${stats.products}+`, label: "Products" },
                 { value: stats.stores >= 1000 ? `${Math.floor(stats.stores / 1000)}K+` : `${stats.stores}+`, label: "Stores" },
               ].map((stat) => (
-                <div key={stat.label} className="relative text-center px-8 py-5 rounded-2xl bg-white/5 backdrop-blur-[30px] border border-white/20 shadow-[0_0_30px_rgba(255,255,255,0.15)] overflow-hidden group hover:bg-white/10 hover:border-white/30 hover:shadow-[0_0_40px_rgba(255,255,255,0.25)] transition-all">
-                  {/* Vertical light streak */}
-                  <div className="absolute inset-0 bg-gradient-to-b from-transparent via-white/10 to-transparent translate-y-[-200%] group-hover:translate-y-[200%] transition-transform duration-1000" />
-                  <p className="relative font-display text-2xl sm:text-3xl font-bold mb-1 text-white drop-shadow-[0_0_20px_rgba(255,255,255,0.8)] filter brightness-125">{stat.value}</p>
-                  <p className="relative text-xs text-white/70 uppercase tracking-wider drop-shadow-[0_0_10px_rgba(255,255,255,0.4)]">{stat.label}</p>
+                <div key={stat.label} className="relative text-center px-8 py-5 rounded-2xl bg-white/5 backdrop-blur-[30px] border border-white/15 overflow-hidden group hover:bg-white/8 hover:border-white/20 transition-all">
+                  <p className="relative font-display text-2xl sm:text-3xl font-bold mb-1 text-white filter brightness-110">{stat.value}</p>
+                  <p className="relative text-xs text-white/70 uppercase tracking-wider">{stat.label}</p>
                 </div>
               ))}
             </div>
-          </div>
-        </div>
-
-        {/* Scroll indicator */}
-        <div className="absolute bottom-10 left-1/2 -translate-x-1/2 animate-bounce">
-          <div className="w-7 h-12 rounded-full glass-card flex justify-center pt-3">
-            <div className="w-1 h-2.5 bg-foreground rounded-full animate-pulse" />
           </div>
         </div>
       </section>
@@ -235,14 +215,12 @@ const Index: React.FC = () => {
             {features.map((feature) => (
               <div 
                 key={feature.title}
-                className="group relative p-6 rounded-2xl border border-white/10 bg-white/5 backdrop-blur-[25px] hover:border-white/25 hover:bg-white/10 transition-all duration-300 shadow-[0_0_20px_rgba(255,255,255,0.1)] hover:shadow-[0_0_30px_rgba(255,255,255,0.2)] overflow-hidden select-none"
+                className="group relative p-6 rounded-2xl border border-white/10 bg-white/5 backdrop-blur-[25px] hover:border-white/20 hover:bg-white/8 transition-all duration-300 overflow-hidden select-none"
               >
-                {/* Vertical light streak */}
-                <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/5 to-transparent translate-x-[-200%] group-hover:translate-x-[200%] transition-transform duration-1000" />
-                <div className="relative w-12 h-12 rounded-xl bg-white/10 backdrop-blur-sm border border-white/20 flex items-center justify-center mb-4 group-hover:bg-white/15 transition-colors shadow-[0_0_15px_rgba(255,255,255,0.2)] group-hover:shadow-[0_0_20px_rgba(255,255,255,0.3)]">
-                  <feature.icon className="w-6 h-6 text-white filter drop-shadow-[0_0_8px_rgba(255,255,255,0.6)]" />
+                <div className="relative w-12 h-12 rounded-xl bg-white/10 backdrop-blur-sm border border-white/20 flex items-center justify-center mb-4 group-hover:bg-white/15 transition-colors">
+                  <feature.icon className="w-6 h-6 text-white" />
                 </div>
-                <h3 className="relative font-display font-semibold text-base mb-2 text-white drop-shadow-[0_0_10px_rgba(255,255,255,0.5)]">{feature.title}</h3>
+                <h3 className="relative font-display font-semibold text-base mb-2 text-white">{feature.title}</h3>
                 <p className="relative text-sm text-white/70 leading-relaxed">{feature.description}</p>
               </div>
             ))}
@@ -257,24 +235,24 @@ const Index: React.FC = () => {
           <div className="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-6 mb-10">
             <div>
               <div className="inline-flex items-center gap-2 mb-3 select-none">
-                <div className="w-1.5 h-1.5 rounded-full bg-white shadow-[0_0_8px_rgba(255,255,255,0.8)]" />
-                <span className="text-xs text-white/60 uppercase tracking-wider drop-shadow-[0_0_8px_rgba(255,255,255,0.3)]">Just In</span>
+                <div className="w-1.5 h-1.5 rounded-full bg-white" />
+                <span className="text-xs text-white/60 uppercase tracking-wider">Just In</span>
               </div>
-              <h2 className="font-display text-4xl sm:text-5xl font-bold text-white drop-shadow-[0_0_20px_rgba(255,255,255,0.6)] select-none">New Arrivals</h2>
-              <p className="text-white/70 mt-2 drop-shadow-[0_0_10px_rgba(255,255,255,0.3)] select-none">Fresh pieces just added to the collection</p>
+              <h2 className="font-display text-4xl sm:text-5xl font-bold text-white select-none">New Arrivals</h2>
+              <p className="text-white/70 mt-2 select-none">Fresh pieces just added to the collection</p>
             </div>
           </div>
 
-          {/* Products Grid - 2 rows of 3 */}
+          {/* Products Grid - Smaller cards */}
           {productsLoading ? (
-            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6">
-              {[...Array(6)].map((_, i) => (
+            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4">
+              {[...Array(10)].map((_, i) => (
                 <div key={i} className="aspect-[3/4] rounded-2xl bg-card/50 animate-pulse" />
               ))}
             </div>
           ) : (
-            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6">
-              {products.slice(0, 6).map((product) => (
+            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4">
+              {products.slice(0, 10).map((product) => (
                 <ProductCard
                   key={product.id}
                   id={product.id}
@@ -291,10 +269,8 @@ const Index: React.FC = () => {
           <div className="text-center mt-12">
             <button 
               onClick={() => navigate("/products")}
-              className="relative px-8 py-3 rounded-full border border-white/20 bg-white/5 backdrop-blur-[30px] text-white font-medium text-sm hover:bg-white/10 hover:border-white/40 transition-all duration-300 shadow-[0_0_25px_rgba(255,255,255,0.2)] hover:shadow-[0_0_35px_rgba(255,255,255,0.3)] overflow-hidden group"
+              className="relative px-8 py-3 rounded-full border border-white/20 bg-white/5 backdrop-blur-[30px] text-white font-medium text-sm hover:bg-white/10 hover:border-white/30 transition-all duration-300 overflow-hidden group"
             >
-              {/* Vertical light streak */}
-              <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/10 to-transparent translate-x-[-200%] group-hover:translate-x-[200%] transition-transform duration-1000" />
               <span className="relative">View All Products</span>
             </button>
           </div>

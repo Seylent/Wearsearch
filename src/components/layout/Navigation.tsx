@@ -52,30 +52,30 @@ const Navigation: React.FC = () => {
 
   return (
     <header className="fixed top-0 left-0 right-0 z-50 flex justify-center pt-6 px-4">
-      <nav className="flex items-center justify-between gap-8 px-6 py-3 rounded-full border border-zinc-700/80 bg-zinc-900/60 backdrop-blur-xl shadow-2xl shadow-black/60 max-w-7xl w-full neon-glow-soft">
-        {/* Logo */}
+      <nav className="flex items-center justify-between gap-0 rounded-full border border-zinc-700/80 bg-zinc-900/80 backdrop-blur-2xl shadow-[0_8px_32px_rgba(0,0,0,0.6)] max-w-7xl w-full overflow-hidden">
+        {/* Left Section - Logo */}
         <div 
-          className="flex items-center gap-2.5 cursor-pointer" 
+          className="flex items-center gap-2.5 cursor-pointer group px-6 py-3 border-r border-zinc-700/60" 
           onClick={handleLogoClick}
         >
           <span 
-            className="text-white text-2xl tracking-tight"
+            className="text-white text-xl tracking-tight transition-all duration-300"
             style={{ fontFamily: "'Youre Gone', sans-serif" }}
           >
             wearsearch
           </span>
         </div>
 
-        {/* Nav Links */}
-        <div className="hidden md:flex items-center gap-1">
+        {/* Center Section - Navigation Links */}
+        <div className="hidden md:flex items-center gap-1 flex-1 justify-center px-6 py-3 border-r border-zinc-700/60">
           {navLinks.map((link) => (
             <Link
               key={link.name}
               to={link.href}
-              className={`px-4 py-2 text-sm font-medium transition-all duration-300 rounded-full ${
+              className={`px-4 py-1.5 text-sm font-medium transition-all duration-300 rounded-full ${
                 location.pathname === link.href 
-                  ? "text-white bg-zinc-800/80 shadow-lg shadow-white/10" 
-                  : "text-zinc-400 hover:text-white hover:bg-zinc-800/50 hover:shadow-md hover:shadow-white/5"
+                  ? "text-white bg-zinc-800/90" 
+                  : "text-zinc-400 hover:text-white hover:bg-zinc-800/60"
               }`}
             >
               {link.name}
@@ -85,10 +85,10 @@ const Navigation: React.FC = () => {
           {isAdmin && (
             <Link
               to="/admin"
-              className={`px-4 py-2 text-sm font-medium transition-all duration-300 rounded-full ${
+              className={`px-4 py-1.5 text-sm font-medium transition-all duration-300 rounded-full ${
                 location.pathname === "/admin" 
-                  ? "text-white bg-zinc-800/80 shadow-lg shadow-white/10" 
-                  : "text-zinc-400 hover:text-white hover:bg-zinc-800/50 hover:shadow-md hover:shadow-white/5"
+                  ? "text-white bg-zinc-800/90" 
+                  : "text-zinc-400 hover:text-white hover:bg-zinc-800/60"
               }`}
             >
               Admin
@@ -96,23 +96,23 @@ const Navigation: React.FC = () => {
           )}
         </div>
 
-        {/* Right Side Actions */}
-        <div className="flex items-center gap-2">
+        {/* Right Section - Search & Profile */}
+        <div className="flex items-center gap-2 px-6 py-3">
           <button 
-            className="w-9 h-9 rounded-full flex items-center justify-center hover:bg-zinc-800/60 hover:shadow-md hover:shadow-white/10 transition-all duration-300"
+            className="w-8 h-8 rounded-full flex items-center justify-center hover:bg-zinc-800/70 transition-all duration-300 group"
             onClick={() => setShowSearch(true)}
           >
-            <Search className="w-4 h-4 text-zinc-400" />
+            <Search className="w-4 h-4 text-zinc-400 group-hover:text-white transition-colors" />
           </button>
           
           {user ? (
             <UserProfileMenu />
           ) : (
             <button 
-              className="w-9 h-9 rounded-full flex items-center justify-center hover:bg-zinc-800/60 hover:shadow-md hover:shadow-white/10 transition-all duration-300"
+              className="w-8 h-8 rounded-full flex items-center justify-center hover:bg-zinc-800/70 transition-all duration-300 group"
               onClick={() => navigate("/auth")}
             >
-              <UserIcon className="w-4 h-4 text-zinc-400" />
+              <UserIcon className="w-4 h-4 text-zinc-400 group-hover:text-white transition-colors" />
             </button>
           )}
         </div>

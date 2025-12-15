@@ -3,13 +3,14 @@ import Navigation from "@/components/layout/Navigation";
 import { Footer } from "@/components/layout/Footer";
 import { NeonAbstractions } from "@/components/NeonAbstractions";
 import ProductCard from "@/components/ProductCard";
+import { ProductGridSkeleton } from "@/components/common/SkeletonLoader";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
-import { Filter, Search, Sparkles } from "lucide-react";
+import { Filter, Search, Sparkles, AlertCircle } from "lucide-react";
 import {
   Pagination,
   PaginationContent,
@@ -19,13 +20,17 @@ import {
   PaginationPrevious,
   PaginationEllipsis,
 } from "@/components/ui/pagination";
-import { useProducts } from "@/hooks/useApi";
-import type { Product } from "@/services/productService";
+import { useProducts, useBrands } from "@/hooks/useApi";
+import { useDebounce } from "@/hooks/useDebounce";
+import type { Product } from "@/types";
 
 const Products = () => {
   const [searchQuery, setSearchQuery] = useState("");
+  const debouncedSearch = useDebounce(searchQuery, 300);
   const [selectedColors, setSelectedColors] = useState<string[]>([]);
   const [selectedTypes, setSelectedTypes] = useState<string[]>([]);
+  const [selectedBrand, setSelectedBrand] = useState<string>("");
+  const [brandSearchQuery, setBrandSearchQuery] = useState("");
   const [sortBy, setSortBy] = useState("default");
   const [currentPage, setCurrentPage] = useState(1);
   const [filterOpen, setFilterOpen] = useState(false);
@@ -34,19 +39,33 @@ const Products = () => {
   const colors = ["Black", "White", "Gray", "Beige", "Brown", "Red", "Blue", "Navy", "Green", "Olive", "Yellow", "Orange", "Pink", "Purple", "Cream"];
   const types = ["Outerwear", "Tops", "Bottoms", "Dresses", "Shoes", "Accessories"];
 
-  const { data: productsData, isLoading: loading } = useProducts();
+  const { data: productsData, isLoading: loading, error } = useProducts();
+  const { data: brandsData } = useBrands();
   
   const allProducts = useMemo(() => {
     if (!productsData) return [];
     return productsData.products || productsData || [];
   }, [productsData]);
 
+  const brands = useMemo(() => {
+    if (!brandsData) return [];
+    return Array.isArray(brandsData) ? brandsData : [];
+  }, [brandsData]);
+
+  const filteredBrands = useMemo(() => {
+    if (!brandSearchQuery.trim()) return brands;
+    const query = brandSearchQuery.toLowerCase();
+    return brands.filter((brand: any) => 
+      brand.name?.toLowerCase().includes(query)
+    );
+  }, [brands, brandSearchQuery]);
+
   const filteredAndSortedProducts = useMemo(() => {
     let filtered = [...allProducts];
 
-    // Search filter
-    if (searchQuery.trim()) {
-      const query = searchQuery.toLowerCase();
+    // Search filter - use debounced value
+    if (debouncedSearch.trim()) {
+      const query = debouncedSearch.toLowerCase();
       filtered = filtered.filter((p: Product) =>
         p.name?.toLowerCase().includes(query) ||
         p.type?.toLowerCase().includes(query) ||
@@ -68,6 +87,13 @@ const Products = () => {
       );
     }
 
+    // Brand filter
+    if (selectedBrand) {
+      filtered = filtered.filter((p: Product) =>
+        p.brand === selectedBrand
+      );
+    }
+
     // Sorting
     if (sortBy !== 'default') {
       const [field, order] = sortBy.split('-');
@@ -83,7 +109,7 @@ const Products = () => {
     }
 
     return filtered;
-  }, [allProducts, searchQuery, selectedColors, selectedTypes, sortBy]);
+  }, [allProducts, debouncedSearch, selectedColors, selectedTypes, sortBy]);
 
   const totalProducts = filteredAndSortedProducts.length;
   const totalPages = Math.ceil(totalProducts / itemsPerPage);
@@ -110,6 +136,8 @@ const Products = () => {
   const clearAllFilters = () => {
     setSelectedColors([]);
     setSelectedTypes([]);
+    setSelectedBrand("");
+    setBrandSearchQuery("");
     setSearchQuery("");
     setCurrentPage(1);
   };
@@ -169,9 +197,9 @@ const Products = () => {
                   <Button variant="outline" size="lg" className="border-foreground/20 bg-card/50 text-foreground hover:bg-card hover:border-foreground/30">
                     <Filter className="w-4 h-4 mr-2" />
                     Filters
-                    {(selectedColors.length + selectedTypes.length) > 0 && (
+                    {(selectedColors.length + selectedTypes.length + (selectedBrand ? 1 : 0)) > 0 && (
                       <span className="ml-2 bg-primary text-primary-foreground rounded-full w-5 h-5 flex items-center justify-center text-[10px] font-bold">
-                        {selectedColors.length + selectedTypes.length}
+                        {selectedColors.length + selectedTypes.length + (selectedBrand ? 1 : 0)}
                       </span>
                     )}
                   </Button>
@@ -227,6 +255,50 @@ const Products = () => {
                       </div>
                     </div>
 
+                    {/* Brand Filter */}
+                    <div>
+                      <h3 className="font-semibold mb-4 text-sm uppercase tracking-widest text-muted-foreground">Brand</h3>
+                      {selectedBrand && (
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => { setSelectedBrand(""); setCurrentPage(1); }}
+                          className="mb-3 text-xs text-muted-foreground hover:text-foreground"
+                        >
+                          Clear brand: {selectedBrand}
+                        </Button>
+                      )}
+                      <Input
+                        type="text"
+                        placeholder="Search brands..."
+                        value={brandSearchQuery}
+                        onChange={(e) => setBrandSearchQuery(e.target.value)}
+                        className="mb-3 h-9 text-sm"
+                      />
+                      <div className="max-h-48 overflow-y-auto space-y-2 border border-foreground/10 rounded-lg p-2">
+                        {filteredBrands.length > 0 ? (
+                          filteredBrands.map((brand: any) => (
+                            <button
+                              key={brand.id}
+                              onClick={() => {
+                                setSelectedBrand(brand.name);
+                                setCurrentPage(1);
+                              }}
+                              className={`w-full text-left px-3 py-2 rounded-md text-sm transition-colors ${
+                                selectedBrand === brand.name
+                                  ? "bg-primary text-primary-foreground"
+                                  : "hover:bg-foreground/5"
+                              }`}
+                            >
+                              {brand.name}
+                            </button>
+                          ))
+                        ) : (
+                          <p className="text-xs text-muted-foreground text-center py-4">No brands found</p>
+                        )}
+                      </div>
+                    </div>
+
                     <div className="flex gap-3 pt-6 border-t border-foreground/10">
                       <Button 
                         variant="ghost" 
@@ -246,7 +318,7 @@ const Products = () => {
                 </DialogContent>
               </Dialog>
               
-              {(selectedColors.length > 0 || selectedTypes.length > 0) && (
+              {(selectedColors.length > 0 || selectedTypes.length > 0 || selectedBrand) && (
                 <Button 
                   variant="ghost" 
                   onClick={clearAllFilters}
@@ -273,8 +345,19 @@ const Products = () => {
           
           {/* Products Grid */}
           {loading ? (
-            <div className="min-h-[400px] flex items-center justify-center">
-              <div className="animate-spin w-8 h-8 border-2 border-foreground border-t-transparent rounded-full"></div>
+            <ProductGridSkeleton count={24} columns={6} />
+          ) : error ? (
+            <div className="text-center py-32 border border-dashed border-destructive/30 rounded-3xl bg-destructive/5">
+              <div className="w-16 h-16 rounded-full bg-destructive/10 flex items-center justify-center mx-auto mb-6">
+                <AlertCircle className="w-8 h-8 text-destructive" />
+              </div>
+              <h3 className="font-display text-xl font-semibold mb-2">Failed to load products</h3>
+              <p className="text-muted-foreground mb-6 max-w-md mx-auto">
+                We couldn't load the products. Please check your connection and try again.
+              </p>
+              <Button onClick={() => window.location.reload()}>
+                Retry
+              </Button>
             </div>
           ) : (
             <>

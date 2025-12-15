@@ -74,8 +74,8 @@ const AdminBrands = () => {
     setIsLoading(true);
     try {
       const url = searchQuery 
-        ? `http://localhost:3000/api${ENDPOINTS.BRANDS.LIST}?search=${encodeURIComponent(searchQuery)}`
-        : `http://localhost:3000/api${ENDPOINTS.BRANDS.LIST}`;
+        ? `http://192.168.0.117:3000/api${ENDPOINTS.BRANDS.LIST}?search=${encodeURIComponent(searchQuery)}`
+        : `http://192.168.0.117:3000/api${ENDPOINTS.BRANDS.LIST}`;
       
       const response = await fetch(url);
       const data = await response.json();
@@ -117,7 +117,7 @@ const AdminBrands = () => {
     }
 
     try {
-      const response = await fetch(`http://localhost:3000/api${ENDPOINTS.BRANDS.CREATE}`, {
+      const response = await fetch(`http://192.168.0.117:3000/api${ENDPOINTS.BRANDS.CREATE}`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -155,7 +155,7 @@ const AdminBrands = () => {
     if (!editingBrand) return;
 
     try {
-      const response = await fetch(`http://localhost:3000/api${ENDPOINTS.BRANDS.UPDATE(editingBrand.id)}`, {
+      const response = await fetch(`http://192.168.0.117:3000/api${ENDPOINTS.BRANDS.UPDATE(editingBrand.id)}`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
@@ -191,7 +191,7 @@ const AdminBrands = () => {
     if (!confirm(`Are you sure you want to delete "${brandName}"? This cannot be undone.`)) return;
 
     try {
-      const response = await fetch(`http://localhost:3000/api${ENDPOINTS.BRANDS.DELETE(brandId)}`, {
+      const response = await fetch(`http://192.168.0.117:3000/api${ENDPOINTS.BRANDS.DELETE(brandId)}`, {
         method: 'DELETE',
         headers: {
           'Authorization': `Bearer ${localStorage.getItem('access_token')}`,
@@ -479,4 +479,5 @@ const AdminBrands = () => {
 };
 
 export default AdminBrands;
+
 

@@ -11,6 +11,7 @@ import { useToast } from "@/hooks/use-toast";
 import { convertS3UrlToHttps } from "@/lib/utils";
 import { FavoriteButton } from "@/components/FavoriteButton";
 import { StoreRating } from "@/components/StoreRating";
+import { RelatedProducts } from "@/components/RelatedProducts";
 import {
   Select,
   SelectContent,
@@ -110,7 +111,7 @@ const ProductDetail = () => {
   const fetchProduct = async () => {
     try {
       console.log('🔍 Fetching product:', id);
-      const response = await fetch(`http://localhost:3000/api/items/${id}`);
+      const response = await fetch(`http://192.168.0.117:3000/api/items/${id}`);
       const result = await response.json();
       console.log('📦 Product response:', result);
       
@@ -146,7 +147,7 @@ const ProductDetail = () => {
   const fetchBrand = async (brandId: string) => {
     try {
       console.log('🏷️ Fetching brand:', brandId);
-      const response = await fetch(`http://localhost:3000/api/brands/${brandId}`);
+      const response = await fetch(`http://192.168.0.117:3000/api/brands/${brandId}`);
       const result = await response.json();
       console.log('🏷️ Brand response:', result);
       
@@ -164,7 +165,7 @@ const ProductDetail = () => {
   const fetchStores = async () => {
     try {
       console.log('🏪 Fetching stores for product:', id);
-      const response = await fetch(`http://localhost:3000/api/items/${id}/stores`);
+      const response = await fetch(`http://192.168.0.117:3000/api/items/${id}/stores`);
       const result = await response.json();
       console.log('🏪 Stores response:', result);
       
@@ -545,6 +546,14 @@ const ProductDetail = () => {
             </div>
           </div>
         </div>
+
+        {/* Related Products Section */}
+        {product && (
+          <RelatedProducts 
+            productId={String(id)} 
+            className="mb-16 animate-fade-in-up" 
+          />
+        )}
       </div>
 
       <Footer />
@@ -553,3 +562,4 @@ const ProductDetail = () => {
 };
 
 export default ProductDetail;
+

@@ -52,6 +52,7 @@ const Admin = () => {
   // Contacts state
   const [contactTelegram, setContactTelegram] = useState<string>("@wearsearch");
   const [contactInstagram, setContactInstagram] = useState<string>("@wearsearch");
+  const [contactTiktok, setContactTiktok] = useState<string>("@wearsearch");
   const [contactEmail, setContactEmail] = useState<string>("support@wearsearch.com");
   const [savingContacts, setSavingContacts] = useState(false);
   
@@ -59,6 +60,7 @@ const Admin = () => {
   const [storeName, setStoreName] = useState<string>("");
   const [storeTelegram, setStoreTelegram] = useState<string>("");
   const [storeInstagram, setStoreInstagram] = useState<string>("");
+  const [storeTiktok, setStoreTiktok] = useState<string>("");
   const [storeShipping, setStoreShipping] = useState<string>("");
   const [storeLogoUrl, setStoreLogoUrl] = useState<string>("");
   const [editingStore, setEditingStore] = useState<any | null>(null);
@@ -84,6 +86,7 @@ const Admin = () => {
         const contacts = JSON.parse(savedContacts);
         if (contacts.telegram) setContactTelegram(contacts.telegram);
         if (contacts.instagram) setContactInstagram(contacts.instagram);
+        if (contacts.tiktok) setContactTiktok(contacts.tiktok);
         if (contacts.email) setContactEmail(contacts.email);
       } catch (e) {
         console.error('Failed to load saved contacts');
@@ -133,7 +136,7 @@ const Admin = () => {
     console.log('🔍 [checkAdmin] No cache, fetching /me from API (should happen only ONCE)');
     console.trace('Called from:'); // See where this was called from
     try {
-      const response = await fetch('http://localhost:3000/api/auth/me', {
+      const response = await fetch(`${API_BASE_URL}/api/auth/me`, {
         headers: { 'Authorization': `Bearer ${token}` },
       });
       
@@ -175,11 +178,11 @@ const Admin = () => {
     setLoading(true);
     try {
       const [productsRes, storesRes, brandsRes] = await Promise.all([
-        fetch('http://localhost:3000/api/admin/products', {
+        fetch('http://192.168.0.117:3000/api/admin/products', {
           headers: { 'Authorization': `Bearer ${localStorage.getItem('access_token')}` }
         }),
-        fetch('http://localhost:3000/api/stores'),
-        fetch('http://localhost:3000/api/brands')
+        fetch('http://192.168.0.117:3000/api/stores'),
+        fetch('http://192.168.0.117:3000/api/brands')
       ]);
 
       const productsData = await productsRes.json();
@@ -218,7 +221,7 @@ const Admin = () => {
 
   const fetchHeroImages = async () => {
     try {
-      const response = await fetch('http://localhost:3000/api/admin/hero-images', {
+      const response = await fetch(`${API_BASE_URL}/api/admin/hero-images`, {
         headers: { 'Authorization': `Bearer ${localStorage.getItem('access_token')}` }
       });
       const data = await response.json();
@@ -242,7 +245,7 @@ const Admin = () => {
 
     setUploadingHeroImage(true);
     try {
-      const response = await fetch('http://localhost:3000/api/admin/hero-images', {
+      const response = await fetch(`${API_BASE_URL}/api/admin/hero-images`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -281,7 +284,7 @@ const Admin = () => {
     if (!window.confirm('Delete this hero image?')) return;
 
     try {
-      const response = await fetch(`http://localhost:3000/api/admin/hero-images/${id}`, {
+      const response = await fetch(`${API_BASE_URL}/api/admin/hero-images/${id}`, {
         method: 'DELETE',
         headers: { 'Authorization': `Bearer ${localStorage.getItem('access_token')}` }
       });
@@ -311,7 +314,7 @@ const Admin = () => {
 
     try {
       const deletePromises = selectedHeroImages.map(id =>
-        fetch(`http://localhost:3000/api/admin/hero-images/${id}`, {
+        fetch(`http://192.168.0.117:3000/api/admin/hero-images/${id}`, {
           method: 'DELETE',
           headers: { 'Authorization': `Bearer ${localStorage.getItem('access_token')}` }
         }).then(res => res.json())
@@ -363,7 +366,7 @@ const Admin = () => {
 
       const results = await Promise.all(
         existingImages.map(async (img) => {
-          const response = await fetch('http://localhost:3000/api/admin/hero-images', {
+          const response = await fetch('http://192.168.0.117:3000/api/admin/hero-images', {
             method: 'POST',
             headers: {
               'Content-Type': 'application/json',
@@ -397,8 +400,8 @@ const Admin = () => {
       console.log('🔄 Loading product for edit:', productId);
       // Always fetch from API to get fresh data including stores
       const [productRes, storesRes] = await Promise.all([
-        fetch(`http://localhost:3000/api/items/${productId}`),
-        fetch(`http://localhost:3000/api/items/${productId}/stores`)
+        fetch(`http://192.168.0.117:3000/api/items/${productId}`),
+        fetch(`http://192.168.0.117:3000/api/items/${productId}/stores`)
       ]);
       
       const productResult = await productRes.json();
@@ -567,7 +570,7 @@ const Admin = () => {
         fullData: updateData
       });
 
-      const response = await fetch(`http://localhost:3000/api/admin/products/${editingProductId}`, {
+      const response = await fetch(`http://192.168.0.117:3000/api/admin/products/${editingProductId}`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
@@ -655,7 +658,7 @@ const Admin = () => {
 
       console.log('📤 Sending request to backend...');
       // Try NEW format first: Create ONE product with multiple stores
-      const response = await fetch('http://localhost:3000/api/admin/products', {
+      const response = await fetch('http://192.168.0.117:3000/api/admin/products', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -714,7 +717,7 @@ const Admin = () => {
         // OLD FORMAT: Create separate product for each store
         const results = await Promise.all(
           selectedStores.map(async (store) => {
-            const storeResponse = await fetch('http://localhost:3000/api/admin/products', {
+            const storeResponse = await fetch('http://192.168.0.117:3000/api/admin/products', {
               method: 'POST',
               headers: {
                 'Content-Type': 'application/json',
@@ -789,6 +792,7 @@ const Admin = () => {
     setStoreName(store.name);
     setStoreTelegram(store.telegram_url || "");
     setStoreInstagram(store.instagram_url || "");
+    setStoreTiktok(store.tiktok_url || "");
     setStoreShipping(store.shipping_info || "");
     setStoreLogoUrl(store.logo_url || "");
     // Scroll to form
@@ -800,6 +804,7 @@ const Admin = () => {
     setStoreName("");
     setStoreTelegram("");
     setStoreInstagram("");
+    setStoreTiktok("");
     setStoreShipping("");
     setStoreLogoUrl("");
   };
@@ -810,8 +815,8 @@ const Admin = () => {
 
     try {
       const url = editingStore 
-        ? `http://localhost:3000/api/admin/stores/${editingStore.id}`
-        : 'http://localhost:3000/api/admin/stores';
+        ? `${API_BASE_URL}/api/admin/stores/${editingStore.id}`
+        : `${API_BASE_URL}/api/admin/stores`;
       
       const method = editingStore ? 'PUT' : 'POST';
 
@@ -825,6 +830,7 @@ const Admin = () => {
           name: storeName,
           telegram_url: storeTelegram || null,
           instagram_url: storeInstagram || null,
+          tiktok_url: storeTiktok || null,
           shipping_info: storeShipping || null,
           logo_url: storeLogoUrl || null,
         }),
@@ -842,6 +848,7 @@ const Admin = () => {
         setStoreName("");
       setStoreTelegram("");
       setStoreInstagram("");
+      setStoreTiktok("");
       setStoreShipping("");
       setStoreLogoUrl("");
       fetchData();
@@ -1347,6 +1354,16 @@ const Admin = () => {
                     </div>
 
                     <div className="space-y-2">
+                      <Label>TikTok URL</Label>
+                      <Input
+                        value={storeTiktok}
+                        onChange={(e) => setStoreTiktok(e.target.value)}
+                        placeholder="https://tiktok.com/@storename"
+                        className="h-12 bg-card/50 border-border/50 rounded-lg"
+                      />
+                    </div>
+
+                    <div className="space-y-2">
                       <Label>Shipping Info</Label>
                       <Input
                         value={storeShipping}
@@ -1487,7 +1504,7 @@ const Admin = () => {
                   }
 
                   try {
-                    const response = await fetch('http://localhost:3000/api/brands', {
+                    const response = await fetch('http://192.168.0.117:3000/api/brands', {
                       method: 'POST',
                       headers: {
                         'Content-Type': 'application/json',
@@ -1557,7 +1574,7 @@ const Admin = () => {
                           onClick={async () => {
                             if (window.confirm(`Delete brand "${brand.name}"?`)) {
                               try {
-                                const response = await fetch(`http://localhost:3000/api/brands/${brand.id}`, {
+                                const response = await fetch(`${API_BASE_URL}/api/brands/${brand.id}`, {
                                   method: 'DELETE',
                                   headers: {
                                     'Authorization': `Bearer ${localStorage.getItem('access_token')}`
@@ -1783,6 +1800,19 @@ const Admin = () => {
                   </div>
 
                   <div>
+                    <Label htmlFor="contact-tiktok">TikTok Username</Label>
+                    <Input
+                      id="contact-tiktok"
+                      type="text"
+                      placeholder="@wearsearch"
+                      value={contactTiktok}
+                      onChange={(e) => setContactTiktok(e.target.value)}
+                      className="mt-1.5"
+                    />
+                    <p className="text-xs text-muted-foreground mt-1">Include the @ symbol</p>
+                  </div>
+
+                  <div>
                     <Label htmlFor="contact-email">Support Email</Label>
                     <Input
                       id="contact-email"
@@ -1801,6 +1831,7 @@ const Admin = () => {
                       localStorage.setItem('site_contacts', JSON.stringify({
                         telegram: contactTelegram,
                         instagram: contactInstagram,
+                        tiktok: contactTiktok,
                         email: contactEmail
                       }));
                       setTimeout(() => {
@@ -1836,3 +1867,4 @@ const Admin = () => {
 };
 
 export default Admin;
+

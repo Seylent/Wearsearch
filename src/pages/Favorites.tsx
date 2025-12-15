@@ -4,16 +4,19 @@ import { useToast } from "@/hooks/use-toast";
 import Navigation from "@/components/layout/Navigation";
 import { Footer } from "@/components/layout/Footer";
 import ProductCard from "@/components/ProductCard";
+import { ProductGridSkeleton } from "@/components/common/SkeletonLoader";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { Search, Heart } from "lucide-react";
+import { Search, Heart, AlertCircle } from "lucide-react";
 import { isAuthenticated } from "@/utils/authStorage";
 import { useFavorites, useProducts } from "@/hooks/useApi";
+import { useDebounce } from "@/hooks/useDebounce";
 
 const Favorites = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
   const [searchQuery, setSearchQuery] = useState("");
+  const debouncedSearch = useDebounce(searchQuery, 300);
   
   // Use React Query hooks for favorites and products
   const { data: favoritesData, isLoading: loading, error } = useFavorites();
@@ -55,7 +58,7 @@ const Favorites = () => {
         const name = product.name || product.product_name || product.item_name || '';
         const hasValidData = name && (product.price || product.product_price || product.image_url || product.image);
         if (!hasValidData) return false;
-        return name.toLowerCase().includes(searchQuery.toLowerCase());
+        return name.toLowerCase().includes(debouncedSearch.toLowerCase());
       })
     : [];
 
@@ -93,8 +96,19 @@ const Favorites = () => {
 
         {/* Content */}
         {loading ? (
-          <div className="min-h-[400px] flex items-center justify-center">
-            <div className="animate-spin w-8 h-8 border-2 border-foreground border-t-transparent rounded-full"></div>
+          <ProductGridSkeleton count={12} columns={4} />
+        ) : error ? (
+          <div className="text-center py-32 border border-dashed border-destructive/30 rounded-3xl bg-destructive/5">
+            <div className="w-16 h-16 rounded-full bg-destructive/10 flex items-center justify-center mx-auto mb-6">
+              <AlertCircle className="w-8 h-8 text-destructive" />
+            </div>
+            <h3 className="font-display text-xl font-semibold mb-2">Failed to load favorites</h3>
+            <p className="text-muted-foreground mb-6 max-w-md mx-auto">
+              We couldn't load your favorites. Please check your connection and try again.
+            </p>
+            <Button onClick={() => window.location.reload()}>
+              Retry
+            </Button>
           </div>
         ) : filteredFavorites.length === 0 ? (
           <div className="text-center py-20 border border-dashed border-border/30 rounded-3xl bg-card/10">
@@ -107,11 +121,7 @@ const Favorites = () => {
             <p className="text-muted-foreground mb-6 max-w-md mx-auto select-none">
               {searchQuery 
                 ? "Try adjusting your search terms" 
-                : loading 
-                  ? "Loading your favorites..." 
-                  : error
-                    ? "Unable to load favorites. Please try again."
-                    : "Start exploring and save items you love to see them here"}
+                : "Start exploring and save items you love to see them here"}
             </p>
             <Button 
               onClick={() => navigate("/products")}

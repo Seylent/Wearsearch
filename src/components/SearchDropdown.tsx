@@ -157,7 +157,7 @@ export const SearchDropdown: React.FC<SearchDropdownProps> = ({ onClose }) => {
                     {/* Price */}
                     {product.price && (
                       <div className="text-right">
-                        <p className="font-bold text-white">${product.price}</p>
+                        <p className="font-bold text-white">₴{product.price}</p>
                       </div>
                     )}
                   </button>

@@ -93,7 +93,7 @@ export const ImageUploader = ({ onImageUpload, currentImage, label = "Product Im
       formData.append('image', file);
 
       // Upload to backend server on port 3000
-      const response = await fetch('http://localhost:3000/api/upload/image', {
+      const response = await fetch('http://192.168.0.117:3000/api/upload/image', {
         method: 'POST',
         body: formData,
       });
@@ -235,3 +235,4 @@ export const ImageUploader = ({ onImageUpload, currentImage, label = "Product Im
     </div>
   );
 };
+

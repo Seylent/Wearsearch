@@ -1,9 +1,15 @@
 import { Heart } from 'lucide-react';
+import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
 import { useFavorites, useAddFavorite, useRemoveFavorite } from '@/hooks/useApi';
 import { isAuthenticated } from '@/utils/authStorage';
+import { 
+  isGuestFavorite, 
+  addGuestFavorite, 
+  removeGuestFavorite 
+} from '@/services/guestFavorites';
 
 interface FavoriteButtonProps {
   productId: string;
@@ -23,8 +29,9 @@ export function FavoriteButton({
   const { toast } = useToast();
   const navigate = useNavigate();
   const isLoggedIn = isAuthenticated();
+  const [guestFavorited, setGuestFavorited] = useState(false);
   
-  // Use React Query hooks
+  // Use React Query hooks (only when logged in)
   const { data: favoritesData, isLoading: isFavoritesLoading } = useFavorites();
   const addFavorite = useAddFavorite();
   const removeFavorite = useRemoveFavorite();
@@ -32,28 +39,49 @@ export function FavoriteButton({
   // Extract favorites array from response
   const favorites = favoritesData?.favorites || [];
 
+  // Check guest favorites on mount and when productId changes
+  useEffect(() => {
+    if (!isLoggedIn) {
+      setGuestFavorited(isGuestFavorite(productId));
+    }
+  }, [productId, isLoggedIn]);
+
   // Check if current product is in favorites
   // Backend returns: { favorites: [{ id, product_id, created_at, product: {...} }] }
-  const isFavorited = Array.isArray(favorites) && favorites.some(
-    (fav: any) => {
-      const favProductId = fav.product_id || fav.productId;
-      return String(favProductId) === String(productId);
-    }
-  );
+  const isFavorited = isLoggedIn
+    ? Array.isArray(favorites) && favorites.some(
+        (fav: any) => {
+          const favProductId = fav.product_id || fav.productId;
+          return String(favProductId) === String(productId);
+        }
+      )
+    : guestFavorited;
 
   const handleToggleFavorite = async (e: React.MouseEvent) => {
     e.preventDefault();
     e.stopPropagation();
 
+    // Guest users: manage favorites in localStorage
     if (!isLoggedIn) {
-      toast({
-        title: 'Необхідна авторизація',
-        description: 'Будь ласка, увійдіть щоб зберігати товари',
-        variant: 'destructive',
-      });
+      if (guestFavorited) {
+        removeGuestFavorite(productId);
+        setGuestFavorited(false);
+        toast({
+          title: 'Видалено',
+          description: 'Товар видалено з обраного',
+        });
+      } else {
+        addGuestFavorite(productId);
+        setGuestFavorited(true);
+        toast({
+          title: 'Додано',
+          description: 'Увійдіть щоб зберегти назавжди',
+        });
+      }
       return;
     }
 
+    // Logged-in users: sync with backend
     try {
       if (isFavorited) {
         await removeFavorite.mutateAsync(productId);
@@ -79,26 +107,10 @@ export function FavoriteButton({
     }
   };
 
-  // Show empty heart if not logged in
-  if (!isLoggedIn) {
-    return (
-      <Button
-        onClick={handleToggleFavorite}
-        variant={variant}
-        size={size}
-        className={`${className} transition-all hover:text-red-400`}
-        title="Login to add to favorites"
-      >
-        <Heart className={`h-5 w-5 ${showText ? 'mr-2' : ''} transition-all hover:scale-110`} />
-        {showText && 'Save'}
-      </Button>
-    );
-  }
-
   return (
     <Button
       onClick={handleToggleFavorite}
-      disabled={addFavorite.isPending || removeFavorite.isPending || isFavoritesLoading}
+      disabled={isLoggedIn && (addFavorite.isPending || removeFavorite.isPending || isFavoritesLoading)}
       variant={variant}
       size={size}
       className={`${className} transition-all ${isFavorited ? 'text-red-500 hover:text-red-600' : 'hover:text-red-400'}`}

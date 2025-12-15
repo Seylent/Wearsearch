@@ -8,7 +8,7 @@ import { getAuth, clearAuth } from '@/utils/authStorage';
 import type { ApiResponse, ApiError } from '@/types';
 
 // Get API base URL from environment variables
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:3000/api';
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://192.168.0.117:3000/api';
 
 /**
  * Create axios instance with default configuration
