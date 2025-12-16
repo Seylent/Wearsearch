@@ -19,9 +19,9 @@ const ProductCard: React.FC<ProductCardProps> = ({ id, name, image, price, categ
 
   return (
     <Link to={`/product/${id}`} className="group block h-full">
-      <div className="relative h-full flex flex-col rounded-lg overflow-hidden border border-white/10 bg-white/5 backdrop-blur-[25px] transition-all duration-300 hover:border-white/20 hover:bg-white/8 hover:z-10">
+      <div className="relative h-full flex flex-col rounded-lg sm:rounded-xl overflow-hidden border border-white/10 bg-white/5 backdrop-blur-[25px] transition-all duration-300 hover:border-white/20 hover:bg-white/8 hover:z-10">
         {/* Image Container - Reduced aspect ratio with subtle pattern background */}
-        <div className="relative aspect-[4/5] overflow-hidden" style={{
+        <div className="relative aspect-[3/4] sm:aspect-[4/5] overflow-hidden" style={{
           background: 'radial-gradient(circle at 20% 30%, rgba(255,255,255,0.05) 0%, transparent 50%), radial-gradient(circle at 80% 70%, rgba(255,255,255,0.03) 0%, transparent 50%), linear-gradient(135deg, rgba(0,0,0,0.9) 0%, rgba(20,20,20,0.95) 100%)'
         }}>
           <ImageDebugger 
@@ -38,36 +38,36 @@ const ProductCard: React.FC<ProductCardProps> = ({ id, name, image, price, categ
           
           {/* New Badge - Glassmorphism */}
           {isNew && (
-            <div className="absolute top-2 left-2 px-2 py-0.5 rounded-full bg-white/15 backdrop-blur-md border border-white/25 text-white text-[9px] font-medium uppercase tracking-wider select-none">
+            <div className="absolute top-1.5 sm:top-2 left-1.5 sm:left-2 px-1.5 sm:px-2 py-0.5 rounded-full bg-white/15 backdrop-blur-md border border-white/25 text-white text-[8px] sm:text-[9px] font-medium uppercase tracking-wider select-none">
               New
             </div>
           )}
           
           {/* Favorite Button */}
-          <div className="absolute top-2 right-2 z-10 transition-all duration-300 select-none">
+          <div className="absolute top-1.5 sm:top-2 right-1.5 sm:right-2 z-10 transition-all duration-300 select-none scale-90 sm:scale-100">
             <FavoriteButton productId={String(id)} variant="ghost" size="icon" />
           </div>
         </div>
 
         {/* Content - Reduced padding */}
-        <div className="p-3 flex-1 flex flex-col justify-between">
+        <div className="p-2 sm:p-3 flex-1 flex flex-col justify-between">
           <div>
             {/* Brand */}
             {brand && (
-              <p className="text-[9px] text-white/50 uppercase tracking-[0.15em] mb-1 select-none">
+              <p className="text-[8px] sm:text-[9px] text-white/50 uppercase tracking-[0.15em] mb-0.5 sm:mb-1 select-none">
                 {brand}
               </p>
             )}
             
             {/* Product Name */}
-            <h3 className="font-display font-semibold text-xs text-white line-clamp-2 mb-1.5 select-none">
+            <h3 className="font-display font-semibold text-[11px] sm:text-xs text-white line-clamp-2 mb-1 sm:mb-1.5 select-none">
               {name}
             </h3>
           </div>
           
           {/* Price */}
-          <div className="mt-2">
-            <p className="font-display text-sm font-bold text-white select-none">
+          <div className="mt-1 sm:mt-2">
+            <p className="font-display text-xs sm:text-sm font-bold text-white select-none">
               from ₴{price ?? '0'}
             </p>
           </div>

@@ -8,6 +8,7 @@ import { Footer } from "@/components/layout/Footer";
 import { NeonAbstractions } from "@/components/NeonAbstractions";
 import { FaTelegram, FaInstagram } from "react-icons/fa";
 import { useToast } from "@/hooks/use-toast";
+import { api } from "@/services/api";
 import { convertS3UrlToHttps } from "@/lib/utils";
 import { FavoriteButton } from "@/components/FavoriteButton";
 import { StoreRating } from "@/components/StoreRating";
@@ -111,26 +112,32 @@ const ProductDetail = () => {
   const fetchProduct = async () => {
     try {
       console.log('🔍 Fetching product:', id);
-      const response = await fetch(`http://192.168.0.117:3000/api/items/${id}`);
-      const result = await response.json();
+      const response = await api.get(`/items/${id}`);
+      const result = response.data;
       console.log('📦 Product response:', result);
       
+      // Handle both response formats: {success: true, data: {...}} or direct product object {id, name, ...}
+      let productData;
       if (result.success) {
-        // Handle both response formats: {success: true, data: {...}} and {success: true, ...data}
-        const productData = result.data || result;
+        productData = result.data || result;
         delete productData.success;
-        console.log('✅ Product data:', productData);
-        console.log('🖼️ Image URL:', productData.image_url);
-        console.log('🏷️ Brand ID:', productData.brand_id);
-        console.log('🏷️ Brand (legacy):', productData.brand);
-        setProduct(productData);
-        
-        // Fetch brand if brand_id exists
-        if (productData.brand_id) {
-          fetchBrand(productData.brand_id);
-        }
+      } else if (result.id) {
+        // Direct product object
+        productData = result;
       } else {
         console.error('❌ Product fetch failed:', result);
+        return;
+      }
+      
+      console.log('✅ Product data:', productData);
+      console.log('🖼️ Image URL:', productData.image_url);
+      console.log('🏷️ Brand ID:', productData.brand_id);
+      console.log('🏷️ Brand (legacy):', productData.brand);
+      setProduct(productData);
+      
+      // Fetch brand if brand_id exists
+      if (productData.brand_id) {
+        fetchBrand(productData.brand_id);
       }
     } catch (error) {
       console.error("❌ Error fetching product:", error);
@@ -147,8 +154,8 @@ const ProductDetail = () => {
   const fetchBrand = async (brandId: string) => {
     try {
       console.log('🏷️ Fetching brand:', brandId);
-      const response = await fetch(`http://192.168.0.117:3000/api/brands/${brandId}`);
-      const result = await response.json();
+      const response = await api.get(`/brands/${brandId}`);
+      const result = response.data;
       console.log('🏷️ Brand response:', result);
       
       if (result.success && result.data) {
@@ -165,20 +172,23 @@ const ProductDetail = () => {
   const fetchStores = async () => {
     try {
       console.log('🏪 Fetching stores for product:', id);
-      const response = await fetch(`http://192.168.0.117:3000/api/items/${id}/stores`);
-      const result = await response.json();
+      const response = await api.get(`/items/${id}/stores`);
+      const result = response.data;
       console.log('🏪 Stores response:', result);
       
+      // Handle different response formats
+      let storesData = [];
       if (result.success && result.stores) {
-        console.log('✅ Stores data:', result.stores);
-        setStores(result.stores);
+        storesData = result.stores;
       } else if (result.stores) {
-        // Some APIs might not have success field
-        console.log('✅ Stores data (no success field):', result.stores);
-        setStores(result.stores);
-      } else {
-        console.warn('⚠️ No stores found in response');
+        storesData = result.stores;
+      } else if (Array.isArray(result)) {
+        // Direct array of stores
+        storesData = result;
       }
+      
+      console.log('✅ Stores data:', storesData);
+      setStores(storesData);
     } catch (error) {
       console.error("❌ Error fetching stores:", error);
     }

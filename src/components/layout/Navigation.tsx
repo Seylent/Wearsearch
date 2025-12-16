@@ -6,7 +6,7 @@ import { ContactsDialog } from "@/components/ContactsDialog";
 import { SearchDropdown } from "@/components/SearchDropdown";
 import { authService } from "@/services/authService";
 import type { User } from "@/types";
-import { Search, User as UserIcon } from "lucide-react";
+import { Search, User as UserIcon, Menu, X } from "lucide-react";
 
 const Navigation: React.FC = () => {
   const navigate = useNavigate();
@@ -14,6 +14,7 @@ const Navigation: React.FC = () => {
   const [user, setUser] = useState<User | null>(null);
   const [isAdmin, setIsAdmin] = useState(false);
   const [showSearch, setShowSearch] = useState(false);
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   useEffect(() => {
     checkAuth();
@@ -51,22 +52,22 @@ const Navigation: React.FC = () => {
   ];
 
   return (
-    <header className="fixed top-0 left-0 right-0 z-50 flex justify-center pt-6 px-4">
+    <header className="fixed top-0 left-0 right-0 z-50 flex justify-center pt-4 md:pt-6 px-2 sm:px-4">
       <nav className="flex items-center justify-between gap-0 rounded-full border border-zinc-700/80 bg-zinc-900/80 backdrop-blur-2xl shadow-[0_8px_32px_rgba(0,0,0,0.6)] max-w-7xl w-full overflow-hidden">
         {/* Left Section - Logo */}
         <div 
-          className="flex items-center gap-2.5 cursor-pointer group px-6 py-3 border-r border-zinc-700/60" 
+          className="flex items-center gap-2.5 cursor-pointer group px-3 sm:px-4 md:px-6 py-2 md:py-3 border-r border-zinc-700/60" 
           onClick={handleLogoClick}
         >
           <span 
-            className="text-white text-xl tracking-tight transition-all duration-300"
+            className="text-white text-base sm:text-lg md:text-xl tracking-tight transition-all duration-300"
             style={{ fontFamily: "'Youre Gone', sans-serif" }}
           >
             wearsearch
           </span>
         </div>
 
-        {/* Center Section - Navigation Links */}
+        {/* Center Section - Navigation Links (Desktop) */}
         <div className="hidden md:flex items-center gap-1 flex-1 justify-center px-6 py-3 border-r border-zinc-700/60">
           {navLinks.map((link) => (
             <Link
@@ -96,8 +97,21 @@ const Navigation: React.FC = () => {
           )}
         </div>
 
-        {/* Right Section - Search & Profile */}
-        <div className="flex items-center gap-2 px-6 py-3">
+        {/* Right Section - Search, Menu & Profile */}
+        <div className="flex items-center gap-1 sm:gap-2 px-3 sm:px-4 md:px-6 py-2 md:py-3">
+          {/* Mobile Menu Button */}
+          <button 
+            className="md:hidden w-8 h-8 rounded-full flex items-center justify-center hover:bg-zinc-800/70 transition-all duration-300 group"
+            onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+          >
+            {mobileMenuOpen ? (
+              <X className="w-4 h-4 text-zinc-400 group-hover:text-white transition-colors" />
+            ) : (
+              <Menu className="w-4 h-4 text-zinc-400 group-hover:text-white transition-colors" />
+            )}
+          </button>
+
+          {/* Search Button */}
           <button 
             className="w-8 h-8 rounded-full flex items-center justify-center hover:bg-zinc-800/70 transition-all duration-300 group"
             onClick={() => setShowSearch(true)}
@@ -117,6 +131,44 @@ const Navigation: React.FC = () => {
           )}
         </div>
       </nav>
+
+      {/* Mobile Menu */}
+      {mobileMenuOpen && (
+        <div className="md:hidden fixed top-20 left-2 right-2 bg-zinc-900/95 backdrop-blur-2xl rounded-2xl border border-zinc-700/80 shadow-2xl overflow-hidden z-40">
+          <div className="flex flex-col p-2">
+            {navLinks.map((link) => (
+              <Link
+                key={link.name}
+                to={link.href}
+                onClick={() => setMobileMenuOpen(false)}
+                className={`px-4 py-3 text-sm font-medium transition-all duration-300 rounded-lg ${
+                  location.pathname === link.href 
+                    ? "text-white bg-zinc-800/90" 
+                    : "text-zinc-400 hover:text-white hover:bg-zinc-800/60"
+                }`}
+              >
+                {link.name}
+              </Link>
+            ))}
+            <div className="px-4 py-3">
+              <ContactsDialog />
+            </div>
+            {isAdmin && (
+              <Link
+                to="/admin"
+                onClick={() => setMobileMenuOpen(false)}
+                className={`px-4 py-3 text-sm font-medium transition-all duration-300 rounded-lg ${
+                  location.pathname === "/admin" 
+                    ? "text-white bg-zinc-800/90" 
+                    : "text-zinc-400 hover:text-white hover:bg-zinc-800/60"
+                }`}
+              >
+                Admin
+              </Link>
+            )}
+          </div>
+        </div>
+      )}
       
       {/* Search Dropdown */}
       {showSearch && <SearchDropdown onClose={() => setShowSearch(false)} />}

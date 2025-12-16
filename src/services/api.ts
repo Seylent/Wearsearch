@@ -7,8 +7,8 @@ import axios, { AxiosInstance, AxiosError, InternalAxiosRequestConfig, AxiosResp
 import { getAuth, clearAuth } from '@/utils/authStorage';
 import type { ApiResponse, ApiError } from '@/types';
 
-// Get API base URL from environment variables
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://192.168.0.117:3000/api';
+// Use relative URL for API requests - works with Vite proxy and ngrok
+const API_BASE_URL = '/api';
 
 /**
  * Create axios instance with default configuration
