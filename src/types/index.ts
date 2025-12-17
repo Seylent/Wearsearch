@@ -48,8 +48,7 @@ export interface Product {
     id: string;
     name: string;
   };
-  type?: string;
-  category?: string;
+  category?: string;  // Primary field (backend uses 'category')
   color?: string;
   price?: number | string;
   description?: string;
@@ -83,6 +82,10 @@ export interface Store {
   location?: string;
   shipping?: string;
   rating?: number;
+  is_verified?: boolean;       // Verified stores (✓)
+  is_recommended?: boolean;     // Recommended stores (⭐)
+  average_rating?: number;
+  total_ratings?: number;
   created_at?: string;
   updated_at?: string;
 }

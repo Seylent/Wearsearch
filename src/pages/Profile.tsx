@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import { authService } from "@/services/authService";
 import { Button } from "@/components/ui/button";
@@ -26,26 +26,55 @@ const Profile = () => {
   const [newPassword, setNewPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
 
+  // Track mounted state and abort controller
+  const isMounted = useRef(true);
+  const abortControllerRef = useRef<AbortController | null>(null);
+
   useEffect(() => {
-    checkUser();
+    isMounted.current = true;
+    return () => {
+      isMounted.current = false;
+      if (abortControllerRef.current) {
+        abortControllerRef.current.abort();
+      }
+    };
   }, []);
 
-  const checkUser = async () => {
+  const checkUser = useCallback(async () => {
     if (!authService.isAuthenticated()) {
       navigate("/auth");
       return;
     }
 
+    // Cancel previous request if exists
+    if (abortControllerRef.current) {
+      abortControllerRef.current.abort();
+    }
+
+    abortControllerRef.current = new AbortController();
+
     try {
       const userData = await authService.getCurrentUser();
-      setUser(userData);
-      setEmail(userData.email || "");
-      setDisplayName(userData.display_name || "");
-    } catch (error) {
+      if (isMounted.current) {
+        setUser(userData);
+        setEmail(userData.email || "");
+        setDisplayName(userData.display_name || "");
+      }
+    } catch (error: any) {
+      // Don't show error if request was aborted
+      if (error.name === 'CanceledError' || error.code === 'ERR_CANCELED') {
+        return;
+      }
       console.error("Error loading user:", error);
-      navigate("/auth");
+      if (isMounted.current) {
+        navigate("/auth");
+      }
     }
-  };
+  }, [navigate]);
+
+  useEffect(() => {
+    checkUser();
+  }, [checkUser]);
 
   const handleUpdateProfile = async (e: React.FormEvent) => {
     e.preventDefault();

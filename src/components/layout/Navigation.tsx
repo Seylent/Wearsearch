@@ -1,9 +1,11 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate, useLocation, Link } from "react-router-dom";
+import { useTranslation } from "react-i18next";
 import { Button } from "@/components/ui/button";
 import { UserProfileMenu } from "@/components/UserProfileMenu";
 import { ContactsDialog } from "@/components/ContactsDialog";
 import { SearchDropdown } from "@/components/SearchDropdown";
+import { LanguageSelector } from "@/components/LanguageSelector";
 import { authService } from "@/services/authService";
 import type { User } from "@/types";
 import { Search, User as UserIcon, Menu, X } from "lucide-react";
@@ -11,6 +13,7 @@ import { Search, User as UserIcon, Menu, X } from "lucide-react";
 const Navigation: React.FC = () => {
   const navigate = useNavigate();
   const location = useLocation();
+  const { t } = useTranslation();
   const [user, setUser] = useState<User | null>(null);
   const [isAdmin, setIsAdmin] = useState(false);
   const [showSearch, setShowSearch] = useState(false);
@@ -30,6 +33,21 @@ const Navigation: React.FC = () => {
         setIsAdmin(false);
         return;
       }
+      
+      // Use cached user data - avoid unnecessary API calls
+      const cachedUser = localStorage.getItem('user');
+      if (cachedUser) {
+        try {
+          const userData = JSON.parse(cachedUser);
+          setUser(userData);
+          setIsAdmin((userData as any)?.role === "admin");
+          return;
+        } catch (e) {
+          console.error('Failed to parse cached user:', e);
+        }
+      }
+      
+      // Only fetch from API if no cache (should rarely happen)
       const userData = await authService.getCurrentUser();
       setUser(userData);
       setIsAdmin((userData as any)?.role === "admin");
@@ -46,9 +64,9 @@ const Navigation: React.FC = () => {
   };
 
   const navLinks = [
-    { name: "All Items", href: "/products" },
-    { name: "Stores", href: "/stores" },
-    { name: "About", href: "/about" },
+    { name: t('nav.allItems'), href: "/products" },
+    { name: t('nav.stores'), href: "/stores" },
+    { name: t('nav.about'), href: "/about" },
   ];
 
   return (
@@ -92,12 +110,12 @@ const Navigation: React.FC = () => {
                   : "text-zinc-400 hover:text-white hover:bg-zinc-800/60"
               }`}
             >
-              Admin
+              {t('nav.admin')}
             </Link>
           )}
         </div>
 
-        {/* Right Section - Search, Menu & Profile */}
+        {/* Right Section - Search, Language, Menu & Profile */}
         <div className="flex items-center gap-1 sm:gap-2 px-3 sm:px-4 md:px-6 py-2 md:py-3">
           {/* Mobile Menu Button */}
           <button 
@@ -118,6 +136,9 @@ const Navigation: React.FC = () => {
           >
             <Search className="w-4 h-4 text-zinc-400 group-hover:text-white transition-colors" />
           </button>
+
+          {/* Language Selector */}
+          <LanguageSelector />
           
           {user ? (
             <UserProfileMenu />
@@ -135,35 +156,35 @@ const Navigation: React.FC = () => {
       {/* Mobile Menu */}
       {mobileMenuOpen && (
         <div className="md:hidden fixed top-20 left-2 right-2 bg-zinc-900/95 backdrop-blur-2xl rounded-2xl border border-zinc-700/80 shadow-2xl overflow-hidden z-40">
-          <div className="flex flex-col p-2">
+          <div className="flex flex-col">
             {navLinks.map((link) => (
               <Link
                 key={link.name}
                 to={link.href}
                 onClick={() => setMobileMenuOpen(false)}
-                className={`px-4 py-3 text-sm font-medium transition-all duration-300 rounded-lg ${
+                className={`px-6 py-3 text-base font-medium transition-all duration-300 border-b border-zinc-800/50 ${
                   location.pathname === link.href 
-                    ? "text-white bg-zinc-800/90" 
-                    : "text-zinc-400 hover:text-white hover:bg-zinc-800/60"
+                    ? "text-white bg-zinc-800/60" 
+                    : "text-zinc-300 hover:text-white hover:bg-zinc-800/30"
                 }`}
               >
                 {link.name}
               </Link>
             ))}
-            <div className="px-4 py-3">
+            <div className="px-6 py-3 border-b border-zinc-800/50">
               <ContactsDialog />
             </div>
             {isAdmin && (
               <Link
                 to="/admin"
                 onClick={() => setMobileMenuOpen(false)}
-                className={`px-4 py-3 text-sm font-medium transition-all duration-300 rounded-lg ${
+                className={`px-6 py-3 text-base font-medium transition-all duration-300 ${
                   location.pathname === "/admin" 
-                    ? "text-white bg-zinc-800/90" 
-                    : "text-zinc-400 hover:text-white hover:bg-zinc-800/60"
+                    ? "text-white bg-zinc-800/60" 
+                    : "text-zinc-300 hover:text-white hover:bg-zinc-800/30"
                 }`}
               >
-                Admin
+                {t('nav.admin')}
               </Link>
             )}
           </div>

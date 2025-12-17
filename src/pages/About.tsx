@@ -1,4 +1,5 @@
 import { useNavigate } from "react-router-dom";
+import { useTranslation } from "react-i18next";
 import { Button } from "@/components/ui/button";
 import { ArrowLeft, Sparkles, Shield, Globe, Heart } from "lucide-react";
 import Navigation from "@/components/layout/Navigation";
@@ -7,27 +8,28 @@ import { NeonAbstractions } from "@/components/NeonAbstractions";
 
 const About = () => {
   const navigate = useNavigate();
+  const { t } = useTranslation();
 
   const values = [
     {
       icon: Sparkles,
-      title: "Curated Excellence",
-      description: "Every piece in our collection is hand-selected by our team of fashion experts, ensuring only the finest quality reaches you."
+      title: t('about.value1Title'),
+      description: t('about.value1Desc')
     },
     {
       icon: Shield,
-      title: "Recommended Stores",
-      description: "We partner exclusively with verified stores and brands, recommending the best places to shop."
+      title: t('about.value2Title'),
+      description: t('about.value2Desc')
     },
     {
       icon: Globe,
-      title: "Global Reach",
-      description: "Connecting fashion enthusiasts worldwide with the best stores and designers from around the globe."
+      title: t('about.value3Title'),
+      description: t('about.value3Desc')
     },
     {
       icon: Heart,
-      title: "Passion for Fashion",
-      description: "Our love for exceptional design drives everything we do, from curation to customer experience."
+      title: t('about.value4Title'),
+      description: t('about.value4Desc')
     }
   ];
 
@@ -65,14 +67,11 @@ const About = () => {
             </div>
             
             <h1 className="font-display text-5xl sm:text-6xl md:text-7xl font-bold mb-6 tracking-tight select-none">
-              <span className="block">About</span>
-              <span className="block text-gradient">Wearsearch</span>
+              <span className="block">{t('about.title')}</span>
             </h1>
             
             <p className="text-xl text-muted-foreground leading-relaxed mb-8 select-none">
-              Wearsearch is your gateway to exceptional fashion. We curate the finest pieces from 
-              world-renowned designers and connect you with verified stores that share our 
-              passion for quality and authenticity.
+              {t('about.description')}
             </p>
           </div>
         </div>
@@ -82,13 +81,9 @@ const About = () => {
       <section className="py-20 border-y border-border/20">
         <div className="container mx-auto px-6">
           <div className="max-w-3xl mx-auto text-center">
-            <h2 className="font-display text-3xl sm:text-4xl font-bold mb-6 select-none">Our Mission</h2>
+            <h2 className="font-display text-3xl sm:text-4xl font-bold mb-6 select-none">{t('about.missionTitle')}</h2>
             <p className="text-lg text-muted-foreground leading-relaxed select-none">
-              We believe that finding exceptional fashion should be effortless. Our platform 
-              brings together the world's most innovative designers and trusted stores, 
-              making it easy for you to discover, compare, and purchase pieces that 
-              speak to your unique style. We don't sell clothing directly — we help you 
-              find what you need faster, easier, and more efficiently.
+              {t('about.mission')}
             </p>
           </div>
         </div>
@@ -98,9 +93,9 @@ const About = () => {
       <section className="py-20">
         <div className="container mx-auto px-6">
           <div className="text-center mb-12">
-            <h2 className="font-display text-3xl sm:text-4xl font-bold mb-4 select-none">Our Values</h2>
+            <h2 className="font-display text-3xl sm:text-4xl font-bold mb-4 select-none">{t('about.valuesTitle')}</h2>
             <p className="text-muted-foreground max-w-2xl mx-auto select-none">
-              The principles that guide everything we do
+              {t('about.description')}
             </p>
           </div>
           

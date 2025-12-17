@@ -1,9 +1,10 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback, useRef, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
+import { Checkbox } from "@/components/ui/checkbox";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
@@ -13,6 +14,10 @@ import { Package, Store, Plus, Edit, Trash2, Search, ShieldCheck } from "lucide-
 import { ImageUploader } from "@/components/ImageUploader";
 import { productService } from "@/services/productService";
 import { storeService } from "@/services/storeService";
+import { api } from "@/services/api";
+
+// Use relative API URL (works with Vite proxy)
+const API_BASE_URL = '';
 
 const Admin = () => {
   const navigate = useNavigate();
@@ -24,7 +29,7 @@ const Admin = () => {
   
   // Product form state - always initialize with empty string to avoid controlled/uncontrolled issues
   const [productName, setProductName] = useState<string>("");
-  const [productType, setProductType] = useState<string>("");
+  const [productCategory, setProductCategory] = useState<string>("");
   const [productColor, setProductColor] = useState<string>("");
   const [productGender, setProductGender] = useState<string>("");
   const [productBrandId, setProductBrandId] = useState<string>("");
@@ -42,6 +47,20 @@ const Admin = () => {
   
   // Tab state
   const [activeTab, setActiveTab] = useState("add-product");
+  
+  // Track mounted state
+  const isMounted = useRef(true);
+  const fetchAbortController = useRef<AbortController | null>(null);
+
+  useEffect(() => {
+    isMounted.current = true;
+    return () => {
+      isMounted.current = false;
+      if (fetchAbortController.current) {
+        fetchAbortController.current.abort();
+      }
+    };
+  }, []);
   
   // Hero images state
   const [heroImages, setHeroImages] = useState<any[]>([]);
@@ -63,6 +82,7 @@ const Admin = () => {
   const [storeTiktok, setStoreTiktok] = useState<string>("");
   const [storeShipping, setStoreShipping] = useState<string>("");
   const [storeLogoUrl, setStoreLogoUrl] = useState<string>("");
+  const [storeRecommended, setStoreRecommended] = useState<boolean>(false);
   const [editingStore, setEditingStore] = useState<any | null>(null);
   
   const [submitting, setSubmitting] = useState(false);
@@ -101,7 +121,7 @@ const Admin = () => {
     }
   }, []);
 
-  const checkAdmin = async () => {
+  const checkAdmin = useCallback(async () => {
     const token = localStorage.getItem('access_token');
     if (!token) {
       console.log('🔒 No token, redirecting to auth');
@@ -109,7 +129,7 @@ const Admin = () => {
       return;
     }
 
-    // Try to use cached user data first
+    // Try to use cached user data first - AVOID unnecessary /me requests
     const cachedUser = localStorage.getItem('user');
     if (cachedUser) {
       try {
@@ -134,24 +154,9 @@ const Admin = () => {
 
     // Only fetch from API if no valid cache
     console.log('🔍 [checkAdmin] No cache, fetching /me from API (should happen only ONCE)');
-    console.trace('Called from:'); // See where this was called from
     try {
-      const response = await fetch(`${API_BASE_URL}/api/auth/me`, {
-        headers: { 'Authorization': `Bearer ${token}` },
-      });
-      
-      if (!response.ok) {
-        console.error(`❌ /me request failed with status: ${response.status}`);
-        if (response.status === 401) {
-          console.error('🚨 Token is invalid! Clearing and redirecting...');
-          localStorage.removeItem('access_token');
-          localStorage.removeItem('user');
-          navigate('/auth');
-          return;
-        }
-      }
-      
-      const data = await response.json();
+      const response = await api.get('/auth/me');
+      const data = response.data;
       const userData = data.data || data.user || data;
       
       console.log('💾 [checkAdmin] Caching user data:', userData);
@@ -172,66 +177,74 @@ const Admin = () => {
       localStorage.removeItem('user');
       navigate('/auth');
     }
-  };
+  }, [navigate, toast]);
 
-  const fetchData = async () => {
+  const fetchData = useCallback(async () => {
+    if (fetchAbortController.current) {
+      fetchAbortController.current.abort();
+    }
+    
+    fetchAbortController.current = new AbortController();
     setLoading(true);
+    
     try {
       const [productsRes, storesRes, brandsRes] = await Promise.all([
-        fetch('http://192.168.0.117:3000/api/admin/products', {
-          headers: { 'Authorization': `Bearer ${localStorage.getItem('access_token')}` }
-        }),
-        fetch('http://192.168.0.117:3000/api/stores'),
-        fetch('http://192.168.0.117:3000/api/brands')
+        api.get('/admin/products', { signal: fetchAbortController.current.signal }),
+        api.get('/stores', { signal: fetchAbortController.current.signal }),
+        api.get('/brands', { signal: fetchAbortController.current.signal })
       ]);
 
-      const productsData = await productsRes.json();
-      const storesData = await storesRes.json();
-      const brandsData = await brandsRes.json();
+      const productsData = productsRes.data;
+      const storesData = storesRes.data;
+      const brandsData = brandsRes.data;
 
       console.log('Brands API response:', brandsData);
 
-      if (productsData.success) setProducts(productsData.data || []);
-      if (storesData.success || Array.isArray(storesData)) {
-        setStores(Array.isArray(storesData) ? storesData : storesData.data || []);
+      if (isMounted.current) {
+        if (productsData.success) setProducts(productsData.data || []);
+        if (storesData.success || Array.isArray(storesData)) {
+          setStores(Array.isArray(storesData) ? storesData : storesData.data || []);
+        }
+        
+        // Better handle brands response format
+        let brandsArray = [];
+        if (Array.isArray(brandsData)) {
+          brandsArray = brandsData;
+        } else if (brandsData?.data?.brands && Array.isArray(brandsData.data.brands)) {
+          brandsArray = brandsData.data.brands;
+        } else if (brandsData?.brands && Array.isArray(brandsData.brands)) {
+          brandsArray = brandsData.brands;
+        } else if (brandsData?.data && Array.isArray(brandsData.data)) {
+          brandsArray = brandsData.data;
+        } else if (brandsData?.success && brandsData?.data) {
+          brandsArray = Array.isArray(brandsData.data) ? brandsData.data : [];
+        }
+        
+        console.log('Brands array set to:', brandsArray);
+        setBrands(brandsArray);
       }
-      
-      // Better handle brands response format
-      let brandsArray = [];
-      if (Array.isArray(brandsData)) {
-        brandsArray = brandsData;
-      } else if (brandsData?.data?.brands && Array.isArray(brandsData.data.brands)) {
-        brandsArray = brandsData.data.brands;
-      } else if (brandsData?.brands && Array.isArray(brandsData.brands)) {
-        brandsArray = brandsData.brands;
-      } else if (brandsData?.data && Array.isArray(brandsData.data)) {
-        brandsArray = brandsData.data;
-      } else if (brandsData?.success && brandsData?.data) {
-        brandsArray = Array.isArray(brandsData.data) ? brandsData.data : [];
+    } catch (error: any) {
+      if (error.name !== 'CanceledError' && error.code !== 'ERR_CANCELED') {
+        console.error("Error fetching data:", error);
       }
-      
-      console.log('Brands array set to:', brandsArray);
-      setBrands(brandsArray);
-    } catch (error) {
-      console.error("Error fetching data:", error);
     } finally {
-      setLoading(false);
+      if (isMounted.current) {
+        setLoading(false);
+      }
     }
-  };
+  }, []);
 
-  const fetchHeroImages = async () => {
+  const fetchHeroImages = useCallback(async () => {
     try {
-      const response = await fetch(`${API_BASE_URL}/api/admin/hero-images`, {
-        headers: { 'Authorization': `Bearer ${localStorage.getItem('access_token')}` }
-      });
-      const data = await response.json();
-      if (data.success) {
+      const response = await api.get('/admin/hero-images');
+      const data = response.data;
+      if (data.success && isMounted.current) {
         setHeroImages(data.data || []);
       }
     } catch (error) {
       console.error("Error fetching hero images:", error);
     }
-  };
+  }, []);
 
   const handleUploadHeroImage = async () => {
     if (!heroImageUrl.trim()) {
@@ -314,7 +327,7 @@ const Admin = () => {
 
     try {
       const deletePromises = selectedHeroImages.map(id =>
-        fetch(`http://192.168.0.117:3000/api/admin/hero-images/${id}`, {
+        fetch(`/api/admin/hero-images/${id}`, {
           method: 'DELETE',
           headers: { 'Authorization': `Bearer ${localStorage.getItem('access_token')}` }
         }).then(res => res.json())
@@ -366,7 +379,7 @@ const Admin = () => {
 
       const results = await Promise.all(
         existingImages.map(async (img) => {
-          const response = await fetch('http://192.168.0.117:3000/api/admin/hero-images', {
+          const response = await fetch('/api/admin/hero-images', {
             method: 'POST',
             headers: {
               'Content-Type': 'application/json',
@@ -400,8 +413,8 @@ const Admin = () => {
       console.log('🔄 Loading product for edit:', productId);
       // Always fetch from API to get fresh data including stores
       const [productRes, storesRes] = await Promise.all([
-        fetch(`http://192.168.0.117:3000/api/items/${productId}`),
-        fetch(`http://192.168.0.117:3000/api/items/${productId}/stores`)
+        fetch(`/api/items/${productId}`),
+        fetch(`/api/items/${productId}/stores`)
       ]);
       
       const productResult = await productRes.json();
@@ -452,7 +465,7 @@ const Admin = () => {
     
     // Load product data into form
     setProductName(product.name);
-    setProductType(product.type);
+    setProductCategory(product.category || product.type || "");
     setProductColor(product.color);
     setProductGender(product.gender || "");
     setProductBrandId(product.brand_id || "");
@@ -570,7 +583,7 @@ const Admin = () => {
         fullData: updateData
       });
 
-      const response = await fetch(`http://192.168.0.117:3000/api/admin/products/${editingProductId}`, {
+      const response = await fetch(`/api/admin/products/${editingProductId}`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
@@ -595,7 +608,7 @@ const Admin = () => {
         // Reset form
         setEditingProductId(null);
         setProductName("");
-        setProductType("");
+        setProductCategory("");
         setProductColor("");
         setProductGender("");
         setProductBrandId("");
@@ -625,7 +638,7 @@ const Admin = () => {
   const cancelEdit = () => {
     setEditingProductId(null);
     setProductName("");
-    setProductType("");
+    setProductCategory("");
     setProductColor("");
     setProductGender("");
     setProductBrandId("");
@@ -658,7 +671,7 @@ const Admin = () => {
 
       console.log('📤 Sending request to backend...');
       // Try NEW format first: Create ONE product with multiple stores
-      const response = await fetch('http://192.168.0.117:3000/api/admin/products', {
+      const response = await fetch('/api/admin/products', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -694,7 +707,7 @@ const Admin = () => {
         // Reset form
         setEditingProductId(null);
         setProductName("");
-        setProductType("");
+        setProductCategory("");
         setProductColor("");
         setProductGender("");
         setProductBrandId("");
@@ -717,7 +730,7 @@ const Admin = () => {
         // OLD FORMAT: Create separate product for each store
         const results = await Promise.all(
           selectedStores.map(async (store) => {
-            const storeResponse = await fetch('http://192.168.0.117:3000/api/admin/products', {
+            const storeResponse = await fetch('/api/admin/products', {
               method: 'POST',
               headers: {
                 'Content-Type': 'application/json',
@@ -752,7 +765,7 @@ const Admin = () => {
           // Reset form
           setEditingProductId(null);
           setProductName("");
-          setProductType("");
+          setProductCategory("");
           setProductColor("");
           setProductGender("");
           setProductBrandId("");
@@ -795,6 +808,7 @@ const Admin = () => {
     setStoreTiktok(store.tiktok_url || "");
     setStoreShipping(store.shipping_info || "");
     setStoreLogoUrl(store.logo_url || "");
+    setStoreRecommended(store.is_recommended || false);
     // Scroll to form
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
@@ -807,6 +821,7 @@ const Admin = () => {
     setStoreTiktok("");
     setStoreShipping("");
     setStoreLogoUrl("");
+    setStoreRecommended(false);
   };
 
   const handleCreateStore = async (e: React.FormEvent) => {
@@ -833,6 +848,7 @@ const Admin = () => {
           tiktok_url: storeTiktok || null,
           shipping_info: storeShipping || null,
           logo_url: storeLogoUrl || null,
+          is_recommended: storeRecommended,
         }),
       });
 
@@ -851,6 +867,7 @@ const Admin = () => {
       setStoreTiktok("");
       setStoreShipping("");
       setStoreLogoUrl("");
+      setStoreRecommended(false);
       fetchData();
       } else {
         throw new Error(result.error || `Failed to ${editingStore ? 'update' : 'create'} store`);
@@ -977,18 +994,20 @@ const Admin = () => {
                     </div>
 
                     <div className="space-y-2">
-                      <Label>Type</Label>
-                      <Select value={productType} onValueChange={setProductType} required>
+                      <Label>Category *</Label>
+                      <Select value={productCategory} onValueChange={setProductCategory} required>
                         <SelectTrigger className="h-12 bg-card/50 border-border/50 rounded-lg">
-                          <SelectValue placeholder="Select type" />
+                          <SelectValue placeholder="Select category" />
                         </SelectTrigger>
                         <SelectContent className="bg-card border-border/50">
-                          <SelectItem value="Outerwear">Outerwear</SelectItem>
-                          <SelectItem value="Tops">Tops</SelectItem>
-                          <SelectItem value="Bottoms">Bottoms</SelectItem>
-                          <SelectItem value="Dresses">Dresses</SelectItem>
-                          <SelectItem value="Shoes">Shoes</SelectItem>
-                          <SelectItem value="Accessories">Accessories</SelectItem>
+                          <SelectItem value="jackets">Jackets</SelectItem>
+                          <SelectItem value="hoodies">Hoodies</SelectItem>
+                          <SelectItem value="T-shirts">T-shirts</SelectItem>
+                          <SelectItem value="pants">Pants</SelectItem>
+                          <SelectItem value="jeans">Jeans</SelectItem>
+                          <SelectItem value="shorts">Shorts</SelectItem>
+                          <SelectItem value="shoes">Shoes</SelectItem>
+                          <SelectItem value="accessories">Accessories</SelectItem>
                         </SelectContent>
                       </Select>
                     </div>
@@ -1240,7 +1259,7 @@ const Admin = () => {
                           <h4 className="font-semibold text-lg mb-1">{product.name}</h4>
                           <div className="flex flex-wrap gap-2 text-sm text-muted-foreground">
                             <span className="px-2 py-0.5 rounded bg-foreground/10">${product.price}</span>
-                            <span className="px-2 py-0.5 rounded bg-foreground/10">{product.type}</span>
+                            <span className="px-2 py-0.5 rounded bg-foreground/10">{product.category || product.type}</span>
                             <span className="px-2 py-0.5 rounded bg-foreground/10">{product.color}</span>
                             {product.brand && <span className="px-2 py-0.5 rounded bg-foreground/10">{product.brand}</span>}
                           </div>
@@ -1388,6 +1407,24 @@ const Admin = () => {
                         className="h-12 bg-card/50 border-border/50 rounded-lg mt-2"
                       />
                     </div>
+
+                    {/* Recommended Checkbox */}
+                    <div className="space-y-2 md:col-span-2">
+                      <div className="flex items-center space-x-2">
+                        <Checkbox
+                          id="recommended"
+                          checked={storeRecommended}
+                          onCheckedChange={(checked) => setStoreRecommended(checked as boolean)}
+                          className="border-foreground/20 data-[state=checked]:bg-purple-500 data-[state=checked]:text-white"
+                        />
+                        <Label htmlFor="recommended" className="cursor-pointer">
+                          ⭐ Recommended Store (Featured)
+                        </Label>
+                      </div>
+                      <p className="text-sm text-muted-foreground ml-6">
+                        Mark this store as recommended/verified to feature it prominently on the platform
+                      </p>
+                    </div>
                   </div>
 
                   <Button
@@ -1504,7 +1541,7 @@ const Admin = () => {
                   }
 
                   try {
-                    const response = await fetch('http://192.168.0.117:3000/api/brands', {
+                    const response = await fetch('/api/brands', {
                       method: 'POST',
                       headers: {
                         'Content-Type': 'application/json',
@@ -1732,6 +1769,11 @@ const Admin = () => {
                           <div className="px-2 py-1 rounded-md bg-black/80 text-xs font-medium">
                             #{image.sort_order ?? index + 1}
                           </div>
+                          {image.is_active && (
+                            <div className="px-2 py-1 rounded-md bg-green-500/80 text-xs font-medium">
+                              ✓ Active
+                            </div>
+                          )}
                         </div>
                         {!image.is_active && (
                           <div className="absolute top-2 right-2 px-2 py-1 rounded-md bg-red-500/80 text-xs font-medium">

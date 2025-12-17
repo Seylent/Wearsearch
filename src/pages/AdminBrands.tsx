@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -10,6 +10,7 @@ import { Footer } from "@/components/layout/Footer";
 import { Plus, Edit, Trash2, Search, Tag, ArrowLeft } from "lucide-react";
 import { ImageUploader } from "@/components/ImageUploader";
 import ENDPOINTS from "@/services/endpoints";
+import { api } from "@/services/api";
 
 interface Brand {
   id: string;
@@ -38,13 +39,31 @@ const AdminBrands = () => {
     website_url: "",
   });
 
+  // Track mounted state and abort controller
+  const isMounted = useRef(true);
+  const abortControllerRef = useRef<AbortController | null>(null);
+  const debounceTimerRef = useRef<NodeJS.Timeout | null>(null);
+
+  useEffect(() => {
+    isMounted.current = true;
+    return () => {
+      isMounted.current = false;
+      if (abortControllerRef.current) {
+        abortControllerRef.current.abort();
+      }
+      if (debounceTimerRef.current) {
+        clearTimeout(debounceTimerRef.current);
+      }
+    };
+  }, []);
+
   // Check admin access
   useEffect(() => {
     checkAdmin();
     fetchBrands();
   }, []);
 
-  const checkAdmin = async () => {
+  const checkAdmin = useCallback(async () => {
     const token = localStorage.getItem('access_token');
     if (!token) {
       navigate('/auth');
@@ -67,41 +86,70 @@ const AdminBrands = () => {
         navigate('/auth');
       }
     }
-  };
+  }, [navigate, toast]);
 
-  // Fetch brands
-  const fetchBrands = async () => {
-    setIsLoading(true);
-    try {
-      const url = searchQuery 
-        ? `http://192.168.0.117:3000/api${ENDPOINTS.BRANDS.LIST}?search=${encodeURIComponent(searchQuery)}`
-        : `http://192.168.0.117:3000/api${ENDPOINTS.BRANDS.LIST}`;
-      
-      const response = await fetch(url);
-      const data = await response.json();
-      
-      if (data.success || Array.isArray(data)) {
-        setBrands(Array.isArray(data) ? data : data.data || []);
-      }
-    } catch (error) {
-      console.error('Error fetching brands:', error);
-      toast({
-        title: "Error",
-        description: "Failed to fetch brands",
-        variant: "destructive",
-      });
-    } finally {
-      setIsLoading(false);
+  // Fetch brands with AbortController
+  const fetchBrands = useCallback(async () => {
+    // Cancel previous request
+    if (abortControllerRef.current) {
+      abortControllerRef.current.abort();
     }
-  };
+    
+    abortControllerRef.current = new AbortController();
+    setIsLoading(true);
+    
+    try {
+      const endpoint = searchQuery 
+        ? `${ENDPOINTS.BRANDS.LIST}?search=${encodeURIComponent(searchQuery)}`
+        : ENDPOINTS.BRANDS.LIST;
+      
+      const response = await api.get(endpoint, {
+        signal: abortControllerRef.current.signal
+      });
+      const data = response.data;
+      
+      if (isMounted.current) {
+        if (data.success || Array.isArray(data)) {
+          setBrands(Array.isArray(data) ? data : data.data || []);
+        }
+      }
+    } catch (error: any) {
+      // Don't show error if request was aborted
+      if (error.name !== 'CanceledError' && error.code !== 'ERR_CANCELED') {
+        console.error('Error fetching brands:', error);
+        if (isMounted.current) {
+          toast({
+            title: "Error",
+            description: "Failed to fetch brands",
+            variant: "destructive",
+          });
+        }
+      }
+    } finally {
+      if (isMounted.current) {
+        setIsLoading(false);
+      }
+    }
+  }, [searchQuery, toast]);
 
+  // Debounce search query changes
   useEffect(() => {
-    const delayDebounce = setTimeout(() => {
+    // Clear previous timer
+    if (debounceTimerRef.current) {
+      clearTimeout(debounceTimerRef.current);
+    }
+
+    // Set new timer
+    debounceTimerRef.current = setTimeout(() => {
       fetchBrands();
     }, 300);
 
-    return () => clearTimeout(delayDebounce);
-  }, [searchQuery]);
+    return () => {
+      if (debounceTimerRef.current) {
+        clearTimeout(debounceTimerRef.current);
+      }
+    };
+  }, [searchQuery, fetchBrands]);
 
   // Create brand
   const handleCreateBrand = async (e: React.FormEvent) => {
@@ -117,7 +165,7 @@ const AdminBrands = () => {
     }
 
     try {
-      const response = await fetch(`http://192.168.0.117:3000/api${ENDPOINTS.BRANDS.CREATE}`, {
+      const response = await fetch(`/api${ENDPOINTS.BRANDS.CREATE}`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -155,7 +203,7 @@ const AdminBrands = () => {
     if (!editingBrand) return;
 
     try {
-      const response = await fetch(`http://192.168.0.117:3000/api${ENDPOINTS.BRANDS.UPDATE(editingBrand.id)}`, {
+      const response = await fetch(`/api${ENDPOINTS.BRANDS.UPDATE(editingBrand.id)}`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
@@ -191,7 +239,7 @@ const AdminBrands = () => {
     if (!confirm(`Are you sure you want to delete "${brandName}"? This cannot be undone.`)) return;
 
     try {
-      const response = await fetch(`http://192.168.0.117:3000/api${ENDPOINTS.BRANDS.DELETE(brandId)}`, {
+      const response = await fetch(`/api${ENDPOINTS.BRANDS.DELETE(brandId)}`, {
         method: 'DELETE',
         headers: {
           'Authorization': `Bearer ${localStorage.getItem('access_token')}`,

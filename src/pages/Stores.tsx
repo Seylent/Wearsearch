@@ -79,8 +79,8 @@ const Stores = () => {
               <p className="text-xs text-muted-foreground uppercase tracking-wider">Stores</p>
             </div>
             <div className="text-center">
-              <p className="font-display text-3xl sm:text-4xl font-bold mb-1">{stores.filter(s => s.is_verified).length}</p>
-              <p className="text-xs text-muted-foreground uppercase tracking-wider">Verified</p>
+              <p className="font-display text-3xl sm:text-4xl font-bold mb-1">{stores.filter(s => s.is_recommended).length}</p>
+              <p className="text-xs text-muted-foreground uppercase tracking-wider">Recommended</p>
             </div>
           </div>
         </div>
@@ -127,10 +127,10 @@ const Stores = () => {
                               <h3 className="font-display text-2xl font-bold mb-2 group-hover:text-foreground/80 transition-colors">
                                 {store.name}
                               </h3>
-                              {store.is_verified && (
-                                <div className="inline-flex items-center gap-1 px-2 py-1 rounded-full bg-foreground/10 border border-foreground/20">
+                              {store.is_recommended && (
+                                <div className="inline-flex items-center gap-1 px-2 py-1 rounded-full bg-purple-500/10 border border-purple-500/20 text-purple-400">
                                   <Star className="w-3 h-3 fill-current" />
-                                  <span className="text-xs font-medium">Verified</span>
+                                  <span className="text-xs font-medium">⭐ Recommended</span>
                                 </div>
                               )}
                             </div>
@@ -204,9 +204,7 @@ const Stores = () => {
                           size="sm"
                           className="opacity-0 group-hover:opacity-100 transition-opacity"
                           onClick={() => {
-                            const params = new URLSearchParams();
-                            params.set('store_id', store.id);
-                            navigate(`/?${params.toString()}#products`);
+                            navigate(`/products?store_id=${store.id}`);
                           }}
                         >
                           View Products

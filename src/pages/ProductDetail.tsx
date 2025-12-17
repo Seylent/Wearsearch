@@ -1,5 +1,6 @@
 import { useParams, useNavigate } from "react-router-dom";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
+import { useTranslation } from "react-i18next";
 import { ArrowLeft, Edit, Package, Tag, MapPin, Search, Filter, ChevronDown, Sparkles } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -25,6 +26,7 @@ const ProductDetail = () => {
   const { id } = useParams();
   const { toast } = useToast();
   const navigate = useNavigate();
+  const { t } = useTranslation();
   const [product, setProduct] = useState<any>(null);
   const [stores, setStores] = useState<any[]>([]);
   const [filteredStores, setFilteredStores] = useState<any[]>([]);
@@ -36,9 +38,24 @@ const ProductDetail = () => {
   // Store filters
   const [storeSearch, setStoreSearch] = useState("");
   const [sortBy, setSortBy] = useState<"name" | "price-asc" | "price-desc" | "rating">("name");
-  const [showVerifiedOnly, setShowVerifiedOnly] = useState(false);
+  const [showRecommendedOnly, setShowRecommendedOnly] = useState(false);
   const [currentStorePage, setCurrentStorePage] = useState(1);
   const storesPerPage = 3;
+
+  // Use ref to track if component is mounted to prevent state updates after unmount
+  const isMounted = useRef(true);
+  const abortControllerRef = useRef<AbortController | null>(null);
+
+  useEffect(() => {
+    isMounted.current = true;
+    return () => {
+      isMounted.current = false;
+      // Cancel any ongoing requests when component unmounts
+      if (abortControllerRef.current) {
+        abortControllerRef.current.abort();
+      }
+    };
+  }, []);
 
   useEffect(() => {
     fetchProduct();
@@ -48,15 +65,17 @@ const ProductDetail = () => {
 
   useEffect(() => {
     filterAndSortStores();
-  }, [stores, storeSearch, sortBy, showVerifiedOnly]);
+  }, [stores, storeSearch, sortBy, showRecommendedOnly]);
 
-  const checkAdmin = () => {
+  const checkAdmin = useCallback(() => {
     // First try to get from localStorage user
     const userStr = localStorage.getItem('user');
     if (userStr) {
       try {
         const user = JSON.parse(userStr);
-        setIsAdmin(user.role === 'admin');
+        if (isMounted.current) {
+          setIsAdmin(user.role === 'admin');
+        }
         return;
       } catch (e) {
         console.error('Failed to parse user:', e);
@@ -68,14 +87,18 @@ const ProductDetail = () => {
     if (token) {
       try {
         const payload = JSON.parse(atob(token.split('.')[1]));
-        setIsAdmin(payload.role === 'admin');
+        if (isMounted.current) {
+          setIsAdmin(payload.role === 'admin');
+        }
       } catch (e) {
-        setIsAdmin(false);
+        if (isMounted.current) {
+          setIsAdmin(false);
+        }
       }
     }
-  };
+  }, []);
 
-  const filterAndSortStores = () => {
+  const filterAndSortStores = useCallback(() => {
     let filtered = [...stores];
 
     // Search filter
@@ -85,9 +108,9 @@ const ProductDetail = () => {
       );
     }
 
-    // Verified filter
-    if (showVerifiedOnly) {
-      filtered = filtered.filter(store => store.is_verified);
+    // Recommended filter
+    if (showRecommendedOnly) {
+      filtered = filtered.filter(store => store.is_recommended);
     }
 
     // Sort
@@ -106,13 +129,25 @@ const ProductDetail = () => {
       }
     });
 
-    setFilteredStores(filtered);
-  };
+    if (isMounted.current) {
+      setFilteredStores(filtered);
+    }
+  }, [stores, storeSearch, sortBy, showRecommendedOnly]);
 
-  const fetchProduct = async () => {
+  const fetchProduct = useCallback(async () => {
+    // Cancel previous request if exists
+    if (abortControllerRef.current) {
+      abortControllerRef.current.abort();
+    }
+
+    // Create new abort controller for this request
+    abortControllerRef.current = new AbortController();
+
     try {
       console.log('🔍 Fetching product:', id);
-      const response = await api.get(`/items/${id}`);
+      const response = await api.get(`/items/${id}`, {
+        signal: abortControllerRef.current.signal
+      });
       const result = response.data;
       console.log('📦 Product response:', result);
       
@@ -133,25 +168,38 @@ const ProductDetail = () => {
       console.log('🖼️ Image URL:', productData.image_url);
       console.log('🏷️ Brand ID:', productData.brand_id);
       console.log('🏷️ Brand (legacy):', productData.brand);
-      setProduct(productData);
+      
+      if (isMounted.current) {
+        setProduct(productData);
+      }
       
       // Fetch brand if brand_id exists
       if (productData.brand_id) {
         fetchBrand(productData.brand_id);
       }
-    } catch (error) {
+    } catch (error: any) {
+      // Don't show error if request was aborted (component unmounted or new request started)
+      if (error.name === 'CanceledError' || error.code === 'ERR_CANCELED') {
+        console.log('🔄 Product fetch cancelled');
+        return;
+      }
+      
       console.error("❌ Error fetching product:", error);
-      toast({
-        title: "Error",
-        description: "Failed to load product",
-        variant: "destructive",
-      });
+      if (isMounted.current) {
+        toast({
+          title: "Error",
+          description: "Failed to load product",
+          variant: "destructive",
+        });
+      }
     } finally {
-      setLoading(false);
+      if (isMounted.current) {
+        setLoading(false);
+      }
     }
-  };
+  }, [id, toast]);
 
-  const fetchBrand = async (brandId: string) => {
+  const fetchBrand = useCallback(async (brandId: string) => {
     try {
       console.log('🏷️ Fetching brand:', brandId);
       const response = await api.get(`/brands/${brandId}`);
@@ -159,17 +207,21 @@ const ProductDetail = () => {
       console.log('🏷️ Brand response:', result);
       
       if (result.success && result.data) {
-        setBrand(result.data);
+        if (isMounted.current) {
+          setBrand(result.data);
+        }
       } else if (result.id) {
         // Direct brand object response
-        setBrand(result);
+        if (isMounted.current) {
+          setBrand(result);
+        }
       }
     } catch (error) {
       console.error("❌ Error fetching brand:", error);
     }
-  };
+  }, []);
 
-  const fetchStores = async () => {
+  const fetchStores = useCallback(async () => {
     try {
       console.log('🏪 Fetching stores for product:', id);
       const response = await api.get(`/items/${id}/stores`);
@@ -188,13 +240,15 @@ const ProductDetail = () => {
       }
       
       console.log('✅ Stores data:', storesData);
-      setStores(storesData);
+      if (isMounted.current) {
+        setStores(storesData);
+      }
     } catch (error) {
       console.error("❌ Error fetching stores:", error);
     }
-  };
+  }, [id]);
 
-  const getPriceRange = () => {
+  const getPriceRange = useCallback(() => {
     if (stores.length === 0) return null;
     
     const prices = stores.map(s => s.price).filter(p => p != null);
@@ -205,7 +259,7 @@ const ProductDetail = () => {
     
     if (min === max) return `₴${min}`;
     return `₴${min} - ₴${max}`;
-  };
+  }, [stores]);
 
   if (loading) {
     return (
@@ -310,11 +364,11 @@ const ProductDetail = () => {
 
               {/* Details */}
               <div className="space-y-4 mb-8">
-                {product.type && (
+                {product.category && (
                   <div className="flex items-center gap-3">
                     <Tag className="w-5 h-5 text-muted-foreground" />
                     <span className="text-muted-foreground select-none">Category:</span>
-                    <span className="font-medium">{product.type}</span>
+                    <span className="font-medium capitalize">{product.category}</span>
                   </div>
                 )}
                 {product.color && (
@@ -353,10 +407,10 @@ const ProductDetail = () => {
 
               {/* Header */}
               <div className="mb-6">
-                <h2 className="font-display text-2xl font-bold mb-2">Available At</h2>
+                <h2 className="font-display text-2xl font-bold mb-2">{t('productDetail.availableAt')}</h2>
                 <div className="flex items-center gap-2 text-sm text-muted-foreground select-none">
                   <MapPin className="w-4 h-4" />
-                  <span>{stores.length} {stores.length === 1 ? 'store' : 'stores'}</span>
+                  <span>{stores.length} {t('productDetail.stores')}</span>
                 </div>
               </div>
 
@@ -368,7 +422,7 @@ const ProductDetail = () => {
                     <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                     <Input
                       type="text"
-                      placeholder="Search stores..."
+                      placeholder={t('productDetail.searchStores')}
                       value={storeSearch}
                       onChange={(e) => setStoreSearch(e.target.value)}
                       className="pl-10 bg-black/30 border-white/6 text-white"
@@ -381,21 +435,21 @@ const ProductDetail = () => {
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent className="bg-black/80 border-white/10 text-white">
-                      <SelectItem value="name">Name</SelectItem>
-                      <SelectItem value="price-asc">Price: Low to High</SelectItem>
-                      <SelectItem value="price-desc">Price: High to Low</SelectItem>
-                      <SelectItem value="rating">Rating</SelectItem>
+                      <SelectItem value="name">{t('productDetail.name')}</SelectItem>
+                      <SelectItem value="price-asc">{t('productDetail.priceAsc')}</SelectItem>
+                      <SelectItem value="price-desc">{t('productDetail.priceDesc')}</SelectItem>
+                      <SelectItem value="rating">{t('productDetail.rating')}</SelectItem>
                     </SelectContent>
                   </Select>
 
-                  {/* Verified Only Toggle */}
+                  {/* Recommended Only Toggle */}
                   <Button
-                    variant={showVerifiedOnly ? "default" : "outline"}
-                    onClick={() => setShowVerifiedOnly(!showVerifiedOnly)}
+                    variant={showRecommendedOnly ? "default" : "outline"}
+                    onClick={() => setShowRecommendedOnly(!showRecommendedOnly)}
                     className="w-full"
                     size="sm"
                   >
-                    {showVerifiedOnly ? "✓" : ""} Verified Only
+                    {showRecommendedOnly ? "✓" : ""} {t('productDetail.recommendedOnly')}
                   </Button>
                 </div>
               )}
@@ -426,9 +480,9 @@ const ProductDetail = () => {
                         
                         <div className="flex-1">
                           <h3 className="font-semibold mb-1 select-none">{store.name}</h3>
-                          {store.is_verified && (
-                            <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-green-500/10 border border-green-500/20 text-xs text-green-400 select-none">
-                              ✓ Verified
+                          {store.is_recommended && (
+                            <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-purple-500/10 border border-purple-500/20 text-xs text-purple-400 select-none">
+                              ⭐ {t('productDetail.recommended')}
                             </span>
                           )}
                         </div>
@@ -529,25 +583,25 @@ const ProductDetail = () => {
               </>
                 ) : stores.length > 0 ? (
                   <div className="text-center py-8 text-muted-foreground select-none">
-                    <p>No stores match your filters</p>
+                    <p>{t('productDetail.noStoresMatch')}</p>
                     <Button
                       variant="link"
                       onClick={() => {
                         setStoreSearch("");
-                        setShowVerifiedOnly(false);
+                        setShowRecommendedOnly(false);
                       }}
                       className="mt-2"
                     >
-                      Clear filters
+                      {t('productDetail.clearFilters')}
                     </Button>
                   </div>
                 ) : (
                   <div className="text-center py-8 border border-dashed border-border/50 rounded-xl">
                     <Package className="w-12 h-12 mx-auto mb-3 text-muted-foreground" />
-                    <p className="text-muted-foreground select-none mb-2">No stores available yet</p>
+                    <p className="text-muted-foreground select-none mb-2">{t('productDetail.noStoresAvailable')}</p>
                     {isAdmin && (
                       <p className="text-xs text-muted-foreground">
-                        Click "Edit Product" to add stores
+                        {t('productDetail.addStores')}
                       </p>
                     )}
                   </div>

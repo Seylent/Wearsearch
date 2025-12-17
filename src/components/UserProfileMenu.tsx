@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { useTranslation } from 'react-i18next';
 import { User, Heart, LogOut, Settings, Shield } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { isAuthenticated, clearAuth } from '@/utils/authStorage';
@@ -24,6 +25,7 @@ interface UserData {
 
 export function UserProfileMenu() {
   const navigate = useNavigate();
+  const { t } = useTranslation();
   const [user, setUser] = useState<UserData | null>(null);
 
   useEffect(() => {
@@ -80,7 +82,7 @@ export function UserProfileMenu() {
             {isAdmin && (
               <span className="text-[10px] uppercase tracking-wider text-muted-foreground flex items-center gap-1">
                 <Shield className="h-2.5 w-2.5" />
-                Admin
+                {t('nav.admin')}
               </span>
             )}
           </div>
@@ -108,7 +110,7 @@ export function UserProfileMenu() {
               {isAdmin && (
                 <span className="text-[10px] text-primary flex items-center gap-1 mt-0.5">
                   <Shield className="h-2.5 w-2.5" />
-                  Admin
+                  {t('nav.admin')}
                 </span>
               )}
             </div>
@@ -122,7 +124,7 @@ export function UserProfileMenu() {
           className="cursor-pointer text-foreground hover:bg-foreground/10 focus:bg-foreground/10 rounded-md mx-0.5 my-0.5 px-2.5 py-2"
         >
           <User className="h-4 w-4 mr-2.5" />
-          <span className="text-sm font-medium">Profile</span>
+          <span className="text-sm font-medium">{t('nav.profile')}</span>
         </DropdownMenuItem>
         
         <DropdownMenuItem 
@@ -130,7 +132,7 @@ export function UserProfileMenu() {
           className="cursor-pointer text-foreground hover:bg-foreground/10 focus:bg-foreground/10 rounded-md mx-0.5 my-0.5 px-2.5 py-2"
         >
           <Heart className="h-4 w-4 mr-2.5" />
-          <span className="text-sm font-medium">Favorites</span>
+          <span className="text-sm font-medium">{t('nav.favorites')}</span>
         </DropdownMenuItem>
         
         {isAdmin && (
@@ -139,7 +141,7 @@ export function UserProfileMenu() {
             className="cursor-pointer text-foreground hover:bg-foreground/10 focus:bg-foreground/10 rounded-md mx-0.5 my-0.5 px-2.5 py-2"
           >
             <Settings className="h-4 w-4 mr-2.5" />
-            <span className="text-sm font-medium">Admin Panel</span>
+            <span className="text-sm font-medium">{t('admin.title')}</span>
           </DropdownMenuItem>
         )}
         
@@ -150,7 +152,7 @@ export function UserProfileMenu() {
           className="cursor-pointer text-red-400 hover:bg-red-500/10 hover:text-red-300 focus:bg-red-500/10 focus:text-red-300 rounded-md mx-0.5 my-0.5 px-2.5 py-2"
         >
           <LogOut className="h-4 w-4 mr-2.5" />
-          <span className="text-sm font-medium">Log Out</span>
+          <span className="text-sm font-medium">{t('nav.signOut')}</span>
         </DropdownMenuItem>
       </DropdownMenuContent>
     </DropdownMenu>

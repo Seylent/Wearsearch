@@ -46,8 +46,10 @@ export const useProducts = (options?: UseQueryOptions<any>) => {
       const response = await api.get('/items');
       return response.data;
     },
-    staleTime: 15 * 60 * 1000, // 15 minutes
-    gcTime: 30 * 60 * 1000,
+    staleTime: 30 * 60 * 1000, // 30 minutes - increased to reduce refetches
+    gcTime: 60 * 60 * 1000, // 1 hour
+    refetchOnWindowFocus: false, // Don't refetch on tab focus
+    refetchOnMount: false, // Use cache if available
     ...options,
   });
 };
@@ -86,8 +88,10 @@ export const useStores = () => {
       const response = await api.get('/stores');
       return response.data;
     },
-    staleTime: 15 * 60 * 1000, // 15 minutes
-    gcTime: 30 * 60 * 1000,
+    staleTime: 30 * 60 * 1000, // 30 minutes
+    gcTime: 60 * 60 * 1000,
+    refetchOnWindowFocus: false,
+    refetchOnMount: false,
   });
 };
 
@@ -125,8 +129,10 @@ export const useBrands = () => {
       
       return brandsArray;
     },
-    staleTime: 15 * 60 * 1000, // 15 minutes
-    gcTime: 30 * 60 * 1000,
+    staleTime: 30 * 60 * 1000, // 30 minutes
+    gcTime: 60 * 60 * 1000,
+    refetchOnWindowFocus: false,
+    refetchOnMount: false,
   });
 };
 
@@ -150,7 +156,10 @@ export const useHeroImages = () => {
       const response = await api.get('/hero-images');
       return response.data;
     },
-    staleTime: 10 * 60 * 1000,
+    staleTime: 60 * 60 * 1000, // 1 hour - hero images rarely change
+    gcTime: 2 * 60 * 60 * 1000, // 2 hours
+    refetchOnWindowFocus: false,
+    refetchOnMount: false,
   });
 };
 
@@ -185,7 +194,10 @@ export const useStats = () => {
         return { products: 0, stores: 0, brands: 0, satisfaction_rate: 0 };
       }
     },
-    staleTime: 2 * 60 * 1000,
+    staleTime: 5 * 60 * 1000, // 5 minutes
+    gcTime: 15 * 60 * 1000,
+    refetchOnWindowFocus: false,
+    refetchOnMount: false,
     retry: false,
   });
 };
@@ -216,11 +228,11 @@ export const useFavorites = () => {
         throw error;
       }
     },
-    staleTime: 2 * 60 * 1000, // 2 minutes
+    staleTime: 5 * 60 * 1000, // 5 minutes - increased from 2
     gcTime: 30 * 60 * 1000,
     retry: 1,
     refetchOnMount: true,
-    refetchOnWindowFocus: false,
+    refetchOnWindowFocus: false, // Don't refetch on tab focus
     refetchOnReconnect: false,
     // Only fetch if user is authenticated
     enabled: typeof window !== 'undefined' && !!getAuth(),

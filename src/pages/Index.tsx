@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
+import { useTranslation } from 'react-i18next';
 import Navigation from "@/components/layout/Navigation";
 import { Footer } from "@/components/layout/Footer";
 import ProductCard from "@/components/ProductCard";
@@ -11,6 +12,7 @@ import { useProducts, useStats, useHeroImages } from "@/hooks/useApi";
 
 const Index: React.FC = () => {
   const navigate = useNavigate();
+  const { t } = useTranslation();
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
   
   // Use React Query hooks - only fetch what's needed for this page
@@ -72,23 +74,23 @@ const Index: React.FC = () => {
   const features = [
     {
       icon: Sparkles,
-      title: "Curated Selection",
-      description: "Hand-picked pieces from world-renowned designers",
+      title: t('about.value1Title'),
+      description: t('about.value1Desc'),
     },
     {
       icon: Shield,
-      title: "Recommended Stores",
-      description: "Every store verified by our expert team",
+      title: t('about.value2Title'),
+      description: t('about.value2Desc'),
     },
     {
       icon: Package,
-      title: "Global Shipping",
-      description: "Express delivery to 50+ countries worldwide",
+      title: t('about.value3Title'),
+      description: t('about.value3Desc'),
     },
     {
       icon: Clock,
-      title: "24/7 Support",
-      description: "Personal styling assistance anytime",
+      title: t('about.value4Title'),
+      description: t('about.value4Desc'),
     },
   ];
 
@@ -259,7 +261,7 @@ const Index: React.FC = () => {
                   name={product.name}
                   image={product.image_url || product.image}
                   price={product.price}
-                  category={product.type}
+                  category={product.category}
                 />
               ))}
             </div>

@@ -56,7 +56,7 @@ export const SearchDropdown: React.FC<SearchDropdownProps> = ({ onClose }) => {
 
     return products.filter((product: any) =>
       product.name?.toLowerCase().includes(query) ||
-      product.type?.toLowerCase().includes(query) ||
+      product.category?.toLowerCase().includes(query) ||
       product.brand?.toLowerCase().includes(query)
     ).slice(0, 5);
   }, [debouncedQuery, productsData]);

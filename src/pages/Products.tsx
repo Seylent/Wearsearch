@@ -1,4 +1,6 @@
 import { useState, useEffect, useMemo } from "react";
+import { useTranslation } from "react-i18next";
+import { useSearchParams } from "react-router-dom";
 import Navigation from "@/components/layout/Navigation";
 import { Footer } from "@/components/layout/Footer";
 import { NeonAbstractions } from "@/components/NeonAbstractions";
@@ -10,7 +12,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
-import { Filter, Search, Sparkles, AlertCircle } from "lucide-react";
+import { Filter, Search, Sparkles, AlertCircle, Grid3x3, LayoutGrid, Columns3 } from "lucide-react";
 import {
   Pagination,
   PaginationContent,
@@ -22,25 +24,35 @@ import {
 } from "@/components/ui/pagination";
 import { useProducts, useBrands } from "@/hooks/useApi";
 import { useDebounce } from "@/hooks/useDebounce";
+import { PRODUCT_CATEGORIES } from "@/constants/categories";
 import type { Product } from "@/types";
 
 const Products = () => {
+  const { t } = useTranslation();
+  const [searchParams] = useSearchParams();
   const [searchQuery, setSearchQuery] = useState("");
   const debouncedSearch = useDebounce(searchQuery, 300);
   const [selectedColors, setSelectedColors] = useState<string[]>([]);
   const [selectedTypes, setSelectedTypes] = useState<string[]>([]);
+  const [selectedGenders, setSelectedGenders] = useState<string[]>([]);
   const [selectedBrand, setSelectedBrand] = useState<string>("");
   const [brandSearchQuery, setBrandSearchQuery] = useState("");
   const [sortBy, setSortBy] = useState("default");
   const [currentPage, setCurrentPage] = useState(1);
   const [filterOpen, setFilterOpen] = useState(false);
+  const [gridColumns, setGridColumns] = useState<number>(6); // Grid layout selector
   const itemsPerPage = 24;
 
   const colors = ["Black", "White", "Gray", "Beige", "Brown", "Red", "Blue", "Navy", "Green", "Olive", "Yellow", "Orange", "Pink", "Purple", "Cream"];
   const types = ["Outerwear", "Tops", "Bottoms", "Dresses", "Shoes", "Accessories"];
+  const genders = ["Male", "Female", "Unisex"];
+  const categories = [...PRODUCT_CATEGORIES]; // Use the standardized categories
 
   const { data: productsData, isLoading: loading, error } = useProducts();
   const { data: brandsData } = useBrands();
+  
+  // Filter products by store if store_id param is present
+  const storeIdParam = searchParams.get('store_id');
   
   const allProducts = useMemo(() => {
     if (!productsData) return [];
@@ -63,12 +75,54 @@ const Products = () => {
   const filteredAndSortedProducts = useMemo(() => {
     let filtered = [...allProducts];
 
+    // Filter by store if store_id is present
+    if (storeIdParam) {
+      console.log('🔍 Filtering by store_id:', storeIdParam);
+      console.log('📦 Total products before filter:', filtered.length);
+      
+      filtered = filtered.filter((p: Product) => {
+        // Check if product has product_stores array
+        const productStores = (p as any).product_stores;
+        
+        if (!productStores || !Array.isArray(productStores)) {
+          console.log('❌ Product', p.name, 'has no product_stores array');
+          return false;
+        }
+        
+        // Check if any of the product's stores match the store_id
+        const hasStore = productStores.some((ps: any) => {
+          // Try multiple possible store_id locations
+          const psStoreId = String(
+            ps.store_id || 
+            ps.id || 
+            ps.store?.id || 
+            (ps.stores && ps.stores.id)
+          );
+          
+          const matches = psStoreId === storeIdParam;
+          if (matches) {
+            console.log('✅ MATCH:', p.name, '- store_id:', psStoreId);
+          }
+          return matches;
+        });
+        
+        return hasStore;
+      });
+      
+      console.log('✅ Filtered products count:', filtered.length);
+      
+      if (filtered.length === 0) {
+        console.warn('⚠️ No products found for store_id:', storeIdParam);
+        console.log('💡 Tip: Check if products have product_stores with matching store_id');
+      }
+    }
+
     // Search filter - use debounced value
     if (debouncedSearch.trim()) {
       const query = debouncedSearch.toLowerCase();
       filtered = filtered.filter((p: Product) =>
         p.name?.toLowerCase().includes(query) ||
-        p.type?.toLowerCase().includes(query) ||
+        p.category?.toLowerCase().includes(query) ||
         p.brand?.toLowerCase().includes(query)
       );
     }
@@ -84,6 +138,13 @@ const Products = () => {
     if (selectedTypes.length > 0) {
       filtered = filtered.filter((p: Product) =>
         p.type && selectedTypes.includes(p.type)
+      );
+    }
+
+    // Gender filter
+    if (selectedGenders.length > 0) {
+      filtered = filtered.filter((p: Product) =>
+        p.gender && selectedGenders.includes(p.gender)
       );
     }
 
@@ -109,7 +170,7 @@ const Products = () => {
     }
 
     return filtered;
-  }, [allProducts, debouncedSearch, selectedColors, selectedTypes, sortBy]);
+  }, [allProducts, debouncedSearch, selectedColors, selectedTypes, selectedGenders, selectedBrand, sortBy, storeIdParam]);
 
   const totalProducts = filteredAndSortedProducts.length;
   const totalPages = Math.ceil(totalProducts / itemsPerPage);
@@ -133,9 +194,17 @@ const Products = () => {
     setCurrentPage(1);
   };
 
+  const toggleGender = (gender: string) => {
+    setSelectedGenders(prev => 
+      prev.includes(gender) ? prev.filter(g => g !== gender) : [...prev, gender]
+    );
+    setCurrentPage(1);
+  };
+
   const clearAllFilters = () => {
     setSelectedColors([]);
     setSelectedTypes([]);
+    setSelectedGenders([]);
     setSelectedBrand("");
     setBrandSearchQuery("");
     setSearchQuery("");
@@ -145,6 +214,11 @@ const Products = () => {
   useEffect(() => {
     setCurrentPage(1);
   }, [searchQuery]);
+
+  // Scroll to top when navigating between pages or changing filters
+  useEffect(() => {
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  }, [currentPage, sortBy, selectedBrand]);
 
   return (
     <div className="min-h-screen bg-black text-white overflow-x-hidden font-sans">
@@ -163,11 +237,11 @@ const Products = () => {
           </div>
           
           <h1 className="font-display text-5xl sm:text-6xl md:text-7xl font-bold mb-4 tracking-tight">
-            <span className="neon-text">Explore</span> Products
+            <span className="neon-text">{t('products.title')}</span>
           </h1>
           
           <p className="text-lg text-muted-foreground max-w-2xl mx-auto mb-8">
-            Discover our curated selection of premium fashion from world-class designers
+            {t('home.subtitle')}
           </p>
           
           {/* Search Bar */}
@@ -176,7 +250,7 @@ const Products = () => {
               <Search className="absolute left-5 w-5 h-5 text-muted-foreground" />
               <Input
                 type="text"
-                placeholder="Search products..."
+                placeholder={t('home.searchPlaceholder')}
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 className="w-full pl-14 pr-5 h-14 glass-card rounded-full text-foreground placeholder:text-muted-foreground focus-visible:ring-2 focus-visible:ring-foreground/20 border-foreground/10"
@@ -190,29 +264,29 @@ const Products = () => {
         <div className="flex flex-col gap-10">
 
           {/* Filters and Sort */}
-          <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-6">
+          <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
             <div className="flex items-center gap-3 flex-wrap">
               <Dialog open={filterOpen} onOpenChange={setFilterOpen}>
                 <DialogTrigger asChild>
                   <Button variant="outline" size="lg" className="border-foreground/20 bg-card/50 text-foreground hover:bg-card hover:border-foreground/30">
                     <Filter className="w-4 h-4 mr-2" />
-                    Filters
-                    {(selectedColors.length + selectedTypes.length + (selectedBrand ? 1 : 0)) > 0 && (
+                    {t('products.filters')}
+                    {(selectedColors.length + selectedTypes.length + selectedGenders.length + (selectedBrand ? 1 : 0)) > 0 && (
                       <span className="ml-2 bg-primary text-primary-foreground rounded-full w-5 h-5 flex items-center justify-center text-[10px] font-bold">
-                        {selectedColors.length + selectedTypes.length + (selectedBrand ? 1 : 0)}
+                        {selectedColors.length + selectedTypes.length + selectedGenders.length + (selectedBrand ? 1 : 0)}
                       </span>
                     )}
                   </Button>
                 </DialogTrigger>
-                <DialogContent className="bg-card border-foreground/10 text-foreground sm:max-w-md">
+                <DialogContent className="bg-card border-foreground/10 text-foreground sm:max-w-md max-h-[85vh] overflow-y-auto">
                   <DialogHeader>
-                    <DialogTitle className="text-2xl font-bold">Filter Products</DialogTitle>
+                    <DialogTitle className="text-2xl font-bold">{t('products.filter')}</DialogTitle>
                   </DialogHeader>
-                  <div className="space-y-8 py-6">
+                  <div className="space-y-6 py-4">
                     {/* Color Filter */}
                     <div>
-                      <h3 className="font-semibold mb-4 text-sm uppercase tracking-widest text-muted-foreground">Color</h3>
-                      <div className="grid grid-cols-2 gap-3">
+                      <h3 className="font-semibold mb-3 text-sm uppercase tracking-widest text-muted-foreground">{t('products.color')}</h3>
+                      <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
                         {colors.map((color) => (
                           <div key={color} className="flex items-center">
                             <Checkbox 
@@ -234,21 +308,44 @@ const Products = () => {
 
                     {/* Category Filter */}
                     <div>
-                      <h3 className="font-semibold mb-4 text-sm uppercase tracking-widest text-muted-foreground">Category</h3>
-                      <div className="grid grid-cols-2 gap-3">
-                        {types.map((type) => (
-                          <div key={type} className="flex items-center">
+                      <h3 className="font-semibold mb-3 text-sm uppercase tracking-widest text-muted-foreground">{t('products.category')}</h3>
+                      <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
+                        {categories.map((category) => (
+                          <div key={category} className="flex items-center">
                             <Checkbox 
-                              id={`filter-type-${type}`}
-                              checked={selectedTypes.includes(type)}
-                              onCheckedChange={() => toggleType(type)}
+                              id={`filter-category-${category}`}
+                              checked={selectedTypes.includes(category)}
+                              onCheckedChange={() => toggleType(category)}
                               className="border-foreground/20 data-[state=checked]:bg-primary data-[state=checked]:text-primary-foreground"
                             />
                             <Label 
-                              htmlFor={`filter-type-${type}`}
+                              htmlFor={`filter-category-${category}`}
+                              className="ml-2 text-sm cursor-pointer hover:text-foreground/80 transition-colors capitalize"
+                            >
+                              {t(`products.${category.toLowerCase().replace('-', '')}`)}
+                            </Label>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+
+                    {/* Gender Filter */}
+                    <div>
+                      <h3 className="font-semibold mb-3 text-sm uppercase tracking-widest text-muted-foreground">{t('products.gender')}</h3>
+                      <div className="grid grid-cols-3 gap-2">
+                        {genders.map((gender) => (
+                          <div key={gender} className="flex items-center">
+                            <Checkbox 
+                              id={`filter-gender-${gender}`}
+                              checked={selectedGenders.includes(gender)}
+                              onCheckedChange={() => toggleGender(gender)}
+                              className="border-foreground/20 data-[state=checked]:bg-primary data-[state=checked]:text-primary-foreground"
+                            />
+                            <Label 
+                              htmlFor={`filter-gender-${gender}`}
                               className="ml-2 text-sm cursor-pointer hover:text-foreground/80 transition-colors"
                             >
-                              {type}
+                              {t(`products.${gender.toLowerCase()}`)}
                             </Label>
                           </div>
                         ))}
@@ -257,25 +354,25 @@ const Products = () => {
 
                     {/* Brand Filter */}
                     <div>
-                      <h3 className="font-semibold mb-4 text-sm uppercase tracking-widest text-muted-foreground">Brand</h3>
+                      <h3 className="font-semibold mb-3 text-sm uppercase tracking-widest text-muted-foreground">{t('products.brand')}</h3>
                       {selectedBrand && (
                         <Button
                           variant="ghost"
                           size="sm"
                           onClick={() => { setSelectedBrand(""); setCurrentPage(1); }}
-                          className="mb-3 text-xs text-muted-foreground hover:text-foreground"
+                          className="mb-2 text-xs text-muted-foreground hover:text-foreground h-7"
                         >
-                          Clear brand: {selectedBrand}
+                          Clear: {selectedBrand}
                         </Button>
                       )}
                       <Input
                         type="text"
-                        placeholder="Search brands..."
+                        placeholder={t('products.searchBrand')}
                         value={brandSearchQuery}
                         onChange={(e) => setBrandSearchQuery(e.target.value)}
-                        className="mb-3 h-9 text-sm"
+                        className="mb-2 h-9 text-sm"
                       />
-                      <div className="max-h-48 overflow-y-auto space-y-2 border border-foreground/10 rounded-lg p-2">
+                      <div className="max-h-40 overflow-y-auto space-y-1 border border-foreground/10 rounded-lg p-2">
                         {filteredBrands.length > 0 ? (
                           filteredBrands.map((brand: any) => (
                             <button
@@ -284,7 +381,7 @@ const Products = () => {
                                 setSelectedBrand(brand.name);
                                 setCurrentPage(1);
                               }}
-                              className={`w-full text-left px-3 py-2 rounded-md text-sm transition-colors ${
+                              className={`w-full text-left px-2 py-1.5 rounded-md text-sm transition-colors ${
                                 selectedBrand === brand.name
                                   ? "bg-primary text-primary-foreground"
                                   : "hover:bg-foreground/5"
@@ -294,53 +391,87 @@ const Products = () => {
                             </button>
                           ))
                         ) : (
-                          <p className="text-xs text-muted-foreground text-center py-4">No brands found</p>
+                          <p className="text-xs text-muted-foreground text-center py-3">{t('common.noResults')}</p>
                         )}
                       </div>
                     </div>
 
-                    <div className="flex gap-3 pt-6 border-t border-foreground/10">
+                    <div className="flex gap-2 pt-4 border-t border-foreground/10">
                       <Button 
                         variant="ghost" 
-                        className="flex-1 text-muted-foreground hover:text-foreground"
+                        className="flex-1 text-muted-foreground hover:text-foreground h-10"
                         onClick={clearAllFilters}
                       >
-                        Reset
+                        {t('products.clearFilters')}
                       </Button>
                       <Button 
-                        className="flex-1 bg-primary text-primary-foreground hover:bg-primary/90"
+                        className="flex-1 bg-primary text-primary-foreground hover:bg-primary/90 h-10"
                         onClick={() => setFilterOpen(false)}
                       >
-                        Show Results
+                        {t('products.applyFilters')}
                       </Button>
                     </div>
                   </div>
                 </DialogContent>
               </Dialog>
               
-              {(selectedColors.length > 0 || selectedTypes.length > 0 || selectedBrand) && (
+              {(selectedColors.length > 0 || selectedTypes.length > 0 || selectedGenders.length > 0 || selectedBrand) && (
                 <Button 
                   variant="ghost" 
                   onClick={clearAllFilters}
                   className="text-muted-foreground hover:text-foreground"
                 >
-                  Clear all filters
+                  {t('products.clearFilters')}
                 </Button>
               )}
             </div>
 
-            <Select value={sortBy} onValueChange={setSortBy}>
-              <SelectTrigger className="w-[200px] h-11 border-foreground/20 bg-card/50 text-foreground focus:ring-foreground/20">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent className="bg-card border-foreground/10 text-foreground">
-                <SelectItem value="default">Default</SelectItem>
-                <SelectItem value="name-asc">Name (A-Z)</SelectItem>
-                <SelectItem value="name-desc">Name (Z-A)</SelectItem>
-                <SelectItem value="price-asc">Price (Low to High)</SelectItem>
-                <SelectItem value="price-desc">Price (High to Low)</SelectItem>
-              </SelectContent>
-            </Select>
+            <div className="flex items-center gap-3 w-full md:w-auto">
+              {/* Grid Layout Selector - Visual Gallery View */}
+              <div className="flex items-center gap-1 border border-foreground/20 rounded-lg p-1 bg-card/50">
+                <Button
+                  variant={gridColumns === 2 ? "default" : "ghost"}
+                  size="sm"
+                  onClick={() => setGridColumns(2)}
+                  className="h-9 w-9 p-0"
+                  title="Великі плитки (2 колонки)"
+                >
+                  <Columns3 className="h-4 w-4" />
+                </Button>
+                <Button
+                  variant={gridColumns === 4 ? "default" : "ghost"}
+                  size="sm"
+                  onClick={() => setGridColumns(4)}
+                  className="h-9 w-9 p-0"
+                  title="Середні плитки (4 колонки)"
+                >
+                  <LayoutGrid className="h-4 w-4" />
+                </Button>
+                <Button
+                  variant={gridColumns === 6 ? "default" : "ghost"}
+                  size="sm"
+                  onClick={() => setGridColumns(6)}
+                  className="h-9 w-9 p-0"
+                  title="Маленькі плитки (6 колонок)"
+                >
+                  <Grid3x3 className="h-4 w-4" />
+                </Button>
+              </div>
+
+              {/* Sort */}
+              <Select value={sortBy} onValueChange={setSortBy}>
+                <SelectTrigger className="w-[200px] h-10 border-foreground/20 bg-card/50 text-foreground focus:ring-foreground/20">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent className="bg-card border-foreground/10 text-foreground">
+                  <SelectItem value="default">{t('products.default')}</SelectItem>
+                  <SelectItem value="name-asc">Name (A-Z)</SelectItem>
+                  <SelectItem value="name-desc">Name (Z-A)</SelectItem>
+                  <SelectItem value="price-asc">{t('products.priceAsc')}</SelectItem>
+                  <SelectItem value="price-desc">{t('products.priceDesc')}</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
           </div>
           
           {/* Products Grid */}
@@ -361,7 +492,11 @@ const Products = () => {
             </div>
           ) : (
             <>
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 xl:grid-cols-6 gap-x-6 gap-y-12">
+              <div className={`grid gap-x-6 gap-y-12 ${
+                gridColumns === 2 ? 'grid-cols-1 sm:grid-cols-2' :
+                gridColumns === 4 ? 'grid-cols-2 sm:grid-cols-3 lg:grid-cols-4' :
+                'grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-6'
+              }`}>
                 {paginatedProducts.map((product) => (
                   <ProductCard
                     key={product.id}
@@ -369,7 +504,7 @@ const Products = () => {
                     name={product.name}
                     image={product.image_url || product.image || ""}
                     price={String(product.price)}
-                    category={product.type || product.category}
+                    category={product.category}
                   />
                 ))}
               </div>

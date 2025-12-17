@@ -14,6 +14,7 @@ export interface Store {
   updated_at?: string;
   // Optional metadata that may be returned by the API
   is_verified?: boolean;
+  is_recommended?: boolean;
   product_count?: number;
   brand_count?: number;
   average_rating?: number;

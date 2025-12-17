@@ -92,8 +92,8 @@ export const ImageUploader = ({ onImageUpload, currentImage, label = "Product Im
       const formData = new FormData();
       formData.append('image', file);
 
-      // Upload to backend server on port 3000
-      const response = await fetch('http://192.168.0.117:3000/api/upload/image', {
+      // Upload to backend server through Vite proxy
+      const response = await fetch('/api/upload/image', {
         method: 'POST',
         body: formData,
       });
