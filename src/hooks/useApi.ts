@@ -95,6 +95,32 @@ export const useStores = () => {
   });
 };
 
+export const useStoreProducts = (
+  storeId: string, 
+  params?: { category?: string; page?: number; limit?: number },
+  options?: UseQueryOptions<any>
+) => {
+  return useQuery({
+    queryKey: ['storeProducts', storeId, params],
+    queryFn: async () => {
+      const response = await api.get(`/stores/${storeId}/products`, {
+        params: {
+          ...(params?.category && { category: params.category }),
+          ...(params?.page && { page: params.page }),
+          ...(params?.limit && { limit: params.limit }),
+        },
+      });
+      return response.data;
+    },
+    enabled: !!storeId,
+    staleTime: 10 * 60 * 1000, // 10 minutes
+    gcTime: 30 * 60 * 1000,
+    refetchOnWindowFocus: false,
+    refetchOnMount: false,
+    ...options,
+  });
+};
+
 export const useStore = (id: string) => {
   return useQuery({
     queryKey: queryKeys.store(id),

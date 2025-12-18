@@ -70,6 +70,15 @@ export const ENDPOINTS = {
   STORES: {
     LIST: '/stores',
     DETAIL: (id: string | number) => `/stores/${id}`,
+    PRODUCTS: (id: string | number, params?: { category?: string; page?: number; limit?: number }) => {
+      const baseUrl = `/stores/${id}/products`;
+      const searchParams = new URLSearchParams();
+      if (params?.category) searchParams.append('category', params.category);
+      if (params?.page) searchParams.append('page', params.page.toString());
+      if (params?.limit) searchParams.append('limit', params.limit.toString());
+      const query = searchParams.toString();
+      return query ? `${baseUrl}?${query}` : baseUrl;
+    },
     CREATE: '/admin/stores',
     UPDATE: (id: string | number) => `/admin/stores/${id}`,
     DELETE: (id: string | number) => `/admin/stores/${id}`,

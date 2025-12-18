@@ -8,20 +8,25 @@ export default defineConfig(({ mode }) => ({
   server: {
     host: "0.0.0.0",
     port: 8080,
-    allowedHosts: [
-      'localhost',
-      '.ngrok.io',
-      '.ngrok-free.dev',
-      'parasynaptic-kim-hippological.ngrok-free.dev'
-    ],
-    proxy: {
-      '/api': {
-        target: 'http://192.168.0.117:3000',
-        changeOrigin: true,
-        secure: false,
-        ws: true,
-      }
-    }
+    // Allow ngrok only in development
+    allowedHosts: mode === 'development' 
+      ? [
+          'localhost',
+          '.ngrok.io',
+          '.ngrok-free.dev',
+          'parasynaptic-kim-hippological.ngrok-free.dev'
+        ]
+      : undefined,
+    proxy: mode === 'development' 
+      ? {
+          '/api': {
+            target: process.env.VITE_API_PROXY_TARGET || 'http://localhost:3000',
+            changeOrigin: true,
+            secure: false,
+            ws: true,
+          }
+        }
+      : undefined,
   },
   plugins: [react(), mode === "development" && componentTagger()].filter(Boolean),
   resolve: {

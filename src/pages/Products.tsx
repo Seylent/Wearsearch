@@ -6,6 +6,7 @@ import { Footer } from "@/components/layout/Footer";
 import { NeonAbstractions } from "@/components/NeonAbstractions";
 import ProductCard from "@/components/ProductCard";
 import { ProductGridSkeleton } from "@/components/common/SkeletonLoader";
+import { NoProductsFound, NoStoreProducts, ErrorState } from "@/components/common/EmptyState";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -22,7 +23,7 @@ import {
   PaginationPrevious,
   PaginationEllipsis,
 } from "@/components/ui/pagination";
-import { useProducts, useBrands } from "@/hooks/useApi";
+import { useProducts, useBrands, useStoreProducts } from "@/hooks/useApi";
 import { useDebounce } from "@/hooks/useDebounce";
 import { PRODUCT_CATEGORIES } from "@/constants/categories";
 import type { Product } from "@/types";
@@ -48,16 +49,28 @@ const Products = () => {
   const genders = ["Male", "Female", "Unisex"];
   const categories = [...PRODUCT_CATEGORIES]; // Use the standardized categories
 
-  const { data: productsData, isLoading: loading, error } = useProducts();
-  const { data: brandsData } = useBrands();
-  
-  // Filter products by store if store_id param is present
+  // Get store_id from URL params
   const storeIdParam = searchParams.get('store_id');
   
+  // Use store-specific endpoint if store_id is present, otherwise get all products
+  const { data: productsData, isLoading: loading, error } = useProducts({ 
+    enabled: !storeIdParam // Only fetch all products if not filtering by store
+  });
+  const { data: storeProductsData, isLoading: storeLoading, error: storeError } = useStoreProducts(
+    storeIdParam || '', 
+    { limit: 1000 }, // Fetch all products from store
+    { enabled: !!storeIdParam }
+  );
+  const { data: brandsData } = useBrands();
+  
+  // Use store products if filtering by store, otherwise use all products
   const allProducts = useMemo(() => {
+    if (storeIdParam && storeProductsData) {
+      return storeProductsData.products || storeProductsData || [];
+    }
     if (!productsData) return [];
     return productsData.products || productsData || [];
-  }, [productsData]);
+  }, [productsData, storeProductsData, storeIdParam]);
 
   const brands = useMemo(() => {
     if (!brandsData) return [];
@@ -74,48 +87,6 @@ const Products = () => {
 
   const filteredAndSortedProducts = useMemo(() => {
     let filtered = [...allProducts];
-
-    // Filter by store if store_id is present
-    if (storeIdParam) {
-      console.log('🔍 Filtering by store_id:', storeIdParam);
-      console.log('📦 Total products before filter:', filtered.length);
-      
-      filtered = filtered.filter((p: Product) => {
-        // Check if product has product_stores array
-        const productStores = (p as any).product_stores;
-        
-        if (!productStores || !Array.isArray(productStores)) {
-          console.log('❌ Product', p.name, 'has no product_stores array');
-          return false;
-        }
-        
-        // Check if any of the product's stores match the store_id
-        const hasStore = productStores.some((ps: any) => {
-          // Try multiple possible store_id locations
-          const psStoreId = String(
-            ps.store_id || 
-            ps.id || 
-            ps.store?.id || 
-            (ps.stores && ps.stores.id)
-          );
-          
-          const matches = psStoreId === storeIdParam;
-          if (matches) {
-            console.log('✅ MATCH:', p.name, '- store_id:', psStoreId);
-          }
-          return matches;
-        });
-        
-        return hasStore;
-      });
-      
-      console.log('✅ Filtered products count:', filtered.length);
-      
-      if (filtered.length === 0) {
-        console.warn('⚠️ No products found for store_id:', storeIdParam);
-        console.log('💡 Tip: Check if products have product_stores with matching store_id');
-      }
-    }
 
     // Search filter - use debounced value
     if (debouncedSearch.trim()) {
@@ -170,7 +141,11 @@ const Products = () => {
     }
 
     return filtered;
-  }, [allProducts, debouncedSearch, selectedColors, selectedTypes, selectedGenders, selectedBrand, sortBy, storeIdParam]);
+  }, [allProducts, debouncedSearch, selectedColors, selectedTypes, selectedGenders, selectedBrand, sortBy]);
+
+  // Handle loading and error states for both data sources
+  const isLoading = storeIdParam ? storeLoading : loading;
+  const currentError = storeIdParam ? storeError : error;
 
   const totalProducts = filteredAndSortedProducts.length;
   const totalPages = Math.ceil(totalProducts / itemsPerPage);
@@ -475,21 +450,26 @@ const Products = () => {
           </div>
           
           {/* Products Grid */}
-          {loading ? (
+          {isLoading ? (
             <ProductGridSkeleton count={24} columns={6} />
-          ) : error ? (
-            <div className="text-center py-32 border border-dashed border-destructive/30 rounded-3xl bg-destructive/5">
-              <div className="w-16 h-16 rounded-full bg-destructive/10 flex items-center justify-center mx-auto mb-6">
-                <AlertCircle className="w-8 h-8 text-destructive" />
-              </div>
-              <h3 className="font-display text-xl font-semibold mb-2">Failed to load products</h3>
-              <p className="text-muted-foreground mb-6 max-w-md mx-auto">
-                We couldn't load the products. Please check your connection and try again.
-              </p>
-              <Button onClick={() => window.location.reload()}>
-                Retry
-              </Button>
-            </div>
+          ) : currentError ? (
+            <ErrorState 
+              title="Failed to load products"
+              description="We couldn't load the products. Please check your connection and try again."
+              onRetry={() => window.location.reload()}
+            />
+          ) : paginatedProducts.length === 0 ? (
+            storeIdParam ? (
+              <NoStoreProducts />
+            ) : (
+              <NoProductsFound hasFilters={
+                selectedColors.length > 0 || 
+                selectedTypes.length > 0 || 
+                selectedGenders.length > 0 || 
+                selectedBrand !== '' ||
+                debouncedSearch !== ''
+              } />
+            )
           ) : (
             <>
               <div className={`grid gap-x-6 gap-y-12 ${
@@ -508,13 +488,6 @@ const Products = () => {
                   />
                 ))}
               </div>
-              
-              {paginatedProducts.length === 0 && (
-                <div className="text-center py-32 border border-dashed border-foreground/10 rounded-3xl bg-card/20">
-                  <p className="text-muted-foreground text-lg">No products found matching your filters.</p>
-                  <Button variant="link" onClick={clearAllFilters} className="text-primary mt-2">Clear all filters</Button>
-                </div>
-              )}
 
               {/* Pagination */}
               {paginatedProducts.length > 0 && totalPages > 1 && (

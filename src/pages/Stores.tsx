@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 import Navigation from "@/components/layout/Navigation";
 import { Footer } from "@/components/layout/Footer";
 import { NeonAbstractions } from "@/components/NeonAbstractions";
+import { NoStoresFound, ErrorState } from "@/components/common/EmptyState";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Search, ArrowRight, ExternalLink, Star, Package } from "lucide-react";
@@ -14,7 +15,7 @@ const Stores = () => {
   const navigate = useNavigate();
   const [searchQuery, setSearchQuery] = useState("");
 
-  const { data: storesData, isLoading: loading } = useStores();
+  const { data: storesData, isLoading: loading, error } = useStores();
   
   const stores = useMemo(() => {
     if (!storesData) return [];
@@ -93,7 +94,30 @@ const Stores = () => {
             <div className="min-h-[400px] flex items-center justify-center">
               <div className="animate-spin w-8 h-8 border-2 border-foreground border-t-transparent rounded-full"></div>
             </div>
-          ) : filteredStores.length > 0 ? (
+          ) : error ? (
+            <ErrorState 
+              title="Failed to load stores"
+              description="We couldn't load the stores. Please check your connection and try again."
+              onRetry={() => window.location.reload()}
+            />
+          ) : filteredStores.length === 0 ? (
+            searchQuery ? (
+              <div className="min-h-[400px] flex flex-col items-center justify-center text-center">
+                <div className="w-16 h-16 rounded-full border-2 border-foreground/20 flex items-center justify-center mb-4">
+                  <Search className="w-8 h-8 text-muted-foreground" />
+                </div>
+                <h3 className="text-xl font-semibold mb-2">No Stores Found</h3>
+                <p className="text-muted-foreground mb-4">
+                  Try adjusting your search or clear filters
+                </p>
+                <Button variant="outline" onClick={() => setSearchQuery("")}>
+                  Clear Search
+                </Button>
+              </div>
+            ) : (
+              <NoStoresFound />
+            )
+          ) : (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
               {filteredStores.map((store, index) => (
                 <div
@@ -221,19 +245,6 @@ const Stores = () => {
                   </div>
                 </div>
               ))}
-            </div>
-          ) : (
-            <div className="min-h-[400px] flex flex-col items-center justify-center text-center">
-              <div className="w-16 h-16 rounded-full border-2 border-foreground/20 flex items-center justify-center mb-4">
-                <Search className="w-8 h-8 text-muted-foreground" />
-              </div>
-              <h3 className="text-xl font-semibold mb-2">No Stores Found</h3>
-              <p className="text-muted-foreground mb-4">
-                Try adjusting your search or clear filters
-              </p>
-              <Button variant="outline" onClick={() => setSearchQuery("")}>
-                Clear Search
-              </Button>
             </div>
           )}
         </div>
