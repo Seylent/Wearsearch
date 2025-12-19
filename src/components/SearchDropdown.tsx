@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { Search, X } from "lucide-react";
 import { useProducts } from "@/hooks/useApi";
 import { convertS3UrlToHttps } from "@/lib/utils";
+import { getCategoryTranslation } from "@/utils/translations";
 
 interface SearchDropdownProps {
   onClose: () => void;
@@ -148,7 +149,7 @@ export const SearchDropdown: React.FC<SearchDropdownProps> = ({ onClose }) => {
                         {product.type && (
                           <>
                             {product.brand && <span className="text-white/30">•</span>}
-                            <span className="text-xs text-white/50">{product.type}</span>
+                            <span className="text-xs text-white/50">{getCategoryTranslation(product.type)}</span>
                           </>
                         )}
                       </div>

@@ -1,12 +1,14 @@
 export const NeonAbstractions = () => {
   return (
-    <div className="absolute inset-0 overflow-hidden pointer-events-none">
+    <div className="absolute inset-0 overflow-hidden pointer-events-none" style={{ transform: 'translateZ(0)' }}>
       {/* Large hemisphere at bottom - like planet horizon */}
       <div
         className="absolute -bottom-[50%] left-1/2 -translate-x-1/2 w-[1400px] h-[1400px] rounded-full"
         style={{
           background: 'radial-gradient(circle at center top, rgba(255, 255, 255, 0.04) 0%, rgba(255, 255, 255, 0.02) 25%, rgba(255, 255, 255, 0.01) 45%, transparent 65%)',
-          filter: 'blur(80px)'
+          filter: 'blur(60px)',
+          willChange: 'transform',
+          transform: 'translateZ(0)'
         }}
       />
       
@@ -37,13 +39,15 @@ export const NeonAbstractions = () => {
         className="absolute bottom-0 left-1/2 -translate-x-1/2 w-[1200px] h-[300px]"
         style={{
           background: 'radial-gradient(ellipse at center top, rgba(255, 255, 255, 0.06) 0%, rgba(255, 255, 255, 0.03) 50%, transparent 80%)',
-          filter: 'blur(100px)'
+          filter: 'blur(80px)',
+          willChange: 'transform',
+          transform: 'translateZ(0)'
         }}
       />
       
       {/* Scattered dots/stars effect */}
-      <div className="absolute inset-0">
-        {[...Array(50)].map((_, i) => (
+      <div className="absolute inset-0" style={{ willChange: 'opacity', transform: 'translateZ(0)' }}>
+        {[...Array(15)].map((_, i) => (
           <div
             key={i}
             className="absolute w-[1px] h-[1px] bg-white rounded-full"
@@ -53,7 +57,8 @@ export const NeonAbstractions = () => {
               opacity: Math.random() * 0.5 + 0.1,
               boxShadow: '0 0 1px rgba(255, 255, 255, 0.8)',
               animation: `twinkle ${Math.random() * 4 + 3}s ease-in-out infinite`,
-              animationDelay: `${Math.random() * 3}s`
+              animationDelay: `${Math.random() * 3}s`,
+              willChange: 'opacity'
             }}
           />
         ))}
@@ -99,7 +104,7 @@ export const NeonAbstractions = () => {
       />
 
       {/* Sparkles / Stars - increased count and variety */}
-      {[...Array(30)].map((_, i) => (
+      {[...Array(10)].map((_, i) => (
         <div
           key={i}
           className="absolute rounded-full bg-foreground"
@@ -111,13 +116,15 @@ export const NeonAbstractions = () => {
             opacity: 0.3 + Math.random() * 0.5,
             animation: `sparkle ${2 + Math.random() * 3}s ease-in-out infinite`,
             animationDelay: `${Math.random() * 4}s`,
-            boxShadow: `0 0 ${4 + Math.random() * 10}px rgba(255,255,255,${0.3 + Math.random() * 0.4})`
+            boxShadow: `0 0 ${4 + Math.random() * 10}px rgba(255,255,255,${0.3 + Math.random() * 0.4})`,
+            willChange: 'opacity, transform',
+            transform: 'translateZ(0)'
           }}
         />
       ))}
 
       {/* Cross sparkles - brighter accent points */}
-      {[...Array(8)].map((_, i) => (
+      {[...Array(4)].map((_, i) => (
         <div
           key={`cross-${i}`}
           className="absolute"

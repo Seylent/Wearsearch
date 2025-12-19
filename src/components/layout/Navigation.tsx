@@ -87,7 +87,7 @@ const Navigation: React.FC = () => {
 
         {/* Center Section - Navigation Links (Desktop) */}
         <div className="hidden md:flex items-center gap-1 flex-1 justify-center px-6 py-3 border-r border-zinc-700/60">
-          {navLinks.map((link) => (
+          {navLinks.map((link, index) => (
             <Link
               key={link.name}
               to={link.href}
@@ -95,7 +95,7 @@ const Navigation: React.FC = () => {
                 location.pathname === link.href 
                   ? "text-white bg-zinc-800/90" 
                   : "text-zinc-400 hover:text-white hover:bg-zinc-800/60"
-              }`}
+              } ${index === 0 ? 'neon-text' : ''}`}
             >
               {link.name}
             </Link>

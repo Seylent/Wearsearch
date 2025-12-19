@@ -198,10 +198,22 @@ const Admin = () => {
       const storesData = storesRes.data;
       const brandsData = brandsRes.data;
 
-      console.log('Brands API response:', brandsData);
+      console.log('📦 Products API response:', productsData);
+      console.log('🏪 Stores API response:', storesData);
+      console.log('🏷️ Brands API response:', brandsData);
 
       if (isMounted.current) {
-        if (productsData.success) setProducts(productsData.data || []);
+        // Handle products - check for different response formats
+        if (productsData.success) {
+          setProducts(productsData.data || []);
+        } else if (Array.isArray(productsData)) {
+          setProducts(productsData);
+        } else if (productsData.products) {
+          setProducts(productsData.products);
+        } else {
+          console.warn('⚠️ Unexpected products response format:', productsData);
+          setProducts([]);
+        }
         if (storesData.success || Array.isArray(storesData)) {
           setStores(Array.isArray(storesData) ? storesData : storesData.data || []);
         }
@@ -238,11 +250,26 @@ const Admin = () => {
     try {
       const response = await api.get('/admin/hero-images');
       const data = response.data;
-      if (data.success && isMounted.current) {
-        setHeroImages(data.data || []);
+      console.log('📸 Hero images response:', data);
+      
+      if (isMounted.current) {
+        // Handle different response formats
+        if (data.success && data.data) {
+          setHeroImages(Array.isArray(data.data) ? data.data : []);
+        } else if (Array.isArray(data)) {
+          setHeroImages(data);
+        } else if (data.heroImages && Array.isArray(data.heroImages)) {
+          setHeroImages(data.heroImages);
+        } else {
+          setHeroImages([]);
+        }
+        console.log('✅ Set hero images:', heroImages.length);
       }
     } catch (error) {
       console.error("Error fetching hero images:", error);
+      if (isMounted.current) {
+        setHeroImages([]);
+      }
     }
   }, []);
 
@@ -465,7 +492,9 @@ const Admin = () => {
     
     // Load product data into form
     setProductName(product.name);
-    setProductCategory(product.category || product.type || "");
+    const categoryValue = product.type || product.category || "";
+    console.log('📂 Category value:', categoryValue);
+    setProductCategory(categoryValue);
     setProductColor(product.color);
     setProductGender(product.gender || "");
     setProductBrandId(product.brand_id || "");
@@ -564,7 +593,7 @@ const Admin = () => {
       const updateData = {
         name: productName,
         price: avgPrice,
-        type: productType,
+        type: productCategory,
         color: productColor,
         gender: productGender || null,
         brand_id: productBrandId || null,
@@ -680,7 +709,7 @@ const Admin = () => {
         body: JSON.stringify({
           name: productName,
           price: avgPrice,
-          type: productType,
+          type: productCategory,
           color: productColor,
           gender: productGender || null,
           brand_id: productBrandId || null,
@@ -740,7 +769,7 @@ const Admin = () => {
                 name: productName,
                 price: store.price,
                 store_price: store.price,
-                type: productType,
+                type: productCategory,
                 color: productColor,
                 gender: productGender || null,
                 brand_id: productBrandId || null,
@@ -908,61 +937,67 @@ const Admin = () => {
       </section>
 
       {/* Admin Tabs */}
-      <section className="py-12">
-        <div className="container mx-auto px-6">
+      <section className="py-6 md:py-12">
+        <div className="container mx-auto px-4 md:px-6">
           <Tabs defaultValue="add-product" className="max-w-6xl mx-auto" value={activeTab} onValueChange={setActiveTab}>
-            <TabsList className="grid w-full grid-cols-6 bg-card/40 border border-border/50 backdrop-blur-sm mb-8 p-1 rounded-xl">
+            <TabsList className="grid w-full grid-cols-3 md:grid-cols-3 lg:grid-cols-6 bg-card/40 border border-border/50 backdrop-blur-sm mb-4 md:mb-8 p-1 rounded-xl">
               <TabsTrigger 
                 value="add-product"
-                className="data-[state=active]:bg-foreground data-[state=active]:text-background rounded-lg transition-all text-xs md:text-sm"
+                className="data-[state=active]:bg-foreground data-[state=active]:text-background rounded-lg transition-all text-xs md:text-sm px-2 py-2"
               >
-                <Plus className="w-4 h-4 mr-1 md:mr-2" />
-                Add Product
+                <Plus className="w-3 h-3 md:w-4 md:h-4 md:mr-2" />
+                <span className="hidden md:inline ml-1">Add Product</span>
+                <span className="md:hidden ml-1">Add</span>
               </TabsTrigger>
               <TabsTrigger 
                 value="manage-products"
-                className="data-[state=active]:bg-foreground data-[state=active]:text-background rounded-lg transition-all text-xs md:text-sm"
+                className="data-[state=active]:bg-foreground data-[state=active]:text-background rounded-lg transition-all text-xs md:text-sm px-2 py-2"
               >
-                <Package className="w-4 h-4 mr-1 md:mr-2" />
-                Products ({products.length})
+                <Package className="w-3 h-3 md:w-4 md:h-4 md:mr-2" />
+                <span className="hidden md:inline ml-1">Products ({products.length})</span>
+                <span className="md:hidden ml-1">List</span>
               </TabsTrigger>
               <TabsTrigger 
                 value="stores"
-                className="data-[state=active]:bg-foreground data-[state=active]:text-background rounded-lg transition-all text-xs md:text-sm"
+                className="data-[state=active]:bg-foreground data-[state=active]:text-background rounded-lg transition-all text-xs md:text-sm px-2 py-2"
               >
-                <Store className="w-4 h-4 mr-1 md:mr-2" />
-                Stores
+                <Store className="w-3 h-3 md:w-4 md:h-4 md:mr-2" />
+                <span className="hidden md:inline ml-1">Stores</span>
+                <span className="md:hidden ml-1">Store</span>
               </TabsTrigger>
               <TabsTrigger 
                 value="brands"
-                className="data-[state=active]:bg-foreground data-[state=active]:text-background rounded-lg transition-all text-xs md:text-sm"
+                className="data-[state=active]:bg-foreground data-[state=active]:text-background rounded-lg transition-all text-xs md:text-sm px-2 py-2"
               >
-                <Package className="w-4 h-4 mr-1 md:mr-2" />
-                Brands
+                <Package className="w-3 h-3 md:w-4 md:h-4 md:mr-2" />
+                <span className="hidden md:inline ml-1">Brands</span>
+                <span className="md:hidden ml-1">Brand</span>
               </TabsTrigger>
               <TabsTrigger 
                 value="hero-images"
-                className="data-[state=active]:bg-foreground data-[state=active]:text-background rounded-lg transition-all text-xs md:text-sm"
+                className="data-[state=active]:bg-foreground data-[state=active]:text-background rounded-lg transition-all text-xs md:text-sm px-2 py-2"
               >
-                <Package className="w-4 h-4 mr-1 md:mr-2" />
-                Hero Images
+                <Package className="w-3 h-3 md:w-4 md:h-4 md:mr-2" />
+                <span className="hidden md:inline ml-1">Hero Images</span>
+                <span className="md:hidden ml-1">Hero</span>
               </TabsTrigger>
               <TabsTrigger 
                 value="contacts"
-                className="data-[state=active]:bg-foreground data-[state=active]:text-background rounded-lg transition-all text-xs md:text-sm"
+                className="data-[state=active]:bg-foreground data-[state=active]:text-background rounded-lg transition-all text-xs md:text-sm px-2 py-2"
               >
-                <Package className="w-4 h-4 mr-1 md:mr-2" />
-                Contacts
+                <Package className="w-3 h-3 md:w-4 md:h-4 md:mr-2" />
+                <span className="hidden md:inline ml-1">Contacts</span>
+                <span className="sm:hidden">Contact</span>
               </TabsTrigger>
             </TabsList>
 
             {/* ADD/EDIT PRODUCT TAB */}
-            <TabsContent value="add-product" className="space-y-8">
+            <TabsContent value="add-product" className="space-y-4 md:space-y-8">
               {/* Add/Edit Product Form */}
-              <div className="p-8 rounded-2xl border border-border/50 bg-card/40 backdrop-blur-sm">
+              <div className="p-4 md:p-8 rounded-xl md:rounded-2xl border border-border/50 bg-card/40 backdrop-blur-sm">
                 <div className="flex items-center justify-between mb-2">
-                  <h2 className="font-display text-2xl font-bold flex items-center gap-2">
-                    {editingProductId ? <Edit className="w-6 h-6" /> : <Plus className="w-6 h-6" />}
+                  <h2 className="font-display text-lg md:text-2xl font-bold flex items-center gap-2">
+                    {editingProductId ? <Edit className="w-4 h-4 md:w-6 md:h-6" /> : <Plus className="w-4 h-4 md:w-6 md:h-6" />}
                     {editingProductId ? 'Edit Product' : 'Add New Product'}
                 </h2>
                   {editingProductId && (
@@ -1000,14 +1035,14 @@ const Admin = () => {
                           <SelectValue placeholder="Select category" />
                         </SelectTrigger>
                         <SelectContent className="bg-card border-border/50">
-                          <SelectItem value="jackets">Jackets</SelectItem>
-                          <SelectItem value="hoodies">Hoodies</SelectItem>
-                          <SelectItem value="T-shirts">T-shirts</SelectItem>
-                          <SelectItem value="pants">Pants</SelectItem>
-                          <SelectItem value="jeans">Jeans</SelectItem>
-                          <SelectItem value="shorts">Shorts</SelectItem>
-                          <SelectItem value="shoes">Shoes</SelectItem>
-                          <SelectItem value="accessories">Accessories</SelectItem>
+                          <SelectItem value="jackets">Куртки</SelectItem>
+                          <SelectItem value="hoodies">Худі</SelectItem>
+                          <SelectItem value="T-shirts">Футболки</SelectItem>
+                          <SelectItem value="pants">Штани</SelectItem>
+                          <SelectItem value="jeans">Джинси</SelectItem>
+                          <SelectItem value="shorts">Шорти</SelectItem>
+                          <SelectItem value="shoes">Взуття</SelectItem>
+                          <SelectItem value="accessories">Аксесуари</SelectItem>
                         </SelectContent>
                       </Select>
                     </div>
@@ -1259,7 +1294,7 @@ const Admin = () => {
                           <h4 className="font-semibold text-lg mb-1">{product.name}</h4>
                           <div className="flex flex-wrap gap-2 text-sm text-muted-foreground">
                             <span className="px-2 py-0.5 rounded bg-foreground/10">${product.price}</span>
-                            <span className="px-2 py-0.5 rounded bg-foreground/10">{product.category || product.type}</span>
+                            <span className="px-2 py-0.5 rounded bg-foreground/10">{product.type || product.category}</span>
                             <span className="px-2 py-0.5 rounded bg-foreground/10">{product.color}</span>
                             {product.brand && <span className="px-2 py-0.5 rounded bg-foreground/10">{product.brand}</span>}
                           </div>

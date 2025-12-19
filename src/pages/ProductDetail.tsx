@@ -14,6 +14,7 @@ import { convertS3UrlToHttps } from "@/lib/utils";
 import { FavoriteButton } from "@/components/FavoriteButton";
 import { StoreRating } from "@/components/StoreRating";
 import { RelatedProducts } from "@/components/RelatedProducts";
+import { getCategoryTranslation } from "@/utils/translations";
 import {
   Select,
   SelectContent,
@@ -292,7 +293,7 @@ const ProductDetail = () => {
           <Button
             variant="ghost"
             onClick={() => navigate(-1)}
-            className="group select-none"
+            className="group"
           >
             <ArrowLeft className="w-4 h-4 mr-2 group-hover:-translate-x-1 transition-transform" />
             Back
@@ -302,7 +303,7 @@ const ProductDetail = () => {
             <Button
               variant="outline"
               onClick={() => navigate(`/admin?editProduct=${id}`)}
-              className="gap-2 select-none"
+              className="gap-2"
             >
               <Edit className="w-4 h-4" />
               Edit Product
@@ -332,7 +333,7 @@ const ProductDetail = () => {
                   <img
                     src={httpsImageUrl}
                     alt={product.name}
-                    className="max-h-[72vh] object-contain select-none"
+                    className="max-h-[72vh] object-contain"
                     draggable={false}
                   />
                 </div>
@@ -343,20 +344,20 @@ const ProductDetail = () => {
             <div className="animate-fade-in-up" style={{ animationDelay: '0.2s' }}>
               {/* Brand */}
               {(brand?.name || product.brand) && (
-                <p className="text-sm text-muted-foreground uppercase tracking-[0.2em] mb-3 select-none">
+                <p className="text-sm text-muted-foreground uppercase tracking-[0.2em] mb-3">
                   {brand?.name || product.brand}
                 </p>
               )}
 
               {/* Title */}
-              <h1 className="font-display text-4xl md:text-5xl font-bold mb-4 tracking-tight select-none">
+              <h1 className="font-display text-4xl md:text-5xl font-bold mb-4 tracking-tight">
                 {product.name}
               </h1>
 
               {/* Gender Badge */}
               {product.gender && (
                 <div className="mb-8 pb-8 border-b border-border/50">
-                  <span className="inline-block text-sm text-muted-foreground uppercase tracking-wider px-3 py-1 border border-border/50 rounded-full select-none">
+                  <span className="inline-block text-sm text-muted-foreground uppercase tracking-wider px-3 py-1 border border-border/50 rounded-full">
                     {product.gender}
                   </span>
                 </div>
@@ -364,17 +365,17 @@ const ProductDetail = () => {
 
               {/* Details */}
               <div className="space-y-4 mb-8">
-                {product.category && (
+                {product.type && (
                   <div className="flex items-center gap-3">
                     <Tag className="w-5 h-5 text-muted-foreground" />
-                    <span className="text-muted-foreground select-none">Category:</span>
-                    <span className="font-medium capitalize">{product.category}</span>
+                    <span className="text-muted-foreground">Категорія:</span>
+                    <span className="font-medium capitalize">{getCategoryTranslation(product.type)}</span>
                   </div>
                 )}
                 {product.color && (
                   <div className="flex items-center gap-3">
                     <Package className="w-5 h-5 text-muted-foreground" />
-                    <span className="text-muted-foreground select-none">Color:</span>
+                    <span className="text-muted-foreground">Колір:</span>
                     <span className="font-medium">{product.color}</span>
                   </div>
                 )}
@@ -383,8 +384,8 @@ const ProductDetail = () => {
               {/* Description */}
               {product.description && (
                 <div className="mb-8 p-6 rounded-xl border border-border/50 bg-card/40 backdrop-blur-sm">
-                  <h3 className="font-semibold mb-2 select-none">Description</h3>
-                  <p className="text-muted-foreground leading-relaxed select-none">{product.description}</p>
+                  <h3 className="font-semibold mb-2">{t('productDetail.description')}</h3>
+                  <p className="text-muted-foreground leading-relaxed">{product.description}</p>
                 </div>
               )}
             </div>
@@ -402,13 +403,13 @@ const ProductDetail = () => {
                     <span className="font-display text-2xl font-bold text-white/60">Price N/A</span>
                   )}
                 </div>
-                <p className="text-sm text-muted-foreground select-none">Price range across all stores</p>
+                <p className="text-sm text-muted-foreground">Price range across all stores</p>
               </div>
 
               {/* Header */}
               <div className="mb-6">
                 <h2 className="font-display text-2xl font-bold mb-2">{t('productDetail.availableAt')}</h2>
-                <div className="flex items-center gap-2 text-sm text-muted-foreground select-none">
+                <div className="flex items-center gap-2 text-sm text-muted-foreground">
                   <MapPin className="w-4 h-4" />
                   <span>{stores.length} {t('productDetail.stores')}</span>
                 </div>
@@ -479,9 +480,9 @@ const ProductDetail = () => {
                         )}
                         
                         <div className="flex-1">
-                          <h3 className="font-semibold mb-1 select-none">{store.name}</h3>
+                          <h3 className="font-semibold mb-1">{store.name}</h3>
                           {store.is_recommended && (
-                            <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-purple-500/10 border border-purple-500/20 text-xs text-purple-400 select-none">
+                            <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-purple-500/10 border border-purple-500/20 text-xs text-purple-400">
                               ⭐ {t('productDetail.recommended')}
                             </span>
                           )}
@@ -491,7 +492,7 @@ const ProductDetail = () => {
                       {/* Price */}
                       {store.price && (
                         <div className="mb-3">
-                          <p className="font-display text-2xl font-bold select-none">₴{store.price}</p>
+                          <p className="font-display text-2xl font-bold">₴{store.price}</p>
                         </div>
                       )}
 
@@ -508,7 +509,7 @@ const ProductDetail = () => {
 
                       {/* Shipping Info */}
                       {store.shipping_info && (
-                        <p className="text-sm text-muted-foreground mb-3 line-clamp-2 select-none">
+                        <p className="text-sm text-muted-foreground mb-3 line-clamp-2">
                           {store.shipping_info}
                         </p>
                       )}
@@ -582,7 +583,7 @@ const ProductDetail = () => {
                 )}
               </>
                 ) : stores.length > 0 ? (
-                  <div className="text-center py-8 text-muted-foreground select-none">
+                  <div className="text-center py-8 text-muted-foreground">
                     <p>{t('productDetail.noStoresMatch')}</p>
                     <Button
                       variant="link"

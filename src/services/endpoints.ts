@@ -43,6 +43,7 @@ export const ENDPOINTS = {
     BIO: '/user/profile/bio',
     AVATAR: '/user/profile/avatar',
     PASSWORD: '/user/profile/password',
+    DELETE_ACCOUNT: '/user/account',
     FAVORITES: '/user/favorites',
     ADD_FAVORITE: (productId: string | number) => `/user/favorites/${productId}`,
     REMOVE_FAVORITE: (productId: string | number) => `/user/favorites/${productId}`,

@@ -1,19 +1,33 @@
 import { useState, useEffect, useCallback, useRef } from "react";
 import { useNavigate } from "react-router-dom";
+import { useTranslation } from "react-i18next";
 import { authService } from "@/services/authService";
+import { userService } from "@/services/userService";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
 import { useToast } from "@/hooks/use-toast";
 import Navigation from "@/components/layout/Navigation";
 import { Footer } from "@/components/layout/Footer";
 import { NeonAbstractions } from "@/components/NeonAbstractions";
-import { User, Lock, LogOut, Sparkles, Star } from "lucide-react";
+import { User, Lock, LogOut, Sparkles, Star, Trash2 } from "lucide-react";
 
 const Profile = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
+  const { t } = useTranslation();
   const [loading, setLoading] = useState(false);
   const [user, setUser] = useState<any>(null);
   
@@ -25,6 +39,10 @@ const Profile = () => {
   const [currentPassword, setCurrentPassword] = useState("");
   const [newPassword, setNewPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
+  
+  // Delete account fields
+  const [deletePassword, setDeletePassword] = useState("");
+  const [showDeleteDialog, setShowDeleteDialog] = useState(false);
 
   // Track mounted state and abort controller
   const isMounted = useRef(true);
@@ -154,6 +172,41 @@ const Profile = () => {
     navigate("/");
   };
 
+  const handleDeleteAccount = async () => {
+    if (!deletePassword.trim()) {
+      toast({
+        title: t('common.error'),
+        description: t('profile.enterPasswordToConfirm'),
+        variant: "destructive",
+      });
+      return;
+    }
+
+    setLoading(true);
+    try {
+      const result = await userService.deleteAccount(deletePassword);
+      
+      toast({
+        title: t('profile.accountDeleted'),
+        description: result.message || t('profile.accountDeletedDesc'),
+      });
+
+      // Logout and redirect to home
+      await authService.logout();
+      navigate("/");
+    } catch (error: any) {
+      toast({
+        title: t('common.error'),
+        description: error.message || "Failed to delete account",
+        variant: "destructive",
+      });
+    } finally {
+      setLoading(false);
+      setDeletePassword("");
+      setShowDeleteDialog(false);
+    }
+  };
+
   if (!user) {
     return null;
   }
@@ -175,7 +228,7 @@ const Profile = () => {
           </div>
           
           <h1 className="font-display text-4xl sm:text-5xl md:text-6xl font-bold mb-3 tracking-tight">
-            My <span className="neon-text">Profile</span>
+            {t('profile.myAccount')} <span className="neon-text">{t('profile.title')}</span>
           </h1>
           
           <p className="text-lg text-muted-foreground">
@@ -194,25 +247,32 @@ const Profile = () => {
               className="rounded-full border-border/50 hover:bg-destructive/10 hover:text-destructive hover:border-destructive/50"
             >
               <LogOut className="w-4 h-4 mr-2" />
-              Logout
+              {t('common.logout')}
             </Button>
           </div>
 
           <Tabs defaultValue="profile" className="w-full">
-            <TabsList className="grid w-full grid-cols-2 glass-card p-1 rounded-xl mb-8">
+            <TabsList className="grid w-full grid-cols-3 glass-card p-1 rounded-xl mb-8">
               <TabsTrigger 
                 value="profile"
                 className="data-[state=active]:bg-foreground data-[state=active]:text-background rounded-lg transition-all"
               >
                 <User className="w-4 h-4 mr-2" />
-                Profile
+                {t('profile.profileInfo')}
               </TabsTrigger>
               <TabsTrigger 
                 value="password"
                 className="data-[state=active]:bg-foreground data-[state=active]:text-background rounded-lg transition-all"
               >
                 <Lock className="w-4 h-4 mr-2" />
-                Password
+                {t('profile.changePassword')}
+              </TabsTrigger>
+              <TabsTrigger 
+                value="danger"
+                className="data-[state=active]:bg-destructive data-[state=active]:text-destructive-foreground rounded-lg transition-all"
+              >
+                <Trash2 className="w-4 h-4 mr-2" />
+                {t('profile.dangerZone')}
               </TabsTrigger>
             </TabsList>
 
@@ -314,6 +374,60 @@ const Profile = () => {
                     {loading ? "Changing..." : "Change Password"}
                   </Button>
                 </form>
+              </div>
+            </TabsContent>
+
+            <TabsContent value="danger">
+              <div className="p-8 rounded-2xl glass-card border border-destructive/20">
+                <h2 className="font-display text-xl font-semibold mb-2 text-destructive">{t('profile.deleteAccount')}</h2>
+                <p className="text-sm text-muted-foreground mb-6">
+                  {t('profile.deleteWarning')}
+                </p>
+                
+                <AlertDialog open={showDeleteDialog} onOpenChange={setShowDeleteDialog}>
+                  <AlertDialogTrigger asChild>
+                    <Button 
+                      variant="destructive"
+                      className="h-12 px-8 rounded-full"
+                    >
+                      <Trash2 className="w-4 h-4 mr-2" />
+                      {t('profile.deleteMyAccount')}
+                    </Button>
+                  </AlertDialogTrigger>
+                  <AlertDialogContent className="bg-zinc-900 border-destructive/20">
+                    <AlertDialogHeader>
+                      <AlertDialogTitle className="text-destructive">{t('profile.deleteConfirmTitle')}</AlertDialogTitle>
+                      <AlertDialogDescription className="text-muted-foreground">
+                        {t('profile.deleteConfirmDesc')}
+                      </AlertDialogDescription>
+                    </AlertDialogHeader>
+                    
+                    <div className="space-y-2 my-4">
+                      <Label htmlFor="deletePassword" className="text-sm font-medium">
+                        {t('profile.enterPasswordToConfirm')}
+                      </Label>
+                      <Input
+                        id="deletePassword"
+                        type="password"
+                        value={deletePassword}
+                        onChange={(e) => setDeletePassword(e.target.value)}
+                        placeholder={t('auth.password')}
+                        className="h-12 bg-card/50 border-border/50 rounded-xl focus-visible:ring-1 focus-visible:ring-destructive/30"
+                      />
+                    </div>
+
+                    <AlertDialogFooter>
+                      <AlertDialogCancel className="rounded-full">{t('common.cancel')}</AlertDialogCancel>
+                      <AlertDialogAction
+                        onClick={handleDeleteAccount}
+                        disabled={loading || !deletePassword.trim()}
+                        className="rounded-full bg-destructive hover:bg-destructive/90"
+                      >
+                        {loading ? t('profile.deleting') : t('profile.deleteAccount')}
+                      </AlertDialogAction>
+                    </AlertDialogFooter>
+                  </AlertDialogContent>
+                </AlertDialog>
               </div>
             </TabsContent>
           </Tabs>

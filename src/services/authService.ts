@@ -15,6 +15,7 @@ const ENDPOINTS = {
   ME: '/auth/me',
   FORGOT_PASSWORD: '/auth/forgot-password',
   RESET_PASSWORD: '/auth/reset-password',
+  CHANGE_PASSWORD: '/auth/password',
 };
 
 export const authService = {
@@ -133,6 +134,42 @@ export const authService = {
         newPassword,
       });
       return response.data;
+    } catch (error) {
+      const apiError = handleApiError(error);
+      throw new Error(apiError.message);
+    }
+  },
+
+  /**
+   * Change password for authenticated user
+   */
+  async changePassword(data: { current_password: string; new_password: string }): Promise<{ success: boolean; message: string }> {
+    try {
+      const response = await api.put(ENDPOINTS.CHANGE_PASSWORD, data);
+      return response.data;
+    } catch (error: any) {
+      // Handle specific password change errors
+      if (error.response?.data?.error) {
+        throw new Error(error.response.data.error);
+      }
+      const apiError = handleApiError(error);
+      throw new Error(apiError.message);
+    }
+  },
+
+  /**
+   * Update user profile
+   */
+  async updateProfile(data: { display_name?: string }): Promise<User> {
+    try {
+      const response = await api.put(ENDPOINTS.ME, data);
+      
+      // Update cached user data
+      if (response.data.user) {
+        localStorage.setItem('user', JSON.stringify(response.data.user));
+      }
+      
+      return response.data.user || response.data;
     } catch (error) {
       const apiError = handleApiError(error);
       throw new Error(apiError.message);

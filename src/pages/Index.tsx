@@ -144,17 +144,17 @@ const Index: React.FC = () => {
         <div className="container mx-auto px-4 sm:px-6 relative z-10">
           <div className="max-w-4xl mx-auto text-center mt-12 sm:mt-20">
             {/* Main headline */}
-            <h1 className="font-display text-4xl sm:text-5xl md:text-6xl lg:text-7xl xl:text-8xl font-bold mb-4 sm:mb-6 tracking-tight select-none">
-              <span className="block text-white filter brightness-110">Discover</span>
+            <h1 className="font-display text-4xl sm:text-5xl md:text-6xl lg:text-7xl xl:text-8xl font-bold mb-4 sm:mb-6 tracking-tight">
+              <span className="block text-white filter brightness-110">{t('home.discover')}</span>
               <span className="block relative inline-block">
-                <span className="text-white filter brightness-125">Exceptional</span>
+                <span className="text-white filter brightness-125">{t('home.exceptional')}</span>
               </span>
-              <span className="block text-white filter brightness-110">Fashion</span>
+              <span className="block text-white filter brightness-110">{t('home.fashion')}</span>
             </h1>
 
             {/* Subheadline */}
-            <p className="text-base sm:text-lg md:text-xl text-white/80 max-w-2xl mx-auto mb-6 sm:mb-10 leading-relaxed backdrop-blur-sm select-none px-4">
-              Curated collections from the world's most innovative designers
+            <p className="text-base sm:text-lg md:text-xl text-white/80 max-w-2xl mx-auto mb-6 sm:mb-10 leading-relaxed backdrop-blur-sm px-4">
+              {t('home.heroSubtitle')}
             </p>
 
             {/* Scroll down button */}
@@ -164,7 +164,7 @@ const Index: React.FC = () => {
                   const productsSection = document.getElementById('products-section');
                   productsSection?.scrollIntoView({ behavior: 'smooth', block: 'start' });
                 }}
-                className="relative w-12 h-12 sm:w-16 sm:h-16 rounded-full border-2 border-white/30 bg-white/5 backdrop-blur-md hover:bg-white/10 hover:border-white/40 transition-all duration-300 flex items-center justify-center group cursor-pointer select-none"
+                className="relative w-12 h-12 sm:w-16 sm:h-16 rounded-full border-2 border-white/30 bg-white/5 backdrop-blur-md hover:bg-white/10 hover:border-white/40 transition-all duration-300 flex items-center justify-center group cursor-pointer"
                 aria-label="Scroll to products"
               >
                 <svg
@@ -189,16 +189,16 @@ const Index: React.FC = () => {
                 variant="outline"
                 className="relative border border-white/20 text-white bg-white/5 backdrop-blur-xl hover:bg-white/10 hover:border-white/30 transition-all overflow-hidden group"
               >
-                View Stores
+                {t('home.viewStores')}
               </Button>
             </div>
 
             {/* Stats - Glassmorphism cards */}
             <div className="flex flex-wrap justify-center gap-3 sm:gap-6 md:gap-10 mt-10 sm:mt-20 px-4">
               {[
-                { value: stats.brands >= 1000 ? `${Math.floor(stats.brands / 1000)}K+` : `${stats.brands}+`, label: "Brands" },
-                { value: stats.products >= 1000 ? `${Math.floor(stats.products / 1000)}K+` : `${stats.products}+`, label: "Products" },
-                { value: stats.stores >= 1000 ? `${Math.floor(stats.stores / 1000)}K+` : `${stats.stores}+`, label: "Stores" },
+                { value: stats.brands >= 1000 ? `${Math.floor(stats.brands / 1000)}K+` : `${stats.brands}+`, label: t('common.brands') },
+                { value: stats.products >= 1000 ? `${Math.floor(stats.products / 1000)}K+` : `${stats.products}+`, label: t('common.products') },
+                { value: stats.stores >= 1000 ? `${Math.floor(stats.stores / 1000)}K+` : `${stats.stores}+`, label: t('common.stores') },
               ].map((stat) => (
                 <div key={stat.label} className="relative text-center px-4 sm:px-6 md:px-8 py-3 sm:py-4 md:py-5 rounded-xl sm:rounded-2xl bg-white/5 backdrop-blur-[30px] border border-white/15 overflow-hidden group hover:bg-white/8 hover:border-white/20 transition-all">
                   <p className="relative font-display text-xl sm:text-2xl md:text-3xl font-bold mb-1 text-white filter brightness-110">{stat.value}</p>
@@ -217,7 +217,7 @@ const Index: React.FC = () => {
             {features.map((feature) => (
               <div 
                 key={feature.title}
-                className="group relative p-4 sm:p-6 rounded-xl sm:rounded-2xl border border-white/10 bg-white/5 backdrop-blur-[25px] hover:border-white/20 hover:bg-white/8 transition-all duration-300 overflow-hidden select-none"
+                className="group relative p-4 sm:p-6 rounded-xl sm:rounded-2xl border border-white/10 bg-white/5 backdrop-blur-[25px] hover:border-white/20 hover:bg-white/8 transition-all duration-300 overflow-hidden"
               >
                 <div className="relative w-10 h-10 sm:w-12 sm:h-12 rounded-lg sm:rounded-xl bg-white/10 backdrop-blur-sm border border-white/20 flex items-center justify-center mb-3 sm:mb-4 group-hover:bg-white/15 transition-colors">
                   <feature.icon className="w-5 h-5 sm:w-6 sm:h-6 text-white" />
@@ -236,12 +236,12 @@ const Index: React.FC = () => {
           {/* Section Header */}
           <div className="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-4 sm:gap-6 mb-6 sm:mb-10">
             <div>
-              <div className="inline-flex items-center gap-2 mb-2 sm:mb-3 select-none">
+              <div className="inline-flex items-center gap-2 mb-2 sm:mb-3">
                 <div className="w-1.5 h-1.5 rounded-full bg-white" />
-                <span className="text-[10px] sm:text-xs text-white/60 uppercase tracking-wider">Just In</span>
+                <span className="text-[10px] sm:text-xs text-white/60 uppercase tracking-wider">{t('home.justIn')}</span>
               </div>
-              <h2 className="font-display text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-bold text-white select-none">New Arrivals</h2>
-              <p className="text-sm sm:text-base text-white/70 mt-1 sm:mt-2 select-none">Fresh pieces just added to the collection</p>
+              <h2 className="font-display text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-bold text-white">{t('home.newArrivals')}</h2>
+              <p className="text-sm sm:text-base text-white/70 mt-1 sm:mt-2">{t('home.freshPieces')}</p>
             </div>
           </div>
 
@@ -261,7 +261,7 @@ const Index: React.FC = () => {
                   name={product.name}
                   image={product.image_url || product.image}
                   price={product.price}
-                  category={product.category}
+                  category={product.type}
                 />
               ))}
             </div>
@@ -273,7 +273,7 @@ const Index: React.FC = () => {
               onClick={() => navigate("/products")}
               className="relative px-8 py-3 rounded-full border border-white/20 bg-white/5 backdrop-blur-[30px] text-white font-medium text-sm hover:bg-white/10 hover:border-white/30 transition-all duration-300 overflow-hidden group"
             >
-              <span className="relative">View All Products</span>
+              <span className="relative">{t('home.viewAllProducts')}</span>
             </button>
           </div>
         </div>

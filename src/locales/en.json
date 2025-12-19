@@ -15,6 +15,15 @@
   },
   "home": {
     "title": "Discover Exceptional Fashion",
+    "discover": "Discover",
+    "exceptional": "Exceptional",
+    "fashion": "Fashion",
+    "heroSubtitle": "Curated collections from the world's most innovative designers",
+    "justIn": "Just In",
+    "newArrivals": "New Arrivals",
+    "freshPieces": "Fresh pieces just added to the collection",
+    "viewAllProducts": "View All Products",
+    "viewStores": "View Stores",
     "subtitle": "Find the best clothing items from top stores",
     "searchPlaceholder": "Search for products...",
     "exploreProducts": "Explore Products",
@@ -66,14 +75,26 @@
   },
   "stores": {
     "title": "Stores",
+    "discover": "Discover",
+    "premium": "Premium",
+    "storesTitle": "Stores",
+    "description": "Curated stores offering the best in luxury fashion and streetwear. Verified by our team for authenticity and exceptional service.",
+    "searchPlaceholder": "Search stores...",
+    "noStoresFound": "No Stores Found",
+    "adjustSearch": "Try adjusting your search or clear filters",
+    "clearSearch": "Clear Search",
     "noStores": "No stores found",
     "loading": "Loading stores...",
     "viewStore": "View Store",
     "products": "products",
+    "brand": "brand",
+    "brands": "brands",
     "rating": "Rating",
+    "reviews": "reviews",
     "verified": "Verified",
     "recommend": "Recommend Store",
-    "recommended": "Recommended"
+    "recommended": "Recommended",
+    "viewProducts": "View Products"
   },
   "about": {
     "title": "About Wearsearch",
@@ -107,7 +128,19 @@
     "myAccount": "My Account",
     "settings": "Settings",
     "orderHistory": "Order History",
-    "savedAddresses": "Saved Addresses"
+    "savedAddresses": "Saved Addresses",
+    "profileInfo": "Profile Information",
+    "changePassword": "Change Password",
+    "dangerZone": "Danger Zone",
+    "deleteAccount": "Delete Account",
+    "deleteWarning": "Once you delete your account, there is no going back. Please be certain.",
+    "deleteConfirmTitle": "Are you absolutely sure?",
+    "deleteConfirmDesc": "This action cannot be undone. This will permanently delete your account and remove all your data from our servers.",
+    "enterPasswordToConfirm": "Enter your password to confirm",
+    "deleteMyAccount": "Delete My Account",
+    "deleting": "Deleting...",
+    "accountDeleted": "Account Deleted",
+    "accountDeletedDesc": "Your account has been permanently deleted"
   },
   "favorites": {
     "title": "My Favorites",
@@ -142,7 +175,15 @@
     "search": "Search",
     "noResults": "No results found",
     "viewMore": "View More",
-    "viewLess": "View Less"
+    "viewLess": "View Less",
+    "logout": "Logout",
+    "from": "from",
+    "brands": "Brands",
+    "products": "Products",
+    "stores": "Stores",
+    "recommended": "Recommended",
+    "rating": "rating",
+    "ratings": "ratings"
   },
   "productDetail": {
     "description": "Description",
@@ -169,7 +210,9 @@
     "clearFilters": "Clear filters",
     "noStoresAvailable": "No stores available yet",
     "addStores": "Add stores where this product is available",
-    "viewOnStore": "View on Store"
+    "viewOnStore": "View on Store",
+    "updateRating": "Update your rating",
+    "rateStore": "Rate this store"
   },
   "footer": {
     "allRightsReserved": "All rights reserved",

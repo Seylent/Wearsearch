@@ -1,10 +1,12 @@
-@import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=Inter:wght@300;400;500;600&display=swap');
+/* Google Fonts with display swap for better performance */
+@import url('https://fonts.googleapis.com/css2?family=Outfit:wght@400;600;700&family=Inter:wght@400;600&display=swap');
 
 @font-face {
   font-family: 'Youre Gone';
   src: url('/fonts/Youre Gone.otf') format('opentype');
   font-weight: normal;
   font-style: normal;
+  font-display: swap;
 }
 
 @font-face {
@@ -12,6 +14,7 @@
   src: url('/fonts/Youre Gone It.otf') format('opentype');
   font-weight: normal;
   font-style: italic;
+  font-display: swap;
 }
 
 @tailwind base;
@@ -21,15 +24,41 @@
 /* Smooth scrolling */
 html {
   scroll-behavior: smooth;
+  /* Performance optimizations for smooth scrolling */
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+body {
+  /* Enable GPU acceleration for the entire page */
+  transform: translateZ(0);
+  -webkit-transform: translateZ(0);
+  backface-visibility: hidden;
+  -webkit-backface-visibility: hidden;
+}
+
+/* Optimize animations for performance */
+* {
+  -webkit-tap-highlight-color: transparent;
 }
 
 @layer utilities {
   .animate-pulse-slow {
     animation: pulse 4s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+    will-change: opacity;
   }
   
   .animate-spin-slow {
     animation: spin 8s linear infinite;
+    will-change: transform;
+  }
+
+  /* GPU acceleration utility */
+  .gpu-accelerated {
+    transform: translateZ(0);
+    -webkit-transform: translateZ(0);
+    backface-visibility: hidden;
+    -webkit-backface-visibility: hidden;
   }
 }
 
@@ -152,6 +181,7 @@ html {
 
   .glass-surface {
     @apply bg-card/50 backdrop-blur-xl border border-border/50;
+    transform: translateZ(0);
   }
 
   .glass-card {
@@ -160,6 +190,7 @@ html {
       inset 0 1px 1px rgba(255, 255, 255, 0.1),
       inset 0 -1px 1px rgba(0, 0, 0, 0.1),
       0 0 40px rgba(255, 255, 255, 0.05);
+    transform: translateZ(0);
   }
 
   .glass-card-strong {
@@ -168,6 +199,23 @@ html {
       inset 0 2px 4px rgba(255, 255, 255, 0.15),
       inset 0 -2px 4px rgba(0, 0, 0, 0.15),
       0 0 60px rgba(255, 255, 255, 0.1);
+    transform: translateZ(0);
+  }
+
+  /* Reduced blur for better performance on mobile */
+  @media (max-width: 768px) {
+    .glass-surface {
+      backdrop-filter: blur(8px);
+      -webkit-backdrop-filter: blur(8px);
+    }
+    .glass-card {
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+    }
+    .glass-card-strong {
+      backdrop-filter: blur(16px);
+      -webkit-backdrop-filter: blur(16px);
+    }
   }
 
   .btn-glass {

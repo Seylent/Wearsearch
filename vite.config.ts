@@ -40,23 +40,68 @@ export default defineConfig(({ mode }) => ({
     cssMinify: true,
     rollupOptions: {
       output: {
-        manualChunks: {
-          'react-vendor': ['react', 'react-dom', 'react-router-dom'],
-          'ui-vendor': [
-            '@radix-ui/react-dialog',
-            '@radix-ui/react-dropdown-menu',
-            '@radix-ui/react-select',
-            '@radix-ui/react-slot',
-            '@radix-ui/react-toast',
-          ],
-          'icons': ['lucide-react', 'react-icons'],
-          'utils': ['clsx', 'tailwind-merge'],
-          'query': ['@tanstack/react-query'],
+        manualChunks: (id) => {
+          // React core libraries
+          if (id.includes('node_modules/react') || id.includes('node_modules/react-dom')) {
+            return 'react-vendor';
+          }
+          
+          // React Router
+          if (id.includes('node_modules/react-router')) {
+            return 'router';
+          }
+          
+          // React Query
+          if (id.includes('@tanstack/react-query')) {
+            return 'query';
+          }
+          
+          // All Radix UI components in single chunk
+          if (id.includes('@radix-ui')) {
+            return 'radix-ui';
+          }
+          
+          // Icons (both lucide and react-icons)
+          if (id.includes('lucide-react') || id.includes('react-icons')) {
+            return 'icons';
+          }
+          
+          // i18n libraries
+          if (id.includes('i18next') || id.includes('react-i18next')) {
+            return 'i18n';
+          }
+          
+          // Utility libraries
+          if (id.includes('clsx') || id.includes('tailwind-merge') || 
+              id.includes('class-variance-authority')) {
+            return 'utils';
+          }
+          
+          // Form libraries
+          if (id.includes('react-hook-form') || id.includes('@hookform')) {
+            return 'forms';
+          }
+          
+          // Large vendor libraries
+          if (id.includes('axios')) {
+            return 'axios';
+          }
+          
+          // All other node_modules
+          if (id.includes('node_modules')) {
+            return 'vendor';
+          }
         },
+        // Optimize chunk sizes
+        chunkFileNames: 'assets/[name]-[hash].js',
+        entryFileNames: 'assets/[name]-[hash].js',
+        assetFileNames: 'assets/[name]-[hash].[ext]',
       },
     },
     sourcemap: mode === 'development',
-    chunkSizeWarningLimit: 1000,
+    chunkSizeWarningLimit: 600, // Reduced from 1000
+    // Enable CSS code splitting
+    cssCodeSplit: true,
   },
   optimizeDeps: {
     include: [

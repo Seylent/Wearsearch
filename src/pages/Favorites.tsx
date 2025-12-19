@@ -140,7 +140,7 @@ const Favorites = () => {
               // Handle image from various formats - same as Products page
               const productImage = product.image_url || product.image || '';
               const productPrice = String(product.price || '0');
-              const productCategory = product.category || '';
+              const productCategory = product.type || '';
               const productBrand = product.brand || (product.brands?.name) || '';
               
               return (

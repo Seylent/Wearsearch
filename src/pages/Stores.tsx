@@ -1,5 +1,6 @@
 import { useState, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
+import { useTranslation } from "react-i18next";
 import Navigation from "@/components/layout/Navigation";
 import { Footer } from "@/components/layout/Footer";
 import { NeonAbstractions } from "@/components/NeonAbstractions";
@@ -13,6 +14,7 @@ import { FaTelegram, FaInstagram } from "react-icons/fa";
 
 const Stores = () => {
   const navigate = useNavigate();
+  const { t } = useTranslation();
   const [searchQuery, setSearchQuery] = useState("");
 
   const { data: storesData, isLoading: loading, error } = useStores();
@@ -38,22 +40,14 @@ const Stores = () => {
         <NeonAbstractions />
         
         <div className="container mx-auto px-6 relative z-10 text-center">
-          <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full border border-border/50 bg-card/30 backdrop-blur-sm mb-8 animate-fade-in">
-            <Package className="w-4 h-4" />
-            <span className="text-xs text-muted-foreground tracking-wider uppercase">
-              Verified Partners
-            </span>
-          </div>
-
           <h1 className="font-display text-5xl sm:text-6xl md:text-7xl lg:text-8xl font-bold mb-6 tracking-tight animate-fade-in-up" style={{ animationDelay: '0.1s' }}>
-            <span className="block">Discover</span>
-            <span className="block neon-text">Premium</span>
-            <span className="block text-gradient">Stores</span>
+            <span className="block">{t('stores.discover')}</span>
+            <span className="block neon-text">{t('stores.premium')}</span>
+            <span className="block text-gradient">{t('stores.storesTitle')}</span>
           </h1>
 
           <p className="text-lg sm:text-xl text-muted-foreground max-w-2xl mx-auto mb-10 leading-relaxed animate-fade-in-up" style={{ animationDelay: '0.2s' }}>
-            Curated stores offering the best in luxury fashion and streetwear. 
-            Verified by our team for authenticity and exceptional service.
+            {t('stores.description')}
           </p>
 
           {/* Search */}
@@ -64,7 +58,7 @@ const Stores = () => {
                 <Search className="absolute left-4 w-5 h-5 text-muted-foreground group-focus-within:text-foreground transition-colors" />
                 <Input
                   type="text"
-                  placeholder="Search stores..."
+                  placeholder={t('stores.searchPlaceholder')}
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
                   className="w-full pl-12 pr-4 h-14 bg-card/50 border-border/50 rounded-full text-foreground placeholder:text-muted-foreground focus-visible:ring-1 focus-visible:ring-foreground/30 focus-visible:border-foreground/30 transition-all backdrop-blur-sm"
@@ -81,7 +75,7 @@ const Stores = () => {
             </div>
             <div className="text-center">
               <p className="font-display text-3xl sm:text-4xl font-bold mb-1">{stores.filter(s => s.is_recommended).length}</p>
-              <p className="text-xs text-muted-foreground uppercase tracking-wider">Recommended</p>
+              <p className="text-xs text-muted-foreground uppercase tracking-wider">{t('common.recommended')}</p>
             </div>
           </div>
         </div>
@@ -106,19 +100,19 @@ const Stores = () => {
                 <div className="w-16 h-16 rounded-full border-2 border-foreground/20 flex items-center justify-center mb-4">
                   <Search className="w-8 h-8 text-muted-foreground" />
                 </div>
-                <h3 className="text-xl font-semibold mb-2">No Stores Found</h3>
+                <h3 className="text-xl font-semibold mb-2">{t('stores.noStoresFound')}</h3>
                 <p className="text-muted-foreground mb-4">
-                  Try adjusting your search or clear filters
+                  {t('stores.adjustSearch')}
                 </p>
                 <Button variant="outline" onClick={() => setSearchQuery("")}>
-                  Clear Search
+                  {t('stores.clearSearch')}
                 </Button>
               </div>
             ) : (
               <NoStoresFound />
             )
           ) : (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 md:gap-8">
               {filteredStores.map((store, index) => (
                 <div
                   key={store.id}
@@ -126,12 +120,12 @@ const Stores = () => {
                   style={{ animationDelay: `${index * 0.05}s` }}
                 >
                   {/* Store Card */}
-                  <div className="relative h-80 rounded-2xl overflow-hidden border border-border/50 bg-card/40 backdrop-blur-sm transition-all duration-500 hover:border-foreground/30 hover:shadow-[0_0_40px_-10px_rgba(255,255,255,0.2)] hover:-translate-y-1">
+                  <div className="relative h-80 md:h-80 rounded-2xl overflow-hidden border border-border/50 bg-card/40 backdrop-blur-sm transition-all duration-500 hover:border-foreground/30 hover:shadow-[0_0_40px_-10px_rgba(255,255,255,0.2)] hover:-translate-y-1">
                     {/* Background gradient */}
                     <div className="absolute inset-0 bg-gradient-to-br from-white/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
                     
                     {/* Content */}
-                    <div className="relative h-full flex flex-col justify-between p-8">
+                    <div className="relative h-full flex flex-col justify-between p-6 md:p-8">
                       {/* Header */}
                       <div>
                         <div className="flex items-start justify-between mb-6">
@@ -154,7 +148,7 @@ const Stores = () => {
                               {store.is_recommended && (
                                 <div className="inline-flex items-center gap-1 px-2 py-1 rounded-full bg-purple-500/10 border border-purple-500/20 text-purple-400">
                                   <Star className="w-3 h-3 fill-current" />
-                                  <span className="text-xs font-medium">⭐ Recommended</span>
+                                  <span className="text-xs font-medium">⚭ {t('stores.recommended')}</span>
                                 </div>
                               )}
                             </div>
@@ -169,19 +163,19 @@ const Stores = () => {
                           {store.product_count !== undefined && (
                             <div className="flex items-center gap-2 text-sm text-muted-foreground">
                               <Package className="w-4 h-4" />
-                              <span>{store.product_count} Products</span>
+                              <span>{store.product_count} {t('stores.products')}</span>
                             </div>
                           )}
                           {store.brand_count !== undefined && store.brand_count > 0 && (
                             <div className="flex items-center gap-2 text-sm text-muted-foreground">
                               <Package className="w-4 h-4" />
-                              <span>{store.brand_count} Brand{store.brand_count !== 1 ? 's' : ''}</span>
+                              <span>{store.brand_count} {t(store.brand_count === 1 ? 'stores.brand' : 'stores.brands')}</span>
                             </div>
                           )}
                           {store.average_rating > 0 && (
                             <div className="flex items-center gap-2 text-sm text-muted-foreground">
                               <Star className="w-4 h-4" />
-                              <span>{store.average_rating.toFixed(1)} ({store.total_ratings} reviews)</span>
+                              <span>{store.average_rating.toFixed(1)} ({store.total_ratings} {t('stores.reviews')})</span>
                             </div>
                           )}
                         </div>
@@ -231,7 +225,7 @@ const Stores = () => {
                             navigate(`/products?store_id=${store.id}`);
                           }}
                         >
-                          View Products
+                          {t('stores.viewProducts')}
                           <ExternalLink className="ml-2 w-4 h-4" />
                         </Button>
                       </div>

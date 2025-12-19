@@ -61,16 +61,16 @@ const About = () => {
           </Button>
           
           <div className="max-w-3xl mx-auto text-center">
-            <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full border border-border/50 bg-card/30 backdrop-blur-sm mb-8 select-none">
+            <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full border border-border/50 bg-card/30 backdrop-blur-sm mb-8">
               <Sparkles className="w-4 h-4" />
               <span className="text-xs tracking-wider uppercase">Our Story</span>
             </div>
             
-            <h1 className="font-display text-5xl sm:text-6xl md:text-7xl font-bold mb-6 tracking-tight select-none">
+            <h1 className="font-display text-5xl sm:text-6xl md:text-7xl font-bold mb-6 tracking-tight">
               <span className="block">{t('about.title')}</span>
             </h1>
             
-            <p className="text-xl text-muted-foreground leading-relaxed mb-8 select-none">
+            <p className="text-xl text-muted-foreground leading-relaxed mb-8">
               {t('about.description')}
             </p>
           </div>
@@ -81,8 +81,8 @@ const About = () => {
       <section className="py-20 border-y border-border/20">
         <div className="container mx-auto px-6">
           <div className="max-w-3xl mx-auto text-center">
-            <h2 className="font-display text-3xl sm:text-4xl font-bold mb-6 select-none">{t('about.missionTitle')}</h2>
-            <p className="text-lg text-muted-foreground leading-relaxed select-none">
+            <h2 className="font-display text-3xl sm:text-4xl font-bold mb-6">{t('about.missionTitle')}</h2>
+            <p className="text-lg text-muted-foreground leading-relaxed">
               {t('about.mission')}
             </p>
           </div>
@@ -93,8 +93,8 @@ const About = () => {
       <section className="py-20">
         <div className="container mx-auto px-6">
           <div className="text-center mb-12">
-            <h2 className="font-display text-3xl sm:text-4xl font-bold mb-4 select-none">{t('about.valuesTitle')}</h2>
-            <p className="text-muted-foreground max-w-2xl mx-auto select-none">
+            <h2 className="font-display text-3xl sm:text-4xl font-bold mb-4">{t('about.valuesTitle')}</h2>
+            <p className="text-muted-foreground max-w-2xl mx-auto">
               {t('about.description')}
             </p>
           </div>
@@ -103,7 +103,7 @@ const About = () => {
             {values.map((value, index) => (
               <div 
                 key={value.title}
-                className="p-8 rounded-2xl border border-border/30 bg-card/20 backdrop-blur-sm hover:bg-card/40 transition-all duration-300 group select-none"
+                className="p-8 rounded-2xl border border-border/30 bg-card/20 backdrop-blur-sm hover:bg-card/40 transition-all duration-300 group"
               >
                 <div className="w-12 h-12 rounded-xl border border-border/50 bg-card/50 flex items-center justify-center mb-5 group-hover:border-foreground/30 transition-colors">
                   <value.icon className="w-5 h-5 text-muted-foreground group-hover:text-foreground transition-colors" />
@@ -123,10 +123,10 @@ const About = () => {
         </div>
         
         <div className="container mx-auto px-6 relative z-10 text-center">
-          <h2 className="font-display text-3xl sm:text-4xl font-bold mb-6 select-none">
+          <h2 className="font-display text-3xl sm:text-4xl font-bold mb-6">
             Ready to Explore?
           </h2>
-          <p className="text-lg text-muted-foreground max-w-xl mx-auto mb-8 select-none">
+          <p className="text-lg text-muted-foreground max-w-xl mx-auto mb-8">
             Discover our curated collection of exceptional fashion pieces.
           </p>
           <Button 

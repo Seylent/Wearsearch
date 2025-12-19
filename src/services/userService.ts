@@ -158,6 +158,26 @@ export const userService = {
       return false;
     }
   },
+
+  /**
+   * Delete user account
+   * Requires password confirmation
+   */
+  async deleteAccount(password: string): Promise<{ success: boolean; message: string }> {
+    try {
+      const response: AxiosResponse<{ success: boolean; message: string }> = await api.delete(
+        ENDPOINTS.USERS.DELETE_ACCOUNT,
+        { data: { password } }
+      );
+      return response.data;
+    } catch (error: any) {
+      // Handle specific error messages from backend
+      if (error.response?.data?.error) {
+        throw new Error(error.response.data.error);
+      }
+      throw new Error(handleApiError(error));
+    }
+  },
 };
 
 export default userService;

@@ -49,6 +49,7 @@ export interface Product {
     name: string;
   };
   category?: string;  // Primary field (backend uses 'category')
+  type?: string;      // Legacy field for backward compatibility
   color?: string;
   price?: number | string;
   description?: string;

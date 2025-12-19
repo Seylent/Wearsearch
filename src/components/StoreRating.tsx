@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { useTranslation } from "react-i18next";
 import { Star } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import api from "@/services/api";
@@ -23,6 +24,7 @@ export const StoreRating = ({
   totalRatings: propsTotalRatings 
 }: StoreRatingProps) => {
   const { toast } = useToast();
+  const { t } = useTranslation();
   const queryClient = useQueryClient();
   const [hoverRating, setHoverRating] = useState<number>(0);
   const [loading, setLoading] = useState(false);
@@ -107,15 +109,15 @@ export const StoreRating = ({
             ))}
           </div>
           <span className="text-sm text-muted-foreground select-none">
-            {averageRating.toFixed(1)} ({totalRatings} {totalRatings === 1 ? 'rating' : 'ratings'})
+            {averageRating.toFixed(1)} ({totalRatings} {totalRatings === 1 ? t('common.rating') : t('common.ratings')})
           </span>
         </div>
       </div>
 
       {isLoggedIn && productId && (
         <div className="space-y-2">
-          <p className="text-sm text-muted-foreground select-none">
-            {userRating > 0 ? 'Update your rating:' : 'Rate this store:'}
+          <p className="text-sm text-muted-foreground">
+            {userRating > 0 ? t('productDetail.updateRating') : t('productDetail.rateStore')}
           </p>
           <div className="flex items-center gap-1">
             {[1, 2, 3, 4, 5].map((star) => (

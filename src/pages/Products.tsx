@@ -93,7 +93,7 @@ const Products = () => {
       const query = debouncedSearch.toLowerCase();
       filtered = filtered.filter((p: Product) =>
         p.name?.toLowerCase().includes(query) ||
-        p.category?.toLowerCase().includes(query) ||
+        p.type?.toLowerCase().includes(query) ||
         p.brand?.toLowerCase().includes(query)
       );
     }
@@ -204,13 +204,6 @@ const Products = () => {
         <NeonAbstractions />
         
         <div className="container mx-auto px-6 relative z-10 text-center">
-          <div className="inline-flex items-center gap-2 px-5 py-2.5 glass-card-strong rounded-full mb-6">
-            <Sparkles className="w-3 h-3" />
-            <span className="text-xs text-foreground/80 tracking-wider uppercase font-medium">
-              Curated Collection
-            </span>
-          </div>
-          
           <h1 className="font-display text-5xl sm:text-6xl md:text-7xl font-bold mb-4 tracking-tight">
             <span className="neon-text">{t('products.title')}</span>
           </h1>
@@ -484,7 +477,7 @@ const Products = () => {
                     name={product.name}
                     image={product.image_url || product.image || ""}
                     price={String(product.price)}
-                    category={product.category}
+                    category={product.type}
                   />
                 ))}
               </div>
