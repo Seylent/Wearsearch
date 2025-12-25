@@ -8,18 +8,25 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { Button } from '@/components/ui/button';
+import { SUPPORTED_LANGUAGES, type SupportedLanguage } from '@/i18n';
+
+interface Language {
+  code: SupportedLanguage;
+  name: string;
+  flag: string;
+}
 
 export const LanguageSelector: React.FC = () => {
   const { i18n } = useTranslation();
 
-  const languages = [
-    { code: 'en', name: 'English', flag: 'ENG' },
-    { code: 'uk', name: 'Українська', flag: 'UKR' }
+  const languages: Language[] = [
+    { code: SUPPORTED_LANGUAGES.EN, name: 'English', flag: 'ENG' },
+    { code: SUPPORTED_LANGUAGES.UK, name: 'Українська', flag: 'UKR' }
   ];
 
   const currentLanguage = languages.find(lang => lang.code === i18n.language) || languages[0];
 
-  const changeLanguage = (langCode: string) => {
+  const changeLanguage = (langCode: SupportedLanguage) => {
     i18n.changeLanguage(langCode);
   };
 

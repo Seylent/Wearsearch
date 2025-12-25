@@ -3,7 +3,7 @@
  * Displays similar products based on category, brand, and price
  */
 
-import { useEffect } from 'react';
+import { memo } from 'react';
 import { Link } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { Sparkles } from 'lucide-react';
@@ -15,7 +15,7 @@ interface RelatedProductsProps {
   className?: string;
 }
 
-export function RelatedProducts({ productId, className = '' }: RelatedProductsProps) {
+export const RelatedProducts = memo(({ productId, className = '' }: RelatedProductsProps) => {
   const { t } = useTranslation();
   const { data, isLoading, error } = useRelatedProducts(productId);
   
@@ -99,6 +99,8 @@ export function RelatedProducts({ productId, className = '' }: RelatedProductsPr
       </div>
     </div>
   );
-}
+});
+
+RelatedProducts.displayName = 'RelatedProducts';
 
 export default RelatedProducts;

@@ -86,6 +86,7 @@ const Index: React.FC = () => {
                     src={image.image_url}
                     alt={image.title || `Hero ${index + 1}`}
                     className="w-full h-full object-cover"
+                    loading="lazy"
                     style={{
                       filter: 'brightness(1.4) contrast(1.3) saturate(0) drop-shadow(0 0 22px rgba(255,255,255,0.4)) drop-shadow(0 0 3px rgba(255,255,255,0.2))',
                       mixBlendMode: 'screen',

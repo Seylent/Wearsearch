@@ -13,7 +13,8 @@ import { api } from "@/services/api";
 import { convertS3UrlToHttps } from "@/lib/utils";
 import { FavoriteButton } from "@/components/FavoriteButton";
 import { RelatedProducts } from "@/components/RelatedProducts";
-import { getCategoryTranslation } from "@/utils/translations";
+import { translateGender } from "@/utils/errorTranslation";
+import { getCategoryTranslation, getColorTranslation } from "@/utils/translations";
 import { GenderBadge } from "@/components/GenderBadge";
 import {
   Select,
@@ -334,6 +335,7 @@ const ProductDetail = () => {
                     src={httpsImageUrl}
                     alt={product.name}
                     className="max-h-[72vh] object-contain"
+                    loading="lazy"
                     draggable={false}
                   />
                 </div>
@@ -367,7 +369,7 @@ const ProductDetail = () => {
                   <div className="flex items-center gap-3">
                     <Package className="w-5 h-5 text-muted-foreground" />
                     <span className="text-muted-foreground">{t('products.color')}:</span>
-                    <span className="font-medium">{product.color}</span>
+                    <span className="font-medium capitalize">{getColorTranslation(product.color)}</span>
                   </div>
                 )}
                 {product.gender && (
@@ -375,7 +377,7 @@ const ProductDetail = () => {
                     <Package className="w-5 h-5 text-muted-foreground" />
                     <span className="text-muted-foreground">{t('products.gender')}:</span>
                     <span className="font-medium capitalize">
-                      {product.gender === 'unisex' ? t('products.unisex') : product.gender === 'men' ? "Men's" : "Women's"}
+                      {translateGender(product.gender)}
                     </span>
                   </div>
                 )}
@@ -490,6 +492,7 @@ const ProductDetail = () => {
                               src={store.logo_url} 
                               alt={store.name}
                               className="w-full h-full object-cover"
+                              loading="lazy"
                             />
                           </div>
                         )}

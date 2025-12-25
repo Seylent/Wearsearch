@@ -11,6 +11,7 @@ import {
   removeGuestFavorite 
 } from '@/services/guestFavorites';
 import { useTranslation } from 'react-i18next';
+import { translateSuccessCode, translateErrorCode } from '@/utils/errorTranslation';
 
 interface FavoriteButtonProps {
   productId: string;
@@ -69,15 +70,15 @@ export function FavoriteButton({
         removeGuestFavorite(productId);
         setGuestFavorited(false);
         toast({
-          title: 'Видалено',
-          description: 'Товар видалено з обраного',
+          title: translateSuccessCode('FAVORITE_REMOVED'),
+          description: t('common.success'),
         });
       } else {
         addGuestFavorite(productId);
         setGuestFavorited(true);
         toast({
-          title: 'Додано',
-          description: 'Увійдіть щоб зберегти назавжди',
+          title: translateSuccessCode('FAVORITE_ADDED'),
+          description: t('products.saved'),
         });
       }
       return;

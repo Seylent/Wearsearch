@@ -15,6 +15,7 @@ import { ImageUploader } from "@/components/ImageUploader";
 import { productService } from "@/services/productService";
 import { storeService } from "@/services/storeService";
 import { api } from "@/services/api";
+import { getCategoryTranslation, getColorTranslation } from "@/utils/translations";
 
 // Use relative API URL (works with Vite proxy)
 const API_BASE_URL = '';
@@ -1301,8 +1302,8 @@ const Admin = () => {
                           <h4 className="font-semibold text-lg mb-1">{product.name}</h4>
                           <div className="flex flex-wrap gap-2 text-sm text-muted-foreground">
                             <span className="px-2 py-0.5 rounded bg-foreground/10">${product.price}</span>
-                            <span className="px-2 py-0.5 rounded bg-foreground/10">{product.type || product.category}</span>
-                            <span className="px-2 py-0.5 rounded bg-foreground/10">{product.color}</span>
+                            <span className="px-2 py-0.5 rounded bg-foreground/10">{getCategoryTranslation(product.type || product.category)}</span>
+                            <span className="px-2 py-0.5 rounded bg-foreground/10">{getColorTranslation(product.color)}</span>
                             {product.brand && <span className="px-2 py-0.5 rounded bg-foreground/10">{product.brand}</span>}
                           </div>
                         </div>

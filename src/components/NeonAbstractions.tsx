@@ -1,4 +1,6 @@
-export const NeonAbstractions = () => {
+import { memo } from 'react';
+
+export const NeonAbstractions = memo(() => {
   return (
     <div className="absolute inset-0 overflow-hidden pointer-events-none" style={{ transform: 'translateZ(0)' }}>
       {/* Large hemisphere at bottom - like planet horizon */}
@@ -181,4 +183,6 @@ export const NeonAbstractions = () => {
       />
     </div>
   );
-};
+});
+
+NeonAbstractions.displayName = 'NeonAbstractions';

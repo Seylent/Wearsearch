@@ -105,13 +105,18 @@ export const handleApiError = (error: unknown): ApiError => {
   if (axios.isAxiosError(error)) {
     const axiosError = error as AxiosError<ApiResponse>;
     
+    // Extract error_code if present (new backend format)
+    const errorCode = axiosError.response?.data?.error_code || 
+                      axiosError.response?.data?.code;
+    
     return {
       message: axiosError.response?.data?.message || 
                axiosError.response?.data?.error ||
                axiosError.message || 
                'An unexpected error occurred',
       status: axiosError.response?.status,
-      code: axiosError.code,
+      code: errorCode || axiosError.code,
+      error_code: errorCode, // Add error_code field for translation
     };
   }
   

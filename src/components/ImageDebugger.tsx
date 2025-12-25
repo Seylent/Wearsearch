@@ -1,10 +1,10 @@
-import React from 'react';
+import React, { memo } from 'react';
 
 interface ImageDebuggerProps extends React.ImgHTMLAttributes<HTMLImageElement> {
   src: string;
 }
 
-const ImageDebugger: React.FC<ImageDebuggerProps> = ({ src, alt = '', className = '', ...rest }) => {
+const ImageDebugger: React.FC<ImageDebuggerProps> = memo(({ src, alt = '', className = '', ...rest }) => {
   const [failed, setFailed] = React.useState(false);
 
   return (
@@ -23,6 +23,8 @@ const ImageDebugger: React.FC<ImageDebuggerProps> = ({ src, alt = '', className 
       )}
     </div>
   );
-};
+});
+
+ImageDebugger.displayName = 'ImageDebugger';
 
 export default ImageDebugger;

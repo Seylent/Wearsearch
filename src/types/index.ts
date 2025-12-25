@@ -171,12 +171,15 @@ export interface ApiResponse<T = any> {
   message?: string;
   data?: T;
   error?: string;
+  error_code?: string; // Added for backend error code support
+  success_code?: string; // Added for backend success code support
 }
 
 export interface ApiError {
   message: string;
   status?: number;
   code?: string;
+  error_code?: string; // Added for backend error code support
 }
 
 // Pagination Types

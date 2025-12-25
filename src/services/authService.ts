@@ -6,6 +6,7 @@
 import { api, handleApiError } from './api';
 import { setAuth, clearAuth, isAuthenticated } from '@/utils/authStorage';
 import { getValidGuestFavorites, clearGuestFavorites } from './guestFavorites';
+import { getErrorMessage } from '@/utils/errorTranslation';
 import type { User, LoginCredentials, RegisterData, AuthResponse } from '@/types';
 
 const ENDPOINTS = {

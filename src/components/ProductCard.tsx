@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { memo } from 'react';
 import { Link } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import ImageDebugger from './ImageDebugger';
@@ -14,7 +14,7 @@ interface ProductCardProps {
   isNew?: boolean;
 }
 
-const ProductCard: React.FC<ProductCardProps> = ({ id, name, image, price, category, brand, isNew }) => {
+const ProductCard: React.FC<ProductCardProps> = memo(({ id, name, image, price, category, brand, isNew }) => {
   const { t } = useTranslation();
   // Handle both 'image' and 'image_url' from different API responses
   const imgSrc = image || '';
@@ -29,6 +29,7 @@ const ProductCard: React.FC<ProductCardProps> = ({ id, name, image, price, categ
           <ImageDebugger 
             src={imgSrc} 
             alt={name} 
+            loading="lazy"
             className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105 filter grayscale group-hover:grayscale-0" 
             style={{
               filter: 'grayscale(100%) contrast(1.2) brightness(1.1)',
@@ -77,6 +78,8 @@ const ProductCard: React.FC<ProductCardProps> = ({ id, name, image, price, categ
       </div>
     </Link>
   );
-};
+});
+
+ProductCard.displayName = 'ProductCard';
 
 export default ProductCard;

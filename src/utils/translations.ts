@@ -1,47 +1,72 @@
 /**
  * Translation utilities for category names and other common terms
+ * Now uses i18next for proper internationalization
  */
 
+import i18n from '@/i18n';
+
 export const getCategoryTranslation = (category: string): string => {
-  const translations: { [key: string]: string } = {
-    'jackets': 'Куртки',
-    'hoodies': 'Худі',
-    'T-shirts': 'Футболки',
-    't-shirts': 'Футболки',
-    'pants': 'Штани',
-    'jeans': 'Джинси',
-    'shorts': 'Шорти',
-    'shoes': 'Взуття',
-    'accessories': 'Аксесуари'
-  };
-  return translations[category] || category;
+  if (!category) return '';
+  
+  // Convert to lowercase to match translation keys
+  const key = `productTypes.${category.toLowerCase()}`;
+  const translated = i18n.t(key);
+  
+  // If translation not found, try with original case
+  if (translated === key) {
+    const fallbackKey = `productTypes.${category}`;
+    const fallbackTranslated = i18n.t(fallbackKey);
+    
+    if (fallbackTranslated === fallbackKey) {
+      if (import.meta.env.DEV) {
+        console.warn(`Missing product type translation: ${category}`);
+      }
+      return category;
+    }
+    return fallbackTranslated;
+  }
+  
+  return translated;
 };
 
 export const getColorTranslation = (color: string): string => {
-  const translations: { [key: string]: string } = {
-    'Black': 'Чорний',
-    'White': 'Білий',
-    'Blue': 'Синій',
-    'Red': 'Червоний',
-    'Green': 'Зелений',
-    'Yellow': 'Жовтий',
-    'Brown': 'Коричневий',
-    'Gray': 'Сірий',
-    'Grey': 'Сірий',
-    'Pink': 'Рожевий',
-    'Purple': 'Фіолетовий',
-    'Orange': 'Помаранчевий',
-    'Beige': 'Бежевий',
-    'Navy': 'Темно-синій'
-  };
-  return translations[color] || color;
+  if (!color) return '';
+  
+  // Convert to lowercase to match translation keys
+  const key = `colors.${color.toLowerCase()}`;
+  const translated = i18n.t(key);
+  
+  // If translation not found, return original color
+  if (translated === key) {
+    if (import.meta.env.DEV) {
+      console.warn(`Missing color translation: ${color}`);
+    }
+    return color;
+  }
+  
+  return translated;
 };
 
 export const getGenderTranslation = (gender: string): string => {
-  const translations: { [key: string]: string } = {
-    'male': 'Чоловіча',
-    'female': 'Жіноча',
-    'unisex': 'Унісекс'
-  };
-  return translations[gender] || gender;
+  if (!gender) return '';
+  
+  // Convert to lowercase to match translation keys
+  const key = `gender.${gender.toLowerCase()}`;
+  const translated = i18n.t(key);
+  
+  // If translation not found, try with original case
+  if (translated === key) {
+    const fallbackKey = `gender.${gender}`;
+    const fallbackTranslated = i18n.t(fallbackKey);
+    
+    if (fallbackTranslated === fallbackKey) {
+      if (import.meta.env.DEV) {
+        console.warn(`Missing gender translation: ${gender}`);
+      }
+      return gender;
+    }
+    return fallbackTranslated;
+  }
+  
+  return translated;
 };

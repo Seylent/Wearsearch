@@ -27,6 +27,8 @@ import { useProducts, useBrands, useStoreProducts } from "@/hooks/useApi";
 import { useDebounce } from "@/hooks/useDebounce";
 import { PRODUCT_CATEGORIES } from "@/constants/categories";
 import type { Product } from "@/types";
+import { translateGender } from "@/utils/errorTranslation";
+import { getColorTranslation, getCategoryTranslation } from "@/utils/translations";
 
 const Products = () => {
   const { t } = useTranslation();
@@ -277,9 +279,9 @@ const Products = () => {
                             />
                             <Label 
                               htmlFor={`filter-color-${color}`}
-                              className="ml-2 text-sm cursor-pointer hover:text-foreground/80 transition-colors"
+                              className="ml-2 text-sm cursor-pointer hover:text-foreground/80 transition-colors capitalize"
                             >
-                              {color}
+                              {getColorTranslation(color)}
                             </Label>
                           </div>
                         ))}
@@ -302,7 +304,7 @@ const Products = () => {
                               htmlFor={`filter-category-${category}`}
                               className="ml-2 text-sm cursor-pointer hover:text-foreground/80 transition-colors capitalize"
                             >
-                              {t(`products.${category.toLowerCase().replace('-', '')}`)}
+                              {getCategoryTranslation(category)}
                             </Label>
                           </div>
                         ))}
@@ -325,7 +327,7 @@ const Products = () => {
                               htmlFor={`filter-gender-${gender}`}
                               className="ml-2 text-sm cursor-pointer hover:text-foreground/80 transition-colors capitalize"
                             >
-                              {gender === 'men' ? "Men's" : gender === 'women' ? "Women's" : 'Unisex'}
+                              {translateGender(gender)}
                             </Label>
                           </div>
                         ))}

@@ -47,8 +47,8 @@ export const useProducts = (options?: UseQueryOptions<any>) => {
       });
       return response.data;
     },
-    staleTime: 30 * 60 * 1000, // 30 minutes - increased to reduce refetches
-    gcTime: 60 * 60 * 1000, // 1 hour
+    staleTime: 5 * 60 * 1000, // 5 minutes
+    gcTime: 10 * 60 * 1000, // 10 minutes (renamed from cacheTime)
     refetchOnWindowFocus: false, // Don't refetch on tab focus
     refetchOnMount: false, // Use cache if available
     ...options,
