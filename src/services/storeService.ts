@@ -17,8 +17,6 @@ export interface Store {
   is_recommended?: boolean;
   product_count?: number;
   brand_count?: number;
-  average_rating?: number;
-  total_ratings?: number;
 }
 
 export interface CreateStoreData {

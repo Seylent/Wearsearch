@@ -82,11 +82,8 @@ export interface Store {
   tiktok_url?: string;
   location?: string;
   shipping?: string;
-  rating?: number;
   is_verified?: boolean;       // Verified stores (✓)
   is_recommended?: boolean;     // Recommended stores (⭐)
-  average_rating?: number;
-  total_ratings?: number;
   created_at?: string;
   updated_at?: string;
 }
@@ -166,24 +163,6 @@ export interface FavoritesResponse {
 
 export interface FavoritesResponse {
   favorites: Favorite[];
-}
-
-// Rating Types
-export interface Rating {
-  id: string;
-  user_id: string;
-  store_id: string;
-  product_id?: string;
-  rating: number;
-  comment?: string;
-  created_at?: string;
-  updated_at?: string;
-}
-
-export interface RatingsResponse {
-  ratings: Rating[];
-  average?: number;
-  total?: number;
 }
 
 // API Response Types

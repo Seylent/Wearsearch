@@ -71,7 +71,25 @@
     "jeans": "Jeans",
     "shorts": "Shorts",
     "shoes": "Shoes",
-    "accessories": "Accessories"
+    "accessories": "Accessories",
+    "black": "Black",
+    "white": "White",
+    "gray": "Gray",
+    "grey": "Grey",
+    "blue": "Blue",
+    "red": "Red",
+    "green": "Green",
+    "yellow": "Yellow",
+    "orange": "Orange",
+    "pink": "Pink",
+    "purple": "Purple",
+    "brown": "Brown",
+    "beige": "Beige",
+    "navy": "Navy",
+    "maroon": "Maroon",
+    "editProduct": "Edit Product",
+    "save": "Save",
+    "saved": "Saved"
   },
   "stores": {
     "title": "Stores",
@@ -194,6 +212,9 @@
     "inStock": "In Stock",
     "outOfStock": "Out of Stock",
     "relatedProducts": "Related Products",
+    "similarProducts": "Similar Products",
+    "product": "product",
+    "products": "products",
     "storeRatings": "Store Ratings",
     "suggestedPrice": "Suggested Price",
     "availableAt": "Available at",
@@ -212,12 +233,22 @@
     "addStores": "Add stores where this product is available",
     "viewOnStore": "View on Store",
     "updateRating": "Update your rating",
-    "rateStore": "Rate this store"
+    "rateStore": "Rate this store",
+    "loginToRate": "Login to rate this store",
+    "youRatedStore": "You rated this store",
+    "star": "star",
+    "stars": "stars"
   },
   "footer": {
     "allRightsReserved": "All rights reserved",
     "privacyPolicy": "Privacy Policy",
     "termsOfService": "Terms of Service",
-    "contactUs": "Contact Us"
+    "contactUs": "Contact Us",
+    "shop": "Shop",
+    "allItems": "All Items",
+    "saved": "Saved",
+    "company": "Company",
+    "about": "About",
+    "contact": "Contact"
   }
 }

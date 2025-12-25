@@ -33,9 +33,6 @@ export const queryKeys = {
   stats: ['stats'] as const,
   favorites: ['favorites'] as const,
   contacts: ['contacts'] as const,
-  storeRatings: (storeId: string) => ['storeRatings', storeId] as const,
-  userStoreRating: (userId: string, storeId: string) => ['userStoreRating', userId, storeId] as const,
-  userRatings: (userId: string) => ['userRatings', userId] as const,
 };
 
 // Products
@@ -44,6 +41,10 @@ export const useProducts = (options?: UseQueryOptions<any>) => {
     queryKey: queryKeys.products,
     queryFn: async () => {
       const response = await api.get('/items');
+      console.log('🔍 API Response from /items:', {
+        firstProduct: response.data?.[0] || response.data?.data?.[0] || response.data?.products?.[0],
+        structure: Array.isArray(response.data) ? 'array' : typeof response.data
+      });
       return response.data;
     },
     staleTime: 30 * 60 * 1000, // 30 minutes - increased to reduce refetches
@@ -262,105 +263,6 @@ export const useFavorites = () => {
     refetchOnReconnect: false,
     // Only fetch if user is authenticated
     enabled: typeof window !== 'undefined' && !!getAuth(),
-  });
-};
-
-// Store Ratings
-export const useStoreRatings = (storeId: string, options?: UseQueryOptions<any>) => {
-  return useQuery({
-    queryKey: queryKeys.storeRatings(storeId),
-    queryFn: async () => {
-      const response = await api.get(`/ratings/store/${storeId}`);
-      const data = response.data;
-      
-      // Backend returns: { success: true, data: [...], average: 4.5, count: 10 }
-      if (data?.average !== undefined && data?.count !== undefined) {
-        return { average: Number(data.average.toFixed(1)), count: data.count };
-      } else if (data?.data && Array.isArray(data.data)) {
-        // Fallback: calculate from ratings array
-        const ratings = data.data.map((r: any) => r.rating);
-        const avg = ratings.length > 0 
-          ? ratings.reduce((sum: number, r: number) => sum + r, 0) / ratings.length 
-          : 0;
-        return { average: Number(avg.toFixed(1)), count: ratings.length };
-      }
-      return { average: 0, count: 0 };
-    },
-    staleTime: 10 * 60 * 1000,
-    gcTime: 20 * 60 * 1000,
-    enabled: !!storeId,
-    ...options,
-  });
-};
-
-export const useUserStoreRating = (userId: string | undefined, storeId: string) => {
-  return useQuery({
-    queryKey: queryKeys.userStoreRating(userId || '', storeId),
-    queryFn: async () => {
-      if (!userId) return null;
-      
-      try {
-        const response = await api.get(`/ratings/user/${userId}/store/${storeId}`);
-        const data = response.data;
-        
-        // Backend returns: { success: true, data: { rating, comment, ... } }
-        if (data?.data && data.data.rating) {
-          return data.data.rating;
-        } else if (data && data.rating) {
-          return data.rating;
-        }
-        return null;
-      } catch (error: any) {
-        // Backend returns 500 if multiple ratings exist - ignore
-        if (error.response?.status === 500) {
-          return null;
-        }
-        throw error;
-      }
-    },
-    staleTime: 10 * 60 * 1000,
-    gcTime: 20 * 60 * 1000,
-    enabled: !!userId && !!storeId,
-  });
-};
-
-// User Ratings
-export const useUserRatings = (userId: string) => {
-  return useQuery({
-    queryKey: queryKeys.userRatings(userId),
-    queryFn: async () => {
-      const response = await api.get(`/ratings/user/${userId}`);
-      const data = response.data;
-      
-      // Backend returns: { success: true, count: number, data: Rating[] }
-      if (data?.data && Array.isArray(data.data)) {
-        return data.data;
-      } else if (Array.isArray(data)) {
-        return data;
-      }
-      return [];
-    },
-    staleTime: 5 * 60 * 1000,
-    gcTime: 15 * 60 * 1000,
-    enabled: !!userId,
-  });
-};
-
-// Delete Rating Mutation
-export const useDeleteRating = () => {
-  const queryClient = useQueryClient();
-  
-  return useMutation({
-    mutationFn: async ({ ratingId, userId }: { ratingId: string; userId: string }) => {
-      const response = await api.delete(`/ratings/${ratingId}`, { data: { user_id: userId } });
-      return response.data;
-    },
-    onSuccess: (data, variables) => {
-      // Invalidate user ratings to refresh the list
-      queryClient.invalidateQueries({ queryKey: queryKeys.userRatings(variables.userId) });
-      // Also invalidate store ratings if needed
-      queryClient.invalidateQueries({ queryKey: ['storeRatings'] });
-    },
   });
 };
 

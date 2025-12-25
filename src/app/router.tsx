@@ -14,7 +14,6 @@ import Admin from '@/pages/Admin';
 import AdminBrands from '@/pages/AdminBrands';
 import Favorites from '@/pages/Favorites';
 import Profile from '@/pages/Profile';
-import MyRatings from '@/pages/MyRatings';
 import NotFound from '@/pages/NotFound';
 
 export const AppRouter = () => (
@@ -30,7 +29,6 @@ export const AppRouter = () => (
       <Route path="/admin" element={<Admin />} />
       <Route path="/admin/brands" element={<AdminBrands />} />
       <Route path="/profile" element={<Profile />} />
-      <Route path="/my-ratings" element={<MyRatings />} />
       <Route path="*" element={<NotFound />} />
     </Routes>
   </BrowserRouter>

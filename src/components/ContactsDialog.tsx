@@ -49,28 +49,30 @@ export const ContactsDialog: React.FC<ContactsDialogProps> = ({ contacts }) => {
   return (
     <Dialog>
       <DialogTrigger asChild>
-        <button className="px-4 py-2 text-sm font-medium transition-all duration-300 rounded-full text-white/70 hover:text-white hover:bg-white/10 hover:shadow-[0_0_15px_rgba(255,255,255,0.2)]">
+        <button 
+          data-contacts-trigger
+          className="px-4 py-2 text-sm font-medium transition-all duration-300 rounded-full text-white/70 hover:text-white hover:bg-white/10 hover:shadow-[0_0_15px_rgba(255,255,255,0.2)]">
           {t('nav.contacts')}
         </button>
       </DialogTrigger>
-      <DialogContent className="sm:max-w-md bg-black/95 border-white/20 backdrop-blur-2xl shadow-[0_0_50px_rgba(255,255,255,0.1)]">
+      <DialogContent className="w-[95vw] max-w-md bg-black/95 border-white/20 backdrop-blur-2xl shadow-[0_0_50px_rgba(255,255,255,0.1)] max-h-[90vh] overflow-y-auto p-4 sm:p-6">
         <DialogHeader>
-          <DialogTitle className="text-2xl font-display text-white drop-shadow-[0_0_15px_rgba(255,255,255,0.5)]">{t('footer.contactUs')}</DialogTitle>
+          <DialogTitle className="text-xl sm:text-2xl font-display text-white drop-shadow-[0_0_15px_rgba(255,255,255,0.5)]">{t('footer.contactUs')}</DialogTitle>
         </DialogHeader>
-        <div className="space-y-4 py-4">
+        <div className="space-y-3 sm:space-y-4 py-2 sm:py-4">
           {activeContacts.telegram && (
             <a
               href={`https://t.me/${activeContacts.telegram.replace('@', '')}`}
               target="_blank"
               rel="noopener noreferrer"
-              className="flex items-center gap-4 p-4 rounded-lg border border-white/20 bg-white/5 backdrop-blur-sm hover:bg-white/10 hover:border-white/40 hover:shadow-[0_0_20px_rgba(255,255,255,0.2)] transition-all duration-300 group"
+              className="flex items-center gap-3 sm:gap-4 p-3 sm:p-4 rounded-lg border border-white/20 bg-white/5 backdrop-blur-sm hover:bg-white/10 hover:border-white/40 hover:shadow-[0_0_20px_rgba(255,255,255,0.2)] transition-all duration-300 group"
             >
-              <div className="w-12 h-12 rounded-full bg-white/10 backdrop-blur-md border border-white/20 flex items-center justify-center group-hover:bg-white/20 group-hover:shadow-[0_0_15px_rgba(255,255,255,0.3)] transition-all">
-                <Send className="w-6 h-6 text-white drop-shadow-[0_0_8px_rgba(255,255,255,0.6)]" />
+              <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-full bg-white/10 backdrop-blur-md border border-white/20 flex items-center justify-center group-hover:bg-white/20 group-hover:shadow-[0_0_15px_rgba(255,255,255,0.3)] transition-all">
+                <Send className="w-5 h-5 sm:w-6 sm:h-6 text-white drop-shadow-[0_0_8px_rgba(255,255,255,0.6)]" />
               </div>
-              <div className="flex-1">
-                <h3 className="font-semibold text-white mb-1 drop-shadow-[0_0_10px_rgba(255,255,255,0.3)]">Telegram</h3>
-                <p className="text-sm text-white/70">{activeContacts.telegram}</p>
+              <div className="flex-1 min-w-0">
+                <h3 className="font-semibold text-white mb-0.5 sm:mb-1 text-sm sm:text-base drop-shadow-[0_0_10px_rgba(255,255,255,0.3)]">Telegram</h3>
+                <p className="text-xs sm:text-sm text-white/70 truncate">{activeContacts.telegram}</p>
               </div>
             </a>
           )}
@@ -80,14 +82,14 @@ export const ContactsDialog: React.FC<ContactsDialogProps> = ({ contacts }) => {
               href={`https://instagram.com/${activeContacts.instagram.replace('@', '')}`}
               target="_blank"
               rel="noopener noreferrer"
-              className="flex items-center gap-4 p-4 rounded-lg border border-white/20 bg-white/5 backdrop-blur-sm hover:bg-white/10 hover:border-white/40 hover:shadow-[0_0_20px_rgba(255,255,255,0.2)] transition-all duration-300 group"
+              className="flex items-center gap-3 sm:gap-4 p-3 sm:p-4 rounded-lg border border-white/20 bg-white/5 backdrop-blur-sm hover:bg-white/10 hover:border-white/40 hover:shadow-[0_0_20px_rgba(255,255,255,0.2)] transition-all duration-300 group"
             >
-              <div className="w-12 h-12 rounded-full bg-white/10 backdrop-blur-md border border-white/20 flex items-center justify-center group-hover:bg-white/20 group-hover:shadow-[0_0_15px_rgba(255,255,255,0.3)] transition-all">
-                <Instagram className="w-6 h-6 text-white drop-shadow-[0_0_8px_rgba(255,255,255,0.6)]" />
+              <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-full bg-white/10 backdrop-blur-md border border-white/20 flex items-center justify-center group-hover:bg-white/20 group-hover:shadow-[0_0_15px_rgba(255,255,255,0.3)] transition-all">
+                <Instagram className="w-5 h-5 sm:w-6 sm:h-6 text-white drop-shadow-[0_0_8px_rgba(255,255,255,0.6)]" />
               </div>
-              <div className="flex-1">
-                <h3 className="font-semibold text-white mb-1 drop-shadow-[0_0_10px_rgba(255,255,255,0.3)]">Instagram</h3>
-                <p className="text-sm text-white/70">{activeContacts.instagram}</p>
+              <div className="flex-1 min-w-0">
+                <h3 className="font-semibold text-white mb-0.5 sm:mb-1 text-sm sm:text-base drop-shadow-[0_0_10px_rgba(255,255,255,0.3)]">Instagram</h3>
+                <p className="text-xs sm:text-sm text-white/70 truncate">{activeContacts.instagram}</p>
               </div>
             </a>
           )}
@@ -97,14 +99,14 @@ export const ContactsDialog: React.FC<ContactsDialogProps> = ({ contacts }) => {
               href={`https://tiktok.com/@${activeContacts.tiktok.replace('@', '')}`}
               target="_blank"
               rel="noopener noreferrer"
-              className="flex items-center gap-4 p-4 rounded-lg border border-white/20 bg-white/5 backdrop-blur-sm hover:bg-white/10 hover:border-white/40 hover:shadow-[0_0_20px_rgba(255,255,255,0.2)] transition-all duration-300 group"
+              className="flex items-center gap-3 sm:gap-4 p-3 sm:p-4 rounded-lg border border-white/20 bg-white/5 backdrop-blur-sm hover:bg-white/10 hover:border-white/40 hover:shadow-[0_0_20px_rgba(255,255,255,0.2)] transition-all duration-300 group"
             >
-              <div className="w-12 h-12 rounded-full bg-white/10 backdrop-blur-md border border-white/20 flex items-center justify-center group-hover:bg-white/20 group-hover:shadow-[0_0_15px_rgba(255,255,255,0.3)] transition-all">
-                <FaTiktok className="w-6 h-6 text-white drop-shadow-[0_0_8px_rgba(255,255,255,0.6)]" />
+              <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-full bg-white/10 backdrop-blur-md border border-white/20 flex items-center justify-center group-hover:bg-white/20 group-hover:shadow-[0_0_15px_rgba(255,255,255,0.3)] transition-all">
+                <FaTiktok className="w-5 h-5 sm:w-6 sm:h-6 text-white drop-shadow-[0_0_8px_rgba(255,255,255,0.6)]" />
               </div>
-              <div className="flex-1">
-                <h3 className="font-semibold text-white mb-1 drop-shadow-[0_0_10px_rgba(255,255,255,0.3)]">TikTok</h3>
-                <p className="text-sm text-white/70">{activeContacts.tiktok}</p>
+              <div className="flex-1 min-w-0">
+                <h3 className="font-semibold text-white mb-0.5 sm:mb-1 text-sm sm:text-base drop-shadow-[0_0_10px_rgba(255,255,255,0.3)]">TikTok</h3>
+                <p className="text-xs sm:text-sm text-white/70 truncate">{activeContacts.tiktok}</p>
               </div>
             </a>
           )}
@@ -112,14 +114,14 @@ export const ContactsDialog: React.FC<ContactsDialogProps> = ({ contacts }) => {
           {activeContacts.email && (
             <a
               href={`mailto:${activeContacts.email}`}
-              className="flex items-center gap-4 p-4 rounded-lg border border-white/20 bg-white/5 backdrop-blur-sm hover:bg-white/10 hover:border-white/40 hover:shadow-[0_0_20px_rgba(255,255,255,0.2)] transition-all duration-300 group"
+              className="flex items-center gap-3 sm:gap-4 p-3 sm:p-4 rounded-lg border border-white/20 bg-white/5 backdrop-blur-sm hover:bg-white/10 hover:border-white/40 hover:shadow-[0_0_20px_rgba(255,255,255,0.2)] transition-all duration-300 group"
             >
-              <div className="w-12 h-12 rounded-full bg-white/10 backdrop-blur-md border border-white/20 flex items-center justify-center group-hover:bg-white/20 group-hover:shadow-[0_0_15px_rgba(255,255,255,0.3)] transition-all">
-                <Mail className="w-6 h-6 text-white drop-shadow-[0_0_8px_rgba(255,255,255,0.6)]" />
+              <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-full bg-white/10 backdrop-blur-md border border-white/20 flex items-center justify-center group-hover:bg-white/20 group-hover:shadow-[0_0_15px_rgba(255,255,255,0.3)] transition-all">
+                <Mail className="w-5 h-5 sm:w-6 sm:h-6 text-white drop-shadow-[0_0_8px_rgba(255,255,255,0.6)]" />
               </div>
-              <div className="flex-1">
-                <h3 className="font-semibold text-white mb-1 drop-shadow-[0_0_10px_rgba(255,255,255,0.3)]">Email</h3>
-                <p className="text-sm text-white/70">{activeContacts.email}</p>
+              <div className="flex-1 min-w-0">
+                <h3 className="font-semibold text-white mb-0.5 sm:mb-1 text-sm sm:text-base drop-shadow-[0_0_10px_rgba(255,255,255,0.3)]">Email</h3>
+                <p className="text-xs sm:text-sm text-white/70 truncate">{activeContacts.email}</p>
               </div>
             </a>
           )}

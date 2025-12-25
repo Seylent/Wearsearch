@@ -1,7 +1,7 @@
 import { useParams, useNavigate } from "react-router-dom";
 import { useState, useEffect, useCallback, useRef } from "react";
 import { useTranslation } from "react-i18next";
-import { ArrowLeft, Edit, Package, Tag, MapPin, Search, Filter, ChevronDown, Sparkles } from "lucide-react";
+import { ArrowLeft, Edit, Package, Tag, MapPin, Search, Filter, ChevronDown, Sparkles, SortAsc, Star } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import Navigation from "@/components/layout/Navigation";
@@ -12,9 +12,9 @@ import { useToast } from "@/hooks/use-toast";
 import { api } from "@/services/api";
 import { convertS3UrlToHttps } from "@/lib/utils";
 import { FavoriteButton } from "@/components/FavoriteButton";
-import { StoreRating } from "@/components/StoreRating";
 import { RelatedProducts } from "@/components/RelatedProducts";
 import { getCategoryTranslation } from "@/utils/translations";
+import { GenderBadge } from "@/components/GenderBadge";
 import {
   Select,
   SelectContent,
@@ -38,7 +38,7 @@ const ProductDetail = () => {
   
   // Store filters
   const [storeSearch, setStoreSearch] = useState("");
-  const [sortBy, setSortBy] = useState<"name" | "price-asc" | "price-desc" | "rating">("name");
+  const [sortBy, setSortBy] = useState<"name" | "price-asc" | "price-desc">("name");
   const [showRecommendedOnly, setShowRecommendedOnly] = useState(false);
   const [currentStorePage, setCurrentStorePage] = useState(1);
   const storesPerPage = 3;
@@ -109,13 +109,15 @@ const ProductDetail = () => {
       );
     }
 
-    // Recommended filter
-    if (showRecommendedOnly) {
-      filtered = filtered.filter(store => store.is_recommended);
-    }
-
-    // Sort
+    // Sort - when showRecommendedOnly is true, show recommended first, then others
     filtered.sort((a, b) => {
+      // If showRecommendedOnly is active, prioritize recommended stores
+      if (showRecommendedOnly) {
+        if (a.is_recommended && !b.is_recommended) return -1;
+        if (!a.is_recommended && b.is_recommended) return 1;
+      }
+
+      // Then apply the selected sort
       switch (sortBy) {
         case "name":
           return a.name.localeCompare(b.name);
@@ -123,8 +125,6 @@ const ProductDetail = () => {
           return (a.price || 0) - (b.price || 0);
         case "price-desc":
           return (b.price || 0) - (a.price || 0);
-        case "rating":
-          return (b.average_rating || 0) - (a.average_rating || 0);
         default:
           return 0;
       }
@@ -296,7 +296,7 @@ const ProductDetail = () => {
             className="group"
           >
             <ArrowLeft className="w-4 h-4 mr-2 group-hover:-translate-x-1 transition-transform" />
-            Back
+            {t('common.back')}
           </Button>
           
           {isAdmin && (
@@ -306,7 +306,7 @@ const ProductDetail = () => {
               className="gap-2"
             >
               <Edit className="w-4 h-4" />
-              Edit Product
+              {t('products.editProduct')}
             </Button>
           )}
         </div>
@@ -350,33 +350,33 @@ const ProductDetail = () => {
               )}
 
               {/* Title */}
-              <h1 className="font-display text-4xl md:text-5xl font-bold mb-4 tracking-tight">
+              <h1 className="font-display text-4xl md:text-5xl font-bold tracking-tight mb-4">
                 {product.name}
               </h1>
-
-              {/* Gender Badge */}
-              {product.gender && (
-                <div className="mb-8 pb-8 border-b border-border/50">
-                  <span className="inline-block text-sm text-muted-foreground uppercase tracking-wider px-3 py-1 border border-border/50 rounded-full">
-                    {product.gender}
-                  </span>
-                </div>
-              )}
 
               {/* Details */}
               <div className="space-y-4 mb-8">
                 {product.type && (
                   <div className="flex items-center gap-3">
                     <Tag className="w-5 h-5 text-muted-foreground" />
-                    <span className="text-muted-foreground">Категорія:</span>
+                    <span className="text-muted-foreground">{t('products.category')}:</span>
                     <span className="font-medium capitalize">{getCategoryTranslation(product.type)}</span>
                   </div>
                 )}
                 {product.color && (
                   <div className="flex items-center gap-3">
                     <Package className="w-5 h-5 text-muted-foreground" />
-                    <span className="text-muted-foreground">Колір:</span>
+                    <span className="text-muted-foreground">{t('products.color')}:</span>
                     <span className="font-medium">{product.color}</span>
+                  </div>
+                )}
+                {product.gender && (
+                  <div className="flex items-center gap-3">
+                    <Package className="w-5 h-5 text-muted-foreground" />
+                    <span className="text-muted-foreground">{t('products.gender')}:</span>
+                    <span className="font-medium capitalize">
+                      {product.gender === 'unisex' ? t('products.unisex') : product.gender === 'men' ? "Men's" : "Women's"}
+                    </span>
                   </div>
                 )}
               </div>
@@ -417,9 +417,9 @@ const ProductDetail = () => {
 
               {/* Search & Filters */}
               {stores.length > 0 && (
-                <div className="space-y-3 mb-6 pb-6 border-b border-white/6">
+                <div className="flex items-center gap-2 mb-6 pb-6 border-b border-white/6">
                   {/* Search */}
-                  <div className="relative">
+                  <div className="relative flex-1">
                     <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                     <Input
                       type="text"
@@ -432,14 +432,28 @@ const ProductDetail = () => {
 
                   {/* Sort */}
                   <Select value={sortBy} onValueChange={(v: any) => setSortBy(v)}>
-                    <SelectTrigger className="bg-black/30 border-white/6 text-white">
-                      <SelectValue />
+                    <SelectTrigger className="w-[50px] bg-black/30 border-white/6 text-white">
+                      <SortAsc className="h-4 w-4" />
                     </SelectTrigger>
                     <SelectContent className="bg-black/80 border-white/10 text-white">
-                      <SelectItem value="name">{t('productDetail.name')}</SelectItem>
-                      <SelectItem value="price-asc">{t('productDetail.priceAsc')}</SelectItem>
-                      <SelectItem value="price-desc">{t('productDetail.priceDesc')}</SelectItem>
-                      <SelectItem value="rating">{t('productDetail.rating')}</SelectItem>
+                      <SelectItem value="name">
+                        <div className="flex items-center gap-2">
+                          <Tag className="h-4 w-4" />
+                          {t('productDetail.name')}
+                        </div>
+                      </SelectItem>
+                      <SelectItem value="price-asc">
+                        <div className="flex items-center gap-2">
+                          <SortAsc className="h-4 w-4" />
+                          {t('productDetail.priceAsc')}
+                        </div>
+                      </SelectItem>
+                      <SelectItem value="price-desc">
+                        <div className="flex items-center gap-2">
+                          <ChevronDown className="h-4 w-4" />
+                          {t('productDetail.priceDesc')}
+                        </div>
+                      </SelectItem>
                     </SelectContent>
                   </Select>
 
@@ -447,10 +461,11 @@ const ProductDetail = () => {
                   <Button
                     variant={showRecommendedOnly ? "default" : "outline"}
                     onClick={() => setShowRecommendedOnly(!showRecommendedOnly)}
-                    className="w-full"
-                    size="sm"
+                    className="w-[50px] p-0"
+                    size="icon"
+                    title={t('productDetail.recommendedOnly')}
                   >
-                    {showRecommendedOnly ? "✓" : ""} {t('productDetail.recommendedOnly')}
+                    <Star className={`h-4 w-4 ${showRecommendedOnly ? 'fill-current' : ''}`} />
                   </Button>
                 </div>
               )}
@@ -495,17 +510,6 @@ const ProductDetail = () => {
                           <p className="font-display text-2xl font-bold">₴{store.price}</p>
                         </div>
                       )}
-
-                      {/* Store Rating */}
-                      <div className="mb-3">
-                        <StoreRating
-                          storeId={store.id}
-                          storeName={store.name}
-                          productId={id}
-                          averageRating={store.average_rating}
-                          totalRatings={store.total_ratings}
-                        />
-                      </div>
 
                       {/* Shipping Info */}
                       {store.shipping_info && (

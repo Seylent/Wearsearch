@@ -10,6 +10,7 @@ import {
   addGuestFavorite, 
   removeGuestFavorite 
 } from '@/services/guestFavorites';
+import { useTranslation } from 'react-i18next';
 
 interface FavoriteButtonProps {
   productId: string;
@@ -28,6 +29,7 @@ export function FavoriteButton({
 }: FavoriteButtonProps) {
   const { toast } = useToast();
   const navigate = useNavigate();
+  const { t } = useTranslation();
   const isLoggedIn = isAuthenticated();
   const [guestFavorited, setGuestFavorited] = useState(false);
   
@@ -121,7 +123,7 @@ export function FavoriteButton({
           isFavorited ? 'fill-red-500 scale-110' : 'hover:scale-110'
         }`}
       />
-      {showText && (isFavorited ? '❤️ Saved' : 'Save')}
+      {showText && (isFavorited ? `❤️ ${t('products.saved')}` : t('products.save'))}
     </Button>
   );
 }

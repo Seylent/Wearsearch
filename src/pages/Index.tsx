@@ -5,10 +5,9 @@ import Navigation from "@/components/layout/Navigation";
 import { Footer } from "@/components/layout/Footer";
 import ProductCard from "@/components/ProductCard";
 import { Button } from "@/components/ui/button";
-import { Sparkles, Shield, Package, Clock, ArrowRight } from "lucide-react";
 import { Product } from "@/services/productService";
 import { NeonAbstractions } from "@/components/NeonAbstractions";
-import { useProducts, useStats, useHeroImages } from "@/hooks/useApi";
+import { useProducts, useHeroImages } from "@/hooks/useApi";
 
 const Index: React.FC = () => {
   const navigate = useNavigate();
@@ -17,7 +16,6 @@ const Index: React.FC = () => {
   
   // Use React Query hooks - only fetch what's needed for this page
   const { data: productsData, isLoading: productsLoading } = useProducts();
-  const { data: statsData } = useStats();
   const { data: heroImagesData } = useHeroImages();
 
   // Process products data
@@ -35,16 +33,6 @@ const Index: React.FC = () => {
     
     return productsList.slice(0, 6);
   }, [productsData]);
-
-  // Process stats data - use real-time counts from API
-  const stats = React.useMemo(() => {
-    // Stats from /api/statistics endpoint with real database counts
-    return {
-      brands: statsData?.brands || 0,
-      products: statsData?.products || 0,
-      stores: statsData?.stores || 0
-    };
-  }, [statsData]);
 
   // Process hero images
   const heroImages = React.useMemo(() => {
@@ -70,29 +58,6 @@ const Index: React.FC = () => {
       return () => clearInterval(interval);
     }
   }, [heroImages]);
-
-  const features = [
-    {
-      icon: Sparkles,
-      title: t('about.value1Title'),
-      description: t('about.value1Desc'),
-    },
-    {
-      icon: Shield,
-      title: t('about.value2Title'),
-      description: t('about.value2Desc'),
-    },
-    {
-      icon: Package,
-      title: t('about.value3Title'),
-      description: t('about.value3Desc'),
-    },
-    {
-      icon: Clock,
-      title: t('about.value4Title'),
-      description: t('about.value4Desc'),
-    },
-  ];
 
   return (
     <div className="min-h-screen bg-black text-white">
@@ -142,7 +107,7 @@ const Index: React.FC = () => {
         </div>
 
         <div className="container mx-auto px-4 sm:px-6 relative z-10">
-          <div className="max-w-4xl mx-auto text-center mt-12 sm:mt-20">
+          <div className="max-w-4xl mx-auto text-center mt-4 sm:mt-16 md:mt-20">
             {/* Main headline */}
             <h1 className="font-display text-4xl sm:text-5xl md:text-6xl lg:text-7xl xl:text-8xl font-bold mb-4 sm:mb-6 tracking-tight">
               <span className="block text-white filter brightness-110">{t('home.discover')}</span>
@@ -168,7 +133,7 @@ const Index: React.FC = () => {
                 aria-label="Scroll to products"
               >
                 <svg
-                  className="w-6 h-6 text-white animate-bounce"
+                  className="w-6 h-6 text-white "
                   fill="none"
                   strokeLinecap="round"
                   strokeLinejoin="round"
@@ -192,40 +157,6 @@ const Index: React.FC = () => {
                 {t('home.viewStores')}
               </Button>
             </div>
-
-            {/* Stats - Glassmorphism cards */}
-            <div className="flex flex-wrap justify-center gap-3 sm:gap-6 md:gap-10 mt-10 sm:mt-20 px-4">
-              {[
-                { value: stats.brands >= 1000 ? `${Math.floor(stats.brands / 1000)}K+` : `${stats.brands}+`, label: t('common.brands') },
-                { value: stats.products >= 1000 ? `${Math.floor(stats.products / 1000)}K+` : `${stats.products}+`, label: t('common.products') },
-                { value: stats.stores >= 1000 ? `${Math.floor(stats.stores / 1000)}K+` : `${stats.stores}+`, label: t('common.stores') },
-              ].map((stat) => (
-                <div key={stat.label} className="relative text-center px-4 sm:px-6 md:px-8 py-3 sm:py-4 md:py-5 rounded-xl sm:rounded-2xl bg-white/5 backdrop-blur-[30px] border border-white/15 overflow-hidden group hover:bg-white/8 hover:border-white/20 transition-all">
-                  <p className="relative font-display text-xl sm:text-2xl md:text-3xl font-bold mb-1 text-white filter brightness-110">{stat.value}</p>
-                  <p className="relative text-[10px] sm:text-xs text-white/70 uppercase tracking-wider">{stat.label}</p>
-                </div>
-              ))}
-            </div>
-          </div>
-        </div>
-      </section>
-
-      {/* Features Section */}
-      <section className="py-8 sm:py-12 border-y border-white/10 bg-black/40">
-        <div className="container mx-auto px-4 sm:px-6">
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6">
-            {features.map((feature) => (
-              <div 
-                key={feature.title}
-                className="group relative p-4 sm:p-6 rounded-xl sm:rounded-2xl border border-white/10 bg-white/5 backdrop-blur-[25px] hover:border-white/20 hover:bg-white/8 transition-all duration-300 overflow-hidden"
-              >
-                <div className="relative w-10 h-10 sm:w-12 sm:h-12 rounded-lg sm:rounded-xl bg-white/10 backdrop-blur-sm border border-white/20 flex items-center justify-center mb-3 sm:mb-4 group-hover:bg-white/15 transition-colors">
-                  <feature.icon className="w-5 h-5 sm:w-6 sm:h-6 text-white" />
-                </div>
-                <h3 className="relative font-display font-semibold text-sm sm:text-base mb-1 sm:mb-2 text-white">{feature.title}</h3>
-                <p className="relative text-xs sm:text-sm text-white/70 leading-relaxed">{feature.description}</p>
-              </div>
-            ))}
           </div>
         </div>
       </section>

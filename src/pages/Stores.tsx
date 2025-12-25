@@ -146,15 +146,12 @@ const Stores = () => {
                                 {store.name}
                               </h3>
                               {store.is_recommended && (
-                                <div className="inline-flex items-center gap-1 px-2 py-1 rounded-full bg-purple-500/10 border border-purple-500/20 text-purple-400">
+                                <div className="inline-flex items-center gap-1 px-2 py-1 rounded-full bg-white/10 border border-white/20 text-white">
                                   <Star className="w-3 h-3 fill-current" />
                                   <span className="text-xs font-medium">⚭ {t('stores.recommended')}</span>
                                 </div>
                               )}
                             </div>
-                          </div>
-                          <div className="w-10 h-10 rounded-full bg-foreground/10 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all transform translate-y-4 group-hover:translate-y-0 duration-300">
-                            <ArrowRight className="w-5 h-5" />
                           </div>
                         </div>
 
@@ -170,12 +167,6 @@ const Stores = () => {
                             <div className="flex items-center gap-2 text-sm text-muted-foreground">
                               <Package className="w-4 h-4" />
                               <span>{store.brand_count} {t(store.brand_count === 1 ? 'stores.brand' : 'stores.brands')}</span>
-                            </div>
-                          )}
-                          {store.average_rating > 0 && (
-                            <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                              <Star className="w-4 h-4" />
-                              <span>{store.average_rating.toFixed(1)} ({store.total_ratings} {t('stores.reviews')})</span>
                             </div>
                           )}
                         </div>

@@ -13,7 +13,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
-import { Filter, Search, Sparkles, AlertCircle, Grid3x3, LayoutGrid, Columns3 } from "lucide-react";
+import { Filter, Search, Grid3x3, LayoutGrid, Columns3 } from "lucide-react";
 import {
   Pagination,
   PaginationContent,
@@ -46,7 +46,7 @@ const Products = () => {
 
   const colors = ["Black", "White", "Gray", "Beige", "Brown", "Red", "Blue", "Navy", "Green", "Olive", "Yellow", "Orange", "Pink", "Purple", "Cream"];
   const types = ["Outerwear", "Tops", "Bottoms", "Dresses", "Shoes", "Accessories"];
-  const genders = ["Male", "Female", "Unisex"];
+  const genders = ["men", "women", "unisex"]; // Updated to match backend API
   const categories = [...PRODUCT_CATEGORIES]; // Use the standardized categories
 
   // Get store_id from URL params
@@ -152,7 +152,19 @@ const Products = () => {
   
   const paginatedProducts = useMemo(() => {
     const startIndex = (currentPage - 1) * itemsPerPage;
-    return filteredAndSortedProducts.slice(startIndex, startIndex + itemsPerPage);
+    const paginated = filteredAndSortedProducts.slice(startIndex, startIndex + itemsPerPage);
+    
+    // Тимчасовий лог для перевірки даних
+    if (paginated.length > 0) {
+      console.log('📦 First paginated product:', {
+        name: paginated[0].name,
+        gender: paginated[0].gender,
+        hasGender: 'gender' in paginated[0],
+        allKeys: Object.keys(paginated[0])
+      });
+    }
+    
+    return paginated;
   }, [filteredAndSortedProducts, currentPage, itemsPerPage]);
 
   const toggleColor = (color: string) => {
@@ -246,9 +258,9 @@ const Products = () => {
                     )}
                   </Button>
                 </DialogTrigger>
-                <DialogContent className="bg-card border-foreground/10 text-foreground sm:max-w-md max-h-[85vh] overflow-y-auto">
+                <DialogContent className="bg-card border-foreground/10 text-foreground w-[95vw] max-w-md max-h-[85vh] overflow-y-auto p-4 sm:p-6">
                   <DialogHeader>
-                    <DialogTitle className="text-2xl font-bold">{t('products.filter')}</DialogTitle>
+                    <DialogTitle className="text-xl sm:text-2xl font-bold">{t('products.filter')}</DialogTitle>
                   </DialogHeader>
                   <div className="space-y-6 py-4">
                     {/* Color Filter */}
@@ -311,9 +323,9 @@ const Products = () => {
                             />
                             <Label 
                               htmlFor={`filter-gender-${gender}`}
-                              className="ml-2 text-sm cursor-pointer hover:text-foreground/80 transition-colors"
+                              className="ml-2 text-sm cursor-pointer hover:text-foreground/80 transition-colors capitalize"
                             >
-                              {t(`products.${gender.toLowerCase()}`)}
+                              {gender === 'men' ? "Men's" : gender === 'women' ? "Women's" : 'Unisex'}
                             </Label>
                           </div>
                         ))}
@@ -478,6 +490,7 @@ const Products = () => {
                     image={product.image_url || product.image || ""}
                     price={String(product.price)}
                     category={product.type}
+                    brand={product.brand}
                   />
                 ))}
               </div>

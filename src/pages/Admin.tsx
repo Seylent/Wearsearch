@@ -594,6 +594,7 @@ const Admin = () => {
         name: productName,
         price: avgPrice,
         type: productCategory,
+        category: productCategory,
         color: productColor,
         gender: productGender || null,
         brand_id: productBrandId || null,
@@ -698,7 +699,23 @@ const Admin = () => {
       // Calculate average price for the main product record
       const avgPrice = selectedStores.reduce((sum, store) => sum + store.price, 0) / selectedStores.length;
 
-      console.log('📤 Sending request to backend...');
+      const createData = {
+        name: productName,
+        price: avgPrice,
+        type: productCategory,
+        category: productCategory,
+        color: productColor,
+        gender: productGender || null,
+        brand_id: productBrandId || null,
+        description: productDescription || null,
+        image_url: productImageUrl,
+        stores: selectedStores.map(store => ({
+          store_id: store.store_id,
+          price: store.price
+        }))
+      };
+
+      console.log('📤 Sending request to backend with data:', createData);
       // Try NEW format first: Create ONE product with multiple stores
       const response = await fetch('/api/admin/products', {
         method: 'POST',
@@ -706,20 +723,7 @@ const Admin = () => {
           'Content-Type': 'application/json',
           'Authorization': `Bearer ${localStorage.getItem('access_token')}`
         },
-        body: JSON.stringify({
-          name: productName,
-          price: avgPrice,
-          type: productCategory,
-          color: productColor,
-          gender: productGender || null,
-          brand_id: productBrandId || null,
-          description: productDescription || null,
-          image_url: productImageUrl,
-          stores: selectedStores.map(store => ({
-            store_id: store.store_id,
-            price: store.price
-          }))
-        }),
+        body: JSON.stringify(createData),
       });
 
       const result = await response.json();
@@ -759,24 +763,27 @@ const Admin = () => {
         // OLD FORMAT: Create separate product for each store
         const results = await Promise.all(
           selectedStores.map(async (store) => {
+            const fallbackData = {
+              name: productName,
+              price: store.price,
+              store_price: store.price,
+              type: productCategory,
+              category: productCategory,
+              color: productColor,
+              gender: productGender || null,
+              brand_id: productBrandId || null,
+              description: productDescription || null,
+              image_url: productImageUrl,
+              store_id: store.store_id,
+            };
+            console.log('📤 Fallback request for store:', store.store_name, fallbackData);
             const storeResponse = await fetch('/api/admin/products', {
               method: 'POST',
               headers: {
                 'Content-Type': 'application/json',
                 'Authorization': `Bearer ${localStorage.getItem('access_token')}`
               },
-              body: JSON.stringify({
-                name: productName,
-                price: store.price,
-                store_price: store.price,
-                type: productCategory,
-                color: productColor,
-                gender: productGender || null,
-                brand_id: productBrandId || null,
-                description: productDescription || null,
-                image_url: productImageUrl,
-                store_id: store.store_id,
-              }),
+              body: JSON.stringify(fallbackData),
             });
             return await storeResponse.json();
           })

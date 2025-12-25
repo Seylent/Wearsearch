@@ -1,16 +1,19 @@
 import { Link } from "react-router-dom";
 import { Instagram } from "lucide-react";
 import { FaTelegram } from "react-icons/fa";
+import { useTranslation } from "react-i18next";
 
 export const Footer = () => {
+  const { t } = useTranslation();
+
   const footerLinks = {
     shop: [
-      { name: "All Items", href: "/products" },
-      { name: "Saved", href: "/favorites" },
+      { name: t('footer.allItems'), href: "/products" },
+      { name: t('footer.saved'), href: "/favorites" },
     ],
     company: [
-      { name: "About", href: "/about" },
-      { name: "Contact", href: "/contacts" },
+      { name: t('footer.about'), href: "/about" },
+      { name: t('footer.contact'), href: "/contacts" },
     ],
   };
 
@@ -51,7 +54,7 @@ export const Footer = () => {
           {/* Links */}
           <div>
             <h4 className="font-display font-semibold mb-5 text-sm tracking-wider uppercase text-white">
-              Shop
+              {t('footer.shop')}
             </h4>
             <ul className="space-y-3">
               {footerLinks.shop.map((link) => (
@@ -69,7 +72,7 @@ export const Footer = () => {
 
           <div>
             <h4 className="font-display font-semibold mb-5 text-sm tracking-wider uppercase text-white">
-              Company
+              {t('footer.company')}
             </h4>
             <ul className="space-y-3">
               {footerLinks.company.map((link) => (
@@ -87,16 +90,13 @@ export const Footer = () => {
         </div>
 
         {/* Bottom */}
-        <div className="pt-8 border-t border-zinc-800/50 flex flex-col sm:flex-row justify-between items-center gap-4">
-          <p className="text-xs text-zinc-600 select-none">
-            © 2024 Wearsearch. All rights reserved.
-          </p>
+        <div className="pt-8 border-t border-zinc-800/50 flex justify-center items-center">
           <div className="flex gap-6">
             <Link to="#" className="text-xs text-zinc-600 hover:text-zinc-400 transition-colors select-none">
-              Privacy Policy
+              {t('footer.privacyPolicy')}
             </Link>
             <Link to="#" className="text-xs text-zinc-600 hover:text-zinc-400 transition-colors select-none">
-              Terms of Service
+              {t('footer.termsOfService')}
             </Link>
           </div>
         </div>

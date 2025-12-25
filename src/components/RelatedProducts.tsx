@@ -5,6 +5,7 @@
 
 import { useEffect } from 'react';
 import { Link } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import { Sparkles } from 'lucide-react';
 import { useRelatedProducts } from '@/hooks/useApi';
 import { convertS3UrlToHttps } from '@/lib/utils';
@@ -15,6 +16,7 @@ interface RelatedProductsProps {
 }
 
 export function RelatedProducts({ productId, className = '' }: RelatedProductsProps) {
+  const { t } = useTranslation();
   const { data, isLoading, error } = useRelatedProducts(productId);
   
   // Debug logging
@@ -32,7 +34,7 @@ export function RelatedProducts({ productId, className = '' }: RelatedProductsPr
       <div className={`animate-fade-in ${className}`}>
         <div className="flex items-center gap-2 mb-6">
           <Sparkles className="w-5 h-5 text-primary" />
-          <h2 className="font-display text-2xl font-bold">Similar Products</h2>
+          <h2 className="font-display text-2xl font-bold">{t('productDetail.similarProducts')}</h2>
         </div>
         <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
           {[...Array(6)].map((_, i) => (
@@ -56,9 +58,9 @@ export function RelatedProducts({ productId, className = '' }: RelatedProductsPr
     <div className={`animate-fade-in ${className}`}>
       <div className="flex items-center gap-2 mb-6">
         <Sparkles className="w-5 h-5 text-primary" />
-        <h2 className="font-display text-2xl font-bold">Similar Products</h2>
+        <h2 className="font-display text-2xl font-bold">{t('productDetail.similarProducts')}</h2>
         <span className="text-sm text-muted-foreground ml-2">
-          ({data.total} {data.total === 1 ? 'product' : 'products'})
+          ({data.total} {data.total === 1 ? t('productDetail.product') : t('productDetail.products')})
         </span>
       </div>
       

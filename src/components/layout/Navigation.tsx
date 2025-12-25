@@ -171,9 +171,16 @@ const Navigation: React.FC = () => {
                 {link.name}
               </Link>
             ))}
-            <div className="px-6 py-3 border-b border-zinc-800/50">
-              <ContactsDialog />
-            </div>
+            <button 
+              className="px-6 py-3 text-base font-medium transition-all duration-300 text-zinc-300 hover:text-white hover:bg-zinc-800/30 text-left border-b border-zinc-800/50"
+              onClick={() => {
+                setMobileMenuOpen(false);
+                // Trigger ContactsDialog - we need to open it programmatically
+                document.querySelector('[data-contacts-trigger]')?.dispatchEvent(new MouseEvent('click', { bubbles: true }));
+              }}
+            >
+              {t('nav.contacts')}
+            </button>
             {isAdmin && (
               <Link
                 to="/admin"
