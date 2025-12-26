@@ -3,8 +3,9 @@
  * Centralized routing configuration with lazy loading
  */
 
-import { lazy, Suspense } from 'react';
+import { lazy, Suspense, ReactNode } from 'react';
 import { BrowserRouter, Routes, Route } from 'react-router-dom';
+import { useAuthEvents } from '@/hooks/useAuthEvents';
 
 // Lazy load all route components for better code splitting
 const Index = lazy(() => import('@/pages/Index'));
@@ -29,22 +30,33 @@ const PageLoader = () => (
   </div>
 );
 
+/**
+ * Auth Events Manager Component
+ * Handles global authentication events inside the router context
+ */
+const AuthEventsManager = ({ children }: { children: ReactNode }) => {
+  useAuthEvents();
+  return <>{children}</>;
+};
+
 export const AppRouter = () => (
   <BrowserRouter future={{ v7_startTransition: true, v7_relativeSplatPath: true }}>
-    <Suspense fallback={<PageLoader />}>
-      <Routes>
-        <Route path="/" element={<Index />} />
-        <Route path="/products" element={<Products />} />
-        <Route path="/stores" element={<Stores />} />
-        <Route path="/product/:id" element={<ProductDetail />} />
-        <Route path="/about" element={<About />} />
-        <Route path="/auth" element={<Auth />} />
-        <Route path="/favorites" element={<Favorites />} />
-        <Route path="/admin" element={<Admin />} />
-        <Route path="/admin/brands" element={<AdminBrands />} />
-        <Route path="/profile" element={<Profile />} />
-        <Route path="*" element={<NotFound />} />
-      </Routes>
-    </Suspense>
+    <AuthEventsManager>
+      <Suspense fallback={<PageLoader />}>
+        <Routes>
+          <Route path="/" element={<Index />} />
+          <Route path="/products" element={<Products />} />
+          <Route path="/stores" element={<Stores />} />
+          <Route path="/product/:id" element={<ProductDetail />} />
+          <Route path="/about" element={<About />} />
+          <Route path="/auth" element={<Auth />} />
+          <Route path="/favorites" element={<Favorites />} />
+          <Route path="/admin" element={<Admin />} />
+          <Route path="/admin/brands" element={<AdminBrands />} />
+          <Route path="/profile" element={<Profile />} />
+          <Route path="*" element={<NotFound />} />
+        </Routes>
+      </Suspense>
+    </AuthEventsManager>
   </BrowserRouter>
 );

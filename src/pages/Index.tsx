@@ -105,7 +105,7 @@ const Index: React.FC = () => {
                     className="w-full h-full object-cover"
                     loading={index === 0 ? "eager" : "lazy"}
                     decoding={index === 0 ? "sync" : "async"}
-                    fetchPriority={index === 0 ? "high" : "low"}
+                    fetchpriority={index === 0 ? "high" : "low"}
                     style={{
                       filter: 'brightness(1.4) contrast(1.3) saturate(0) drop-shadow(0 0 22px rgba(255,255,255,0.4)) drop-shadow(0 0 3px rgba(255,255,255,0.2))',
                       mixBlendMode: 'screen',

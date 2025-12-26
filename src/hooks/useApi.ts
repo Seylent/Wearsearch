@@ -320,13 +320,44 @@ export const useAddFavorite = () => {
       const response = await api.post(`/user/favorites/${productId}`);
       return response.data;
     },
-    onSuccess: () => {
-      // Refetch favorites immediately
-      queryClient.invalidateQueries({ queryKey: queryKeys.favorites, refetchType: 'active' });
+    // Optimistic update
+    onMutate: async (productId: string) => {
+      // Cancel outgoing refetches
+      await queryClient.cancelQueries({ queryKey: queryKeys.favorites });
+      
+      // Snapshot current value
+      const previousFavorites = queryClient.getQueryData(queryKeys.favorites);
+      
+      // Optimistically update
+      queryClient.setQueryData(queryKeys.favorites, (old: FavoritesResponse | undefined) => {
+        if (!old) return old;
+        
+        return {
+          ...old,
+          favorites: [
+            ...(old.favorites || []),
+            {
+              id: `temp-${Date.now()}`,
+              product_id: productId,
+              user_id: 'current',
+              created_at: new Date().toISOString(),
+            },
+          ],
+        };
+      });
+      
+      return { previousFavorites };
     },
-    onError: (error: any) => {
-      console.error('Add favorite failed:', error.response?.data || error.message);
-      throw error;
+    // Rollback on error
+    onError: (error, variables, context) => {
+      if (context?.previousFavorites) {
+        queryClient.setQueryData(queryKeys.favorites, context.previousFavorites);
+      }
+      console.error('Add favorite failed:', error);
+    },
+    // Sync with server on success
+    onSettled: () => {
+      queryClient.invalidateQueries({ queryKey: queryKeys.favorites, refetchType: 'active' });
     },
   });
 };
@@ -339,13 +370,36 @@ export const useRemoveFavorite = () => {
       const response = await api.delete(`/user/favorites/${productId}`);
       return response.data;
     },
-    onSuccess: () => {
-      // Refetch favorites immediately
-      queryClient.invalidateQueries({ queryKey: queryKeys.favorites, refetchType: 'active' });
+    // Optimistic update
+    onMutate: async (productId: string) => {
+      // Cancel outgoing refetches
+      await queryClient.cancelQueries({ queryKey: queryKeys.favorites });
+      
+      // Snapshot current value
+      const previousFavorites = queryClient.getQueryData(queryKeys.favorites);
+      
+      // Optimistically remove from cache
+      queryClient.setQueryData(queryKeys.favorites, (old: FavoritesResponse | undefined) => {
+        if (!old) return old;
+        
+        return {
+          ...old,
+          favorites: (old.favorites || []).filter((fav) => fav.product_id !== productId),
+        };
+      });
+      
+      return { previousFavorites };
     },
-    onError: (error: any) => {
-      console.error('Remove favorite failed:', error.response?.data || error.message);
-      throw error;
+    // Rollback on error
+    onError: (error, variables, context) => {
+      if (context?.previousFavorites) {
+        queryClient.setQueryData(queryKeys.favorites, context.previousFavorites);
+      }
+      console.error('Remove favorite failed:', error);
+    },
+    // Sync with server on success
+    onSettled: () => {
+      queryClient.invalidateQueries({ queryKey: queryKeys.favorites, refetchType: 'active' });
     },
   });
 };

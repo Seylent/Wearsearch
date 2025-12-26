@@ -40,6 +40,7 @@ const Products = () => {
   const [selectedGenders, setSelectedGenders] = useState<string[]>([]);
   const [selectedBrand, setSelectedBrand] = useState<string>("");
   const [brandSearchQuery, setBrandSearchQuery] = useState("");
+  const [showRecommendedOnly, setShowRecommendedOnly] = useState(false);
   const [sortBy, setSortBy] = useState("default");
   const [currentPage, setCurrentPage] = useState(1);
   const [filterOpen, setFilterOpen] = useState(false);
@@ -140,6 +141,13 @@ const Products = () => {
       );
     }
 
+    // Recommended filter
+    if (showRecommendedOnly) {
+      filtered = filtered.filter((p: Product) =>
+        p.is_recommended === true
+      );
+    }
+
     // Sorting
     if (sortBy !== 'default') {
       const [field, order] = sortBy.split('-');
@@ -155,7 +163,7 @@ const Products = () => {
     }
 
     return filtered;
-  }, [allProducts, debouncedSearch, selectedColors, selectedTypes, selectedGenders, selectedBrand, sortBy]);
+  }, [allProducts, debouncedSearch, selectedColors, selectedTypes, selectedGenders, selectedBrand, showRecommendedOnly, sortBy]);
 
   // Handle loading and error states for both data sources
   const isLoading = storeIdParam ? storeLoading : loading;
@@ -209,6 +217,7 @@ const Products = () => {
     setSelectedBrand("");
     setBrandSearchQuery("");
     setSearchQuery("");
+    setShowRecommendedOnly(false);
     setCurrentPage(1);
   };
 
@@ -265,9 +274,9 @@ const Products = () => {
                   <Button variant="outline" size="lg" className="border-foreground/20 bg-card/50 text-foreground hover:bg-card hover:border-foreground/30">
                     <Filter className="w-4 h-4 mr-2" />
                     {t('products.filters')}
-                    {(selectedColors.length + selectedTypes.length + selectedGenders.length + (selectedBrand ? 1 : 0)) > 0 && (
+                    {(selectedColors.length + selectedTypes.length + selectedGenders.length + (selectedBrand ? 1 : 0) + (showRecommendedOnly ? 1 : 0)) > 0 && (
                       <span className="ml-2 bg-primary text-primary-foreground rounded-full w-5 h-5 flex items-center justify-center text-[10px] font-bold">
-                        {selectedColors.length + selectedTypes.length + selectedGenders.length + (selectedBrand ? 1 : 0)}
+                        {selectedColors.length + selectedTypes.length + selectedGenders.length + (selectedBrand ? 1 : 0) + (showRecommendedOnly ? 1 : 0)}
                       </span>
                     )}
                   </Button>
@@ -390,6 +399,28 @@ const Products = () => {
                       </div>
                     </div>
 
+                    {/* Recommended Only Filter */}
+                    <div>
+                      <h3 className="font-semibold mb-3 text-sm uppercase tracking-widest text-muted-foreground">{t('common.recommended')}</h3>
+                      <div className="flex items-center">
+                        <Checkbox 
+                          id="filter-recommended"
+                          checked={showRecommendedOnly}
+                          onCheckedChange={(checked) => {
+                            setShowRecommendedOnly(checked as boolean);
+                            setCurrentPage(1);
+                          }}
+                          className="border-foreground/20 data-[state=checked]:bg-primary data-[state=checked]:text-primary-foreground"
+                        />
+                        <Label 
+                          htmlFor="filter-recommended"
+                          className="ml-2 text-sm cursor-pointer hover:text-foreground/80 transition-colors"
+                        >
+                          {t('products.recommendedOnly')}
+                        </Label>
+                      </div>
+                    </div>
+
                     <div className="flex gap-2 pt-4 border-t border-foreground/10">
                       <Button 
                         variant="ghost" 
@@ -409,7 +440,7 @@ const Products = () => {
                 </DialogContent>
               </Dialog>
               
-              {(selectedColors.length > 0 || selectedTypes.length > 0 || selectedGenders.length > 0 || selectedBrand) && (
+              {(selectedColors.length > 0 || selectedTypes.length > 0 || selectedGenders.length > 0 || selectedBrand || showRecommendedOnly) && (
                 <Button 
                   variant="ghost" 
                   onClick={clearAllFilters}
@@ -486,6 +517,7 @@ const Products = () => {
                 selectedTypes.length > 0 || 
                 selectedGenders.length > 0 || 
                 selectedBrand !== '' ||
+                showRecommendedOnly ||
                 debouncedSearch !== ''
               } />
             )

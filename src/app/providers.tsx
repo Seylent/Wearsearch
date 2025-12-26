@@ -8,6 +8,7 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { TooltipProvider } from '@/components/ui/tooltip';
 import { Toaster } from '@/components/ui/toaster';
 import { Toaster as Sonner } from '@/components/ui/sonner';
+import { ApiError } from '@/services/api/errorHandler';
 
 // Create QueryClient instance with optimized configuration
 const queryClient = new QueryClient({
@@ -16,10 +17,12 @@ const queryClient = new QueryClient({
       refetchOnWindowFocus: false,
       refetchOnMount: false, // Don't refetch on component mount
       refetchOnReconnect: false, // Don't refetch on reconnect
-      retry: (failureCount, error: any) => {
-        // Don't retry on 401/404 errors
-        if (error?.response?.status === 401 || error?.response?.status === 404) {
-          return false;
+      retry: (failureCount, error: unknown) => {
+        // Don't retry on auth or not found errors
+        if (error instanceof ApiError) {
+          if (error.isAuthError() || error.isNotFound()) {
+            return false;
+          }
         }
         // Retry once on other errors
         return failureCount < 1;

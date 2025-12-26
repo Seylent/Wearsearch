@@ -23,6 +23,15 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+  DropdownMenuCheckboxItem,
+} from "@/components/ui/dropdown-menu";
 
 const ProductDetail = () => {
   const { id } = useParams();
@@ -344,43 +353,65 @@ const ProductDetail = () => {
                     />
                   </div>
 
-                  {/* Sort */}
-                  <Select value={sortBy} onValueChange={(v: any) => setSortBy(v)}>
-                    <SelectTrigger className="w-[50px] bg-black/30 border-white/6 text-white">
-                      <SortAsc className="h-4 w-4" />
-                    </SelectTrigger>
-                    <SelectContent className="bg-black/80 border-white/10 text-white">
-                      <SelectItem value="name">
-                        <div className="flex items-center gap-2">
-                          <Tag className="h-4 w-4" />
-                          {t('productDetail.name')}
-                        </div>
-                      </SelectItem>
-                      <SelectItem value="price-asc">
-                        <div className="flex items-center gap-2">
-                          <SortAsc className="h-4 w-4" />
-                          {t('productDetail.priceAsc')}
-                        </div>
-                      </SelectItem>
-                      <SelectItem value="price-desc">
-                        <div className="flex items-center gap-2">
-                          <ChevronDown className="h-4 w-4" />
-                          {t('productDetail.priceDesc')}
-                        </div>
-                      </SelectItem>
-                    </SelectContent>
-                  </Select>
-
-                  {/* Recommended Only Toggle */}
-                  <Button
-                    variant={showRecommendedOnly ? "default" : "outline"}
-                    onClick={() => setShowRecommendedOnly(!showRecommendedOnly)}
-                    className="w-[50px] p-0"
-                    size="icon"
-                    title={t('productDetail.recommendedOnly')}
-                  >
-                    <Star className={`h-4 w-4 ${showRecommendedOnly ? 'fill-current' : ''}`} />
-                  </Button>
+                  {/* Filter Dropdown */}
+                  <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                      <Button variant="outline" size="default" className="border-white/20 bg-black/30 text-white hover:bg-black/50 hover:border-white/30">
+                        <Filter className="w-4 h-4 mr-2" />
+                        {t('products.filters')}
+                        {(showRecommendedOnly || sortBy !== 'name') && (
+                          <span className="ml-2 bg-primary text-primary-foreground rounded-full w-5 h-5 flex items-center justify-center text-[10px] font-bold">
+                            {(showRecommendedOnly ? 1 : 0) + (sortBy !== 'name' ? 1 : 0)}
+                          </span>
+                        )}
+                      </Button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent className="w-56 bg-card border-foreground/10 text-foreground" align="end">
+                      <DropdownMenuLabel className="text-xs uppercase tracking-widest text-muted-foreground">{t('productDetail.sortBy')}</DropdownMenuLabel>
+                      <DropdownMenuItem onClick={() => setSortBy('name')} className="cursor-pointer">
+                        <Tag className="h-4 w-4 mr-2" />
+                        {t('productDetail.name')}
+                        {sortBy === 'name' && <span className="ml-auto">✓</span>}
+                      </DropdownMenuItem>
+                      <DropdownMenuItem onClick={() => setSortBy('price-asc')} className="cursor-pointer">
+                        <SortAsc className="h-4 w-4 mr-2" />
+                        {t('productDetail.priceAsc')}
+                        {sortBy === 'price-asc' && <span className="ml-auto">✓</span>}
+                      </DropdownMenuItem>
+                      <DropdownMenuItem onClick={() => setSortBy('price-desc')} className="cursor-pointer">
+                        <ChevronDown className="h-4 w-4 mr-2" />
+                        {t('productDetail.priceDesc')}
+                        {sortBy === 'price-desc' && <span className="ml-auto">✓</span>}
+                      </DropdownMenuItem>
+                      
+                      <DropdownMenuSeparator />
+                      
+                      <DropdownMenuLabel className="text-xs uppercase tracking-widest text-muted-foreground">{t('common.recommended')}</DropdownMenuLabel>
+                      <DropdownMenuCheckboxItem
+                        checked={showRecommendedOnly}
+                        onCheckedChange={setShowRecommendedOnly}
+                        className="cursor-pointer"
+                      >
+                        <Star className="h-4 w-4 mr-2" />
+                        {t('productDetail.recommendedOnly')}
+                      </DropdownMenuCheckboxItem>
+                      
+                      {(showRecommendedOnly || sortBy !== 'name') && (
+                        <>
+                          <DropdownMenuSeparator />
+                          <DropdownMenuItem
+                            onClick={() => {
+                              setShowRecommendedOnly(false);
+                              setSortBy('name');
+                            }}
+                            className="cursor-pointer text-muted-foreground"
+                          >
+                            {t('products.clearFilters')}
+                          </DropdownMenuItem>
+                        </>
+                      )}
+                    </DropdownMenuContent>
+                  </DropdownMenu>
                 </div>
               )}
 

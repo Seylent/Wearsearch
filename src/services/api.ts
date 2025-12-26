@@ -5,17 +5,19 @@
 
 import axios, { AxiosInstance, AxiosError, InternalAxiosRequestConfig, AxiosResponse } from 'axios';
 import { getAuth, clearAuth } from '@/utils/authStorage';
-import type { ApiResponse, ApiError } from '@/types';
-
-// Use relative URL for API requests - works with Vite proxy and ngrok
-const API_BASE_URL = '/api';
+import { API_CONFIG } from '@/config/api.config';
+import { handleApiError as createApiError, ApiError } from './api/errorHandler';
+import type { ApiResponse } from '@/types';
+import type { ApiError as ApiErrorType } from '@/types';
+import { z } from 'zod';
 
 /**
  * Create axios instance with default configuration
  */
 export const api: AxiosInstance = axios.create({
-  baseURL: API_BASE_URL,
-  timeout: 15000,
+  baseURL: API_CONFIG.BASE_URL,
+  timeout: API_CONFIG.TIMEOUT,
+  withCredentials: API_CONFIG.WITH_CREDENTIALS,
   headers: {
     'Content-Type': 'application/json',
   },
@@ -54,109 +56,168 @@ api.interceptors.response.use(
     return response;
   },
   (error: AxiosError) => {
-    // Handle common errors
-    if (error.response) {
-      switch (error.response.status) {
-        case 401:
-          // Unauthorized - clear auth and redirect to login
-          console.log('Unauthorized request - token cleared');
-          clearAuth();
-          
-          // Only redirect if not already on auth page
-          if (!window.location.pathname.includes('/auth')) {
-            window.location.href = '/auth';
-          }
-          break;
-          
-        case 403:
-          // Forbidden
-          console.error('Forbidden access');
-          break;
-          
-        case 404:
-          // Not found
-          console.log('Resource not found:', error.config?.url);
-          break;
-          
-        case 500:
-          // Server error
-          console.error('Server error:', error.response.data);
-          break;
-          
-        default:
-          console.error('API error:', error.response.status, error.response.data);
-      }
-    } else if (error.request) {
-      // Request made but no response received
-      console.error('Network error - no response received');
-    } else {
-      // Error setting up request
-      console.error('Request setup error:', error.message);
+    const apiError = createApiError(error);
+    
+    // Handle authentication errors globally
+    if (apiError.isAuthError()) {
+      console.log('Authentication error - clearing auth');
+      clearAuth();
+      
+      // Dispatch custom event for auth handling (avoid direct window.location)
+      window.dispatchEvent(new CustomEvent('auth:logout', { 
+        detail: { reason: 'unauthorized' } 
+      }));
     }
     
-    return Promise.reject(error);
+    // Log errors in development
+    if (import.meta.env.DEV) {
+      if (apiError.isServerError()) {
+        console.error('Server error:', apiError);
+      } else if (apiError.isNetworkError()) {
+        console.error('Network error:', apiError);
+      } else if (!apiError.isNotFound()) {
+        console.log('API error:', apiError);
+      }
+    }
+    
+    return Promise.reject(apiError);
   }
 );
 
 /**
- * Centralized error handler
+ * Centralized error handler (deprecated - use ApiError class directly)
+ * @deprecated Import handleApiError from './api/errorHandler' instead
  */
-export const handleApiError = (error: unknown): ApiError => {
-  if (axios.isAxiosError(error)) {
-    const axiosError = error as AxiosError<ApiResponse>;
-    
-    // Extract error_code if present (new backend format)
-    const errorCode = axiosError.response?.data?.error_code || 
-                      axiosError.response?.data?.code;
-    
-    return {
-      message: axiosError.response?.data?.message || 
-               axiosError.response?.data?.error ||
-               axiosError.message || 
-               'An unexpected error occurred',
-      status: axiosError.response?.status,
-      code: errorCode || axiosError.code,
-      error_code: errorCode, // Add error_code field for translation
-    };
-  }
-  
-  if (error instanceof Error) {
-    return {
-      message: error.message,
-    };
-  }
+export const handleApiError = (error: unknown): ApiErrorType => {
+  const apiError = createApiError(error);
   
   return {
-    message: 'An unexpected error occurred',
+    message: apiError.message,
+    status: apiError.status,
+    code: apiError.code,
+    error_code: apiError.errorCode,
   };
 };
 
 /**
- * Type-safe API wrapper functions
+ * Type-safe API wrapper functions with optional Zod validation
  */
-export const apiGet = async <T = any>(url: string, config?: any): Promise<T> => {
-  const response = await api.get<T>(url, config);
+export const apiGet = async <T>(
+  url: string,
+  config?: { schema?: z.ZodSchema<T>; [key: string]: unknown }
+): Promise<T> => {
+  const { schema, ...axiosConfig } = config || {};
+  const response = await api.get<T>(url, axiosConfig);
+  
+  if (schema) {
+    try {
+      return schema.parse(response.data);
+    } catch (error) {
+      if (import.meta.env.DEV) {
+        console.error('API response validation failed:', {
+          url,
+          error: error instanceof z.ZodError ? error.errors : error,
+          data: response.data,
+        });
+      }
+      throw new ApiError('Invalid API response format', undefined, undefined, 'VALIDATION_ERROR');
+    }
+  }
+  
   return response.data;
 };
 
-export const apiPost = async <T = any>(url: string, data?: any, config?: any): Promise<T> => {
-  const response = await api.post<T>(url, data, config);
+export const apiPost = async <T>(
+  url: string,
+  data?: unknown,
+  config?: { schema?: z.ZodSchema<T>; [key: string]: unknown }
+): Promise<T> => {
+  const { schema, ...axiosConfig } = config || {};
+  const response = await api.post<T>(url, data, axiosConfig);
+  
+  if (schema) {
+    try {
+      return schema.parse(response.data);
+    } catch (error) {
+      if (import.meta.env.DEV) {
+        console.error('API response validation failed:', {
+          url,
+          error: error instanceof z.ZodError ? error.errors : error,
+        });
+      }
+      throw new ApiError('Invalid API response format', undefined, undefined, 'VALIDATION_ERROR');
+    }
+  }
+  
   return response.data;
 };
 
-export const apiPut = async <T = any>(url: string, data?: any, config?: any): Promise<T> => {
-  const response = await api.put<T>(url, data, config);
+export const apiPut = async <T>(
+  url: string,
+  data?: unknown,
+  config?: { schema?: z.ZodSchema<T>; [key: string]: unknown }
+): Promise<T> => {
+  const { schema, ...axiosConfig } = config || {};
+  const response = await api.put<T>(url, data, axiosConfig);
+  
+  if (schema) {
+    try {
+      return schema.parse(response.data);
+    } catch (error) {
+      if (import.meta.env.DEV) {
+        console.error('API response validation failed:', { url, error });
+      }
+      throw new ApiError('Invalid API response format', undefined, undefined, 'VALIDATION_ERROR');
+    }
+  }
+  
   return response.data;
 };
 
-export const apiPatch = async <T = any>(url: string, data?: any, config?: any): Promise<T> => {
-  const response = await api.patch<T>(url, data, config);
+export const apiPatch = async <T>(
+  url: string,
+  data?: unknown,
+  config?: { schema?: z.ZodSchema<T>; [key: string]: unknown }
+): Promise<T> => {
+  const { schema, ...axiosConfig } = config || {};
+  const response = await api.patch<T>(url, data, axiosConfig);
+  
+  if (schema) {
+    try {
+      return schema.parse(response.data);
+    } catch (error) {
+      if (import.meta.env.DEV) {
+        console.error('API response validation failed:', { url, error });
+      }
+      throw new ApiError('Invalid API response format', undefined, undefined, 'VALIDATION_ERROR');
+    }
+  }
+  
   return response.data;
 };
 
-export const apiDelete = async <T = any>(url: string, config?: any): Promise<T> => {
-  const response = await api.delete<T>(url, config);
+export const apiDelete = async <T>(
+  url: string,
+  config?: { schema?: z.ZodSchema<T>; [key: string]: unknown }
+): Promise<T> => {
+  const { schema, ...axiosConfig } = config || {};
+  const response = await api.delete<T>(url, axiosConfig);
+  
+  if (schema) {
+    try {
+      return schema.parse(response.data);
+    } catch (error) {
+      if (import.meta.env.DEV) {
+        console.error('API response validation failed:', { url, error });
+      }
+      throw new ApiError('Invalid API response format', undefined, undefined, 'VALIDATION_ERROR');
+    }
+  }
+  
   return response.data;
 };
+
+// Re-export error handling utilities for convenience
+export { ApiError, isApiError, getErrorMessage } from './api/errorHandler';
 
 export default api;

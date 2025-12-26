@@ -6,6 +6,7 @@
 import { createRoot } from 'react-dom/client';
 import App from './App';
 import ErrorBoundary from './components/ErrorBoundary';
+import './i18n';
 
 const rootElement = document.getElementById('root');
 
@@ -13,14 +14,12 @@ if (!rootElement) {
   throw new Error('Root element not found');
 }
 
-// Render immediately without waiting for i18n
+// Render immediately
 createRoot(rootElement).render(
   <ErrorBoundary>
     <App />
   </ErrorBoundary>
 );
 
-// Initialize i18n asynchronously after first render
-import('./i18n').catch(err => {
-  console.error('Failed to load i18n:', err);
-});
+// Hide static shell once React is rendered
+document.body.classList.add('react-loaded');
