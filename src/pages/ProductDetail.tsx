@@ -1,5 +1,5 @@
 import { useParams, useNavigate } from "react-router-dom";
-import { useState, useEffect, useCallback, useRef } from "react";
+import { useState, useEffect, useCallback, useMemo } from "react";
 import { useTranslation } from "react-i18next";
 import { ArrowLeft, Edit, Package, Tag, MapPin, Search, Filter, ChevronDown, Sparkles, SortAsc, Star } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -9,13 +9,13 @@ import { Footer } from "@/components/layout/Footer";
 import { NeonAbstractions } from "@/components/NeonAbstractions";
 import { FaTelegram, FaInstagram } from "react-icons/fa";
 import { useToast } from "@/hooks/use-toast";
-import { api } from "@/services/api";
 import { convertS3UrlToHttps } from "@/lib/utils";
 import { FavoriteButton } from "@/components/FavoriteButton";
 import { RelatedProducts } from "@/components/RelatedProducts";
 import { translateGender } from "@/utils/errorTranslation";
 import { getCategoryTranslation, getColorTranslation } from "@/utils/translations";
 import { GenderBadge } from "@/components/GenderBadge";
+import { useProduct, useProductStores, useBrand } from "@/hooks/useApi";
 import {
   Select,
   SelectContent,
@@ -29,13 +29,8 @@ const ProductDetail = () => {
   const { toast } = useToast();
   const navigate = useNavigate();
   const { t } = useTranslation();
-  const [product, setProduct] = useState<any>(null);
-  const [stores, setStores] = useState<any[]>([]);
-  const [filteredStores, setFilteredStores] = useState<any[]>([]);
-  const [loading, setLoading] = useState(true);
   const [selectedImage, setSelectedImage] = useState(0);
   const [isAdmin, setIsAdmin] = useState(false);
-  const [brand, setBrand] = useState<any>(null);
   
   // Store filters
   const [storeSearch, setStoreSearch] = useState("");
@@ -44,40 +39,56 @@ const ProductDetail = () => {
   const [currentStorePage, setCurrentStorePage] = useState(1);
   const storesPerPage = 3;
 
-  // Use ref to track if component is mounted to prevent state updates after unmount
-  const isMounted = useRef(true);
-  const abortControllerRef = useRef<AbortController | null>(null);
-
+  // Use React Query hooks for data fetching
+  const { data: productData, isLoading: productLoading, error: productError } = useProduct(id || '');
+  const { data: storesData, isLoading: storesLoading } = useProductStores(id || '');
+  
+  // Extract product from response
+  const product = useMemo(() => {
+    if (!productData) return null;
+    
+    // Handle both response formats
+    if (productData.success) {
+      const data = productData.data || productData;
+      delete data.success;
+      return data;
+    } else if (productData.id) {
+      return productData;
+    }
+    
+    return null;
+  }, [productData]);
+  
+  // Get brand_id from product
+  const brandId = product?.brand_id;
+  const { data: brandData } = useBrand(brandId || '', { enabled: !!brandId });
+  
+  // Extract brand from response
+  const brand = useMemo(() => {
+    if (!brandData) return null;
+    
+    if (brandData.success && brandData.data) {
+      return brandData.data;
+    } else if (brandData.id) {
+      return brandData;
+    }
+    
+    return null;
+  }, [brandData]);
+  
+  // Extract stores array
+  const stores = useMemo(() => {
+    return Array.isArray(storesData) ? storesData : [];
+  }, [storesData]);
+  
+  // Check admin status once
   useEffect(() => {
-    isMounted.current = true;
-    return () => {
-      isMounted.current = false;
-      // Cancel any ongoing requests when component unmounts
-      if (abortControllerRef.current) {
-        abortControllerRef.current.abort();
-      }
-    };
-  }, []);
-
-  useEffect(() => {
-    fetchProduct();
-    fetchStores();
-    checkAdmin();
-  }, [id]);
-
-  useEffect(() => {
-    filterAndSortStores();
-  }, [stores, storeSearch, sortBy, showRecommendedOnly]);
-
-  const checkAdmin = useCallback(() => {
     // First try to get from localStorage user
     const userStr = localStorage.getItem('user');
     if (userStr) {
       try {
         const user = JSON.parse(userStr);
-        if (isMounted.current) {
-          setIsAdmin(user.role === 'admin');
-        }
+        setIsAdmin(user.role === 'admin');
         return;
       } catch (e) {
         console.error('Failed to parse user:', e);
@@ -89,18 +100,26 @@ const ProductDetail = () => {
     if (token) {
       try {
         const payload = JSON.parse(atob(token.split('.')[1]));
-        if (isMounted.current) {
-          setIsAdmin(payload.role === 'admin');
-        }
+        setIsAdmin(payload.role === 'admin');
       } catch (e) {
-        if (isMounted.current) {
-          setIsAdmin(false);
-        }
+        setIsAdmin(false);
       }
     }
   }, []);
+  
+  // Handle product loading error
+  useEffect(() => {
+    if (productError) {
+      toast({
+        title: "Error",
+        description: "Failed to load product",
+        variant: "destructive",
+      });
+    }
+  }, [productError, toast]);
 
-  const filterAndSortStores = useCallback(() => {
+  // Filter and sort stores using useMemo
+  const filteredStores = useMemo(() => {
     let filtered = [...stores];
 
     // Search filter
@@ -131,126 +150,19 @@ const ProductDetail = () => {
       }
     });
 
-    if (isMounted.current) {
-      setFilteredStores(filtered);
-    }
+    return filtered;
   }, [stores, storeSearch, sortBy, showRecommendedOnly]);
 
-  const fetchProduct = useCallback(async () => {
-    // Cancel previous request if exists
-    if (abortControllerRef.current) {
-      abortControllerRef.current.abort();
-    }
+  // Paginate stores
+  const paginatedStores = useMemo(() => {
+    const startIndex = (currentStorePage - 1) * storesPerPage;
+    return filteredStores.slice(startIndex, startIndex + storesPerPage);
+  }, [filteredStores, currentStorePage, storesPerPage]);
 
-    // Create new abort controller for this request
-    abortControllerRef.current = new AbortController();
+  const totalPages = Math.ceil(filteredStores.length / storesPerPage);
 
-    try {
-      console.log('🔍 Fetching product:', id);
-      const response = await api.get(`/items/${id}`, {
-        signal: abortControllerRef.current.signal
-      });
-      const result = response.data;
-      console.log('📦 Product response:', result);
-      
-      // Handle both response formats: {success: true, data: {...}} or direct product object {id, name, ...}
-      let productData;
-      if (result.success) {
-        productData = result.data || result;
-        delete productData.success;
-      } else if (result.id) {
-        // Direct product object
-        productData = result;
-      } else {
-        console.error('❌ Product fetch failed:', result);
-        return;
-      }
-      
-      console.log('✅ Product data:', productData);
-      console.log('🖼️ Image URL:', productData.image_url);
-      console.log('🏷️ Brand ID:', productData.brand_id);
-      console.log('🏷️ Brand (legacy):', productData.brand);
-      
-      if (isMounted.current) {
-        setProduct(productData);
-      }
-      
-      // Fetch brand if brand_id exists
-      if (productData.brand_id) {
-        fetchBrand(productData.brand_id);
-      }
-    } catch (error: any) {
-      // Don't show error if request was aborted (component unmounted or new request started)
-      if (error.name === 'CanceledError' || error.code === 'ERR_CANCELED') {
-        console.log('🔄 Product fetch cancelled');
-        return;
-      }
-      
-      console.error("❌ Error fetching product:", error);
-      if (isMounted.current) {
-        toast({
-          title: "Error",
-          description: "Failed to load product",
-          variant: "destructive",
-        });
-      }
-    } finally {
-      if (isMounted.current) {
-        setLoading(false);
-      }
-    }
-  }, [id, toast]);
-
-  const fetchBrand = useCallback(async (brandId: string) => {
-    try {
-      console.log('🏷️ Fetching brand:', brandId);
-      const response = await api.get(`/brands/${brandId}`);
-      const result = response.data;
-      console.log('🏷️ Brand response:', result);
-      
-      if (result.success && result.data) {
-        if (isMounted.current) {
-          setBrand(result.data);
-        }
-      } else if (result.id) {
-        // Direct brand object response
-        if (isMounted.current) {
-          setBrand(result);
-        }
-      }
-    } catch (error) {
-      console.error("❌ Error fetching brand:", error);
-    }
-  }, []);
-
-  const fetchStores = useCallback(async () => {
-    try {
-      console.log('🏪 Fetching stores for product:', id);
-      const response = await api.get(`/items/${id}/stores`);
-      const result = response.data;
-      console.log('🏪 Stores response:', result);
-      
-      // Handle different response formats
-      let storesData = [];
-      if (result.success && result.stores) {
-        storesData = result.stores;
-      } else if (result.stores) {
-        storesData = result.stores;
-      } else if (Array.isArray(result)) {
-        // Direct array of stores
-        storesData = result;
-      }
-      
-      console.log('✅ Stores data:', storesData);
-      if (isMounted.current) {
-        setStores(storesData);
-      }
-    } catch (error) {
-      console.error("❌ Error fetching stores:", error);
-    }
-  }, [id]);
-
-  const getPriceRange = useCallback(() => {
+  // Get price range from stores
+  const priceRange = useMemo(() => {
     if (stores.length === 0) return null;
     
     const prices = stores.map(s => s.price).filter(p => p != null);
@@ -263,7 +175,8 @@ const ProductDetail = () => {
     return `₴${min} - ₴${max}`;
   }, [stores]);
 
-  if (loading) {
+  // Loading state
+  if (productLoading) {
     return (
       <div className="min-h-screen bg-background text-foreground flex items-center justify-center">
         <div className="animate-spin w-12 h-12 border-2 border-foreground border-t-transparent rounded-full" />
@@ -282,7 +195,6 @@ const ProductDetail = () => {
 
   const productImages = product.image_url ? [product.image_url] : [];
   const httpsImageUrl = convertS3UrlToHttps(productImages[selectedImage] || '/placeholder.svg');
-  const priceRange = getPriceRange();
 
   return (
     <div className="min-h-screen bg-background text-foreground font-sans">
@@ -476,9 +388,7 @@ const ProductDetail = () => {
               <div className="space-y-4 max-h-[600px] overflow-y-auto pr-2">
                 {filteredStores.length > 0 ? (
                   <>
-                    {filteredStores
-                      .slice((currentStorePage - 1) * storesPerPage, currentStorePage * storesPerPage)
-                      .map((store) => (
+                    {paginatedStores.map((store) => (
                       <div
                         key={store.id}
                         className="p-4 rounded-xl border border-white/6 bg-black/20 hover:bg-white/6 transition-colors"

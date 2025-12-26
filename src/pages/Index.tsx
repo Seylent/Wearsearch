@@ -14,9 +14,26 @@ const Index: React.FC = () => {
   const { t } = useTranslation();
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
   
-  // Use React Query hooks - only fetch what's needed for this page
-  const { data: productsData, isLoading: productsLoading } = useProducts();
-  const { data: heroImagesData } = useHeroImages();
+  // Defer API calls - use enabled flag to prevent automatic fetching
+  // Fetch data after initial render to not block FCP/LCP
+  const [shouldFetchData, setShouldFetchData] = useState(false);
+  
+  const { data: productsData, isLoading: productsLoading } = useProducts({ 
+    enabled: shouldFetchData 
+  });
+  const { data: heroImagesData } = useHeroImages({ 
+    enabled: shouldFetchData 
+  });
+  
+  // Trigger data fetching after component mounts (after first paint)
+  useEffect(() => {
+    // Use requestIdleCallback or setTimeout to defer non-critical data
+    const timeoutId = setTimeout(() => {
+      setShouldFetchData(true);
+    }, 100); // Small delay to ensure first paint happens
+    
+    return () => clearTimeout(timeoutId);
+  }, []);
 
   // Process products data
   const products = React.useMemo(() => {
@@ -65,7 +82,7 @@ const Index: React.FC = () => {
 
       {/* Hero Section */}
       <section className="relative min-h-screen flex items-center justify-center overflow-hidden pt-16 sm:pt-20">
-        {/* Hero Images as Floating Products */}
+        {/* Hero Images as Floating Products - Load lazily */}
         {heroImages.length > 0 && (
           <div className="absolute inset-0 z-0 pointer-events-none hidden md:block">
             {heroImages.map((image, index) => (
@@ -86,7 +103,9 @@ const Index: React.FC = () => {
                     src={image.image_url}
                     alt={image.title || `Hero ${index + 1}`}
                     className="w-full h-full object-cover"
-                    loading="lazy"
+                    loading={index === 0 ? "eager" : "lazy"}
+                    decoding={index === 0 ? "sync" : "async"}
+                    fetchPriority={index === 0 ? "high" : "low"}
                     style={{
                       filter: 'brightness(1.4) contrast(1.3) saturate(0) drop-shadow(0 0 22px rgba(255,255,255,0.4)) drop-shadow(0 0 3px rgba(255,255,255,0.2))',
                       mixBlendMode: 'screen',
@@ -109,7 +128,7 @@ const Index: React.FC = () => {
 
         <div className="container mx-auto px-4 sm:px-6 relative z-10">
           <div className="max-w-4xl mx-auto text-center mt-4 sm:mt-16 md:mt-20">
-            {/* Main headline */}
+            {/* Main headline - LCP element, render immediately */}
             <h1 className="font-display text-4xl sm:text-5xl md:text-6xl lg:text-7xl xl:text-8xl font-bold mb-4 sm:mb-6 tracking-tight">
               <span className="block text-white filter brightness-110">{t('home.discover')}</span>
               <span className="block relative inline-block">

@@ -54,16 +54,28 @@ const Products = () => {
   // Get store_id from URL params
   const storeIdParam = searchParams.get('store_id');
   
+  // Defer data fetching until after initial render
+  const [shouldFetchData, setShouldFetchData] = useState(false);
+  
+  useEffect(() => {
+    // Defer API calls to after first paint
+    const timeoutId = setTimeout(() => {
+      setShouldFetchData(true);
+    }, 50);
+    
+    return () => clearTimeout(timeoutId);
+  }, []);
+  
   // Use store-specific endpoint if store_id is present, otherwise get all products
   const { data: productsData, isLoading: loading, error } = useProducts({ 
-    enabled: !storeIdParam // Only fetch all products if not filtering by store
+    enabled: !storeIdParam && shouldFetchData // Only fetch all products if not filtering by store
   });
   const { data: storeProductsData, isLoading: storeLoading, error: storeError } = useStoreProducts(
     storeIdParam || '', 
     { limit: 1000 }, // Fetch all products from store
-    { enabled: !!storeIdParam }
+    { enabled: !!storeIdParam && shouldFetchData }
   );
-  const { data: brandsData } = useBrands();
+  const { data: brandsData } = useBrands({ enabled: shouldFetchData });
   
   // Use store products if filtering by store, otherwise use all products
   const allProducts = useMemo(() => {

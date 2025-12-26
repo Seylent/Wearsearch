@@ -20,10 +20,14 @@ import type {
   FavoritesResponse,
 } from '@/types';
 
+// Helper type for optional query options
+type QueryOptions = Omit<UseQueryOptions<any, Error, any, any>, 'queryKey' | 'queryFn'>;
+
 // Query keys
 export const queryKeys = {
   products: ['products'] as const,
   product: (id: string) => ['product', id] as const,
+  productStores: (id: string) => ['productStores', id] as const,
   relatedProducts: (id: string) => ['relatedProducts', id] as const,
   stores: ['stores'] as const,
   store: (id: string) => ['store', id] as const,
@@ -36,7 +40,7 @@ export const queryKeys = {
 };
 
 // Products
-export const useProducts = (options?: UseQueryOptions<any>) => {
+export const useProducts = (options?: QueryOptions) => {
   return useQuery({
     queryKey: queryKeys.products,
     queryFn: async () => {
@@ -64,6 +68,32 @@ export const useProduct = (id: string) => {
     },
     enabled: !!id,
     staleTime: 5 * 60 * 1000,
+  });
+};
+
+// Product Stores
+export const useProductStores = (productId: string, options?: QueryOptions) => {
+  return useQuery({
+    queryKey: queryKeys.productStores(productId),
+    queryFn: async () => {
+      const response = await api.get(`/items/${productId}/stores`);
+      const result = response.data;
+      
+      // Handle different response formats
+      if (result.success && result.stores) {
+        return result.stores;
+      } else if (result.stores) {
+        return result.stores;
+      } else if (Array.isArray(result)) {
+        return result;
+      }
+      
+      return [];
+    },
+    enabled: !!productId,
+    staleTime: 5 * 60 * 1000,
+    gcTime: 10 * 60 * 1000,
+    ...options,
   });
 };
 
@@ -135,7 +165,7 @@ export const useStore = (id: string) => {
 };
 
 // Brands
-export const useBrands = () => {
+export const useBrands = (options?: QueryOptions) => {
   return useQuery({
     queryKey: queryKeys.brands,
     queryFn: async () => {
@@ -160,10 +190,11 @@ export const useBrands = () => {
     gcTime: 60 * 60 * 1000,
     refetchOnWindowFocus: false,
     refetchOnMount: false,
+    ...options,
   });
 };
 
-export const useBrand = (id: string) => {
+export const useBrand = (id: string, options?: QueryOptions) => {
   return useQuery({
     queryKey: queryKeys.brand(id),
     queryFn: async () => {
@@ -172,11 +203,12 @@ export const useBrand = (id: string) => {
     },
     enabled: !!id,
     staleTime: 5 * 60 * 1000,
+    ...options,
   });
 };
 
 // Hero Images
-export const useHeroImages = () => {
+export const useHeroImages = (options?: QueryOptions) => {
   return useQuery({
     queryKey: queryKeys.heroImages,
     queryFn: async () => {
@@ -187,6 +219,7 @@ export const useHeroImages = () => {
     gcTime: 2 * 60 * 60 * 1000, // 2 hours
     refetchOnWindowFocus: false,
     refetchOnMount: false,
+    ...options,
   });
 };
 

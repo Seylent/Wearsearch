@@ -38,53 +38,71 @@ export default defineConfig(({ mode }) => ({
     target: 'esnext',
     minify: 'esbuild',
     cssMinify: true,
+    reportCompressedSize: false, // Faster builds
     rollupOptions: {
       output: {
         manualChunks: (id) => {
-          // React core libraries
-          if (id.includes('node_modules/react') || id.includes('node_modules/react-dom')) {
-            return 'react-vendor';
+          // React core libraries - keep small for initial load
+          if (id.includes('node_modules/react/') || id.includes('node_modules/react-dom/')) {
+            if (id.includes('node_modules/react-dom/client')) {
+              return 'react-core';
+            }
+            return 'react-core';
           }
           
-          // React Router
+          // React Router - defer
           if (id.includes('node_modules/react-router')) {
             return 'router';
           }
           
-          // React Query
+          // React Query - defer since data fetches happen after mount
           if (id.includes('@tanstack/react-query')) {
             return 'query';
           }
           
-          // All Radix UI components in single chunk
+          // Radix UI - split into smaller chunks by component
+          if (id.includes('@radix-ui/react-dialog')) {
+            return 'ui-dialog';
+          }
+          if (id.includes('@radix-ui/react-dropdown')) {
+            return 'ui-dropdown';
+          }
           if (id.includes('@radix-ui')) {
-            return 'radix-ui';
+            return 'ui-radix';
           }
           
-          // Icons (both lucide and react-icons)
-          if (id.includes('lucide-react') || id.includes('react-icons')) {
-            return 'icons';
+          // Icons - defer, not needed for initial render
+          if (id.includes('lucide-react')) {
+            return 'icons-lucide';
+          }
+          if (id.includes('react-icons')) {
+            return 'icons-react';
           }
           
-          // i18n libraries
+          // i18n libraries - will be loaded async
           if (id.includes('i18next') || id.includes('react-i18next')) {
             return 'i18n';
           }
           
-          // Utility libraries
+          // Utility libraries - small, can be in vendor
           if (id.includes('clsx') || id.includes('tailwind-merge') || 
               id.includes('class-variance-authority')) {
             return 'utils';
           }
           
-          // Form libraries
+          // Form libraries - defer
           if (id.includes('react-hook-form') || id.includes('@hookform')) {
             return 'forms';
           }
           
-          // Large vendor libraries
+          // Axios - defer
           if (id.includes('axios')) {
             return 'axios';
+          }
+          
+          // Charts - defer completely
+          if (id.includes('recharts')) {
+            return 'charts';
           }
           
           // All other node_modules
