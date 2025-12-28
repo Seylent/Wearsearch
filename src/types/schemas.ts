@@ -91,23 +91,6 @@ export const BrandsResponseSchema = z.object({
 export const BrandsArraySchema = z.array(BrandSchema);
 
 /**
- * Hero Image Schema
- */
-export const HeroImageSchema = z.object({
-  id: z.string(),
-  image_url: z.string(),
-  title: z.string().optional().nullable(),
-  alt_text: z.string().optional().nullable(),
-  is_active: z.boolean(),
-  display_order: z.number().optional().nullable(),
-  created_at: z.string().optional().nullable(),
-});
-
-export const HeroImagesResponseSchema = z.object({
-  images: z.array(HeroImageSchema),
-});
-
-/**
  * Favorite Schema
  */
 export const FavoriteSchema = z.object({
@@ -171,8 +154,6 @@ export type Store = z.infer<typeof StoreSchema>;
 export type StoresResponse = z.infer<typeof StoresResponseSchema>;
 export type Brand = z.infer<typeof BrandSchema>;
 export type BrandsResponse = z.infer<typeof BrandsResponseSchema>;
-export type HeroImage = z.infer<typeof HeroImageSchema>;
-export type HeroImagesResponse = z.infer<typeof HeroImagesResponseSchema>;
 export type Favorite = z.infer<typeof FavoriteSchema>;
 export type FavoritesResponse = z.infer<typeof FavoritesResponseSchema>;
 export type User = z.infer<typeof UserSchema>;

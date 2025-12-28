@@ -23,7 +23,8 @@ import {
   PaginationPrevious,
   PaginationEllipsis,
 } from "@/components/ui/pagination";
-import { useProducts, useBrands, useStoreProducts } from "@/hooks/useApi";
+import { useStoreProducts } from "@/hooks/useApi";
+import { useProductsPageData } from "@/hooks/useAggregatedData";
 import { useDebounce } from "@/hooks/useDebounce";
 import { PRODUCT_CATEGORIES } from "@/constants/categories";
 import type { Product } from "@/types";
@@ -67,16 +68,35 @@ const Products = () => {
     return () => clearTimeout(timeoutId);
   }, []);
   
-  // Use store-specific endpoint if store_id is present, otherwise get all products
-  const { data: productsData, isLoading: loading, error } = useProducts({ 
-    enabled: !storeIdParam && shouldFetchData // Only fetch all products if not filtering by store
+  // Build filters object for aggregated API
+  const filters = {
+    page: currentPage,
+    limit: itemsPerPage,
+    search: debouncedSearch || undefined,
+    type: selectedTypes.length === 1 ? selectedTypes[0] : undefined,
+    color: selectedColors.length === 1 ? selectedColors[0] : undefined,
+    gender: selectedGenders.length === 1 ? selectedGenders[0] : undefined,
+    brand_id: selectedBrand || undefined,
+    sort: sortBy !== 'default' ? sortBy : undefined,
+  };
+  
+  // Use aggregated hook for better performance (2-3 requests → 1 request)
+  const { data: pageData, isLoading: pageLoading } = useProductsPageData(filters, { 
+    enabled: !storeIdParam && shouldFetchData 
   });
+  
+  // Use store-specific endpoint if store_id is present
   const { data: storeProductsData, isLoading: storeLoading, error: storeError } = useStoreProducts(
     storeIdParam || '', 
     { limit: 1000 }, // Fetch all products from store
     { enabled: !!storeIdParam && shouldFetchData }
   );
-  const { data: brandsData } = useBrands({ enabled: shouldFetchData });
+  
+  // Extract data from aggregated response or fallback
+  const productsData = !storeIdParam ? pageData?.products : null;
+  const brandsData = !storeIdParam ? pageData?.brands : null;
+  const loading = !storeIdParam ? pageLoading : false;
+  const error = null; // Error handled in aggregated hook
   
   // Use store products if filtering by store, otherwise use all products
   const allProducts = useMemo(() => {

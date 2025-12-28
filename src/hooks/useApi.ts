@@ -13,8 +13,6 @@ import type {
   StoresResponse,
   Brand,
   BrandsResponse,
-  HeroImage,
-  HeroImagesResponse,
   SiteStats,
   Favorite,
   FavoritesResponse,
@@ -33,7 +31,6 @@ export const queryKeys = {
   store: (id: string) => ['store', id] as const,
   brands: ['brands'] as const,
   brand: (id: string) => ['brand', id] as const,
-  heroImages: ['heroImages'] as const,
   stats: ['stats'] as const,
   favorites: ['favorites'] as const,
   contacts: ['contacts'] as const,
@@ -203,22 +200,6 @@ export const useBrand = (id: string, options?: QueryOptions) => {
     },
     enabled: !!id,
     staleTime: 5 * 60 * 1000,
-    ...options,
-  });
-};
-
-// Hero Images
-export const useHeroImages = (options?: QueryOptions) => {
-  return useQuery({
-    queryKey: queryKeys.heroImages,
-    queryFn: async () => {
-      const response = await api.get('/hero-images');
-      return response.data;
-    },
-    staleTime: 60 * 60 * 1000, // 1 hour - hero images rarely change
-    gcTime: 2 * 60 * 60 * 1000, // 2 hours
-    refetchOnWindowFocus: false,
-    refetchOnMount: false,
     ...options,
   });
 };

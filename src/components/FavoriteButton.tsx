@@ -3,7 +3,7 @@ import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
-import { useFavorites, useAddFavorite, useRemoveFavorite } from '@/hooks/useApi';
+import { useAddFavorite, useRemoveFavorite } from '@/hooks/useApi';
 import { isAuthenticated } from '@/utils/authStorage';
 import { 
   isGuestFavorite, 
@@ -12,6 +12,7 @@ import {
 } from '@/services/guestFavorites';
 import { useTranslation } from 'react-i18next';
 import { translateSuccessCode, translateErrorCode } from '@/utils/errorTranslation';
+import { useFavoritesContext } from '@/contexts/FavoritesContext';
 
 interface FavoriteButtonProps {
   productId: string;
@@ -34,13 +35,10 @@ export function FavoriteButton({
   const isLoggedIn = isAuthenticated();
   const [guestFavorited, setGuestFavorited] = useState(false);
   
-  // Use React Query hooks (only when logged in)
-  const { data: favoritesData, isLoading: isFavoritesLoading } = useFavorites();
+  // Use context instead of direct hook call (prevents multiple API requests)
+  const { isFavorited: isInFavorites } = useFavoritesContext();
   const addFavorite = useAddFavorite();
   const removeFavorite = useRemoveFavorite();
-
-  // Extract favorites array from response
-  const favorites = favoritesData?.favorites || [];
 
   // Check guest favorites on mount and when productId changes
   useEffect(() => {
@@ -49,15 +47,9 @@ export function FavoriteButton({
     }
   }, [productId, isLoggedIn]);
 
-  // Check if current product is in favorites
-  // Backend returns: { favorites: [{ id, product_id, created_at, product: {...} }] }
+  // Check if current product is in favorites (from context - no extra API calls!)
   const isFavorited = isLoggedIn
-    ? Array.isArray(favorites) && favorites.some(
-        (fav: any) => {
-          const favProductId = fav.product_id || fav.productId;
-          return String(favProductId) === String(productId);
-        }
-      )
+    ? isInFavorites(productId)
     : guestFavorited;
 
   const handleToggleFavorite = async (e: React.MouseEvent) => {

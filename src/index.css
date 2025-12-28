@@ -1,19 +1,11 @@
-/* Google Fonts with display swap for better performance */
-@import url('https://fonts.googleapis.com/css2?family=Outfit:wght@400;600;700&family=Inter:wght@400;600&display=swap');
+/* Google Fonts - using link tag in HTML for better caching and preconnect */
+/* Fonts are loaded via <link> in index.html for optimal performance */
 
 @font-face {
   font-family: 'Youre Gone';
   src: url('/fonts/Youre Gone.otf') format('opentype');
   font-weight: normal;
   font-style: normal;
-  font-display: swap;
-}
-
-@font-face {
-  font-family: 'Youre Gone It';
-  src: url('/fonts/Youre Gone It.otf') format('opentype');
-  font-weight: normal;
-  font-style: italic;
   font-display: swap;
 }
 

@@ -110,23 +110,6 @@ export interface BrandsResponse {
   total?: number;
 }
 
-// Hero Image Types
-export interface HeroImage {
-  id: string;
-  image_url: string;
-  alt_text?: string;
-  is_active: boolean;
-  display_order?: number;
-  created_at?: string;
-}
-
-export interface HeroImagesResponse {
-  images: HeroImage[];
-}
-
-  satisfaction_rate?: number;
-}
-
 export interface StatisticsResponse {
   success: boolean;
   data: {

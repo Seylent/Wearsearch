@@ -16,6 +16,7 @@ import { translateGender } from "@/utils/errorTranslation";
 import { getCategoryTranslation, getColorTranslation } from "@/utils/translations";
 import { GenderBadge } from "@/components/GenderBadge";
 import { useProduct, useProductStores, useBrand } from "@/hooks/useApi";
+import { useProductDetailData } from "@/hooks/useAggregatedData";
 import {
   Select,
   SelectContent,
@@ -48,9 +49,15 @@ const ProductDetail = () => {
   const [currentStorePage, setCurrentStorePage] = useState(1);
   const storesPerPage = 3;
 
-  // Use React Query hooks for data fetching
-  const { data: productData, isLoading: productLoading, error: productError } = useProduct(id || '');
-  const { data: storesData, isLoading: storesLoading } = useProductStores(id || '');
+  // Use aggregated hook for better performance (3 requests → 1 request)
+  const { data: detailData, isLoading: detailLoading, error: productError } = useProductDetailData(id || '');
+  
+  // Extract data from aggregated response
+  const productData = detailData?.product;
+  const storesData = detailData?.stores;
+  const brandData = detailData?.brand;
+  const productLoading = detailLoading;
+  const storesLoading = detailLoading;
   
   // Extract product from response
   const product = useMemo(() => {
@@ -68,11 +75,7 @@ const ProductDetail = () => {
     return null;
   }, [productData]);
   
-  // Get brand_id from product
-  const brandId = product?.brand_id;
-  const { data: brandData } = useBrand(brandId || '', { enabled: !!brandId });
-  
-  // Extract brand from response
+  // Extract brand from aggregated response
   const brand = useMemo(() => {
     if (!brandData) return null;
     
@@ -87,7 +90,11 @@ const ProductDetail = () => {
   
   // Extract stores array
   const stores = useMemo(() => {
-    return Array.isArray(storesData) ? storesData : [];
+    console.log('[ProductDetail] storesData:', storesData);
+    console.log('[ProductDetail] is array?', Array.isArray(storesData));
+    const result = Array.isArray(storesData) ? storesData : [];
+    console.log('[ProductDetail] stores result:', result.length, 'stores');
+    return result;
   }, [storesData]);
   
   // Check admin status once
@@ -340,7 +347,7 @@ const ProductDetail = () => {
 
               {/* Search & Filters */}
               {stores.length > 0 && (
-                <div className="flex items-center gap-2 mb-6 pb-6 border-b border-white/6">
+                <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 mb-6 pb-6 border-b border-white/6">
                   {/* Search */}
                   <div className="relative flex-1">
                     <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
@@ -349,16 +356,16 @@ const ProductDetail = () => {
                       placeholder={t('productDetail.searchStores')}
                       value={storeSearch}
                       onChange={(e) => setStoreSearch(e.target.value)}
-                      className="pl-10 bg-black/30 border-white/6 text-white"
+                      className="pl-10 bg-black/30 border-white/6 text-white h-10"
                     />
                   </div>
 
                   {/* Filter Dropdown */}
                   <DropdownMenu>
                     <DropdownMenuTrigger asChild>
-                      <Button variant="outline" size="default" className="border-white/20 bg-black/30 text-white hover:bg-black/50 hover:border-white/30">
+                      <Button variant="outline" size="default" className="border-white/20 bg-black/30 text-white hover:bg-black/50 hover:border-white/30 w-full sm:w-auto h-10">
                         <Filter className="w-4 h-4 mr-2" />
-                        {t('products.filters')}
+                        <span className="sm:inline">{t('products.filters')}</span>
                         {(showRecommendedOnly || sortBy !== 'name') && (
                           <span className="ml-2 bg-primary text-primary-foreground rounded-full w-5 h-5 flex items-center justify-center text-[10px] font-bold">
                             {(showRecommendedOnly ? 1 : 0) + (sortBy !== 'name' ? 1 : 0)}
@@ -366,47 +373,56 @@ const ProductDetail = () => {
                         )}
                       </Button>
                     </DropdownMenuTrigger>
-                    <DropdownMenuContent className="w-56 bg-card border-foreground/10 text-foreground" align="end">
-                      <DropdownMenuLabel className="text-xs uppercase tracking-widest text-muted-foreground">{t('productDetail.sortBy')}</DropdownMenuLabel>
-                      <DropdownMenuItem onClick={() => setSortBy('name')} className="cursor-pointer">
-                        <Tag className="h-4 w-4 mr-2" />
-                        {t('productDetail.name')}
-                        {sortBy === 'name' && <span className="ml-auto">✓</span>}
+                    <DropdownMenuContent className="w-64 bg-black/95 backdrop-blur-xl border border-white/10 text-white shadow-2xl" align="end">
+                      <DropdownMenuLabel className="text-xs uppercase tracking-widest text-white/50 px-3 py-2 font-medium">{t('productDetail.sortBy')}</DropdownMenuLabel>
+                      <DropdownMenuItem 
+                        onClick={() => setSortBy('name')} 
+                        className="cursor-pointer mx-2 rounded-lg hover:bg-white/10 focus:bg-white/10 text-white transition-colors px-3 py-2.5"
+                      >
+                        <Tag className="h-4 w-4 mr-3 text-white/70" />
+                        <span className="flex-1">{t('productDetail.name')}</span>
+                        {sortBy === 'name' && <span className="ml-2 text-primary">✓</span>}
                       </DropdownMenuItem>
-                      <DropdownMenuItem onClick={() => setSortBy('price-asc')} className="cursor-pointer">
-                        <SortAsc className="h-4 w-4 mr-2" />
-                        {t('productDetail.priceAsc')}
-                        {sortBy === 'price-asc' && <span className="ml-auto">✓</span>}
+                      <DropdownMenuItem 
+                        onClick={() => setSortBy('price-asc')} 
+                        className="cursor-pointer mx-2 rounded-lg hover:bg-white/10 focus:bg-white/10 text-white transition-colors px-3 py-2.5"
+                      >
+                        <SortAsc className="h-4 w-4 mr-3 text-white/70" />
+                        <span className="flex-1">{t('productDetail.priceAsc')}</span>
+                        {sortBy === 'price-asc' && <span className="ml-2 text-primary">✓</span>}
                       </DropdownMenuItem>
-                      <DropdownMenuItem onClick={() => setSortBy('price-desc')} className="cursor-pointer">
-                        <ChevronDown className="h-4 w-4 mr-2" />
-                        {t('productDetail.priceDesc')}
-                        {sortBy === 'price-desc' && <span className="ml-auto">✓</span>}
+                      <DropdownMenuItem 
+                        onClick={() => setSortBy('price-desc')} 
+                        className="cursor-pointer mx-2 rounded-lg hover:bg-white/10 focus:bg-white/10 text-white transition-colors px-3 py-2.5"
+                      >
+                        <ChevronDown className="h-4 w-4 mr-3 text-white/70" />
+                        <span className="flex-1">{t('productDetail.priceDesc')}</span>
+                        {sortBy === 'price-desc' && <span className="ml-2 text-primary">✓</span>}
                       </DropdownMenuItem>
                       
-                      <DropdownMenuSeparator />
+                      <DropdownMenuSeparator className="my-2 bg-white/10" />
                       
-                      <DropdownMenuLabel className="text-xs uppercase tracking-widest text-muted-foreground">{t('common.recommended')}</DropdownMenuLabel>
+                      <DropdownMenuLabel className="text-xs uppercase tracking-widest text-white/50 px-3 py-2 font-medium">{t('common.recommended')}</DropdownMenuLabel>
                       <DropdownMenuCheckboxItem
                         checked={showRecommendedOnly}
                         onCheckedChange={setShowRecommendedOnly}
-                        className="cursor-pointer"
+                        className="cursor-pointer mx-2 rounded-lg hover:bg-white/10 focus:bg-white/10 text-white transition-colors px-3 py-2.5"
                       >
-                        <Star className="h-4 w-4 mr-2" />
-                        {t('productDetail.recommendedOnly')}
+                        <Star className="h-4 w-4 mr-3 text-white/70" />
+                        <span className="flex-1">{t('productDetail.recommendedOnly')}</span>
                       </DropdownMenuCheckboxItem>
                       
                       {(showRecommendedOnly || sortBy !== 'name') && (
                         <>
-                          <DropdownMenuSeparator />
+                          <DropdownMenuSeparator className="my-2 bg-white/10" />
                           <DropdownMenuItem
                             onClick={() => {
                               setShowRecommendedOnly(false);
                               setSortBy('name');
                             }}
-                            className="cursor-pointer text-muted-foreground"
+                            className="cursor-pointer mx-2 rounded-lg hover:bg-red-500/10 focus:bg-red-500/10 text-red-400 transition-colors px-3 py-2.5"
                           >
-                            {t('products.clearFilters')}
+                            <span className="flex-1">{t('products.clearFilters')}</span>
                           </DropdownMenuItem>
                         </>
                       )}
@@ -441,9 +457,10 @@ const ProductDetail = () => {
                         <div className="flex-1">
                           <h3 className="font-semibold mb-1">{store.name}</h3>
                           {store.is_recommended && (
-                            <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-purple-500/10 border border-purple-500/20 text-xs text-purple-400">
-                              ⭐ {t('productDetail.recommended')}
-                            </span>
+                            <div className="inline-flex items-center gap-1 px-2 py-1 rounded-full bg-white/10 border border-white/20 text-white">
+                              <Star className="w-3 h-3 fill-current" />
+                              <span className="text-xs font-medium">{t('productDetail.recommended')}</span>
+                            </div>
                           )}
                         </div>
                       </div>

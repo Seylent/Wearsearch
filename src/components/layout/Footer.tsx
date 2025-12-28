@@ -1,6 +1,4 @@
 import { Link } from "react-router-dom";
-import { Instagram } from "lucide-react";
-import { FaTelegram } from "react-icons/fa";
 import { useTranslation } from "react-i18next";
 
 export const Footer = () => {
@@ -35,20 +33,6 @@ export const Footer = () => {
               Discover curated fashion from the world's most innovative designers and 
               independent stores.
             </p>
-            <div className="flex gap-3">
-              <a
-                href="#"
-                className="w-9 h-9 rounded-full border border-zinc-800 hover:border-zinc-600 flex items-center justify-center transition-all duration-300 hover:bg-zinc-800/50"
-              >
-                <Instagram className="w-4 h-4 text-zinc-400" />
-              </a>
-              <a
-                href="#"
-                className="w-9 h-9 rounded-full border border-zinc-800 hover:border-zinc-600 flex items-center justify-center transition-all duration-300 hover:bg-zinc-800/50"
-              >
-                <FaTelegram className="w-4 h-4 text-zinc-400" />
-              </a>
-            </div>
           </div>
 
           {/* Links */}

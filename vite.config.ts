@@ -42,27 +42,9 @@ export default defineConfig(({ mode }) => ({
     rollupOptions: {
       output: {
         manualChunks: (id) => {
-          // Stable vendor chunk strategy - fewer chunks, stable hydration
+          // Simplified chunk strategy - fewer chunks, fewer requests
           
-          // Core React dependencies - keep together for stable bootstrap
-          if (id.includes('node_modules/react') || 
-              id.includes('node_modules/react-dom') ||
-              id.includes('node_modules/react-router') ||
-              id.includes('@tanstack/react-query')) {
-            return 'vendor-react';
-          }
-          
-          // i18n as separate chunk (moderate size)
-          if (id.includes('i18next') || id.includes('react-i18next')) {
-            return 'vendor-i18n';
-          }
-          
-          // UI library (Radix + Lucide)
-          if (id.includes('@radix-ui') || id.includes('lucide-react')) {
-            return 'vendor-ui';
-          }
-          
-          // All other node_modules in vendor
+          // All node_modules in one vendor chunk for fewer HTTP requests
           if (id.includes('node_modules')) {
             return 'vendor';
           }
@@ -74,9 +56,9 @@ export default defineConfig(({ mode }) => ({
       },
     },
     sourcemap: mode === 'development',
-    chunkSizeWarningLimit: 600, // Reduced from 1000
-    // Enable CSS code splitting
-    cssCodeSplit: true,
+    chunkSizeWarningLimit: 1000, // Allow larger chunks to reduce HTTP requests
+    // Disable CSS code splitting - combine all CSS into one file
+    cssCodeSplit: false,
   },
   optimizeDeps: {
     include: [
@@ -86,6 +68,19 @@ export default defineConfig(({ mode }) => ({
       '@tanstack/react-query',
       'i18next',
       'react-i18next',
+      'lucide-react',
+      'zod',
+      'react-hook-form',
+      '@radix-ui/react-dialog',
+      '@radix-ui/react-dropdown-menu',
+      '@radix-ui/react-select',
+      '@radix-ui/react-checkbox',
+      '@radix-ui/react-label',
+      '@radix-ui/react-toast',
+      '@radix-ui/react-tooltip',
     ],
+    esbuildOptions: {
+      target: 'esnext',
+    },
   },
 }));

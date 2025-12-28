@@ -104,6 +104,8 @@
     "sportswear": "Sportswear",
     "underwear": "Underwear",
     "tshirts": "T-Shirts",
+    "t-shirts": "T-Shirts",
+    "T-shirts": "T-Shirts",
     "pants": "Pants",
     "jeans": "Jeans",
     "shorts": "Shorts",
@@ -130,6 +132,8 @@
     "beige": "Beige",
     "navy": "Navy",
     "maroon": "Maroon",
+    "olive": "Olive",
+    "cream": "Cream",
     "multicolor": "Multicolor"
   },
   "gender": {

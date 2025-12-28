@@ -9,6 +9,7 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Search, ArrowRight, ExternalLink, Star, Package } from "lucide-react";
 import { useStores } from "@/hooks/useApi";
+import { useStoresPageData } from "@/hooks/useAggregatedData";
 import type { Store } from "@/services/storeService";
 import { FaTelegram, FaInstagram } from "react-icons/fa";
 
@@ -17,7 +18,9 @@ const Stores = () => {
   const { t } = useTranslation();
   const [searchQuery, setSearchQuery] = useState("");
 
-  const { data: storesData, isLoading: loading, error } = useStores();
+  // Use aggregated hook for better performance
+  const { data: pageData, isLoading: loading, error } = useStoresPageData(searchQuery);
+  const storesData = pageData?.stores;
   
   const stores = useMemo(() => {
     if (!storesData) return [];
@@ -148,7 +151,7 @@ const Stores = () => {
                               {store.is_recommended && (
                                 <div className="inline-flex items-center gap-1 px-2 py-1 rounded-full bg-white/10 border border-white/20 text-white">
                                   <Star className="w-3 h-3 fill-current" />
-                                  <span className="text-xs font-medium">⚭ {t('stores.recommended')}</span>
+                                  <span className="text-xs font-medium">{t('stores.recommended')}</span>
                                 </div>
                               )}
                             </div>

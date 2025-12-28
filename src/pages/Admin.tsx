@@ -15,6 +15,7 @@ import { ImageUploader } from "@/components/ImageUploader";
 import { productService } from "@/services/productService";
 import { storeService } from "@/services/storeService";
 import { api } from "@/services/api";
+import { useAdminDashboardData } from "@/hooks/useAggregatedData";
 import { getCategoryTranslation, getColorTranslation } from "@/utils/translations";
 
 // Use relative API URL (works with Vite proxy)
@@ -63,12 +64,6 @@ const Admin = () => {
     };
   }, []);
   
-  // Hero images state
-  const [heroImages, setHeroImages] = useState<any[]>([]);
-  const [heroImageUrl, setHeroImageUrl] = useState("");
-  const [uploadingHeroImage, setUploadingHeroImage] = useState(false);
-  const [selectedHeroImages, setSelectedHeroImages] = useState<string[]>([]);
-  
   // Contacts state
   const [contactTelegram, setContactTelegram] = useState<string>("@wearsearch");
   const [contactInstagram, setContactInstagram] = useState<string>("@wearsearch");
@@ -98,7 +93,6 @@ const Admin = () => {
   useEffect(() => {
     checkAdmin();
     fetchData();
-    fetchHeroImages();
     
     // Load saved contacts from localStorage
     const savedContacts = localStorage.getItem('site_contacts');
@@ -189,11 +183,21 @@ const Admin = () => {
     setLoading(true);
     
     try {
-      const [productsRes, storesRes, brandsRes] = await Promise.all([
-        api.get('/admin/products', { signal: fetchAbortController.current.signal }),
-        api.get('/stores', { signal: fetchAbortController.current.signal }),
-        api.get('/brands', { signal: fetchAbortController.current.signal })
-      ]);
+      // Try aggregated endpoint first for better performance (3 requests → 1 request)
+      let productsRes, storesRes, brandsRes;
+      try {
+        const dashboardRes = await api.get('/admin/dashboard', { signal: fetchAbortController.current.signal });
+        productsRes = { data: dashboardRes.data.products };
+        storesRes = { data: dashboardRes.data.stores };
+        brandsRes = { data: dashboardRes.data.brands };
+      } catch (aggError) {
+        // Fallback to individual calls if aggregated endpoint doesn't exist
+        [productsRes, storesRes, brandsRes] = await Promise.all([
+          api.get('/admin/products', { signal: fetchAbortController.current.signal }),
+          api.get('/stores', { signal: fetchAbortController.current.signal }),
+          api.get('/brands', { signal: fetchAbortController.current.signal })
+        ]);
+      }
 
       const productsData = productsRes.data;
       const storesData = storesRes.data;
@@ -246,195 +250,6 @@ const Admin = () => {
       }
     }
   }, []);
-
-  const fetchHeroImages = useCallback(async () => {
-    try {
-      const response = await api.get('/admin/hero-images');
-      const data = response.data;
-      console.log('📸 Hero images response:', data);
-      
-      if (isMounted.current) {
-        // Handle different response formats
-        if (data.success && data.data) {
-          setHeroImages(Array.isArray(data.data) ? data.data : []);
-        } else if (Array.isArray(data)) {
-          setHeroImages(data);
-        } else if (data.heroImages && Array.isArray(data.heroImages)) {
-          setHeroImages(data.heroImages);
-        } else {
-          setHeroImages([]);
-        }
-        console.log('✅ Set hero images:', heroImages.length);
-      }
-    } catch (error) {
-      console.error("Error fetching hero images:", error);
-      if (isMounted.current) {
-        setHeroImages([]);
-      }
-    }
-  }, []);
-
-  const handleUploadHeroImage = async () => {
-    if (!heroImageUrl.trim()) {
-      toast({
-        title: "Error",
-        description: "Please enter an image URL",
-        variant: "destructive",
-      });
-      return;
-    }
-
-    setUploadingHeroImage(true);
-    try {
-      const response = await fetch(`${API_BASE_URL}/api/admin/hero-images`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${localStorage.getItem('access_token')}`
-        },
-        body: JSON.stringify({
-          image_url: heroImageUrl,
-          is_active: true,
-          sort_order: heroImages.length
-        }),
-      });
-
-      const result = await response.json();
-      if (result.success) {
-        toast({
-          title: "Success",
-          description: "Hero image added successfully!",
-        });
-        setHeroImageUrl("");
-        fetchHeroImages();
-      } else {
-        throw new Error(result.error || 'Failed to add hero image');
-      }
-    } catch (error: any) {
-      toast({
-        variant: "destructive",
-        title: "Error",
-        description: error.message || "Failed to add hero image",
-      });
-    } finally {
-      setUploadingHeroImage(false);
-    }
-  };
-
-  const handleDeleteHeroImage = async (id: string) => {
-    if (!window.confirm('Delete this hero image?')) return;
-
-    try {
-      const response = await fetch(`${API_BASE_URL}/api/admin/hero-images/${id}`, {
-        method: 'DELETE',
-        headers: { 'Authorization': `Bearer ${localStorage.getItem('access_token')}` }
-      });
-
-      const result = await response.json();
-      if (result.success) {
-        toast({
-          title: "Success",
-          description: "Hero image deleted successfully",
-        });
-        fetchHeroImages();
-      } else {
-        throw new Error(result.error || 'Failed to delete');
-      }
-    } catch (error: any) {
-      toast({
-        variant: "destructive",
-        title: "Error",
-        description: error.message || "Failed to delete hero image",
-      });
-    }
-  };
-
-  const handleBulkDeleteHeroImages = async () => {
-    if (selectedHeroImages.length === 0) return;
-    if (!window.confirm(`Delete ${selectedHeroImages.length} selected hero image(s)?`)) return;
-
-    try {
-      const deletePromises = selectedHeroImages.map(id =>
-        fetch(`/api/admin/hero-images/${id}`, {
-          method: 'DELETE',
-          headers: { 'Authorization': `Bearer ${localStorage.getItem('access_token')}` }
-        }).then(res => res.json())
-      );
-
-      const results = await Promise.all(deletePromises);
-      const successCount = results.filter(r => r.success).length;
-
-      toast({
-        title: "Success",
-        description: `Deleted ${successCount} hero image(s)`,
-      });
-
-      setSelectedHeroImages([]);
-      fetchHeroImages();
-    } catch (error: any) {
-      toast({
-        variant: "destructive",
-        title: "Error",
-        description: error.message || "Failed to delete hero images",
-      });
-    }
-  };
-
-  const toggleHeroImageSelection = (id: string) => {
-    setSelectedHeroImages(prev =>
-      prev.includes(id) ? prev.filter(imgId => imgId !== id) : [...prev, id]
-    );
-  };
-
-  const selectAllHeroImages = () => {
-    if (selectedHeroImages.length === heroImages.length) {
-      setSelectedHeroImages([]);
-    } else {
-      setSelectedHeroImages(heroImages.map(img => img.id));
-    }
-  };
-
-  const handleImportExistingHeroImages = async () => {
-    if (!window.confirm('Import all 13 existing images from /public/hero/ folder?')) return;
-
-    setUploadingHeroImage(true);
-    try {
-      const existingImages = Array.from({ length: 13 }, (_, i) => ({
-        image_url: `/hero/IMG_${5814 + i}.png`,
-        is_active: true,
-        sort_order: i
-      }));
-
-      const results = await Promise.all(
-        existingImages.map(async (img) => {
-          const response = await fetch('/api/admin/hero-images', {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/json',
-              'Authorization': `Bearer ${localStorage.getItem('access_token')}`
-            },
-            body: JSON.stringify(img),
-          });
-          return await response.json();
-        })
-      );
-
-      const successCount = results.filter(r => r.success).length;
-      toast({
-        title: "Success",
-        description: `Imported ${successCount} hero images!`,
-      });
-      fetchHeroImages();
-    } catch (error: any) {
-      toast({
-        variant: "destructive",
-        title: "Error",
-        description: error.message || "Failed to import images",
-      });
-    } finally {
-      setUploadingHeroImage(false);
-    }
-  };
 
   const loadProductForEdit = async (productId: string) => {
     try {
@@ -980,14 +795,6 @@ const Admin = () => {
                 <Package className="w-3 h-3 md:w-4 md:h-4 md:mr-2" />
                 <span className="hidden md:inline ml-1">Brands</span>
                 <span className="md:hidden ml-1">Brand</span>
-              </TabsTrigger>
-              <TabsTrigger 
-                value="hero-images"
-                className="data-[state=active]:bg-foreground data-[state=active]:text-background rounded-lg transition-all text-xs md:text-sm px-2 py-2"
-              >
-                <Package className="w-3 h-3 md:w-4 md:h-4 md:mr-2" />
-                <span className="hidden md:inline ml-1">Hero Images</span>
-                <span className="md:hidden ml-1">Hero</span>
               </TabsTrigger>
               <TabsTrigger 
                 value="contacts"
@@ -1690,157 +1497,6 @@ const Admin = () => {
                     No brands yet
                   </div>
                 )}
-              </div>
-            </TabsContent>
-
-            {/* HERO IMAGES TAB - Manage carousel images */}
-            <TabsContent value="hero-images" className="space-y-6">
-              <div className="p-8 rounded-2xl border border-border/50 bg-card/40 backdrop-blur-sm">
-                <div className="flex items-start justify-between mb-6">
-                  <div>
-                    <h3 className="font-display text-2xl font-bold mb-2">Hero Carousel Images</h3>
-                    <p className="text-muted-foreground">Manage images displayed in the homepage carousel ({heroImages.length} images)</p>
-                  </div>
-                  <div className="flex gap-2">
-                    {selectedHeroImages.length > 0 && (
-                      <Button
-                        variant="destructive"
-                        onClick={handleBulkDeleteHeroImages}
-                        className="gap-2"
-                      >
-                        <Trash2 className="w-4 h-4" />
-                        Delete Selected ({selectedHeroImages.length})
-                      </Button>
-                    )}
-                    {heroImages.length === 0 && (
-                      <Button
-                        variant="outline"
-                        onClick={handleImportExistingHeroImages}
-                        disabled={uploadingHeroImage}
-                        className="gap-2"
-                      >
-                        <Package className="w-4 h-4" />
-                        Import Existing 13 Images
-                      </Button>
-                    )}
-                  </div>
-                </div>
-
-                {/* Upload Section */}
-                <div className="mb-8 p-6 rounded-xl border-2 border-dashed border-border/50 bg-card/10">
-                  <div className="space-y-4">
-                    <div>
-                      <h4 className="font-semibold mb-2 flex items-center gap-2">
-                        <Plus className="w-5 h-5" />
-                        Add New Hero Image
-                      </h4>
-                      <p className="text-sm text-muted-foreground mb-4">Upload image to S3 first, then paste the URL here</p>
-                    </div>
-                    
-                    <div className="space-y-3">
-                      <ImageUploader
-                        onImageUpload={(url) => setHeroImageUrl(url)}
-                        currentImage={heroImageUrl}
-                        label="Upload Hero Image"
-                      />
-                      
-                      <div className="relative">
-                        <Label>Or paste Image URL</Label>
-                        <Input
-                          placeholder="https://... or s3://..."
-                          value={heroImageUrl}
-                          onChange={(e) => setHeroImageUrl(e.target.value)}
-                          className="bg-card/50 border-border/50"
-                        />
-                      </div>
-                      
-                      <Button
-                        onClick={handleUploadHeroImage}
-                        disabled={uploadingHeroImage || !heroImageUrl}
-                        className="w-full bg-foreground text-background hover:bg-foreground/90"
-                      >
-                        {uploadingHeroImage ? 'Adding...' : 'Add to Carousel'}
-                      </Button>
-                    </div>
-                  </div>
-                </div>
-
-                {/* Images Grid */}
-                {heroImages.length > 0 && (
-                  <div className="mb-4 flex items-center gap-4 pb-4 border-b border-border/30">
-                    <input
-                      type="checkbox"
-                      checked={selectedHeroImages.length === heroImages.length && heroImages.length > 0}
-                      onChange={selectAllHeroImages}
-                      className="w-4 h-4 rounded border-border/50"
-                    />
-                    <span className="text-sm text-muted-foreground">
-                      Select All ({selectedHeroImages.length}/{heroImages.length} selected)
-                    </span>
-                  </div>
-                )}
-                <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
-                  {heroImages.length > 0 ? (
-                    heroImages.map((image, index) => (
-                      <div key={image.id} className="relative group aspect-[3/4] rounded-xl overflow-hidden border border-border/50 bg-card/20 hover:border-foreground/30 transition-all">
-                        <img
-                          src={image.image_url}
-                          alt={image.title || `Hero ${index + 1}`}
-                          className="w-full h-full object-cover"
-                        />
-                        <div className="absolute inset-0 bg-black/70 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
-                          <Button
-                            variant="destructive"
-                            size="sm"
-                            onClick={() => handleDeleteHeroImage(image.id)}
-                          >
-                            <Trash2 className="w-4 h-4 mr-2" />
-                            Delete
-                          </Button>
-                        </div>
-                        <div className="absolute top-2 left-2 flex items-center gap-2">
-                          <input
-                            type="checkbox"
-                            checked={selectedHeroImages.includes(image.id)}
-                            onChange={(e) => {
-                              e.stopPropagation();
-                              toggleHeroImageSelection(image.id);
-                            }}
-                            className="w-4 h-4 rounded border-border/50 bg-black/80 cursor-pointer"
-                            onClick={(e) => e.stopPropagation()}
-                          />
-                          <div className="px-2 py-1 rounded-md bg-black/80 text-xs font-medium">
-                            #{image.sort_order ?? index + 1}
-                          </div>
-                          {image.is_active && (
-                            <div className="px-2 py-1 rounded-md bg-green-500/80 text-xs font-medium">
-                              ✓ Active
-                            </div>
-                          )}
-                        </div>
-                        {!image.is_active && (
-                          <div className="absolute top-2 right-2 px-2 py-1 rounded-md bg-red-500/80 text-xs font-medium">
-                            Inactive
-                          </div>
-                        )}
-                      </div>
-                    ))
-                  ) : (
-                    <div className="col-span-full text-center py-16 border border-dashed border-border/50 rounded-xl">
-                      <Package className="w-16 h-16 mx-auto mb-4 text-muted-foreground opacity-50" />
-                      <p className="text-muted-foreground">No hero images yet</p>
-                      <p className="text-sm text-muted-foreground mt-2">Upload your first image above</p>
-                    </div>
-                  )}
-                </div>
-
-                {/* Info */}
-                <div className="mt-6 p-4 rounded-lg bg-foreground/5 border border-foreground/10">
-                  <p className="text-xs text-muted-foreground">
-                    💡 <strong>Tip:</strong> Images are displayed in the order they were added (sort_order). 
-                    For best results, use landscape images with aspect ratio 16:9 or similar.
-                  </p>
-                </div>
               </div>
             </TabsContent>
 

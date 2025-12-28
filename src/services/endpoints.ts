@@ -88,14 +88,6 @@ export const ENDPOINTS = {
     UPDATE: (id: string | number) => `/brands/${id}`,
     DELETE: (id: string | number) => `/brands/${id}`,
   },
-
-  // Hero Images endpoints
-  HERO_IMAGES: {
-    LIST: '/hero-images',
-    ADMIN_LIST: '/admin/hero-images',
-    CREATE: '/admin/hero-images',
-    DELETE: (id: string | number) => `/admin/hero-images/${id}`,
-  },
 } as const;
 
 export default ENDPOINTS;

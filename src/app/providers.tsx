@@ -9,6 +9,7 @@ import { TooltipProvider } from '@/components/ui/tooltip';
 import { Toaster } from '@/components/ui/toaster';
 import { Toaster as Sonner } from '@/components/ui/sonner';
 import { ApiError } from '@/services/api/errorHandler';
+import { FavoritesProvider } from '@/contexts/FavoritesContext';
 
 // Create QueryClient instance with optimized configuration
 const queryClient = new QueryClient({
@@ -42,10 +43,12 @@ interface AppProvidersProps {
 
 export const AppProviders = ({ children }: AppProvidersProps) => (
   <QueryClientProvider client={queryClient}>
-    <TooltipProvider>
-      {children}
-      <Toaster />
-      <Sonner />
-    </TooltipProvider>
+    <FavoritesProvider>
+      <TooltipProvider>
+        {children}
+        <Toaster />
+        <Sonner />
+      </TooltipProvider>
+    </FavoritesProvider>
   </QueryClientProvider>
 );

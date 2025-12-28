@@ -9,8 +9,9 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Search, Heart, AlertCircle } from "lucide-react";
 import { isAuthenticated } from "@/utils/authStorage";
-import { useFavorites, useProducts } from "@/hooks/useApi";
+import { useProducts } from "@/hooks/useApi";
 import { useDebounce } from "@/hooks/useDebounce";
+import { useFavoritesContext } from "@/contexts/FavoritesContext";
 
 const Favorites = () => {
   const navigate = useNavigate();
@@ -18,16 +19,13 @@ const Favorites = () => {
   const [searchQuery, setSearchQuery] = useState("");
   const debouncedSearch = useDebounce(searchQuery, 300);
   
-  // Use React Query hooks for favorites and products
-  const { data: favoritesData, isLoading: loading, error } = useFavorites();
+  // Use context for favorites (prevents duplicate requests)
+  const { favorites: favoritesArray, isLoading: loading } = useFavoritesContext();
+  // Use direct API for products - React Query caches it
   const { data: productsData } = useProducts();
   
-  // Extract favorites array and all products
-  const favorites = favoritesData?.favorites || [];
-  const allProducts = useMemo(() => {
-    if (!productsData) return [];
-    return productsData.products || productsData || [];
-  }, [productsData]);
+  // Extract favorites array
+  const favorites = favoritesArray || [];
   
   // Check authentication on mount
   if (!isAuthenticated()) {

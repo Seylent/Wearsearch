@@ -7,21 +7,18 @@ import ProductCard from "@/components/ProductCard";
 import { Button } from "@/components/ui/button";
 import { Product } from "@/services/productService";
 import { NeonAbstractions } from "@/components/NeonAbstractions";
-import { useProducts, useHeroImages } from "@/hooks/useApi";
+import { useHomepageData } from "@/hooks/useAggregatedData";
 
 const Index: React.FC = () => {
   const navigate = useNavigate();
   const { t } = useTranslation();
-  const [currentImageIndex, setCurrentImageIndex] = useState(0);
   
   // Defer API calls - use enabled flag to prevent automatic fetching
   // Fetch data after initial render to not block FCP/LCP
   const [shouldFetchData, setShouldFetchData] = useState(false);
   
-  const { data: productsData, isLoading: productsLoading } = useProducts({ 
-    enabled: shouldFetchData 
-  });
-  const { data: heroImagesData } = useHeroImages({ 
+  // Use aggregated hook to reduce API requests (2-3 requests → 1 request)
+  const { data: homepageData, isLoading: productsLoading } = useHomepageData({ 
     enabled: shouldFetchData 
   });
   
@@ -35,8 +32,11 @@ const Index: React.FC = () => {
     return () => clearTimeout(timeoutId);
   }, []);
 
-  // Process products data
+  // Process products data from aggregated response
   const products = React.useMemo(() => {
+    if (!homepageData) return [];
+    
+    const productsData = homepageData.products;
     if (!productsData) return [];
     
     let productsList: Product[] = [];
@@ -49,32 +49,7 @@ const Index: React.FC = () => {
     }
     
     return productsList.slice(0, 6);
-  }, [productsData]);
-
-  // Process hero images
-  const heroImages = React.useMemo(() => {
-    if (!heroImagesData) return [];
-    
-    let images = [];
-    if (Array.isArray(heroImagesData)) {
-      images = heroImagesData;
-    } else if (heroImagesData.images && Array.isArray(heroImagesData.images)) {
-      images = heroImagesData.images;
-    } else if (heroImagesData.data && Array.isArray(heroImagesData.data)) {
-      images = heroImagesData.data;
-    }
-    
-    return images.filter((img: any) => img.is_active !== false);
-  }, [heroImagesData]);
-
-  useEffect(() => {
-    if (heroImages.length > 1) {
-      const interval = setInterval(() => {
-        setCurrentImageIndex((prev) => (prev + 1) % heroImages.length);
-      }, 5000); // Change image every 5 seconds
-      return () => clearInterval(interval);
-    }
-  }, [heroImages]);
+  }, [homepageData]);
 
   return (
     <div className="min-h-screen bg-black text-white">
@@ -82,47 +57,8 @@ const Index: React.FC = () => {
 
       {/* Hero Section */}
       <section className="relative min-h-screen flex items-center justify-center overflow-hidden pt-16 sm:pt-20">
-        {/* Hero Images as Floating Products - Load lazily */}
-        {heroImages.length > 0 && (
-          <div className="absolute inset-0 z-0 pointer-events-none hidden md:block">
-            {heroImages.map((image, index) => (
-              <div
-                key={image.id}
-                className={`absolute transition-all duration-1000 ${
-                  index === currentImageIndex ? 'opacity-100 scale-100' : 'opacity-0 scale-95'
-                }`}
-                style={{
-                  // Position images dynamically - more visible placement
-                  top: index % 2 === 0 ? '30%' : '50%',
-                  right: index % 3 === 0 ? '15%' : index % 3 === 1 ? '50%' : '5%',
-                  transform: `translateY(-50%) rotate(${index % 2 === 0 ? '-5deg' : '5deg'})`,
-                }}
-              >
-                <div className="relative w-[280px] lg:w-[380px] h-[360px] lg:h-[480px] overflow-hidden rounded-2xl">
-                  <img
-                    src={image.image_url}
-                    alt={image.title || `Hero ${index + 1}`}
-                    className="w-full h-full object-cover"
-                    loading={index === 0 ? "eager" : "lazy"}
-                    decoding={index === 0 ? "sync" : "async"}
-                    fetchpriority={index === 0 ? "high" : "low"}
-                    style={{
-                      filter: 'brightness(1.4) contrast(1.3) saturate(0) drop-shadow(0 0 22px rgba(255,255,255,0.4)) drop-shadow(0 0 3px rgba(255,255,255,0.2))',
-                      mixBlendMode: 'screen',
-                    }}
-                    onError={(e) => {
-                      console.error('Hero image failed to load:', image.image_url);
-                      e.currentTarget.style.display = 'none';
-                    }}
-                  />
-                </div>
-              </div>
-            ))}
-          </div>
-        )}
-        
-        {/* NeonAbstractions on top of hero images */}
-        <div className="absolute inset-0 z-[5]">
+        {/* NeonAbstractions background */}
+        <div className="absolute inset-0 z-0">
           <NeonAbstractions />
         </div>
 

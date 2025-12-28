@@ -16,6 +16,7 @@ export const SearchDropdown: React.FC<SearchDropdownProps> = ({ onClose }) => {
   const inputRef = useRef<HTMLInputElement>(null);
   const dropdownRef = useRef<HTMLDivElement>(null);
   
+  // Fetch products ONCE - React Query will cache it
   const { data: productsData, isLoading: loading } = useProducts();
 
   useEffect(() => {
