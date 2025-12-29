@@ -19,19 +19,29 @@ const Auth: React.FC = () => {
     e.preventDefault();
     setLoading(true);
     try {
+      console.log('🔐 Starting login process...');
       const res = await authService.login({ identifier, password });
-      if (res.success && res.access_token) {
+      
+      console.log('✅ Login service completed, checking token...');
+      
+      // Check if login was successful by verifying token is stored
+      if (authService.isAuthenticated()) {
+        console.log('✅ Authentication successful, token stored');
         toast({
           title: 'Success',
           description: 'Logged in successfully!',
         });
         // Trigger auth change event
         window.dispatchEvent(new Event('authChange'));
+        
+        console.log('🔀 Navigating to home page');
         navigate('/');
       } else {
-        throw new Error(res.error || 'Login failed');
+        console.error('❌ Login failed - no token stored');
+        throw new Error('Login failed - no authentication token received');
       }
     } catch (err: any) {
+      console.error('❌ Login error:', err);
       toast({
         title: 'Login Failed',
         description: err.message || 'Invalid credentials',

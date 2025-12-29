@@ -27,6 +27,11 @@ export const useAuthEvents = () => {
       const customEvent = event as CustomEvent<AuthLogoutEventDetail>;
       const reason = customEvent.detail?.reason || 'manual';
       
+      console.log('🔴 Logout event received:', { 
+        reason, 
+        currentPath: window.location.pathname 
+      });
+      
       // Clear all cached data
       queryClient.clear();
       
@@ -41,7 +46,10 @@ export const useAuthEvents = () => {
       
       // Navigate to auth page if not already there
       if (!window.location.pathname.includes('/auth')) {
+        console.log('🔀 Redirecting to /auth page');
         navigate('/auth', { replace: true });
+      } else {
+        console.log('ℹ️ Already on /auth page, skipping redirect');
       }
     };
     

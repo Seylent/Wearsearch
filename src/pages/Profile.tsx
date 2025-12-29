@@ -60,9 +60,12 @@ const Profile = () => {
 
   const checkUser = useCallback(async () => {
     if (!authService.isAuthenticated()) {
+      console.log('❌ No auth token found, redirecting to /auth');
       navigate("/auth");
       return;
     }
+
+    console.log('✅ Auth token found, loading user data...');
 
     // Cancel previous request if exists
     if (abortControllerRef.current) {
@@ -73,6 +76,7 @@ const Profile = () => {
 
     try {
       const userData = await authService.getCurrentUser();
+      console.log('✅ User data loaded successfully:', userData);
       if (isMounted.current) {
         setUser(userData);
         setEmail(userData.email || "");
@@ -81,14 +85,28 @@ const Profile = () => {
     } catch (error: any) {
       // Don't show error if request was aborted
       if (error.name === 'CanceledError' || error.code === 'ERR_CANCELED') {
+        console.log('⚠️ Request was aborted');
         return;
       }
-      console.error("Error loading user:", error);
-      if (isMounted.current) {
-        navigate("/auth");
+      console.error("❌ Error loading user:", error);
+      console.error("Error details:", {
+        message: error.message,
+        status: error.status,
+        code: error.code,
+        errorCode: error.errorCode
+      });
+      
+      // Don't redirect here - let the axios interceptor handle auth errors
+      // Only redirect if it's a network error or other non-auth error
+      if (isMounted.current && !error.isAuthError?.()) {
+        toast({
+          title: 'Error',
+          description: 'Failed to load user data. Please try again.',
+          variant: 'destructive',
+        });
       }
     }
-  }, [navigate]);
+  }, [navigate, toast]);
 
   useEffect(() => {
     checkUser();

@@ -1,5 +1,85 @@
 # FOR BACKEND DEVELOPER - Critical Updates Required
 
+## 🚨 CRITICAL: Image Upload Endpoint Error
+
+### Current Problem:
+Image upload fails with error: **"Unexpected field"**
+
+**Error Details:**
+```
+POST http://localhost:3000/api/supabase-upload/image 400/500
+Server error: ApiError: Unexpected field
+```
+
+This error occurs when the multer field name on backend doesn't match the field name sent by frontend.
+
+### What Frontend Currently Sends:
+```javascript
+POST /api/supabase-upload/image
+Content-Type: multipart/form-data
+
+FormData:
+  image: [File object]  // ← Frontend currently sends 'image' field
+```
+
+### Backend Configuration Issue:
+
+The error "Unexpected field" means your multer configuration expects a DIFFERENT field name.
+
+**Check your backend code:**
+```javascript
+// Your backend currently has something like:
+router.post('/supabase-upload/image', upload.single('???'), ...);
+//                                                       ^^^
+//                                         What field name is here?
+```
+
+### Solution Options:
+
+#### Option 1: Update Backend to Accept 'image' (RECOMMENDED)
+```javascript
+// Change your backend to:
+router.post('/supabase-upload/image', upload.single('image'), async (req, res) => {
+  //                                                  ^^^^^
+  //                                    Must be 'image' to match frontend
+  
+  if (!req.file) {
+    return res.status(400).json({ error: 'No file uploaded' });
+  }
+  
+  try {
+    const url = await uploadToStorage(req.file);
+    
+    res.json({
+      url: url,
+      filename: req.file.originalname,
+      size: req.file.size,
+      mimetype: req.file.mimetype
+    });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+```
+
+#### Option 2: Tell Me Your Field Name
+If you can't change the backend, please check what field name your multer expects and let the frontend developer know. Common names:
+- `image` ← **Frontend currently uses this**
+- `file`
+- `photo`
+- `upload`
+- `filePath`
+
+### How to Find Your Current Field Name:
+Look in your backend code for:
+```javascript
+upload.single('FIELD_NAME_HERE')
+// or
+upload.array('FIELD_NAME_HERE')
+```
+
+---
+
 ## 🚨 MOST CRITICAL: Product Creation with Multiple Stores
 
 ### Current Problem:

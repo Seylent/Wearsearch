@@ -38,17 +38,39 @@ export const getAuth = (): string | null => {
       const authData: AuthData = JSON.parse(authDataStr);
       
       // Check if token is expired
-      if (authData.expiresAt && Date.now() > authData.expiresAt) {
-        clearAuth();
-        return null;
+      if (authData.expiresAt) {
+        const now = Date.now();
+        const isExpired = now > authData.expiresAt;
+        
+        if (isExpired) {
+          console.warn('⏰ Token expired:', {
+            expiresAt: new Date(authData.expiresAt).toISOString(),
+            now: new Date(now).toISOString(),
+            expiredAgo: `${Math.round((now - authData.expiresAt) / 1000)}s ago`
+          });
+          clearAuth();
+          return null;
+        }
+        
+        const timeLeft = authData.expiresAt - now;
+        if (timeLeft < 5 * 60 * 1000) { // Less than 5 minutes
+          console.log('⚠️ Token expires soon:', {
+            expiresIn: `${Math.round(timeLeft / 1000)}s`
+          });
+        }
       }
       
       return authData.token;
     }
     
     // Fallback to legacy token
-    return localStorage.getItem('access_token');
+    const legacyToken = localStorage.getItem('access_token');
+    if (legacyToken) {
+      console.log('ℹ️ Using legacy token from access_token');
+    }
+    return legacyToken;
   } catch (error) {
+    console.error('❌ Error getting auth token:', error);
     logError(error as Error, { component: 'authStorage', action: 'GET_AUTH' });
     return null;
   }
@@ -89,6 +111,16 @@ export const getAuthData = (): AuthData | null => {
  * Clear authentication data
  */
 export const clearAuth = (): void => {
+  console.log('🧹 Clearing authentication data');
+  
+  // Log what's being cleared for debugging
+  const hadAuth = !!localStorage.getItem(AUTH_TOKEN_KEY);
+  const hadLegacy = !!localStorage.getItem('access_token');
+  
+  if (hadAuth || hadLegacy) {
+    console.log('Clearing auth tokens:', { hadAuth, hadLegacy });
+  }
+  
   localStorage.removeItem(AUTH_TOKEN_KEY);
   
   // Also clear legacy keys and user data

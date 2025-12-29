@@ -32,6 +32,12 @@ api.interceptors.request.use(
     
     if (token && config.headers) {
       config.headers.Authorization = `Bearer ${token}`;
+      console.log(`🔑 Adding auth token to ${config.method?.toUpperCase()} ${config.url}`, {
+        tokenPreview: `${token.substring(0, 20)}...`,
+        tokenLength: token.length
+      });
+    } else if (!token && config.url && !config.url.includes('/auth/login') && !config.url.includes('/auth/register')) {
+      console.warn(`⚠️ No token available for ${config.method?.toUpperCase()} ${config.url}`);
     }
     
     return config;
@@ -60,7 +66,12 @@ api.interceptors.response.use(
     
     // Handle authentication errors globally
     if (apiError.isAuthError()) {
-      console.log('Authentication error - clearing auth');
+      console.log('🚨 Authentication error detected:', {
+        status: apiError.status,
+        message: apiError.message,
+        url: error.config?.url
+      });
+      console.log('🧹 Clearing auth and dispatching logout event');
       clearAuth();
       
       // Dispatch custom event for auth handling (avoid direct window.location)

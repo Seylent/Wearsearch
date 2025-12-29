@@ -26,8 +26,14 @@ export const authService = {
    */
   async login(credentials: LoginCredentials): Promise<AuthResponse> {
     try {
+      console.log('🔐 Attempting login...');
       const response = await api.post(ENDPOINTS.LOGIN, credentials);
       const data = response.data;
+      console.log('✅ Login response received:', { 
+        hasToken: !!(data.access_token || data.token),
+        hasUser: !!data.user,
+        userId: data.user?.id 
+      });
 
       // Store auth token
       if (data.access_token || data.token) {
@@ -35,6 +41,13 @@ export const authService = {
         const userId = data.user?.id;
         const expiresIn = data.expires_in;
         const expiresAt = expiresIn ? Date.now() + expiresIn * 1000 : undefined;
+
+        console.log('💾 Storing auth data:', { 
+          tokenLength: token.length,
+          userId,
+          expiresIn,
+          expiresAt: expiresAt ? new Date(expiresAt).toISOString() : 'no expiration'
+        });
 
         setAuth(token, userId, expiresAt);
         
@@ -45,10 +58,15 @@ export const authService = {
 
         // Sync guest favorites after successful login
         await this.syncGuestFavorites(token);
+        
+        console.log('✅ Login completed successfully');
+      } else {
+        console.error('❌ No token received from login response');
       }
 
       return data;
     } catch (error) {
+      console.error('❌ Login failed:', error);
       const apiError = handleApiError(error);
       throw new Error(apiError.message);
     }

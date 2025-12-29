@@ -18,21 +18,31 @@ export const useImageUpload = () => {
         throw new Error(validation.error);
       }
 
-      return uploadService.uploadImage(file);
+      const result = await uploadService.uploadImage(file);
+      // Return just the URL string for easier handling
+      return result.url;
     },
-    onSuccess: (url) => {
+    onSuccess: () => {
       toast({
         title: 'Success',
         description: 'Image uploaded successfully',
       });
     },
     onError: (error: Error) => {
+      console.error('Upload error details:', error);
+      
       // Check if upload endpoint is not configured
       if (error.message.includes('404') || error.message.includes('Not Found')) {
         toast({
           title: 'Upload Not Configured',
           description: 'Please paste the image URL directly in the field below',
           variant: 'default',
+        });
+      } else if (error.message.includes('filePath')) {
+        toast({
+          title: 'Upload Configuration Error',
+          description: 'Backend upload endpoint needs configuration. Please contact support.',
+          variant: 'destructive',
         });
       } else {
         toast({
