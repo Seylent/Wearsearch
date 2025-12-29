@@ -1,4 +1,4 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { useToast } from "@/hooks/use-toast";
 import Navigation from "@/components/layout/Navigation";
@@ -28,19 +28,23 @@ const Favorites = () => {
   const favorites = favoritesArray || [];
   
   // Check authentication on mount
-  if (!isAuthenticated()) {
-    toast({
-      title: "Login Required",
-      description: "Please login to view your favorites",
-      variant: "destructive",
-    });
-    navigate("/auth");
-    return null;
-  }
+  useEffect(() => {
+    if (!isAuthenticated()) {
+      toast({
+        title: "Login Required",
+        description: "Please login to view your favorites",
+        variant: "destructive",
+      });
+      navigate("/auth");
+    }
+  }, [navigate, toast]);
 
   // Merge favorites with full product data from products query
   // This is needed because favorites API doesn't return complete product info (e.g. image_url is null)
   const products = useMemo(() => {
+    // useProducts returns data directly as array, not { products: [] }
+    const allProducts = Array.isArray(productsData) ? productsData : [];
+    
     return favorites.map((fav: any) => {
       const favoriteProduct = fav.products || fav.product || fav;
       // Find the full product data from products query
@@ -48,7 +52,7 @@ const Favorites = () => {
       // Merge: use full product data if available, otherwise use favorite product data
       return fullProduct || favoriteProduct;
     });
-  }, [favorites, allProducts]);
+  }, [favorites, productsData]);
 
   const filteredFavorites = Array.isArray(products) 
     ? products.filter(product => {
@@ -95,19 +99,6 @@ const Favorites = () => {
         {/* Content */}
         {loading ? (
           <ProductGridSkeleton count={12} columns={4} />
-        ) : error ? (
-          <div className="text-center py-32 border border-dashed border-destructive/30 rounded-3xl bg-destructive/5">
-            <div className="w-16 h-16 rounded-full bg-destructive/10 flex items-center justify-center mx-auto mb-6">
-              <AlertCircle className="w-8 h-8 text-destructive" />
-            </div>
-            <h3 className="font-display text-xl font-semibold mb-2">Failed to load favorites</h3>
-            <p className="text-muted-foreground mb-6 max-w-md mx-auto">
-              We couldn't load your favorites. Please check your connection and try again.
-            </p>
-            <Button onClick={() => window.location.reload()}>
-              Retry
-            </Button>
-          </div>
         ) : filteredFavorites.length === 0 ? (
           <div className="text-center py-20 border border-dashed border-border/30 rounded-3xl bg-card/10">
             <div className="w-16 h-16 rounded-full border-2 border-border/30 flex items-center justify-center mx-auto mb-6 select-none">

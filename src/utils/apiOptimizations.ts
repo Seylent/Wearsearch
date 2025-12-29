@@ -4,6 +4,7 @@
  */
 
 import { api } from './api';
+import { logError } from '@/services/logger';
 
 // Simple in-memory cache
 const cache = new Map<string, { data: any; timestamp: number }>();
@@ -64,13 +65,13 @@ export const batchRequests = async <T extends Record<string, any>>(
     if (result.status === 'fulfilled') {
       const { result: apiResult, error } = result.value;
       if (error) {
-        console.error(`[Batch Request] Error in ${key}:`, error);
+        logError(error, { component: 'batchRequest', action: key });
         data[key as keyof T] = null;
       } else {
         data[key as keyof T] = apiResult;
       }
     } else {
-      console.error(`[Batch Request] Failed ${key}:`, result.reason);
+      logError(result.reason, { component: 'batchRequest', action: `FAILED_${key}` });
       data[key as keyof T] = null;
     }
   });
@@ -158,6 +159,6 @@ export const prefetchData = async (
     setCachedData(key, response.data);
     console.log(`[Prefetch] Cached: ${key}`);
   } catch (error) {
-    console.error(`[Prefetch] Failed: ${endpoint}`, error);
+    logError(error as Error, { component: 'prefetch', action: endpoint });
   }
 };

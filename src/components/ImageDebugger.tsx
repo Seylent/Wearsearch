@@ -43,7 +43,6 @@ const ImageDebugger: React.FC<ImageDebuggerProps> = memo(({
   return (
     <div ref={imgRef} className={`w-full h-full bg-muted flex items-center justify-center ${className}`}>
       {!failed && isVisible ? (
-        // eslint-disable-next-line @next/next/no-img-element
         <img
           src={src}
           alt={alt}

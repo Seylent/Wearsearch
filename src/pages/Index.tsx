@@ -8,10 +8,21 @@ import { Button } from "@/components/ui/button";
 import { Product } from "@/services/productService";
 import { NeonAbstractions } from "@/components/NeonAbstractions";
 import { useHomepageData } from "@/hooks/useAggregatedData";
+import { useSEO } from "@/hooks/useSEO";
+import { ProductGridSkeleton } from "@/components/common/SkeletonLoader";
 
 const Index: React.FC = () => {
   const navigate = useNavigate();
   const { t } = useTranslation();
+  
+  // SEO Meta Tags
+  useSEO({
+    title: t('home.seoTitle', 'Wearsearch - Discover Exceptional Fashion'),
+    description: t('home.seoDescription', 'Discover and shop the latest fashion trends. Find clothing, footwear, and accessories from top stores with worldwide shipping.'),
+    keywords: 'fashion, clothing, shopping, streetwear, designer, brands, online shopping',
+    type: 'website',
+    image: 'https://wearsearch.com/og-image.jpg',
+  });
   
   // Defer API calls - use enabled flag to prevent automatic fetching
   // Fetch data after initial render to not block FCP/LCP
@@ -56,27 +67,28 @@ const Index: React.FC = () => {
       <Navigation />
 
       {/* Hero Section */}
-      <section className="relative min-h-screen flex items-center justify-center overflow-hidden pt-16 sm:pt-20">
-        {/* NeonAbstractions background */}
-        <div className="absolute inset-0 z-0">
-          <NeonAbstractions />
-        </div>
+      <main id="main-content">
+        <section className="relative min-h-screen flex items-center justify-center overflow-hidden pt-16 sm:pt-20">
+          {/* NeonAbstractions background */}
+          <div className="absolute inset-0 z-0" aria-hidden="true">
+            <NeonAbstractions />
+          </div>
 
-        <div className="container mx-auto px-4 sm:px-6 relative z-10">
-          <div className="max-w-4xl mx-auto text-center mt-4 sm:mt-16 md:mt-20">
-            {/* Main headline - LCP element, render immediately */}
-            <h1 className="font-display text-4xl sm:text-5xl md:text-6xl lg:text-7xl xl:text-8xl font-bold mb-4 sm:mb-6 tracking-tight">
-              <span className="block text-white filter brightness-110">{t('home.discover')}</span>
-              <span className="block relative inline-block">
-                <span className="text-white filter brightness-125">{t('home.exceptional')}</span>
-              </span>
-              <span className="block text-white filter brightness-110">{t('home.fashion')}</span>
-            </h1>
+          <div className="container mx-auto px-4 sm:px-6 relative z-10">
+            <div className="max-w-4xl mx-auto text-center mt-4 sm:mt-16 md:mt-20">
+              {/* Main headline - LCP element, render immediately */}
+              <h1 className="font-display text-4xl sm:text-5xl md:text-6xl lg:text-7xl xl:text-8xl font-bold mb-4 sm:mb-6 tracking-tight">
+                <span className="block text-white filter brightness-110">{t('home.discover')}</span>
+                <span className="block relative inline-block">
+                  <span className="text-white filter brightness-125">{t('home.exceptional')}</span>
+                </span>
+                <span className="block text-white filter brightness-110">{t('home.fashion')}</span>
+              </h1>
 
-            {/* Subheadline */}
-            <p className="text-base sm:text-lg md:text-xl text-white/80 max-w-2xl mx-auto mb-6 sm:mb-10 leading-relaxed backdrop-blur-sm px-4">
-              {t('home.heroSubtitle')}
-            </p>
+              {/* Subheadline */}
+              <p className="text-base sm:text-lg md:text-xl text-white/80 max-w-2xl mx-auto mb-6 sm:mb-10 leading-relaxed backdrop-blur-sm px-4">
+                {t('home.heroSubtitle')}
+              </p>
 
             {/* Scroll down button */}
             <div className="flex justify-center mb-6 sm:mb-10">
@@ -113,58 +125,55 @@ const Index: React.FC = () => {
                 {t('home.viewStores')}
               </Button>
             </div>
+            </div>
           </div>
-        </div>
-      </section>
+        </section>
 
-      {/* New Arrivals Section */}
-      <section id="products-section" className="py-12 sm:py-16 md:py-20 bg-black">
-        <div className="container mx-auto px-4 sm:px-6">
-          {/* Section Header */}
-          <div className="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-4 sm:gap-6 mb-6 sm:mb-10">
-            <div>
-              <div className="inline-flex items-center gap-2 mb-2 sm:mb-3">
-                <div className="w-1.5 h-1.5 rounded-full bg-white" />
-                <span className="text-[10px] sm:text-xs text-white/60 uppercase tracking-wider">{t('home.justIn')}</span>
+        {/* New Arrivals Section */}
+        <section id="products-section" className="py-12 sm:py-16 md:py-20 bg-black">
+          <div className="container mx-auto px-4 sm:px-6">
+            {/* Section Header */}
+            <header className="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-4 sm:gap-6 mb-6 sm:mb-10">
+              <div>
+                <div className="inline-flex items-center gap-2 mb-2 sm:mb-3">
+                  <div className="w-1.5 h-1.5 rounded-full bg-white" aria-hidden="true" />
+                  <span className="text-[10px] sm:text-xs text-white/60 uppercase tracking-wider">{t('home.justIn')}</span>
+                </div>
+                <h2 className="font-display text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-bold text-white">{t('home.newArrivals')}</h2>
+                <p className="text-sm sm:text-base text-white/70 mt-1 sm:mt-2">{t('home.freshPieces')}</p>
               </div>
-              <h2 className="font-display text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-bold text-white">{t('home.newArrivals')}</h2>
-              <p className="text-sm sm:text-base text-white/70 mt-1 sm:mt-2">{t('home.freshPieces')}</p>
-            </div>
-          </div>
+            </header>
 
-          {/* Products Grid - Smaller cards */}
-          {productsLoading ? (
-            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-3 sm:gap-4">
-              {[...Array(10)].map((_, i) => (
-                <div key={i} className="aspect-[3/4] rounded-xl sm:rounded-2xl bg-card/50 animate-pulse" />
-              ))}
-            </div>
-          ) : (
-            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-3 sm:gap-4">
-              {products.slice(0, 10).map((product) => (
-                <ProductCard
-                  key={product.id}
-                  id={product.id}
-                  name={product.name}
-                  image={product.image_url || product.image}
-                  price={product.price}
-                  category={product.type}
-                />
-              ))}
-            </div>
-          )}
+            {/* Products Grid - Smaller cards */}
+            {productsLoading ? (
+              <ProductGridSkeleton count={10} columns={6} />
+            ) : (
+              <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-3 sm:gap-4">
+                {products.slice(0, 10).map((product) => (
+                  <ProductCard
+                    key={product.id}
+                    id={product.id}
+                    name={product.name}
+                    image={product.image_url || product.image}
+                    price={product.price}
+                    category={product.type}
+                  />
+                ))}
+              </div>
+            )}
 
-          {/* View All Button - Glassmorphism */}
-          <div className="text-center mt-12">
-            <button 
-              onClick={() => navigate("/products")}
-              className="relative px-8 py-3 rounded-full border border-white/20 bg-white/5 backdrop-blur-[30px] text-white font-medium text-sm hover:bg-white/10 hover:border-white/30 transition-all duration-300 overflow-hidden group"
-            >
-              <span className="relative">{t('home.viewAllProducts')}</span>
-            </button>
+            {/* View All Button - Glassmorphism */}
+            <nav className="text-center mt-12">
+              <button 
+                onClick={() => navigate("/products")}
+                className="relative px-8 py-3 rounded-full border border-white/20 bg-white/5 backdrop-blur-[30px] text-white font-medium text-sm hover:bg-white/10 hover:border-white/30 transition-all duration-300 overflow-hidden group"
+              >
+                <span className="relative">{t('home.viewAllProducts')}</span>
+              </button>
+            </nav>
           </div>
-        </div>
-      </section>
+        </section>
+      </main>
 
       <Footer />
     </div>

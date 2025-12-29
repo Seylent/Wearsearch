@@ -13,6 +13,7 @@ import {
 import { useTranslation } from 'react-i18next';
 import { translateSuccessCode, translateErrorCode } from '@/utils/errorTranslation';
 import { useFavoritesContext } from '@/contexts/FavoritesContext';
+import { cn } from '@/lib/utils';
 
 interface FavoriteButtonProps {
   productId: string;
@@ -36,7 +37,7 @@ export function FavoriteButton({
   const [guestFavorited, setGuestFavorited] = useState(false);
   
   // Use context instead of direct hook call (prevents multiple API requests)
-  const { isFavorited: isInFavorites } = useFavoritesContext();
+  const { isFavorited: isInFavorites, isLoading: isFavoritesLoading } = useFavoritesContext();
   const addFavorite = useAddFavorite();
   const removeFavorite = useRemoveFavorite();
 
@@ -108,13 +109,22 @@ export function FavoriteButton({
       disabled={isLoggedIn && (addFavorite.isPending || removeFavorite.isPending || isFavoritesLoading)}
       variant={variant}
       size={size}
-      className={`${className} transition-all ${isFavorited ? 'text-red-500 hover:text-red-600' : 'hover:text-red-400'}`}
+      className={cn(
+        'transition-all',
+        isFavorited ? 'text-red-500 hover:text-red-600' : 'hover:text-red-400',
+        className
+      )}
       title={isFavorited ? 'Remove from favorites' : 'Add to favorites'}
+      aria-label={isFavorited ? 'Remove from favorites' : 'Add to favorites'}
+      aria-pressed={isFavorited}
     >
       <Heart 
-        className={`h-5 w-5 ${showText ? 'mr-2' : ''} transition-all ${
+        className={cn(
+          'h-5 w-5 transition-all',
+          showText && 'mr-2',
           isFavorited ? 'fill-red-500 scale-110' : 'hover:scale-110'
-        }`}
+        )}
+        aria-hidden="true"
       />
       {showText && (isFavorited ? `❤️ ${t('products.saved')}` : t('products.save'))}
     </Button>

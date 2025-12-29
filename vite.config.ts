@@ -28,7 +28,10 @@ export default defineConfig(({ mode }) => ({
         }
       : undefined,
   },
-  plugins: [react(), mode === "development" && componentTagger()].filter(Boolean),
+  plugins: [
+    react(),
+    mode === "development" && componentTagger(),
+  ].filter(Boolean),
   resolve: {
     alias: {
       "@": path.resolve(__dirname, "./src"),
@@ -38,27 +41,16 @@ export default defineConfig(({ mode }) => ({
     target: 'esnext',
     minify: 'esbuild',
     cssMinify: true,
-    reportCompressedSize: false, // Faster builds
+    reportCompressedSize: true, // Show sizes
     rollupOptions: {
       output: {
-        manualChunks: (id) => {
-          // Simplified chunk strategy - fewer chunks, fewer requests
-          
-          // All node_modules in one vendor chunk for fewer HTTP requests
-          if (id.includes('node_modules')) {
-            return 'vendor';
-          }
-        },
-        // Optimize chunk sizes
         chunkFileNames: 'assets/[name]-[hash].js',
         entryFileNames: 'assets/[name]-[hash].js',
         assetFileNames: 'assets/[name]-[hash].[ext]',
       },
     },
-    sourcemap: mode === 'development',
-    chunkSizeWarningLimit: 1000, // Allow larger chunks to reduce HTTP requests
-    // Disable CSS code splitting - combine all CSS into one file
-    cssCodeSplit: false,
+    sourcemap: false,
+    chunkSizeWarningLimit: 500,
   },
   optimizeDeps: {
     include: [

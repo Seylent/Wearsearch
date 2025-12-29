@@ -3,6 +3,8 @@
  * Centralized token management for the entire application
  */
 
+import { logError } from '@/services/logger';
+
 const AUTH_TOKEN_KEY = 'wearsearch.auth';
 
 export interface AuthData {
@@ -47,7 +49,7 @@ export const getAuth = (): string | null => {
     // Fallback to legacy token
     return localStorage.getItem('access_token');
   } catch (error) {
-    console.error('Error reading auth data:', error);
+    logError(error as Error, { component: 'authStorage', action: 'GET_AUTH' });
     return null;
   }
 };
@@ -78,7 +80,7 @@ export const getAuthData = (): AuthData | null => {
     
     return null;
   } catch (error) {
-    console.error('Error reading auth data:', error);
+    logError(error as Error, { component: 'authStorage', action: 'GET_AUTH_DATA' });
     return null;
   }
 };

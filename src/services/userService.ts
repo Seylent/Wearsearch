@@ -3,6 +3,7 @@ import ENDPOINTS from './endpoints';
 import { AxiosResponse } from 'axios';
 import { User } from './authService';
 import { Product } from './productService';
+import { logError } from './logger';
 
 // Type definitions for user-related data
 export interface UserProfile extends User {
@@ -154,7 +155,7 @@ export const userService = {
       const favorites = await this.getFavorites();
       return favorites.some((product) => product.id === Number(productId));
     } catch (error) {
-      console.error('Error checking favorite status:', error);
+      logError(error as Error, { component: 'userService', action: 'IS_FAVORITE', metadata: { productId } });
       return false;
     }
   },

@@ -3,6 +3,7 @@ import { DollarSign } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Text } from "@/components/ui/typography";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 
@@ -151,10 +152,18 @@ export const SuggestedPrice = ({ productId, currentPrice }: SuggestedPriceProps)
               (based on {totalSuggestions} {totalSuggestions === 1 ? 'suggestion' : 'suggestions'})
             </span>
           </div>
+import { Text } from '@/components/ui/typography';
+
+// ... existing imports ...
+
           {priceDifference !== 0 && (
-            <p className={`text-sm select-none ${priceDifference > 0 ? 'text-red-500' : 'text-green-500'}`}>
+            <Text 
+              size="sm" 
+              variant={priceDifference > 0 ? 'destructive' : 'success'}
+              className="select-none"
+            >
               {priceDifference > 0 ? '+' : ''}{priceDifference.toFixed(1)}% compared to current price
-            </p>
+            </Text>
           )}
         </div>
       )}

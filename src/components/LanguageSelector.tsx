@@ -17,7 +17,7 @@ interface Language {
 }
 
 export const LanguageSelector: React.FC = () => {
-  const { i18n } = useTranslation();
+  const { i18n, t } = useTranslation();
 
   const languages: Language[] = [
     { code: SUPPORTED_LANGUAGES.EN, name: 'English', flag: 'ENG' },
@@ -37,7 +37,7 @@ export const LanguageSelector: React.FC = () => {
           variant="ghost" 
           size="icon"
           className="relative h-9 w-9 rounded-full hover:bg-zinc-800/60 transition-colors"
-          title="Change Language"
+          title={t('aria.changeLanguage')}
         >
           <Globe className="h-5 w-5 text-zinc-400 hover:text-white transition-colors" />
         </Button>

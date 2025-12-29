@@ -1,6 +1,8 @@
 import { useState, useRef } from 'react';
+import { useTranslation } from 'react-i18next';
 import { Upload, X, Image as ImageIcon } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { useImageUpload } from '@/hooks/useImageUpload';
 import { useToast } from '@/hooks/use-toast';
 
 interface ImageUploaderProps {
@@ -10,44 +12,43 @@ interface ImageUploaderProps {
 }
 
 export const ImageUploader = ({ onImageUpload, currentImage, label = "Product Image" }: ImageUploaderProps) => {
+  const { t } = useTranslation();
   const [file, setFile] = useState<File | null>(null);
   const [preview, setPreview] = useState<string>(currentImage || '');
-  const [uploading, setUploading] = useState(false);
   const [dragActive, setDragActive] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const { toast } = useToast();
+  
+  // Use centralized upload hook instead of direct fetch
+  const uploadMutation = useImageUpload();
 
-  const handleFileChange = (selectedFile: File | null) => {
-    if (!selectedFile) return;
-
-    // Validate file type
+  const handleFileChange = async (selectedFile: File) => {
     if (!selectedFile.type.startsWith('image/')) {
       toast({
-        title: 'Invalid File',
-        description: 'Please select an image file',
-        variant: 'destructive',
+        variant: "destructive",
+        title: "Invalid file type",
+        description: "Please select an image file",
       });
       return;
     }
 
-    // Validate file size (max 5MB)
     if (selectedFile.size > 5 * 1024 * 1024) {
       toast({
-        title: 'File Too Large',
-        description: 'Image must be less than 5MB',
-        variant: 'destructive',
+        variant: "destructive",
+        title: "File too large",
+        description: "Image must be less than 5MB",
       });
       return;
     }
 
-    setFile(selectedFile);
-
-    // Create preview
-    const reader = new FileReader();
-    reader.onloadend = () => {
-      setPreview(reader.result as string);
-    };
-    reader.readAsDataURL(selectedFile);
+    try {
+      // Use centralized upload service via hook
+      const url = await uploadMutation.mutateAsync(selectedFile);
+      onImageUpload(url);
+    } catch (error) {
+      // Error handling is done in the hook
+      console.error('Upload failed:', error);
+    }
   };
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -76,71 +77,20 @@ export const ImageUploader = ({ onImageUpload, currentImage, label = "Product Im
     }
   };
 
-  const handleUpload = async () => {
-    if (!file) {
-      toast({
-        title: 'No File Selected',
-        description: 'Please select an image to upload',
-        variant: 'destructive',
-      });
-      return;
-    }
-
-    setUploading(true);
-
-    try {
-      const formData = new FormData();
-      formData.append('image', file);
-
-      // Upload to backend server through Vite proxy
-      const response = await fetch('/api/upload/image', {
-        method: 'POST',
-        body: formData,
-      });
-
-      if (!response.ok) {
-        throw new Error('Upload endpoint not available');
-      }
-
-      const data = await response.json();
-      
-      if (data.url) {
-        onImageUpload(data.url);
-        toast({
-          title: 'Success',
-          description: 'Image uploaded successfully',
-        });
-      } else {
-        throw new Error('No URL returned');
-      }
-    } catch (error) {
-      // Upload endpoint not available - user can paste URL directly
-      toast({
-        title: 'Upload Not Configured',
-        description: 'Please paste the image URL directly in the field below',
-      });
-    } finally {
-      setUploading(false);
-    }
+  const handleClick = () => {
+    fileInputRef.current?.click();
   };
 
   const handleRemove = () => {
     setFile(null);
     setPreview('');
-    onImageUpload('');
     if (fileInputRef.current) {
       fileInputRef.current.value = '';
     }
   };
 
-  const handleClick = () => {
-    fileInputRef.current?.click();
-  };
-
   return (
-    <div className="space-y-3">
-      <label className="text-sm font-medium select-none">{label}</label>
-      
+    <div className="space-y-4">
       <div
         className={`relative border-2 border-dashed rounded-2xl transition-all ${
           dragActive
@@ -179,9 +129,11 @@ export const ImageUploader = ({ onImageUpload, currentImage, label = "Product Im
             </div>
           </div>
         ) : (
-          <div
-            className="p-12 text-center cursor-pointer"
+          <button
+            type="button"
+            className="p-12 text-center w-full hover:bg-muted/50 transition-colors rounded-lg focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2"
             onClick={handleClick}
+            aria-label={t('aria.uploadImage')}
           >
             <div className="flex flex-col items-center gap-3">
               <div className="w-16 h-16 rounded-full bg-muted flex items-center justify-center">
@@ -196,7 +148,7 @@ export const ImageUploader = ({ onImageUpload, currentImage, label = "Product Im
                 </p>
               </div>
             </div>
-          </div>
+          </button>
         )}
 
         <input
@@ -212,10 +164,10 @@ export const ImageUploader = ({ onImageUpload, currentImage, label = "Product Im
         <Button
           type="button"
           onClick={handleUpload}
-          disabled={uploading}
+          disabled={uploadMutation.isPending}
           className="w-full"
         >
-          {uploading ? (
+          {uploadMutation.isPending ? (
             <>
               <span className="animate-spin mr-2">⏳</span>
               Uploading...

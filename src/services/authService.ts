@@ -7,6 +7,7 @@ import { api, handleApiError } from './api';
 import { setAuth, clearAuth, isAuthenticated } from '@/utils/authStorage';
 import { getValidGuestFavorites, clearGuestFavorites } from './guestFavorites';
 import { getErrorMessage } from '@/utils/errorTranslation';
+import { logAuthError } from './logger';
 import type { User, LoginCredentials, RegisterData, AuthResponse } from '@/types';
 
 const ENDPOINTS = {
@@ -93,7 +94,7 @@ export const authService = {
     try {
       await api.post(ENDPOINTS.LOGOUT);
     } catch (error) {
-      console.error('Logout error:', error);
+      logAuthError(error as Error, 'LOGOUT');
     } finally {
       clearAuth();
     }
@@ -217,7 +218,7 @@ export const authService = {
         clearGuestFavorites();
       }
     } catch (error: any) {
-      console.error('❌ Failed to sync guest favorites:', error);
+      logAuthError(error, 'SYNC_GUEST_FAVORITES');
       
       // Show detailed error message
       if (error.response?.data?.error) {

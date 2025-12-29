@@ -54,13 +54,22 @@ export const OptimizedImage: React.FC<OptimizedImageProps> = ({
         type="image/avif" 
       />
       
+import { useState } from 'react';
+import { cn } from '@/lib/utils';
+
+// ... existing interfaces and functions ...
+
       {/* Fallback to original format */}
       <img
         src={fallbackSrc}
         alt={alt}
         loading={priority ? 'eager' : 'lazy'}
         decoding="async"
-        className={`transition-opacity duration-300 ${loaded ? 'opacity-100' : 'opacity-0'} ${className}`}
+        className={cn(
+          'transition-opacity duration-300',
+          loaded ? 'opacity-100' : 'opacity-0',
+          className
+        )}
         onLoad={() => setLoaded(true)}
         onError={() => {
           console.error(`Failed to load image: ${src}`);

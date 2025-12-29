@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback, useRef } from "react";
+import { useState, useEffect, useCallback, useRef, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -11,6 +11,7 @@ import { Plus, Edit, Trash2, Search, Tag, ArrowLeft } from "lucide-react";
 import { ImageUploader } from "@/components/ImageUploader";
 import ENDPOINTS from "@/services/endpoints";
 import { api } from "@/services/api";
+import { useBrands } from "@/hooks/useApi";
 
 interface Brand {
   id: string;
@@ -25,8 +26,21 @@ interface Brand {
 const AdminBrands = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
-  const [brands, setBrands] = useState<Brand[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
+  
+  // Use React Query hook - single source of truth
+  const { data: brandsData = [], isLoading, refetch: refetchBrands } = useBrands();
+  
+  // Normalize brands data (handle different API response formats)
+  const allBrands = useMemo(() => {
+    if (Array.isArray(brandsData)) return brandsData;
+    if (brandsData?.success) return brandsData.data || [];
+    if (brandsData?.data?.brands) return brandsData.data.brands;
+    if (brandsData?.brands) return brandsData.brands;
+    if (brandsData?.data) return brandsData.data;
+    return [];
+  }, [brandsData]);
+  
+  // UI state
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingBrand, setEditingBrand] = useState<Brand | null>(null);
   const [searchQuery, setSearchQuery] = useState("");
@@ -39,18 +53,21 @@ const AdminBrands = () => {
     website_url: "",
   });
 
-  // Track mounted state and abort controller
-  const isMounted = useRef(true);
-  const abortControllerRef = useRef<AbortController | null>(null);
+  // Debounce timer ref for search
   const debounceTimerRef = useRef<NodeJS.Timeout | null>(null);
+  
+  // Filter brands locally based on search query
+  const brands = useMemo(() => {
+    if (!searchQuery.trim()) return allBrands;
+    const query = searchQuery.toLowerCase();
+    return allBrands.filter((brand: Brand) => 
+      brand.name?.toLowerCase().includes(query) ||
+      brand.description?.toLowerCase().includes(query)
+    );
+  }, [allBrands, searchQuery]);
 
   useEffect(() => {
-    isMounted.current = true;
     return () => {
-      isMounted.current = false;
-      if (abortControllerRef.current) {
-        abortControllerRef.current.abort();
-      }
       if (debounceTimerRef.current) {
         clearTimeout(debounceTimerRef.current);
       }
@@ -60,7 +77,6 @@ const AdminBrands = () => {
   // Check admin access
   useEffect(() => {
     checkAdmin();
-    fetchBrands();
   }, []);
 
   const checkAdmin = useCallback(async () => {
@@ -87,69 +103,6 @@ const AdminBrands = () => {
       }
     }
   }, [navigate, toast]);
-
-  // Fetch brands with AbortController
-  const fetchBrands = useCallback(async () => {
-    // Cancel previous request
-    if (abortControllerRef.current) {
-      abortControllerRef.current.abort();
-    }
-    
-    abortControllerRef.current = new AbortController();
-    setIsLoading(true);
-    
-    try {
-      const endpoint = searchQuery 
-        ? `${ENDPOINTS.BRANDS.LIST}?search=${encodeURIComponent(searchQuery)}`
-        : ENDPOINTS.BRANDS.LIST;
-      
-      const response = await api.get(endpoint, {
-        signal: abortControllerRef.current.signal
-      });
-      const data = response.data;
-      
-      if (isMounted.current) {
-        if (data.success || Array.isArray(data)) {
-          setBrands(Array.isArray(data) ? data : data.data || []);
-        }
-      }
-    } catch (error: any) {
-      // Don't show error if request was aborted
-      if (error.name !== 'CanceledError' && error.code !== 'ERR_CANCELED') {
-        console.error('Error fetching brands:', error);
-        if (isMounted.current) {
-          toast({
-            title: "Error",
-            description: "Failed to fetch brands",
-            variant: "destructive",
-          });
-        }
-      }
-    } finally {
-      if (isMounted.current) {
-        setIsLoading(false);
-      }
-    }
-  }, [searchQuery, toast]);
-
-  // Debounce search query changes
-  useEffect(() => {
-    // Clear previous timer
-    if (debounceTimerRef.current) {
-      clearTimeout(debounceTimerRef.current);
-    }
-
-    // Set new timer
-    debounceTimerRef.current = setTimeout(() => {
-      fetchBrands();
-    }, 300);
-
-    return () => {
-      if (debounceTimerRef.current) {
-        clearTimeout(debounceTimerRef.current);
-      }
-    };
-  }, [searchQuery, fetchBrands]);
 
   // Create brand
   const handleCreateBrand = async (e: React.FormEvent) => {
@@ -182,7 +135,7 @@ const AdminBrands = () => {
           description: "Brand created successfully!",
         });
         setIsModalOpen(false);
-        fetchBrands();
+        refetchBrands();
         resetForm();
       } else {
         throw new Error(data.error || 'Failed to create brand');
@@ -220,7 +173,7 @@ const AdminBrands = () => {
           description: "Brand updated successfully!",
         });
         setIsModalOpen(false);
-        fetchBrands();
+        refetchBrands();
         resetForm();
       } else {
         throw new Error(data.error || 'Failed to update brand');
@@ -253,7 +206,7 @@ const AdminBrands = () => {
           title: "Success",
           description: "Brand deleted successfully!",
         });
-        fetchBrands();
+        refetchBrands();
       } else {
         throw new Error(data.error || 'Failed to delete brand');
       }

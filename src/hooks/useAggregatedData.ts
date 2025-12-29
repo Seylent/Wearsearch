@@ -6,6 +6,7 @@
 
 import { useQuery, UseQueryOptions } from '@tanstack/react-query';
 import { api } from '@/services/api';
+import { logApiError } from '@/services/logger';
 
 type QueryOptions = Omit<UseQueryOptions<any, Error, any, any>, 'queryKey' | 'queryFn'>;
 
@@ -28,8 +29,10 @@ export const useHomepageData = (options?: QueryOptions) => {
         // Backend returns { success: true, data: {...} }
         return response.data?.data || response.data;
       } catch (error: any) {
-        // Fallback to individual calls
-        console.warn('[Homepage] Aggregated endpoint failed, using fallback:', error.message);
+        // Fallback to individual calls (backend BFF not ready yet)
+        if (import.meta.env.DEV) {
+          console.log('[Homepage] Using fallback endpoints');
+        }
         
         const [productsRes, statsRes] = await Promise.all([
           api.get('/items?limit=6'),
@@ -94,8 +97,10 @@ export const useProductsPageData = (filters: ProductFilters = {}, options?: Quer
         // Backend returns { success: true, data: {...} }
         return response.data?.data || response.data;
       } catch (error: any) {
-        // Fallback to individual calls
-        console.warn('[Products Page] Aggregated endpoint failed, using fallback:', error.message);
+        // Fallback to individual calls (backend BFF not ready yet)
+        if (import.meta.env.DEV) {
+          console.log('[Products Page] Using fallback endpoints');
+        }
         
         const [productsRes, brandsRes] = await Promise.all([
           api.get('/items'),
@@ -175,7 +180,7 @@ export const useProductDetailData = (productId: string, options?: QueryOptions) 
           relatedProducts: [],
         };
       } catch (error: any) {
-        console.error('[Product Detail] Failed to fetch product details:', error.message);
+        logApiError(error, `/products/${productId}`, { component: 'useProductDetail' });
         throw error;
       }
     },
@@ -283,7 +288,7 @@ export const useBatchedRequests = (
             const response = await requestFn();
             return [key, response.data];
           } catch (error) {
-            console.error(`[Batched Request] Failed to fetch ${key}:`, error);
+            logApiError(error, `batched-${key}`, { component: 'useBatchedData' });
             return [key, null];
           }
         })

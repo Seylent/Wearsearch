@@ -17,6 +17,7 @@ import { getCategoryTranslation, getColorTranslation } from "@/utils/translation
 import { GenderBadge } from "@/components/GenderBadge";
 import { useProduct, useProductStores, useBrand } from "@/hooks/useApi";
 import { useProductDetailData } from "@/hooks/useAggregatedData";
+import { logError } from "@/services/logger";
 import {
   Select,
   SelectContent,
@@ -107,7 +108,7 @@ const ProductDetail = () => {
         setIsAdmin(user.role === 'admin');
         return;
       } catch (e) {
-        console.error('Failed to parse user:', e);
+        logError(e as Error, { component: 'ProductDetail', action: 'PARSE_USER' });
       }
     }
     

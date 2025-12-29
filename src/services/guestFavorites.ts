@@ -3,6 +3,8 @@
  * Manages favorites in localStorage before user login
  */
 
+import { logError } from './logger';
+
 const GUEST_FAVORITES_KEY = 'guestFavorites';
 
 // UUID validation regex
@@ -70,7 +72,7 @@ export function getGuestFavorites(): string[] {
     const parsed = JSON.parse(stored);
     return Array.isArray(parsed) ? parsed : [];
   } catch (error) {
-    console.error('Failed to load guest favorites:', error);
+    logError(error as Error, { component: 'guestFavorites', action: 'LOAD' });
     return [];
   }
 }
@@ -98,7 +100,7 @@ export function clearGuestFavorites(): void {
   try {
     localStorage.removeItem(GUEST_FAVORITES_KEY);
   } catch (error) {
-    console.error('Failed to clear guest favorites:', error);
+    logError(error as Error, { component: 'guestFavorites', action: 'CLEAR' });
   }
 }
 
@@ -116,7 +118,7 @@ function saveGuestFavorites(favorites: string[]): void {
   try {
     localStorage.setItem(GUEST_FAVORITES_KEY, JSON.stringify(favorites));
   } catch (error) {
-    console.error('Failed to save guest favorites:', error);
+    logError(error as Error, { component: 'guestFavorites', action: 'SAVE' });
   }
 }
 

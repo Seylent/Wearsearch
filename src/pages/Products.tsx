@@ -26,77 +26,80 @@ import {
 import { useStoreProducts } from "@/hooks/useApi";
 import { useProductsPageData } from "@/hooks/useAggregatedData";
 import { useDebounce } from "@/hooks/useDebounce";
+import { useProductFilters, useProductSort, usePagination, useGridLayout } from "@/features/products";
 import { PRODUCT_CATEGORIES } from "@/constants/categories";
 import type { Product } from "@/types";
 import { translateGender } from "@/utils/errorTranslation";
 import { getColorTranslation, getCategoryTranslation } from "@/utils/translations";
+import { useSEO } from "@/hooks/useSEO";
 
 const Products = () => {
   const { t } = useTranslation();
   const [searchParams] = useSearchParams();
-  const [searchQuery, setSearchQuery] = useState("");
-  const debouncedSearch = useDebounce(searchQuery, 300);
-  const [selectedColors, setSelectedColors] = useState<string[]>([]);
-  const [selectedTypes, setSelectedTypes] = useState<string[]>([]);
-  const [selectedGenders, setSelectedGenders] = useState<string[]>([]);
-  const [selectedBrand, setSelectedBrand] = useState<string>("");
+  
+  // SEO Meta Tags
+  const storeIdParam = searchParams.get('store_id');
+  useSEO({
+    title: storeIdParam 
+      ? t('products.seoTitleStore', 'Shop Products from Store')
+      : t('products.seoTitle', 'Shop All Fashion Products'),
+    description: t('products.seoDescription', 'Browse our complete collection of fashion items. Filter by category, color, brand, and more. Find your perfect style.'),
+    keywords: 'fashion products, clothing, shoes, accessories, brands, online shopping',
+    type: 'website',
+  });
+  
+  // Use custom hooks for state management
+  const filters = useProductFilters();
+  const sort = useProductSort();
+  const layout = useGridLayout(6);
   const [brandSearchQuery, setBrandSearchQuery] = useState("");
-  const [showRecommendedOnly, setShowRecommendedOnly] = useState(false);
-  const [sortBy, setSortBy] = useState("default");
-  const [currentPage, setCurrentPage] = useState(1);
-  const [filterOpen, setFilterOpen] = useState(false);
-  const [gridColumns, setGridColumns] = useState<number>(6); // Grid layout selector
-  const itemsPerPage = 24;
+  
+  // Debounce search query
+  const debouncedSearch = useDebounce(filters.searchQuery, 300);
 
   const colors = ["Black", "White", "Gray", "Beige", "Brown", "Red", "Blue", "Navy", "Green", "Olive", "Yellow", "Orange", "Pink", "Purple", "Cream"];
   const types = ["Outerwear", "Tops", "Bottoms", "Dresses", "Shoes", "Accessories"];
-  const genders = ["men", "women", "unisex"]; // Updated to match backend API
-  const categories = [...PRODUCT_CATEGORIES]; // Use the standardized categories
-
-  // Get store_id from URL params
-  const storeIdParam = searchParams.get('store_id');
+  const genders = ["men", "women", "unisex"];
+  const categories = [...PRODUCT_CATEGORIES];
+  
+  const itemsPerPage = 24;
   
   // Defer data fetching until after initial render
   const [shouldFetchData, setShouldFetchData] = useState(false);
   
   useEffect(() => {
-    // Defer API calls to after first paint
-    const timeoutId = setTimeout(() => {
-      setShouldFetchData(true);
-    }, 50);
-    
+    const timeoutId = setTimeout(() => setShouldFetchData(true), 50);
     return () => clearTimeout(timeoutId);
   }, []);
   
-  // Build filters object for aggregated API
-  const filters = {
-    page: currentPage,
-    limit: itemsPerPage,
+  // Build API filters object
+  const apiFilters = {
+    page: 1, // Pagination moved to frontend
+    limit: 1000, // Fetch all, filter on frontend
     search: debouncedSearch || undefined,
-    type: selectedTypes.length === 1 ? selectedTypes[0] : undefined,
-    color: selectedColors.length === 1 ? selectedColors[0] : undefined,
-    gender: selectedGenders.length === 1 ? selectedGenders[0] : undefined,
-    brand_id: selectedBrand || undefined,
-    sort: sortBy !== 'default' ? sortBy : undefined,
+    type: filters.selectedTypes?.length === 1 ? filters.selectedTypes[0] : undefined,
+    color: filters.selectedColors?.length === 1 ? filters.selectedColors[0] : undefined,
+    gender: filters.selectedGenders?.length === 1 ? filters.selectedGenders[0] : undefined,
+    brand_id: filters.selectedBrand || undefined,
+    sort: sort.sortBy !== 'default' ? sort.sortBy : undefined,
   };
   
-  // Use aggregated hook for better performance (2-3 requests → 1 request)
-  const { data: pageData, isLoading: pageLoading } = useProductsPageData(filters, { 
+  // Use aggregated hook for better performance
+  const { data: pageData, isLoading: pageLoading } = useProductsPageData(apiFilters, { 
     enabled: !storeIdParam && shouldFetchData 
   });
   
   // Use store-specific endpoint if store_id is present
   const { data: storeProductsData, isLoading: storeLoading, error: storeError } = useStoreProducts(
     storeIdParam || '', 
-    { limit: 1000 }, // Fetch all products from store
+    { limit: 1000 },
     { enabled: !!storeIdParam && shouldFetchData }
   );
   
-  // Extract data from aggregated response or fallback
+  // Extract data
   const productsData = !storeIdParam ? pageData?.products : null;
   const brandsData = !storeIdParam ? pageData?.brands : null;
   const loading = !storeIdParam ? pageLoading : false;
-  const error = null; // Error handled in aggregated hook
   
   // Use store products if filtering by store, otherwise use all products
   const allProducts = useMemo(() => {
@@ -121,9 +124,9 @@ const Products = () => {
   }, [brands, brandSearchQuery]);
 
   const filteredAndSortedProducts = useMemo(() => {
-    let filtered = [...allProducts];
+    let filtered = [...(allProducts || [])];
 
-    // Search filter - use debounced value
+    // Search filter
     if (debouncedSearch.trim()) {
       const query = debouncedSearch.toLowerCase();
       filtered = filtered.filter((p: Product) =>
@@ -134,121 +137,82 @@ const Products = () => {
     }
 
     // Color filter
-    if (selectedColors.length > 0) {
+    if (filters.selectedColors?.length > 0) {
       filtered = filtered.filter((p: Product) =>
-        p.color && selectedColors.includes(p.color)
+        p.color && filters.selectedColors.includes(p.color)
       );
     }
 
     // Type filter
-    if (selectedTypes.length > 0) {
+    if (filters.selectedTypes?.length > 0) {
       filtered = filtered.filter((p: Product) =>
-        p.type && selectedTypes.includes(p.type)
+        p.type && filters.selectedTypes.includes(p.type)
       );
     }
 
     // Gender filter
-    if (selectedGenders.length > 0) {
+    if (filters.selectedGenders?.length > 0) {
       filtered = filtered.filter((p: Product) =>
-        p.gender && selectedGenders.includes(p.gender)
+        p.gender && filters.selectedGenders.includes(p.gender)
       );
     }
 
     // Brand filter
-    if (selectedBrand) {
+    if (filters.selectedBrand) {
       filtered = filtered.filter((p: Product) =>
-        p.brand === selectedBrand
+        p.brand === filters.selectedBrand
       );
     }
 
-    // Recommended filter
-    if (showRecommendedOnly) {
-      filtered = filtered.filter((p: Product) =>
-        p.is_recommended === true
-      );
-    }
+    // Recommended filter (commented out - not in useProductFilters hook)
+    // if (filters.showRecommendedOnly) {
+    //   filtered = filtered.filter((p: Product) =>
+    //     p.is_recommended === true
+    //   );
+    // }
 
     // Sorting
-    if (sortBy !== 'default') {
-      const [field, order] = sortBy.split('-');
+    if (sort.sortBy !== 'default') {
+      const [field, order] = sort.sortBy.split('-');
       filtered.sort((a: any, b: any) => {
         const aVal = a[field] || '';
         const bVal = b[field] || '';
-        if (order === 'asc') {
-          return aVal > bVal ? 1 : -1;
-        } else {
-          return aVal < bVal ? 1 : -1;
-        }
+        return order === 'asc' ? (aVal > bVal ? 1 : -1) : (aVal < bVal ? 1 : -1);
       });
     }
 
     return filtered;
-  }, [allProducts, debouncedSearch, selectedColors, selectedTypes, selectedGenders, selectedBrand, showRecommendedOnly, sortBy]);
+  }, [allProducts, debouncedSearch, filters, sort.sortBy]);
 
-  // Handle loading and error states for both data sources
+  // Handle loading and error states
   const isLoading = storeIdParam ? storeLoading : loading;
-  const currentError = storeIdParam ? storeError : error;
+  const currentError = storeIdParam ? storeError : null;
 
-  const totalProducts = filteredAndSortedProducts.length;
-  const totalPages = Math.ceil(totalProducts / itemsPerPage);
+  // Initialize pagination with total items
+  const pagination = usePagination({ 
+    itemsPerPage, 
+    totalItems: filteredAndSortedProducts.length 
+  });
   
   const paginatedProducts = useMemo(() => {
-    const startIndex = (currentPage - 1) * itemsPerPage;
-    const paginated = filteredAndSortedProducts.slice(startIndex, startIndex + itemsPerPage);
-    
-    // Тимчасовий лог для перевірки даних
-    if (paginated.length > 0) {
-      console.log('📦 First paginated product:', {
-        name: paginated[0].name,
-        gender: paginated[0].gender,
-        hasGender: 'gender' in paginated[0],
-        allKeys: Object.keys(paginated[0])
-      });
-    }
-    
-    return paginated;
-  }, [filteredAndSortedProducts, currentPage, itemsPerPage]);
+    const startIndex = (pagination.currentPage - 1) * itemsPerPage;
+    return filteredAndSortedProducts.slice(startIndex, startIndex + itemsPerPage);
+  }, [filteredAndSortedProducts, pagination.currentPage, itemsPerPage]);
 
-  const toggleColor = (color: string) => {
-    setSelectedColors(prev => 
-      prev.includes(color) ? prev.filter(c => c !== color) : [...prev, color]
-    );
-    setCurrentPage(1);
-  };
-
-  const toggleType = (type: string) => {
-    setSelectedTypes(prev => 
-      prev.includes(type) ? prev.filter(t => t !== type) : [...prev, type]
-    );
-    setCurrentPage(1);
-  };
-
-  const toggleGender = (gender: string) => {
-    setSelectedGenders(prev => 
-      prev.includes(gender) ? prev.filter(g => g !== gender) : [...prev, gender]
-    );
-    setCurrentPage(1);
-  };
-
-  const clearAllFilters = () => {
-    setSelectedColors([]);
-    setSelectedTypes([]);
-    setSelectedGenders([]);
-    setSelectedBrand("");
-    setBrandSearchQuery("");
-    setSearchQuery("");
-    setShowRecommendedOnly(false);
-    setCurrentPage(1);
-  };
+  // Filter toggle handlers are now provided by useProductFilters hook:
+  // - filters.toggleColor(color)
+  // - filters.toggleType(type)
+  // - filters.toggleGender(gender)
+  // - filters.clearFilters()
 
   useEffect(() => {
-    setCurrentPage(1);
-  }, [searchQuery]);
+    pagination.setCurrentPage(1);
+  }, [filters.searchQuery, pagination]);
 
   // Scroll to top when navigating between pages or changing filters
   useEffect(() => {
     window.scrollTo({ top: 0, behavior: 'smooth' });
-  }, [currentPage, sortBy, selectedBrand]);
+  }, [pagination.currentPage, sort.sortBy, filters.selectedBrand]);
 
   return (
     <div className="min-h-screen bg-black text-white overflow-x-hidden font-sans">
@@ -274,8 +238,8 @@ const Products = () => {
               <Input
                 type="text"
                 placeholder={t('home.searchPlaceholder')}
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
+                value={filters.searchQuery}
+                onChange={(e) => filters.setSearchQuery(e.target.value)}
                 className="w-full pl-14 pr-5 h-14 glass-card rounded-full text-foreground placeholder:text-muted-foreground focus-visible:ring-2 focus-visible:ring-foreground/20 border-foreground/10"
               />
             </div>
@@ -289,14 +253,14 @@ const Products = () => {
           {/* Filters and Sort */}
           <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
             <div className="flex items-center gap-3 flex-wrap">
-              <Dialog open={filterOpen} onOpenChange={setFilterOpen}>
+              <Dialog open={layout.filterOpen} onOpenChange={layout.setFilterOpen}>
                 <DialogTrigger asChild>
                   <Button variant="outline" size="lg" className="border-foreground/20 bg-card/50 text-foreground hover:bg-card hover:border-foreground/30">
                     <Filter className="w-4 h-4 mr-2" />
                     {t('products.filters')}
-                    {(selectedColors.length + selectedTypes.length + selectedGenders.length + (selectedBrand ? 1 : 0) + (showRecommendedOnly ? 1 : 0)) > 0 && (
+                    {filters.hasActiveFilters && (
                       <span className="ml-2 bg-primary text-primary-foreground rounded-full w-5 h-5 flex items-center justify-center text-[10px] font-bold">
-                        {selectedColors.length + selectedTypes.length + selectedGenders.length + (selectedBrand ? 1 : 0) + (showRecommendedOnly ? 1 : 0)}
+                        {filters.selectedColors.length + filters.selectedTypes.length + filters.selectedGenders.length + (filters.selectedBrand ? 1 : 0)}
                       </span>
                     )}
                   </Button>
@@ -314,8 +278,8 @@ const Products = () => {
                           <div key={color} className="flex items-center">
                             <Checkbox 
                               id={`filter-color-${color}`}
-                              checked={selectedColors.includes(color)}
-                              onCheckedChange={() => toggleColor(color)}
+                              checked={filters.selectedColors.includes(color)}
+                              onCheckedChange={() => filters.toggleColor(color)}
                               className="border-foreground/20 data-[state=checked]:bg-primary data-[state=checked]:text-primary-foreground"
                             />
                             <Label 
@@ -337,8 +301,8 @@ const Products = () => {
                           <div key={category} className="flex items-center">
                             <Checkbox 
                               id={`filter-category-${category}`}
-                              checked={selectedTypes.includes(category)}
-                              onCheckedChange={() => toggleType(category)}
+                              checked={filters.selectedTypes.includes(category)}
+                              onCheckedChange={() => filters.toggleType(category)}
                               className="border-foreground/20 data-[state=checked]:bg-primary data-[state=checked]:text-primary-foreground"
                             />
                             <Label 
@@ -360,8 +324,8 @@ const Products = () => {
                           <div key={gender} className="flex items-center">
                             <Checkbox 
                               id={`filter-gender-${gender}`}
-                              checked={selectedGenders.includes(gender)}
-                              onCheckedChange={() => toggleGender(gender)}
+                              checked={filters.selectedGenders.includes(gender)}
+                              onCheckedChange={() => filters.toggleGender(gender)}
                               className="border-foreground/20 data-[state=checked]:bg-primary data-[state=checked]:text-primary-foreground"
                             />
                             <Label 
@@ -378,14 +342,14 @@ const Products = () => {
                     {/* Brand Filter */}
                     <div>
                       <h3 className="font-semibold mb-3 text-sm uppercase tracking-widest text-muted-foreground">{t('products.brand')}</h3>
-                      {selectedBrand && (
+                      {filters.selectedBrand && (
                         <Button
                           variant="ghost"
                           size="sm"
-                          onClick={() => { setSelectedBrand(""); setCurrentPage(1); }}
+                          onClick={() => { filters.setSelectedBrand(""); pagination.setCurrentPage(1); }}
                           className="mb-2 text-xs text-muted-foreground hover:text-foreground h-7"
                         >
-                          Clear: {selectedBrand}
+                          Clear: {filters.selectedBrand}
                         </Button>
                       )}
                       <Input
@@ -401,11 +365,11 @@ const Products = () => {
                             <button
                               key={brand.id}
                               onClick={() => {
-                                setSelectedBrand(brand.name);
-                                setCurrentPage(1);
+                                filters.setSelectedBrand(brand.name);
+                                pagination.setCurrentPage(1);
                               }}
                               className={`w-full text-left px-2 py-1.5 rounded-md text-sm transition-colors ${
-                                selectedBrand === brand.name
+                                filters.selectedBrand === brand.name
                                   ? "bg-primary text-primary-foreground"
                                   : "hover:bg-foreground/5"
                               }`}
@@ -419,39 +383,17 @@ const Products = () => {
                       </div>
                     </div>
 
-                    {/* Recommended Only Filter */}
-                    <div>
-                      <h3 className="font-semibold mb-3 text-sm uppercase tracking-widest text-muted-foreground">{t('common.recommended')}</h3>
-                      <div className="flex items-center">
-                        <Checkbox 
-                          id="filter-recommended"
-                          checked={showRecommendedOnly}
-                          onCheckedChange={(checked) => {
-                            setShowRecommendedOnly(checked as boolean);
-                            setCurrentPage(1);
-                          }}
-                          className="border-foreground/20 data-[state=checked]:bg-primary data-[state=checked]:text-primary-foreground"
-                        />
-                        <Label 
-                          htmlFor="filter-recommended"
-                          className="ml-2 text-sm cursor-pointer hover:text-foreground/80 transition-colors"
-                        >
-                          {t('products.recommendedOnly')}
-                        </Label>
-                      </div>
-                    </div>
-
                     <div className="flex gap-2 pt-4 border-t border-foreground/10">
                       <Button 
                         variant="ghost" 
                         className="flex-1 text-muted-foreground hover:text-foreground h-10"
-                        onClick={clearAllFilters}
+                        onClick={filters.clearFilters}
                       >
                         {t('products.clearFilters')}
                       </Button>
                       <Button 
                         className="flex-1 bg-primary text-primary-foreground hover:bg-primary/90 h-10"
-                        onClick={() => setFilterOpen(false)}
+                        onClick={() => layout.setFilterOpen(false)}
                       >
                         {t('products.applyFilters')}
                       </Button>
@@ -460,10 +402,10 @@ const Products = () => {
                 </DialogContent>
               </Dialog>
               
-              {(selectedColors.length > 0 || selectedTypes.length > 0 || selectedGenders.length > 0 || selectedBrand || showRecommendedOnly) && (
+              {filters.hasActiveFilters && (
                 <Button 
                   variant="ghost" 
-                  onClick={clearAllFilters}
+                  onClick={filters.clearFilters}
                   className="text-muted-foreground hover:text-foreground"
                 >
                   {t('products.clearFilters')}
@@ -475,27 +417,27 @@ const Products = () => {
               {/* Grid Layout Selector - Visual Gallery View */}
               <div className="flex items-center gap-1 border border-foreground/20 rounded-lg p-1 bg-card/50">
                 <Button
-                  variant={gridColumns === 2 ? "default" : "ghost"}
+                  variant={layout.columns === 2 ? "default" : "ghost"}
                   size="sm"
-                  onClick={() => setGridColumns(2)}
+                  onClick={() => layout.setColumns(2)}
                   className="h-9 w-9 p-0"
                   title="Великі плитки (2 колонки)"
                 >
                   <Columns3 className="h-4 w-4" />
                 </Button>
                 <Button
-                  variant={gridColumns === 4 ? "default" : "ghost"}
+                  variant={layout.columns === 4 ? "default" : "ghost"}
                   size="sm"
-                  onClick={() => setGridColumns(4)}
+                  onClick={() => layout.setColumns(4)}
                   className="h-9 w-9 p-0"
                   title="Середні плитки (4 колонки)"
                 >
                   <LayoutGrid className="h-4 w-4" />
                 </Button>
                 <Button
-                  variant={gridColumns === 6 ? "default" : "ghost"}
+                  variant={layout.columns === 6 ? "default" : "ghost"}
                   size="sm"
-                  onClick={() => setGridColumns(6)}
+                  onClick={() => layout.setColumns(6)}
                   className="h-9 w-9 p-0"
                   title="Маленькі плитки (6 колонок)"
                 >
@@ -504,7 +446,7 @@ const Products = () => {
               </div>
 
               {/* Sort */}
-              <Select value={sortBy} onValueChange={setSortBy}>
+              <Select value={sort.sortBy} onValueChange={sort.setSortBy}>
                 <SelectTrigger className="w-[200px] h-10 border-foreground/20 bg-card/50 text-foreground focus:ring-foreground/20">
                   <SelectValue />
                 </SelectTrigger>
@@ -527,25 +469,27 @@ const Products = () => {
               title="Failed to load products"
               description="We couldn't load the products. Please check your connection and try again."
               onRetry={() => window.location.reload()}
+              technicalDetails={currentError instanceof Error ? currentError.message : String(currentError)}
             />
           ) : paginatedProducts.length === 0 ? (
             storeIdParam ? (
               <NoStoreProducts />
+            ) : filters.searchQuery ? (
+              <NoSearchResults 
+                query={filters.searchQuery}
+                onClearSearch={() => { filters.setSearchQuery(''); pagination.setCurrentPage(1); }}
+              />
             ) : (
-              <NoProductsFound hasFilters={
-                selectedColors.length > 0 || 
-                selectedTypes.length > 0 || 
-                selectedGenders.length > 0 || 
-                selectedBrand !== '' ||
-                showRecommendedOnly ||
-                debouncedSearch !== ''
-              } />
+              <NoProductsFound 
+                hasFilters={filters.hasActiveFilters}
+                onClearFilters={filters.clearFilters}
+              />
             )
           ) : (
             <>
               <div className={`grid gap-x-6 gap-y-12 ${
-                gridColumns === 2 ? 'grid-cols-1 sm:grid-cols-2' :
-                gridColumns === 4 ? 'grid-cols-2 sm:grid-cols-3 lg:grid-cols-4' :
+                layout.columns === 2 ? 'grid-cols-1 sm:grid-cols-2' :
+                layout.columns === 4 ? 'grid-cols-2 sm:grid-cols-3 lg:grid-cols-4' :
                 'grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-6'
               }`}>
                 {paginatedProducts.map((product) => (
@@ -562,37 +506,38 @@ const Products = () => {
               </div>
 
               {/* Pagination */}
-              {paginatedProducts.length > 0 && totalPages > 1 && (
+              {paginatedProducts.length > 0 && pagination.totalPages > 1 && (
                 <Pagination className="mt-20">
                   <PaginationContent>
                     <PaginationItem>
                       <PaginationPrevious 
-                        onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
-                        className={`cursor-pointer text-foreground hover:bg-card hover:text-foreground ${currentPage === 1 ? "pointer-events-none opacity-50" : ""}`}
+                        onClick={() => pagination.setCurrentPage(p => Math.max(1, p - 1))}
+                        disabled={pagination.currentPage === 1}
+                        className="cursor-pointer text-foreground hover:bg-card hover:text-foreground"
                       />
                     </PaginationItem>
                     
-                    {[...Array(totalPages)].map((_, i) => {
+                    {[...Array(pagination.totalPages)].map((_, i) => {
                       const pageNum = i + 1;
                       if (
                         pageNum === 1 ||
-                        pageNum === totalPages ||
-                        (pageNum >= currentPage - 1 && pageNum <= currentPage + 1)
+                        pageNum === pagination.totalPages ||
+                        (pageNum >= pagination.currentPage - 1 && pageNum <= pagination.currentPage + 1)
                       ) {
                         return (
                           <PaginationItem key={pageNum}>
                             <PaginationLink
-                              onClick={() => setCurrentPage(pageNum)}
-                              isActive={currentPage === pageNum}
-                              className={`cursor-pointer border-foreground/20 text-foreground hover:bg-card hover:text-foreground ${currentPage === pageNum ? "bg-primary text-primary-foreground hover:bg-primary/90 hover:text-primary-foreground" : ""}`}
+                              onClick={() => pagination.setCurrentPage(pageNum)}
+                              isActive={pagination.currentPage === pageNum}
+                              className="cursor-pointer border-foreground/20 text-foreground hover:bg-card hover:text-foreground"
                             >
                               {pageNum}
                             </PaginationLink>
                           </PaginationItem>
                         );
                       } else if (
-                        pageNum === currentPage - 2 ||
-                        pageNum === currentPage + 2
+                        pageNum === pagination.currentPage - 2 ||
+                        pageNum === pagination.currentPage + 2
                       ) {
                         return (
                           <PaginationItem key={pageNum}>
@@ -605,8 +550,9 @@ const Products = () => {
                     
                     <PaginationItem>
                       <PaginationNext 
-                        onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
-                        className={`cursor-pointer text-foreground hover:bg-card hover:text-foreground ${currentPage === totalPages ? "pointer-events-none opacity-50" : ""}`}
+                        onClick={() => pagination.setCurrentPage(p => Math.min(pagination.totalPages, p + 1))}
+                        disabled={pagination.currentPage === pagination.totalPages}
+                        className="cursor-pointer text-foreground hover:bg-card hover:text-foreground"
                       />
                     </PaginationItem>
                   </PaginationContent>

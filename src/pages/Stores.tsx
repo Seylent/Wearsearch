@@ -5,6 +5,7 @@ import Navigation from "@/components/layout/Navigation";
 import { Footer } from "@/components/layout/Footer";
 import { NeonAbstractions } from "@/components/NeonAbstractions";
 import { NoStoresFound, ErrorState } from "@/components/common/EmptyState";
+import { StoreGridSkeleton } from "@/components/common/SkeletonLoader";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Search, ArrowRight, ExternalLink, Star, Package } from "lucide-react";
@@ -86,33 +87,24 @@ const Stores = () => {
 
       {/* Stores Grid */}
       <section className="py-24 relative">
-        <div className="container mx-auto px-6">
+        <div className="container mx-auto px-6" id="main-content">
           {loading ? (
-            <div className="min-h-[400px] flex items-center justify-center">
-              <div className="animate-spin w-8 h-8 border-2 border-foreground border-t-transparent rounded-full"></div>
-            </div>
+            <StoreGridSkeleton count={9} />
           ) : error ? (
             <ErrorState 
               title="Failed to load stores"
               description="We couldn't load the stores. Please check your connection and try again."
               onRetry={() => window.location.reload()}
+              technicalDetails={error instanceof Error ? error.message : String(error)}
             />
           ) : filteredStores.length === 0 ? (
             searchQuery ? (
-              <div className="min-h-[400px] flex flex-col items-center justify-center text-center">
-                <div className="w-16 h-16 rounded-full border-2 border-foreground/20 flex items-center justify-center mb-4">
-                  <Search className="w-8 h-8 text-muted-foreground" />
-                </div>
-                <h3 className="text-xl font-semibold mb-2">{t('stores.noStoresFound')}</h3>
-                <p className="text-muted-foreground mb-4">
-                  {t('stores.adjustSearch')}
-                </p>
-                <Button variant="outline" onClick={() => setSearchQuery("")}>
-                  {t('stores.clearSearch')}
-                </Button>
-              </div>
+              <NoStoresFound 
+                hasSearch={true}
+                onClearSearch={() => setSearchQuery('')}
+              />
             ) : (
-              <NoStoresFound />
+              <NoStoresFound hasSearch={false} />
             )
           ) : (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 md:gap-8">

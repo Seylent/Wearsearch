@@ -17,6 +17,7 @@ import { storeService } from "@/services/storeService";
 import { api } from "@/services/api";
 import { useAdminDashboardData } from "@/hooks/useAggregatedData";
 import { getCategoryTranslation, getColorTranslation } from "@/utils/translations";
+import { useProducts, useStores, useBrands } from "@/hooks/useApi";
 
 // Use relative API URL (works with Vite proxy)
 const API_BASE_URL = '';
@@ -24,10 +25,36 @@ const API_BASE_URL = '';
 const Admin = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
-  const [loading, setLoading] = useState(true);
-  const [products, setProducts] = useState<any[]>([]);
-  const [stores, setStores] = useState<any[]>([]);
-  const [brands, setBrands] = useState<any[]>([]);
+  
+  // Use React Query hooks - single source of truth for server data
+  const { data: productsData = [], isLoading: productsLoading, refetch: refetchProducts } = useProducts();
+  const { data: storesData = [], isLoading: storesLoading, refetch: refetchStores } = useStores();
+  const { data: brandsData = [], isLoading: brandsLoading, refetch: refetchBrands } = useBrands();
+  
+  // Normalize data (handle different API response formats)
+  const products = useMemo(() => {
+    if (Array.isArray(productsData)) return productsData;
+    if (productsData?.success) return productsData.data || [];
+    if (productsData?.products) return productsData.products;
+    return [];
+  }, [productsData]);
+  
+  const stores = useMemo(() => {
+    if (Array.isArray(storesData)) return storesData;
+    if (storesData?.success) return storesData.data || [];
+    return [];
+  }, [storesData]);
+  
+  const brands = useMemo(() => {
+    if (Array.isArray(brandsData)) return brandsData;
+    if (brandsData?.data?.brands) return brandsData.data.brands;
+    if (brandsData?.brands) return brandsData.brands;
+    if (brandsData?.data) return brandsData.data;
+    if (brandsData?.success && brandsData?.data) return Array.isArray(brandsData.data) ? brandsData.data : [];
+    return [];
+  }, [brandsData]);
+  
+  const loading = productsLoading || storesLoading || brandsLoading;
   
   // Product form state - always initialize with empty string to avoid controlled/uncontrolled issues
   const [productName, setProductName] = useState<string>("");
@@ -49,20 +76,6 @@ const Admin = () => {
   
   // Tab state
   const [activeTab, setActiveTab] = useState("add-product");
-  
-  // Track mounted state
-  const isMounted = useRef(true);
-  const fetchAbortController = useRef<AbortController | null>(null);
-
-  useEffect(() => {
-    isMounted.current = true;
-    return () => {
-      isMounted.current = false;
-      if (fetchAbortController.current) {
-        fetchAbortController.current.abort();
-      }
-    };
-  }, []);
   
   // Contacts state
   const [contactTelegram, setContactTelegram] = useState<string>("@wearsearch");
@@ -92,7 +105,6 @@ const Admin = () => {
 
   useEffect(() => {
     checkAdmin();
-    fetchData();
     
     // Load saved contacts from localStorage
     const savedContacts = localStorage.getItem('site_contacts');
@@ -173,83 +185,6 @@ const Admin = () => {
       navigate('/auth');
     }
   }, [navigate, toast]);
-
-  const fetchData = useCallback(async () => {
-    if (fetchAbortController.current) {
-      fetchAbortController.current.abort();
-    }
-    
-    fetchAbortController.current = new AbortController();
-    setLoading(true);
-    
-    try {
-      // Try aggregated endpoint first for better performance (3 requests → 1 request)
-      let productsRes, storesRes, brandsRes;
-      try {
-        const dashboardRes = await api.get('/admin/dashboard', { signal: fetchAbortController.current.signal });
-        productsRes = { data: dashboardRes.data.products };
-        storesRes = { data: dashboardRes.data.stores };
-        brandsRes = { data: dashboardRes.data.brands };
-      } catch (aggError) {
-        // Fallback to individual calls if aggregated endpoint doesn't exist
-        [productsRes, storesRes, brandsRes] = await Promise.all([
-          api.get('/admin/products', { signal: fetchAbortController.current.signal }),
-          api.get('/stores', { signal: fetchAbortController.current.signal }),
-          api.get('/brands', { signal: fetchAbortController.current.signal })
-        ]);
-      }
-
-      const productsData = productsRes.data;
-      const storesData = storesRes.data;
-      const brandsData = brandsRes.data;
-
-      console.log('📦 Products API response:', productsData);
-      console.log('🏪 Stores API response:', storesData);
-      console.log('🏷️ Brands API response:', brandsData);
-
-      if (isMounted.current) {
-        // Handle products - check for different response formats
-        if (productsData.success) {
-          setProducts(productsData.data || []);
-        } else if (Array.isArray(productsData)) {
-          setProducts(productsData);
-        } else if (productsData.products) {
-          setProducts(productsData.products);
-        } else {
-          console.warn('⚠️ Unexpected products response format:', productsData);
-          setProducts([]);
-        }
-        if (storesData.success || Array.isArray(storesData)) {
-          setStores(Array.isArray(storesData) ? storesData : storesData.data || []);
-        }
-        
-        // Better handle brands response format
-        let brandsArray = [];
-        if (Array.isArray(brandsData)) {
-          brandsArray = brandsData;
-        } else if (brandsData?.data?.brands && Array.isArray(brandsData.data.brands)) {
-          brandsArray = brandsData.data.brands;
-        } else if (brandsData?.brands && Array.isArray(brandsData.brands)) {
-          brandsArray = brandsData.brands;
-        } else if (brandsData?.data && Array.isArray(brandsData.data)) {
-          brandsArray = brandsData.data;
-        } else if (brandsData?.success && brandsData?.data) {
-          brandsArray = Array.isArray(brandsData.data) ? brandsData.data : [];
-        }
-        
-        console.log('Brands array set to:', brandsArray);
-        setBrands(brandsArray);
-      }
-    } catch (error: any) {
-      if (error.name !== 'CanceledError' && error.code !== 'ERR_CANCELED') {
-        console.error("Error fetching data:", error);
-      }
-    } finally {
-      if (isMounted.current) {
-        setLoading(false);
-      }
-    }
-  }, []);
 
   const loadProductForEdit = async (productId: string) => {
     try {
@@ -463,7 +398,7 @@ const Admin = () => {
         setSelectedStores([]);
         setCurrentStore("");
         setCurrentStorePrice("");
-        fetchData();
+        refetchProducts();
         
         // Clear URL param
         window.history.replaceState({}, '', '/admin');
@@ -565,7 +500,7 @@ const Admin = () => {
         setSelectedStores([]);
         setCurrentStore("");
         setCurrentStorePrice("");
-        fetchData();
+        refetchProducts();
         
         // Clear URL param if editing
         window.history.replaceState({}, '', '/admin');
@@ -626,7 +561,7 @@ const Admin = () => {
           setSelectedStores([]);
           setCurrentStore("");
           setCurrentStorePrice("");
-          fetchData();
+          refetchProducts();
           
           // Clear URL param if editing
           window.history.replaceState({}, '', '/admin');
@@ -720,7 +655,7 @@ const Admin = () => {
       setStoreShipping("");
       setStoreLogoUrl("");
       setStoreRecommended(false);
-      fetchData();
+      refetchStores();
       } else {
         throw new Error(result.error || `Failed to ${editingStore ? 'update' : 'create'} store`);
       }
@@ -1141,7 +1076,7 @@ const Admin = () => {
                                     title: "Success",
                                     description: "Product deleted",
                                   });
-                                  fetchData();
+                                  refetchProducts();
                                 } catch (error: any) {
                                   toast({
                                     variant: "destructive",
@@ -1342,7 +1277,7 @@ const Admin = () => {
                                     title: "Success",
                                     description: "Store deleted successfully",
                                   });
-                                  fetchData();
+                                  refetchStores();
                                 } catch (error: any) {
                                   toast({
                                     variant: "destructive",
@@ -1405,7 +1340,7 @@ const Admin = () => {
                         title: "Success",
                         description: "Brand created successfully",
                       });
-                      fetchData();
+                      refetchBrands();
                       (form.elements.namedItem('brandName') as HTMLInputElement).value = '';
                     } else {
                       throw new Error('Failed to create brand');
@@ -1473,7 +1408,7 @@ const Admin = () => {
                                     title: "Success",
                                     description: "Brand deleted successfully",
                                   });
-                                  fetchData();
+                                  refetchBrands();
                                 } else {
                                   throw new Error('Failed to delete brand');
                                 }
