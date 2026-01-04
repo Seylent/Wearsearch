@@ -28,6 +28,7 @@ export function Combobox({
 }: ComboboxProps) {
   const [open, setOpen] = React.useState(false);
   const [internalSearch, setInternalSearch] = React.useState("");
+  const searchInputRef = React.useRef<HTMLInputElement | null>(null);
   
   const search = searchValue !== undefined ? searchValue : internalSearch;
   const setSearch = onSearchChange || setInternalSearch;
@@ -37,6 +38,17 @@ export function Combobox({
   const filteredItems = items.filter((item) =>
     item.label.toLowerCase().includes(search.toLowerCase())
   );
+
+  React.useEffect(() => {
+    if (!open) return;
+    // Defer to ensure the input exists after portal mount
+    const id = window.setTimeout(() => {
+      searchInputRef.current?.focus();
+    }, 0);
+    return () => {
+      window.clearTimeout(id);
+    };
+  }, [open]);
 
   return (
     <div className="relative">
@@ -57,18 +69,24 @@ export function Combobox({
         </PopoverPrimitive.Trigger>
         <PopoverPrimitive.Portal>
           <PopoverPrimitive.Content
-            className="z-[9999] w-[var(--radix-popover-trigger-width)] rounded-2xl border border-white/20 bg-zinc-900 p-0 shadow-[0_8px_32px_rgba(0,0,0,0.8)] data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95"
+            className="z-[9999] w-[var(--radix-popover-trigger-width)] max-w-[var(--radix-popper-available-width)] rounded-2xl border border-white/20 bg-zinc-900 p-0 shadow-[0_8px_32px_rgba(0,0,0,0.8)] data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95"
             align="start"
             side="bottom"
             sideOffset={8}
-            avoidCollisions={false}
+            avoidCollisions={true}
+            collisionPadding={12}
+            collisionBoundary={typeof window !== 'undefined' ? document.body : undefined}
+            sticky="always"
+            hideWhenDetached
+            updatePositionStrategy="always"
             onOpenAutoFocus={(e) => {
               e.preventDefault();
             }}
           >
-          <div className="flex flex-col max-h-[40vh]">
+          <div className="flex flex-col max-h-[min(40vh,var(--radix-popper-available-height))]">
             <div className="p-2 border-b border-white/10">
               <input
+                ref={searchInputRef}
                 type="text"
                 className="w-full h-9 px-3 rounded-lg bg-white/5 border border-white/10 text-sm text-white placeholder:text-white/40 focus:outline-none focus:border-white/20"
                 placeholder={searchPlaceholder}

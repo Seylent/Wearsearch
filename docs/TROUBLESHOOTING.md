@@ -1,5 +1,12 @@
 # Troubleshooting Guide - Wearsearch Frontend
 
+## Lighthouse / Performance Audits
+
+If Lighthouse reports large savings like **“Minify JavaScript”** or very high **unused JS**, confirm you're auditing a **production build**.
+
+- Dev server (`npm run dev`) serves unoptimized bundles and can trigger misleading audits.
+- For realistic numbers, run `npm run build` and audit `npm run preview` (or your deployed site).
+
 ## Products Not Displaying Issue
 
 ### Symptoms
@@ -8,7 +15,7 @@
 - Console shows API errors
 
 ### Root Cause
-The frontend is trying to connect to the backend API but either:
+The frontend is trying to connect to the backend API but either  :
 1. Backend is not running
 2. Backend endpoint doesn't exist
 3. Backend is returning wrong data format

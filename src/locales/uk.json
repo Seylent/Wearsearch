@@ -92,7 +92,10 @@
     "maroon": "Бордовий",
     "editProduct": "Редагувати товар",
     "save": "Зберегти",
-    "saved": "Збережено"
+    "saved": "Збережено",
+    "zoomImage": "Натисніть для збільшення",
+    "scrollToZoom": "Прокрутіть для збільшення",
+    "doubleClickToToggle": "Подвійний клік для перемикання"
   },
   "productTypes": {
     "outerwear": "Верхній одяг",
@@ -447,6 +450,7 @@
     "openMenu": "Відкрити меню",
     "closeMenu": "Закрити меню",
     "openSearch": "Відкрити пошук",
+    "closeSearch": "Закрити пошук",
     "uploadImage": "Завантажити зображення",
     "toggleSidebar": "Перемкнути бічну панель",
     "loadingProducts": "Завантаження товарів",
@@ -457,7 +461,17 @@
     "goToNextPage": "Перейти на наступну сторінку",
     "previousSlide": "Попередній слайд",
     "nextSlide": "Наступний слайд",
-    "changeLanguage": "Змінити мову"
+    "changeLanguage": "Змінити мову",
+    "mainNavigation": "Головна навігація",
+    "userMenu": "Меню користувача",
+    "addToFavorites": "Додати {{product}} в обране",
+    "removeFromFavorites": "Видалити {{product}} з обраного",
+    "viewProduct": "Переглянути деталі {{product}}",
+    "searchInput": "Пошук товарів, магазинів або брендів",
+    "searchResults": "Результати пошуку",
+    "loading": "Завантаження...",
+    "productCard": "Картка товару {{product}}",
+    "signIn": "Увійти до облікового запису"
   },
   "placeholders": {
     "searchProducts": "Шукати товари...",
@@ -578,22 +592,5 @@
     "tryDifferent": "Спробуйте інший пошуковий запит",
     "hint": "Шукайте за назвою товару, брендом, категорією або назвою магазину",
     "viewAll": "Показати всі результати для \"{{query}}\""
-  },
-  "aria": {
-    "navigateToHomepage": "Перейти на головну",
-    "openMenu": "Відкрити меню навігації",
-    "closeMenu": "Закрити меню навігації",
-    "openSearch": "Відкрити пошук",
-    "closeSearch": "Закрити пошук",
-    "mainNavigation": "Головна навігація",
-    "userMenu": "Меню користувача",
-    "addToFavorites": "Додати {{product}} в обране",
-    "removeFromFavorites": "Видалити {{product}} з обраного",
-    "viewProduct": "Переглянути деталі {{product}}",
-    "searchInput": "Пошук товарів, магазинів або брендів",
-    "searchResults": "Результати пошуку",
-    "loading": "Завантаження...",
-    "productCard": "Картка товару {{product}}",
-    "signIn": "Увійти до облікового запису"
   }
 }

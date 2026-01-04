@@ -26,7 +26,7 @@ const ProductCard: React.FC<ProductCardProps> = memo(({ id, name, image, price, 
       aria-label={t('aria.viewProduct', { product: name })}
     >
       <div 
-        className="relative h-full flex flex-col rounded-lg sm:rounded-xl overflow-hidden border border-white/10 bg-white/5 backdrop-blur-[25px] transition-all duration-300 md:hover:border-white/20 md:hover:bg-white/8 md:hover:z-10" 
+        className="relative h-full flex flex-col rounded-lg sm:rounded-xl overflow-hidden border border-white/10 bg-white/5 backdrop-blur-[25px] transition-colors duration-300 md:hover:border-white/20 md:hover:bg-white/8 md:hover:z-10" 
         role="article"
         aria-labelledby={`product-name-${id}`}
         style={{

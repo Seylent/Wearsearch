@@ -92,7 +92,10 @@
     "maroon": "Maroon",
     "editProduct": "Edit Product",
     "save": "Save",
-    "saved": "Saved"
+    "saved": "Saved",
+    "zoomImage": "Click to zoom",
+    "scrollToZoom": "Scroll to zoom",
+    "doubleClickToToggle": "Double-click to toggle zoom"
   },
   "productTypes": {
     "outerwear": "Outerwear",
@@ -467,6 +470,7 @@
     "openMenu": "Open menu",
     "closeMenu": "Close menu",
     "openSearch": "Open search",
+    "closeSearch": "Close search",
     "uploadImage": "Upload image",
     "toggleSidebar": "Toggle Sidebar",
     "loadingProducts": "Loading products",
@@ -477,7 +481,17 @@
     "goToNextPage": "Go to next page",
     "previousSlide": "Previous slide",
     "nextSlide": "Next slide",
-    "changeLanguage": "Change Language"
+    "changeLanguage": "Change Language",
+    "mainNavigation": "Main navigation",
+    "userMenu": "User menu",
+    "addToFavorites": "Add {{product}} to favorites",
+    "removeFromFavorites": "Remove {{product}} from favorites",
+    "viewProduct": "View {{product}} details",
+    "searchInput": "Search for products, stores, or brands",
+    "searchResults": "Search results",
+    "loading": "Loading...",
+    "productCard": "Product card for {{product}}",
+    "signIn": "Sign in to your account"
   },
   "placeholders": {
     "searchProducts": "Search for products...",
@@ -598,22 +612,5 @@
     "tryDifferent": "Try a different search term",
     "hint": "Search by product name, brand, category, or store name",
     "viewAll": "View All Results for \"{{query}}\""
-  },
-  "aria": {
-    "navigateToHomepage": "Navigate to homepage",
-    "openMenu": "Open navigation menu",
-    "closeMenu": "Close navigation menu",
-    "openSearch": "Open search",
-    "closeSearch": "Close search",
-    "mainNavigation": "Main navigation",
-    "userMenu": "User menu",
-    "addToFavorites": "Add {{product}} to favorites",
-    "removeFromFavorites": "Remove {{product}} from favorites",
-    "viewProduct": "View {{product}} details",
-    "searchInput": "Search for products, stores, or brands",
-    "searchResults": "Search results",
-    "loading": "Loading...",
-    "productCard": "Product card for {{product}}",
-    "signIn": "Sign in to your account"
   }
 }

@@ -1,7 +1,7 @@
 import { useParams, useNavigate } from "react-router-dom";
 import { useState, useEffect, useMemo, useRef } from "react";
 import { useTranslation } from "react-i18next";
-import { ArrowLeft, Edit, Package, Tag, MapPin, Search, Filter, ChevronDown, SortAsc, Star, Send, Instagram, X } from "lucide-react";
+import { ArrowLeft, Edit, Package, Tag, MapPin, Search, Filter, ChevronDown, SortAsc, Star, Send, Instagram, X, ZoomIn } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import Navigation from "@/components/layout/Navigation";
@@ -13,6 +13,7 @@ import { RelatedProducts } from "@/components/RelatedProducts";
 import { translateGender } from "@/utils/errorTranslation";
 import { getCategoryTranslation, getColorTranslation } from "@/utils/translations";
 import { useProductDetailData } from "@/hooks/useAggregatedData";
+import { ImageLightbox } from "@/components/ImageLightbox";
 import { useSEO } from "@/hooks/useSEO";
 import { logError } from "@/services/logger";
 import { seoApi, type SEOData } from "@/services/api/seo.api";
@@ -35,6 +36,7 @@ const ProductDetail = () => {
   const { t } = useTranslation();
   const [selectedImage, _setSelectedImage] = useState(0);
   const [isAdmin, setIsAdmin] = useState(false);
+  const [isLightboxOpen, setIsLightboxOpen] = useState(false);
   
   // Dynamic SEO from API
   const [seoData, setSeoData] = useState<SEOData | null>(null);
@@ -319,7 +321,16 @@ const ProductDetail = () => {
             <div className="relative animate-fade-in">
               <div className="relative rounded-3xl overflow-hidden border border-transparent bg-transparent group">
                 {product && (
-                  <div className="absolute top-4 right-4 z-10">
+                  <div className="absolute top-4 right-4 z-10 flex gap-2">
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      onClick={() => setIsLightboxOpen(true)}
+                      className="w-12 h-12 rounded-full bg-black/60 backdrop-blur-sm text-white md:hover:bg-white md:hover:text-black active:bg-white active:text-black transition-all"
+                      title={t('products.zoomImage', 'Click to zoom')}
+                    >
+                      <ZoomIn className="w-5 h-5" />
+                    </Button>
                     <FavoriteButton 
                       productId={String(id)}
                       variant="ghost"
@@ -327,19 +338,37 @@ const ProductDetail = () => {
                     />
                   </div>
                 )}
-                <div className="w-full rounded-3xl flex items-center justify-center p-8" style={{
-                  background: 'radial-gradient(circle at 20% 30%, rgba(255,255,255,0.08) 0%, transparent 50%), radial-gradient(circle at 80% 70%, rgba(255,255,255,0.06) 0%, transparent 50%), linear-gradient(135deg, rgba(0,0,0,0.9) 0%, rgba(20,20,20,0.95) 100%)'
-                }}>
+                <div 
+                  className="w-full rounded-3xl flex items-center justify-center p-8 cursor-zoom-in" 
+                  style={{
+                    background: 'radial-gradient(circle at 20% 30%, rgba(255,255,255,0.08) 0%, transparent 50%), radial-gradient(circle at 80% 70%, rgba(255,255,255,0.06) 0%, transparent 50%), linear-gradient(135deg, rgba(0,0,0,0.9) 0%, rgba(20,20,20,0.95) 100%)'
+                  }}
+                  onClick={() => setIsLightboxOpen(true)}
+                  role="button"
+                  tabIndex={0}
+                  onKeyDown={(e) => e.key === 'Enter' && setIsLightboxOpen(true)}
+                  aria-label={t('products.zoomImage', 'Click to zoom image')}
+                >
                   <img
                     src={httpsImageUrl}
                     alt={product.name}
-                    className="max-h-[72vh] object-contain"
+                    className="max-h-[72vh] object-contain transition-transform duration-300 group-hover:scale-[1.02]"
                     loading="lazy"
                     draggable={false}
                   />
                 </div>
               </div>
             </div>
+
+            {/* Image Lightbox */}
+            <ImageLightbox
+              src={httpsImageUrl}
+              alt={product.name}
+              isOpen={isLightboxOpen}
+              onClose={() => setIsLightboxOpen(false)}
+              images={productImages.map(convertS3UrlToHttps)}
+              initialIndex={selectedImage}
+            />
 
             {/* Product Info */}
             <div className="animate-fade-in-up" style={{ animationDelay: '0.2s' }}>

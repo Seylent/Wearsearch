@@ -46,7 +46,7 @@ export const ContactsDialog: React.FC<ContactsDialogProps> = ({ contacts, asFoot
   }, [contacts]);
 
   return (
-    <Dialog>
+    <Dialog modal={false}>
       <DialogTrigger asChild>
         {asFooterLink ? (
           <button className="text-sm text-muted-foreground hover:text-foreground transition-colors select-none text-left">

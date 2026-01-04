@@ -257,7 +257,7 @@ const Products = () => {
           {/* Filters and Sort */}
           <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
             <div className="flex items-center gap-3 flex-wrap">
-              <Dialog open={layout.filterOpen} onOpenChange={layout.setFilterOpen}>
+              <Dialog modal={false} open={layout.filterOpen} onOpenChange={layout.setFilterOpen}>
                 <DialogTrigger asChild>
                   <Button variant="outline" size="lg" className="border-foreground/20 bg-card/50 text-foreground hover:bg-card hover:border-foreground/30 min-h-[48px] text-base touch-manipulation active:scale-95">
                     <Filter className="w-5 h-5 mr-2" />

@@ -112,12 +112,9 @@ i18n
     // Missing key handling for better debugging
     saveMissing: true,
     missingKeyHandler: (lngs, ns, key, fallbackValue) => {
-      console.warn(`Missing translation key: "${key}" for language(s): ${lngs.join(', ')}`);
-      
-      // In development, show key path for debugging
+      // Only log in development and use debug level to reduce noise
       if (import.meta.env.DEV) {
-        console.warn(`  Namespace: ${ns}`);
-        console.warn(`  Fallback value: ${fallbackValue}`);
+        console.debug(`[i18n] Missing key: "${key}" (${lngs.join(', ')}) -> "${fallbackValue}"`);
       }
     },
 

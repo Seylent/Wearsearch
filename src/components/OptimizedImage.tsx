@@ -1,4 +1,5 @@
-import React, { useState } from 'react';
+import React, { useMemo, useState } from 'react';
+import { cn } from '@/lib/utils';
 
 interface OptimizedImageProps extends React.ImgHTMLAttributes<HTMLImageElement> {
   src: string;
@@ -20,44 +21,63 @@ export const OptimizedImage: React.FC<OptimizedImageProps> = ({
   const [error, setError] = useState(false);
   const [loaded, setLoaded] = useState(false);
 
-  // Convert image path to WebP if not already
-  const webpSrc = src.replace(/\.(jpg|jpeg|png)$/i, '.webp');
+  const computed = useMemo(() => {
+    const isRemote = /^(https?:)?\/\//i.test(src);
+    const hasKnownExt = /\.(avif|webp|png|jpe?g)(\?.*)?$/i.test(src);
+
+    // If remote (or unknown extension), do not guess alternate formats/sizes.
+    // This avoids extra network requests for URLs that don't exist.
+    if (isRemote || !hasKnownExt) {
+      return {
+        useSources: false,
+        avifSrc: src,
+        webpSrc: src,
+      };
+    }
+
+    const avifSrc = src.replace(/\.(jpg|jpeg|png|webp)(\?.*)?$/i, '.avif$2');
+    const webpSrc = src.replace(/\.(jpg|jpeg|png|avif)(\?.*)?$/i, '.webp$2');
+    return {
+      useSources: true,
+      avifSrc,
+      webpSrc,
+    };
+  }, [src]);
+
   const fallbackSrc = error ? (fallback || src) : src;
 
-  // Generate responsive srcset for different screen sizes
+  // Generate responsive srcset for local, pre-generated assets (e.g. foo-600w.webp)
   const generateSrcSet = (imageSrc: string) => {
-    const base = imageSrc.replace(/\.(jpg|jpeg|png|webp)$/i, '');
-    const ext = imageSrc.match(/\.(jpg|jpeg|png|webp)$/i)?.[0] || '.webp';
-    
-    // Generate multiple sizes for responsive images
-    return `
-      ${base}-300w${ext} 300w,
-      ${base}-600w${ext} 600w,
-      ${base}-900w${ext} 900w,
-      ${base}-1200w${ext} 1200w
-    `.trim();
+    const [pathPart, queryPart] = imageSrc.split('?');
+    const base = pathPart.replace(/\.(jpg|jpeg|png|webp|avif)$/i, '');
+    const ext = pathPart.match(/\.(jpg|jpeg|png|webp|avif)$/i)?.[0] || '.webp';
+    const q = queryPart ? `?${queryPart}` : '';
+
+    return [
+      `${base}-300w${ext}${q} 300w`,
+      `${base}-600w${ext}${q} 600w`,
+      `${base}-900w${ext}${q} 900w`,
+      `${base}-1200w${ext}${q} 1200w`,
+    ].join(', ');
   };
 
   return (
     <picture>
-      {/* WebP source for modern browsers */}
-      <source 
-        srcSet={generateSrcSet(webpSrc)} 
-        sizes={sizes || "(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"}
-        type="image/webp" 
-      />
-      
-      {/* AVIF source for even better compression */}
-      <source 
-        srcSet={generateSrcSet(src.replace(/\.(jpg|jpeg|png)$/i, '.avif'))} 
-        sizes={sizes || "(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"}
-        type="image/avif" 
-      />
-      
-import { useState } from 'react';
-import { cn } from '@/lib/utils';
-
-// ... existing interfaces and functions ...
+      {computed.useSources && (
+        <>
+          {/* AVIF first for best compression when supported */}
+          <source
+            srcSet={generateSrcSet(computed.avifSrc)}
+            sizes={sizes || "(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"}
+            type="image/avif"
+          />
+          <source
+            srcSet={generateSrcSet(computed.webpSrc)}
+            sizes={sizes || "(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"}
+            type="image/webp"
+          />
+        </>
+      )}
 
       {/* Fallback to original format */}
       <img
@@ -65,6 +85,7 @@ import { cn } from '@/lib/utils';
         alt={alt}
         loading={priority ? 'eager' : 'lazy'}
         decoding="async"
+        fetchPriority={priority ? 'high' : 'auto'}
         className={cn(
           'transition-opacity duration-300',
           loaded ? 'opacity-100' : 'opacity-0',
@@ -72,7 +93,6 @@ import { cn } from '@/lib/utils';
         )}
         onLoad={() => setLoaded(true)}
         onError={() => {
-          console.error(`Failed to load image: ${src}`);
           setError(true);
           setLoaded(true); // Show fallback
         }}
