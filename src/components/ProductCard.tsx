@@ -1,8 +1,10 @@
-import React, { memo } from 'react';
+import React, { memo, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
+import { Eye } from 'lucide-react';
 import ImageDebugger from './ImageDebugger';
 import FavoriteButton from './FavoriteButton';
+import QuickViewModal from './QuickViewModal';
 
 interface ProductCardProps {
   id: number | string;
@@ -12,14 +14,23 @@ interface ProductCardProps {
   category?: string;
   brand?: string;
   isNew?: boolean;
+  showQuickView?: boolean;
 }
 
-const ProductCard: React.FC<ProductCardProps> = memo(({ id, name, image, price, category: _category, brand, isNew }) => {
+const ProductCard: React.FC<ProductCardProps> = memo(({ id, name, image, price, category: _category, brand, isNew, showQuickView = true }) => {
   const { t } = useTranslation();
+  const [isQuickViewOpen, setIsQuickViewOpen] = useState(false);
   // Handle both 'image' and 'image_url' from different API responses
   const imgSrc = image || '';
 
+  const handleQuickView = (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setIsQuickViewOpen(true);
+  };
+
   return (
+    <>
     <Link 
       to={`/product/${id}`} 
       className="group block h-full"
@@ -58,10 +69,27 @@ const ProductCard: React.FC<ProductCardProps> = memo(({ id, name, image, price, 
             </div>
           )}
           
-          {/* Favorite Button */}
+          {/* Favorite Button - larger touch target on mobile */}
           <div className="absolute top-2 sm:top-2 right-2 sm:right-2 z-10 transition-all duration-300">
-            <FavoriteButton productId={String(id)} variant="ghost" size="icon" />
+            <FavoriteButton 
+              productId={String(id)} 
+              variant="ghost" 
+              size="icon"
+              className="w-10 h-10 sm:w-9 sm:h-9 rounded-full bg-black/40 backdrop-blur-sm active:bg-white/20"
+            />
           </div>
+          
+          {/* Quick View Button - always visible on mobile, hover on desktop */}
+          {showQuickView && (
+            <button
+              onClick={handleQuickView}
+              className="absolute bottom-3 left-1/2 -translate-x-1/2 z-10 flex items-center gap-1.5 px-4 py-2.5 sm:px-3 sm:py-1.5 rounded-full bg-white/20 backdrop-blur-md border border-white/30 text-white text-sm sm:text-xs font-medium md:opacity-0 md:translate-y-2 md:group-hover:opacity-100 md:group-hover:translate-y-0 transition-all duration-300 active:bg-white/40 md:hover:bg-white/30 touch-manipulation"
+              aria-label={t('quickView.open')}
+            >
+              <Eye className="w-4 h-4 sm:w-3.5 sm:h-3.5" />
+              <span>{t('quickView.button')}</span>
+            </button>
+          )}
         </div>
 
         {/* Content */}
@@ -92,6 +120,14 @@ const ProductCard: React.FC<ProductCardProps> = memo(({ id, name, image, price, 
         </div>
       </div>
     </Link>
+    
+    {/* Quick View Modal */}
+    <QuickViewModal
+      productId={id}
+      isOpen={isQuickViewOpen}
+      onClose={() => setIsQuickViewOpen(false)}
+    />
+    </>
   );
 });
 

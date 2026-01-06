@@ -34,6 +34,9 @@ import { translateGender } from "@/utils/errorTranslation";
 import { getColorTranslation, getCategoryTranslation } from "@/utils/translations";
 import { useSEO } from "@/hooks/useSEO";
 import { seoApi, type SEOData } from "@/services/api/seo.api";
+import PriceRangeFilter from "@/components/PriceRangeFilter";
+import RecentlyViewedProducts from "@/components/RecentlyViewedProducts";
+import PersonalizedRecommendations from "@/components/PersonalizedRecommendations";
 
 const Products = () => {
   const { t } = useTranslation();
@@ -387,6 +390,23 @@ const Products = () => {
                       </div>
                     </div>
 
+                    {/* Price Range Filter */}
+                    <div>
+                      <PriceRangeFilter
+                        min={0}
+                        max={5000}
+                        minValue={filters.priceMin ?? 0}
+                        maxValue={filters.priceMax ?? 5000}
+                        onApply={(min, max) => {
+                          filters.setPriceRange(min === 0 ? null : min, max === 5000 ? null : max);
+                          setCurrentPage(1);
+                        }}
+                        currency="$"
+                        showApplyButton={false}
+                        step={50}
+                      />
+                    </div>
+
                     <div className="flex gap-2 pt-4 border-t border-foreground/10">
                       <Button 
                         variant="ghost" 
@@ -564,6 +584,18 @@ const Products = () => {
               )}
             </>
           )}
+
+          {/* Personalized Recommendations */}
+          <PersonalizedRecommendations 
+            className="mt-8"
+            limit={8}
+          />
+
+          {/* Recently Viewed Products */}
+          <RecentlyViewedProducts 
+            className="mt-8"
+            maxItems={8}
+          />
         </div>
       </main>
 

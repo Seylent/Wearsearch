@@ -14,6 +14,8 @@ export interface ProductFiltersState {
   selectedGenders: string[];
   selectedBrand: string;
   brandSearchQuery: string;
+  priceMin: number | null;
+  priceMax: number | null;
 }
 
 export const useProductFilters = () => {
@@ -24,6 +26,8 @@ export const useProductFilters = () => {
   const [selectedGenders, setSelectedGenders] = useState<string[]>([]);
   const [selectedBrand, setSelectedBrand] = useState('');
   const [brandSearchQuery, setBrandSearchQuery] = useState('');
+  const [priceMin, setPriceMin] = useState<number | null>(null);
+  const [priceMax, setPriceMax] = useState<number | null>(null);
 
   // Get store_id from URL params
   const storeIdParam = searchParams.get('store_id');
@@ -49,6 +53,14 @@ export const useProductFilters = () => {
     setSelectedGenders([]);
     setSelectedBrand('');
     setBrandSearchQuery('');
+    setPriceMin(null);
+    setPriceMax(null);
+  }, []);
+
+  // Set price range
+  const setPriceRange = useCallback((min: number | null, max: number | null) => {
+    setPriceMin(min);
+    setPriceMax(max);
   }, []);
 
   // Check if any filters are active
@@ -58,8 +70,10 @@ export const useProductFilters = () => {
       selectedColors.length > 0 ||
       selectedTypes.length > 0 ||
       selectedGenders.length > 0 ||
-      selectedBrand !== '',
-    [searchQuery, selectedColors.length, selectedTypes.length, selectedGenders.length, selectedBrand]
+      selectedBrand !== '' ||
+      priceMin !== null ||
+      priceMax !== null,
+    [searchQuery, selectedColors.length, selectedTypes.length, selectedGenders.length, selectedBrand, priceMin, priceMax]
   );
 
   return {
@@ -70,11 +84,14 @@ export const useProductFilters = () => {
     selectedGenders,
     selectedBrand,
     brandSearchQuery,
+    priceMin,
+    priceMax,
     
     // Setters
     setSearchQuery,
     setSelectedBrand,
     setBrandSearchQuery,
+    setPriceRange,
     
     // Actions
     toggleColor,

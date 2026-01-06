@@ -10,6 +10,11 @@ import { useToast } from "@/hooks/use-toast";
 import { convertS3UrlToHttps } from "@/lib/utils";
 import { FavoriteButton } from "@/components/FavoriteButton";
 import { RelatedProducts } from "@/components/RelatedProducts";
+import ShareButton from "@/components/ShareButton";
+import RecentlyViewedProducts from "@/components/RecentlyViewedProducts";
+import SimilarProducts from "@/components/SimilarProducts";
+import { useRecentlyViewed } from "@/hooks/useRecentlyViewed";
+import { trackInteraction } from "@/hooks/useRecommendations";
 import { translateGender } from "@/utils/errorTranslation";
 import { getCategoryTranslation, getColorTranslation } from "@/utils/translations";
 import { useProductDetailData } from "@/hooks/useAggregatedData";
@@ -153,6 +158,17 @@ const ProductDetail = () => {
     const value = detailData["relatedProducts"];
     return Array.isArray(value) ? value : undefined;
   }, [detailData]);
+
+  // Track recently viewed products and interactions
+  const { addItem: addToRecentlyViewed } = useRecentlyViewed();
+  
+  useEffect(() => {
+    if (product) {
+      addToRecentlyViewed(product);
+      // Track view interaction for recommendations
+      trackInteraction(product.id, 'view');
+    }
+  }, [product, addToRecentlyViewed]);
   
   // Check admin status once
   useEffect(() => {
@@ -333,6 +349,12 @@ const ProductDetail = () => {
                     </Button>
                     <FavoriteButton 
                       productId={String(id)}
+                      variant="ghost"
+                      className="w-12 h-12 rounded-full bg-black/60 backdrop-blur-sm text-white md:hover:bg-white md:hover:text-black active:bg-white active:text-black transition-all"
+                    />
+                    <ShareButton
+                      title={product.name}
+                      description={product.description}
                       variant="ghost"
                       className="w-12 h-12 rounded-full bg-black/60 backdrop-blur-sm text-white md:hover:bg-white md:hover:text-black active:bg-white active:text-black transition-all"
                     />
@@ -710,6 +732,22 @@ const ProductDetail = () => {
           </div>
         </div>
 
+        {/* Recently Viewed Products */}
+        <RecentlyViewedProducts 
+          className="mb-16 animate-fade-in-up"
+          maxItems={6}
+          excludeProductId={id}
+        />
+
+        {/* Similar Products Section (from API) */}
+        {product && id && (
+          <SimilarProducts
+            productId={id}
+            limit={6}
+            className="mb-16 animate-fade-in-up"
+          />
+        )}
+
         {/* Related Products Section */}
         {product && (
           <RelatedProducts 
@@ -718,6 +756,9 @@ const ProductDetail = () => {
             className="mb-16 animate-fade-in-up" 
           />
         )}
+        
+        {/* Spacer for mobile action bar */}
+        <div className="h-20 md:hidden" />
       </div>
 
       <Footer />

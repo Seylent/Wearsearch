@@ -8,6 +8,7 @@ import { useNavigate } from 'react-router-dom';
 import { useProductSearch } from '../hooks/useProductSearch';
 import { SearchDropdownView } from './SearchDropdownView';
 import { detectSearchFilter } from '@/utils/searchFilters';
+import { useSearchHistory } from '@/hooks/useSearchHistory';
 
 interface SearchDropdownContainerProps {
   onClose: () => void;
@@ -20,6 +21,9 @@ export const SearchDropdownContainer: React.FC<SearchDropdownContainerProps> = R
 
   // Business logic from custom hook
   const search = useProductSearch();
+  
+  // Search history hook
+  const { history, popularQueries, addToHistory, removeFromHistory, clearHistory } = useSearchHistory();
 
   // Focus input on mount
   useEffect(() => {
@@ -64,6 +68,9 @@ export const SearchDropdownContainer: React.FC<SearchDropdownContainerProps> = R
 
   const handleViewAll = useCallback(() => {
     if (search.query.trim()) {
+      // Add to search history
+      addToHistory(search.query);
+      
       const detectedFilter = detectSearchFilter(search.query);
       
       // If we detected a color or category filter, navigate with that filter
@@ -80,7 +87,15 @@ export const SearchDropdownContainer: React.FC<SearchDropdownContainerProps> = R
       
       onClose();
     }
-  }, [navigate, onClose, search.query]);
+  }, [navigate, onClose, search.query, addToHistory]);
+
+  // Handle history item click
+  const handleHistoryClick = useCallback((query: string) => {
+    search.setQuery(query);
+    addToHistory(query);
+    navigate(`/products?search=${encodeURIComponent(query)}`);
+    onClose();
+  }, [navigate, onClose, search, addToHistory]);
 
   return (
     <SearchDropdownView
@@ -94,6 +109,11 @@ export const SearchDropdownContainer: React.FC<SearchDropdownContainerProps> = R
       onViewAll={handleViewAll}
       inputRef={inputRef}
       dropdownRef={dropdownRef}
+      searchHistory={history}
+      popularQueries={popularQueries}
+      onHistoryClick={handleHistoryClick}
+      onRemoveHistory={removeFromHistory}
+      onClearHistory={clearHistory}
     />
   );
 });

@@ -8,12 +8,13 @@ import ProductCard from "@/components/ProductCard";
 import { ProductGridSkeleton } from "@/components/common/SkeletonLoader";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { Search, Heart } from "lucide-react";
+import { Search, Heart, Settings } from "lucide-react";
 import { isAuthenticated } from "@/utils/authStorage";
 import { useDebounce } from "@/hooks/useDebounce";
 import { useFavoritesContext } from "@/contexts/FavoritesContext";
 import { useFavoritesPage } from "@/hooks/useApi";
 import { useSEO } from "@/hooks/useSEO";
+import WishlistPrivacySettings from "@/components/WishlistPrivacySettings";
 
 function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === "object" && value !== null;
@@ -33,6 +34,7 @@ const Favorites = () => {
   const { t } = useTranslation();
   const [searchParams, setSearchParams] = useSearchParams();
   const [searchQuery, setSearchQuery] = useState("");
+  const [showSettings, setShowSettings] = useState(false);
   const debouncedSearch = useDebounce(searchQuery, 300);
 
   useSEO({
@@ -130,12 +132,32 @@ const Favorites = () => {
       <main className="container mx-auto px-6 pt-28 pb-16">
         {/* Header */}
         <div className="mb-10">
-          <div className="inline-flex items-center gap-2 mb-4 select-none">
-            <Heart className="w-4 h-4 text-red-500" />
-            <span className="text-xs text-muted-foreground uppercase tracking-wider">Your Collection</span>
+          <div className="flex items-start justify-between">
+            <div>
+              <div className="inline-flex items-center gap-2 mb-4 select-none">
+                <Heart className="w-4 h-4 text-red-500" />
+                <span className="text-xs text-muted-foreground uppercase tracking-wider">{t('favorites.yourCollection')}</span>
+              </div>
+              <h1 className="font-display text-4xl sm:text-5xl font-bold mb-3 select-none">{t('favorites.title')}</h1>
+              <p className="text-muted-foreground text-lg select-none">{t('favorites.subtitle')}</p>
+            </div>
+            
+            {/* Settings Button */}
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setShowSettings(!showSettings)}
+              className="shrink-0 mt-2"
+            >
+              <Settings className="w-4 h-4 mr-2" />
+              {t('wishlist.settings')}
+            </Button>
           </div>
-          <h1 className="font-display text-4xl sm:text-5xl font-bold mb-3 select-none">My Favorites</h1>
-          <p className="text-muted-foreground text-lg select-none">Items you've saved for later</p>
+          
+          {/* Privacy Settings Panel */}
+          {showSettings && (
+            <WishlistPrivacySettings className="mt-6 max-w-md" />
+          )}
         </div>
 
         {/* Search */}

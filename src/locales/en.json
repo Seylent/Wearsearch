@@ -297,8 +297,39 @@
   },
   "favorites": {
     "title": "My Favorites",
+    "yourCollection": "Your Collection",
+    "subtitle": "Items you've saved for later",
     "noFavorites": "No favorite items yet",
-    "addSome": "Start adding items you love!"
+    "addSome": "Start adding items you love!",
+    "seoTitle": "Favorites",
+    "seoDescription": "View and manage your favorite products.",
+    "added": "Added to favorites",
+    "removed": "Removed from favorites"
+  },
+  "wishlist": {
+    "settings": "Settings",
+    "privacySettings": "Privacy Settings",
+    "publicWishlist": "Public Wishlist",
+    "anyoneCanView": "Anyone with the link can view your wishlist",
+    "onlyYouCanView": "Only you can see your wishlist",
+    "shareLink": "Share Link",
+    "generateLink": "Generate Share Link",
+    "linkGenerated": "Link Generated",
+    "linkReady": "Your share link is ready to use",
+    "linkError": "Failed to generate link",
+    "linkCopied": "Link copied to clipboard",
+    "settingsSaved": "Settings Saved",
+    "nowPublic": "Your wishlist is now public",
+    "nowPrivate": "Your wishlist is now private",
+    "settingsError": "Failed to save settings",
+    "shared": "Shared Wishlist",
+    "sharedWishlist": "Shared Wishlist",
+    "sharedTitle": "{{name}}'s Wishlist",
+    "sharedDescription": "View this shared wishlist",
+    "itemsCount": "{{count}} items",
+    "notFound": "Wishlist Not Found",
+    "notFoundOrPrivate": "This wishlist doesn't exist or is private",
+    "emptyShared": "This wishlist is empty"
   },
   "admin": {
     "title": "Admin Panel",
@@ -605,12 +636,128 @@
     "responseTime": "We typically respond within 24 hours"
   },
   "search": {
-    "placeholder": "Search for products, stores, or brands...",
+    "placeholder": "Search products, brands...",
     "startTyping": "Start typing to search products and stores...",
     "searching": "Searching...",
     "noResults": "No products or stores found for \"{{query}}\"",
     "tryDifferent": "Try a different search term",
     "hint": "Search by product name, brand, category, or store name",
-    "viewAll": "View All Results for \"{{query}}\""
+    "viewAll": "View All Results for \"{{query}}\"",
+    "clear": "Clear search",
+    "recentSearches": "Recent Searches",
+    "clearHistory": "Clear",
+    "suggestions": "Suggestions",
+    "popular": "Popular",
+    "searchFor": "Search for",
+    "removeFromHistory": "Remove from history"
+  },
+  "recentlyViewed": {
+    "title": "Recently Viewed",
+    "clearAll": "Clear all",
+    "remove": "Remove from recently viewed",
+    "empty": "No recently viewed products"
+  },
+  "share": {
+    "share": "Share",
+    "shareProduct": "Share Product",
+    "shareVia": "Share via",
+    "linkCopied": "Link copied!",
+    "linkCopiedDesc": "The link has been copied to your clipboard.",
+    "copyFailed": "Failed to copy"
+  },
+  "collections": {
+    "title": "Collections",
+    "create": "New",
+    "createNew": "Create New Collection",
+    "createButton": "Create Collection",
+    "createFirst": "Create your first collection",
+    "quickStart": "Quick Start",
+    "or": "or create custom",
+    "name": "Name",
+    "namePlaceholder": "My Collection",
+    "icon": "Icon",
+    "items": "items",
+    "empty": "No collections yet",
+    "emptyHint": "Create your first collection to organize products",
+    "noCollections": "You don't have any collections yet",
+    "nameRequired": "Name is required",
+    "created": "Collection created",
+    "createdDesc": "has been created successfully",
+    "deleted": "Collection deleted",
+    "deletedDesc": "has been removed",
+    "addToCollection": "Add to collection",
+    "save": "Save",
+    "saveToCollection": "Save to Collection",
+    "addedTo": "Added to collection",
+    "addedToDesc": "was added to",
+    "removedFrom": "Removed from collection",
+    "removedFromDesc": "was removed from",
+    "newName": "New collection name"
+  },
+  "reviews": {
+    "title": "Reviews",
+    "reviews": "reviews",
+    "writeReview": "Write a Review",
+    "yourReview": "Your Review",
+    "yourRating": "Your Rating",
+    "yourFeedback": "Your Feedback",
+    "placeholder": "Share your experience with this product...",
+    "characters": "characters",
+    "submit": "Submit Review",
+    "submitting": "Submitting...",
+    "submitted": "Review submitted",
+    "submittedDesc": "Thank you for your feedback!",
+    "submitError": "Failed to submit review",
+    "ratingRequired": "Please select a rating",
+    "contentRequired": "Please write at least 10 characters",
+    "loginToReview": "Please log in to write a review",
+    "loginToHelp": "Please log in to mark reviews as helpful",
+    "helpfulError": "Failed to mark as helpful",
+    "loadError": "Failed to load reviews",
+    "noReviews": "No reviews yet",
+    "beFirst": "Be the first to review this product!",
+    "helpful": "Helpful",
+    "verified": "Verified",
+    "stars": "stars",
+    "sort": {
+      "newest": "Newest",
+      "oldest": "Oldest",
+      "highest": "Highest rated",
+      "lowest": "Lowest rated",
+      "helpful": "Most helpful"
+    }
+  },
+  "recommendations": {
+    "title": "Recommended for You",
+    "reason": {
+      "based_on_favorites": "From favorites",
+      "based_on_views": "Based on views",
+      "trending": "Trending",
+      "similar_users": "Popular choice"
+    }
+  },
+  "quickView": {
+    "button": "Quick View",
+    "open": "Open quick view",
+    "viewFull": "View Full Details",
+    "availableIn": "Available in {{count}} stores",
+    "notFound": "Product not found"
+  },
+  "filters": {
+    "priceRange": "Price Range",
+    "min": "Min",
+    "max": "Max",
+    "reset": "Reset",
+    "apply": "Apply"
+  },
+  "mobileActions": {
+    "zoom": "Zoom",
+    "save": "Save",
+    "saved": "Saved",
+    "share": "Share",
+    "stores": "{{count}} stores",
+    "viewStores": "View stores",
+    "buy": "Buy",
+    "details": "Details"
   }
 }

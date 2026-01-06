@@ -1,13 +1,451 @@
-# Backend Required Changes for New Analytics Features
+# Backend Required Changes for New Features
 
-**Дата:** 5 січня 2026  
+**Дата:** 6 січня 2026  
 **Статус:** Frontend Ready - Backend Implementation Needed
 
 ---
 
 ## 🎯 Overview
 
-Frontend реалізував 4 нові analytics features, які зараз працюють з localStorage. Потрібна backend інтеграція для production.
+Frontend реалізував нові user-facing та analytics features, які зараз працюють з localStorage/mock data. Потрібна backend інтеграція для production.
+
+---
+
+# ЧАСТИНА 1: User-Facing Features (НОВІ)
+
+---
+
+## 5️⃣ Product Reviews & Ratings ⭐
+
+### Database Migration
+
+```sql
+CREATE TABLE product_reviews (
+  id SERIAL PRIMARY KEY,
+  product_id INT NOT NULL REFERENCES items(id) ON DELETE CASCADE,
+  user_id INT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  rating INT NOT NULL CHECK (rating >= 1 AND rating <= 5),
+  title VARCHAR(255),
+  text TEXT,
+  helpful_count INT DEFAULT 0,
+  is_verified_purchase BOOLEAN DEFAULT FALSE,
+  created_at TIMESTAMP DEFAULT NOW(),
+  updated_at TIMESTAMP DEFAULT NOW(),
+  
+  UNIQUE(product_id, user_id),  -- Один відгук на продукт від користувача
+  INDEX idx_product_rating (product_id, rating DESC),
+  INDEX idx_created_at (created_at DESC)
+);
+
+CREATE TABLE review_helpful (
+  user_id INT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  review_id INT NOT NULL REFERENCES product_reviews(id) ON DELETE CASCADE,
+  PRIMARY KEY (user_id, review_id)
+);
+```
+
+### Required Endpoints
+
+#### Get Product Reviews
+```
+GET /api/v1/items/:productId/reviews
+
+Query params:
+  - sort: 'newest' | 'oldest' | 'highest' | 'lowest' | 'helpful' (default 'newest')
+  - limit: number (default 10)
+  - offset: number (pagination)
+
+Response:
+{
+  "reviews": [
+    {
+      "id": 123,
+      "user_id": 456,
+      "user_name": "Олександр К.",
+      "user_avatar": "https://...",
+      "rating": 5,
+      "title": "Відмінні кросівки!",
+      "text": "Дуже комфортні, рекомендую...",
+      "helpful_count": 12,
+      "is_verified_purchase": true,
+      "created_at": "2026-01-05T15:30:00Z"
+    }
+  ],
+  "stats": {
+    "average_rating": 4.5,
+    "total_reviews": 45,
+    "rating_distribution": {
+      "5": 25,
+      "4": 12,
+      "3": 5,
+      "2": 2,
+      "1": 1
+    }
+  },
+  "total": 45
+}
+```
+
+#### Submit Review
+```
+POST /api/v1/items/:productId/reviews
+Authorization: Bearer <token>
+
+{
+  "rating": 5,
+  "title": "Відмінний товар",
+  "text": "Дуже задоволений покупкою..."
+}
+
+Response:
+{
+  "success": true,
+  "review": { ... }
+}
+```
+
+#### Mark Review as Helpful
+```
+POST /api/v1/reviews/:reviewId/helpful
+Authorization: Bearer <token>
+
+Response:
+{
+  "success": true,
+  "helpful_count": 13
+}
+```
+
+#### Delete Own Review
+```
+DELETE /api/v1/reviews/:reviewId
+Authorization: Bearer <token>
+
+Response:
+{
+  "success": true
+}
+```
+
+---
+
+## 6️⃣ User Collections / Wishlists 📁
+
+### Database Migration
+
+```sql
+CREATE TABLE user_collections (
+  id SERIAL PRIMARY KEY,
+  user_id INT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  name VARCHAR(255) NOT NULL,
+  description TEXT,
+  emoji VARCHAR(10) DEFAULT '📁',
+  is_public BOOLEAN DEFAULT FALSE,
+  created_at TIMESTAMP DEFAULT NOW(),
+  updated_at TIMESTAMP DEFAULT NOW(),
+  
+  INDEX idx_user (user_id)
+);
+
+CREATE TABLE collection_items (
+  collection_id INT NOT NULL REFERENCES user_collections(id) ON DELETE CASCADE,
+  product_id INT NOT NULL REFERENCES items(id) ON DELETE CASCADE,
+  added_at TIMESTAMP DEFAULT NOW(),
+  notes TEXT,
+  
+  PRIMARY KEY (collection_id, product_id)
+);
+```
+
+### Required Endpoints
+
+#### Get User Collections
+```
+GET /api/v1/users/me/collections
+Authorization: Bearer <token>
+
+Response:
+{
+  "collections": [
+    {
+      "id": "uuid-1",
+      "name": "Хочу купити",
+      "emoji": "🛒",
+      "description": "На наступну зарплату",
+      "product_count": 5,
+      "is_public": false,
+      "created_at": "2026-01-05T15:30:00Z"
+    }
+  ]
+}
+```
+
+#### Create Collection
+```
+POST /api/v1/users/me/collections
+Authorization: Bearer <token>
+
+{
+  "name": "Літні кросівки",
+  "emoji": "☀️",
+  "description": "Для відпустки"
+}
+
+Response:
+{
+  "success": true,
+  "collection": { ... }
+}
+```
+
+#### Update Collection
+```
+PUT /api/v1/users/me/collections/:id
+Authorization: Bearer <token>
+
+{
+  "name": "Нова назва",
+  "emoji": "🎯"
+}
+```
+
+#### Delete Collection
+```
+DELETE /api/v1/users/me/collections/:id
+Authorization: Bearer <token>
+```
+
+#### Add Product to Collection
+```
+POST /api/v1/users/me/collections/:id/items
+Authorization: Bearer <token>
+
+{
+  "product_id": 123,
+  "notes": "Розмір 42"
+}
+```
+
+#### Remove Product from Collection
+```
+DELETE /api/v1/users/me/collections/:id/items/:productId
+Authorization: Bearer <token>
+```
+
+#### Get Collection Products
+```
+GET /api/v1/users/me/collections/:id/items
+Authorization: Bearer <token>
+
+Response:
+{
+  "products": [
+    {
+      "id": 123,
+      "name": "Nike Air Max",
+      "price": 150,
+      "image_url": "...",
+      "added_at": "2026-01-05T15:30:00Z",
+      "notes": "Розмір 42"
+    }
+  ]
+}
+```
+
+---
+
+## 7️⃣ Personalized Recommendations 🎯
+
+### Database Migration
+
+```sql
+CREATE TABLE user_preferences (
+  user_id INT PRIMARY KEY REFERENCES users(id) ON DELETE CASCADE,
+  preferred_categories TEXT[],
+  preferred_brands TEXT[],
+  price_range_min DECIMAL(10,2),
+  price_range_max DECIMAL(10,2),
+  updated_at TIMESTAMP DEFAULT NOW()
+);
+
+CREATE TABLE user_product_interactions (
+  id SERIAL PRIMARY KEY,
+  user_id INT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  product_id INT NOT NULL REFERENCES items(id) ON DELETE CASCADE,
+  interaction_type VARCHAR(20) NOT NULL,  -- 'view', 'favorite', 'cart', 'purchase'
+  created_at TIMESTAMP DEFAULT NOW(),
+  
+  INDEX idx_user_interaction (user_id, interaction_type),
+  INDEX idx_product (product_id)
+);
+```
+
+### Required Endpoints
+
+#### Get Personalized Recommendations
+```
+GET /api/v1/recommendations
+Authorization: Bearer <token>
+
+Query params:
+  - limit: number (default 10)
+  - exclude_viewed: boolean (default true)
+
+Response:
+{
+  "recommendations": [
+    {
+      "id": 123,
+      "name": "Adidas Ultraboost",
+      "price": 160,
+      "image_url": "...",
+      "category": "sneakers",
+      "brand": "Adidas",
+      "reason": "based_on_favorites",  // 'based_on_favorites', 'based_on_views', 'trending', 'similar_users'
+      "score": 0.95
+    }
+  ]
+}
+```
+
+#### Get Similar Products (для "Recently Viewed")
+```
+GET /api/v1/items/:productId/similar
+
+Query params:
+  - limit: number (default 6)
+
+Response:
+{
+  "products": [
+    {
+      "id": 456,
+      "name": "Similar Product",
+      "price": 145,
+      "image_url": "...",
+      "similarity_score": 0.89
+    }
+  ]
+}
+```
+
+#### Track Interaction (для recommendations algorithm)
+```
+POST /api/v1/interactions
+Authorization: Bearer <token>
+
+{
+  "product_id": 123,
+  "type": "view"  // 'view', 'favorite', 'cart', 'purchase'
+}
+```
+
+**Recommendation Algorithm (спрощений):**
+```sql
+-- Рекомендації на основі категорій улюблених товарів
+WITH user_fav_categories AS (
+  SELECT DISTINCT i.category
+  FROM favorites f
+  JOIN items i ON f.item_id = i.id
+  WHERE f.user_id = $1
+)
+SELECT i.*, 
+  CASE 
+    WHEN i.category IN (SELECT category FROM user_fav_categories) THEN 0.8
+    ELSE 0.5
+  END as score
+FROM items i
+WHERE i.id NOT IN (
+  SELECT item_id FROM favorites WHERE user_id = $1
+)
+ORDER BY score DESC, i.created_at DESC
+LIMIT 10;
+```
+
+---
+
+## 8️⃣ Search History & Popular Queries 🔍
+
+### Database Migration
+
+```sql
+CREATE TABLE user_search_history (
+  id SERIAL PRIMARY KEY,
+  user_id INT REFERENCES users(id) ON DELETE CASCADE,
+  session_id VARCHAR(255),  -- для неавторизованих
+  query VARCHAR(255) NOT NULL,
+  results_count INT,
+  created_at TIMESTAMP DEFAULT NOW(),
+  
+  INDEX idx_user (user_id),
+  INDEX idx_created_at (created_at DESC)
+);
+
+CREATE TABLE popular_searches (
+  query VARCHAR(255) PRIMARY KEY,
+  search_count INT DEFAULT 1,
+  last_searched_at TIMESTAMP DEFAULT NOW()
+);
+```
+
+### Required Endpoints
+
+#### Get Search History
+```
+GET /api/v1/search/history
+Authorization: Bearer <token>  (optional)
+
+Query params:
+  - limit: number (default 10)
+
+Response:
+{
+  "history": [
+    {
+      "query": "nike air max",
+      "results_count": 25,
+      "searched_at": "2026-01-05T15:30:00Z"
+    }
+  ]
+}
+```
+
+#### Clear Search History
+```
+DELETE /api/v1/search/history
+Authorization: Bearer <token>
+```
+
+#### Get Popular Searches
+```
+GET /api/v1/search/popular
+
+Query params:
+  - limit: number (default 5)
+
+Response:
+{
+  "popular": [
+    { "query": "nike", "count": 1250 },
+    { "query": "adidas ultraboost", "count": 890 },
+    { "query": "кросівки", "count": 750 }
+  ]
+}
+```
+
+#### Track Search (викликається при пошуку)
+```
+POST /api/v1/search/track
+
+{
+  "query": "nike air max",
+  "results_count": 25
+}
+```
+
+---
+
+# ЧАСТИНА 2: Analytics Features (попередні)
 
 ---
 
@@ -436,3 +874,92 @@ See:
 - `src/pages/Admin.tsx` - Frontend implementation (lines 754-870)
 
 **Ready to implement! 🎉**
+
+---
+
+# 📋 ПОВНИЙ ЧЕКЛІСТ ДЛЯ БЕКЕНДУ
+
+## User-Facing Features (Пріоритет 1 - для користувачів)
+
+### Reviews (Відгуки)
+- [ ] Таблиці: `product_reviews`, `review_helpful`
+- [ ] `GET /api/v1/items/:id/reviews` - отримати відгуки
+- [ ] `POST /api/v1/items/:id/reviews` - додати відгук
+- [ ] `POST /api/v1/reviews/:id/helpful` - позначити корисним
+- [ ] `DELETE /api/v1/reviews/:id` - видалити відгук
+
+### Collections (Колекції)
+- [ ] Таблиці: `user_collections`, `collection_items`
+- [ ] `GET /api/v1/users/me/collections` - список колекцій
+- [ ] `POST /api/v1/users/me/collections` - створити
+- [ ] `PUT /api/v1/users/me/collections/:id` - оновити
+- [ ] `DELETE /api/v1/users/me/collections/:id` - видалити
+- [ ] `POST /api/v1/users/me/collections/:id/items` - додати товар
+- [ ] `DELETE /api/v1/users/me/collections/:id/items/:productId` - видалити товар
+- [ ] `GET /api/v1/users/me/collections/:id/items` - товари в колекції
+
+### Recommendations (Рекомендації)
+- [ ] Таблиці: `user_preferences`, `user_product_interactions`
+- [ ] `GET /api/v1/recommendations` - персоналізовані рекомендації
+- [ ] `GET /api/v1/items/:id/similar` - схожі товари
+- [ ] `POST /api/v1/interactions` - трекінг взаємодій
+
+### Search History (Історія пошуку)
+- [ ] Таблиці: `user_search_history`, `popular_searches`
+- [ ] `GET /api/v1/search/history` - історія пошуку
+- [ ] `DELETE /api/v1/search/history` - очистити історію
+- [ ] `GET /api/v1/search/popular` - популярні запити
+- [ ] `POST /api/v1/search/track` - зберегти пошук
+
+## Analytics Features (Пріоритет 2 - для адміна)
+
+### Price History
+- [ ] Таблиця: `store_price_history`
+- [ ] `GET /api/v1/items/:id/price-history`
+- [ ] Автоматичний тригер при зміні ціни
+
+### Activity Log
+- [ ] Таблиця: `audit_log`
+- [ ] `GET /api/v1/audit-log`
+- [ ] Middleware для логування
+
+### Product Relations
+- [ ] Таблиця: `product_relations`
+- [ ] `GET /api/v1/items/:id/related`
+- [ ] `POST /api/v1/items/:id/relations`
+- [ ] `DELETE /api/v1/items/:id/relations/:relationId`
+
+---
+
+## 🚀 Frontend Status
+
+| Feature | Frontend | Backend | Notes |
+|---------|----------|---------|-------|
+| Product Reviews | ✅ Done | ✅ Ready | API integrated |
+| Collections | ✅ Done | ✅ Ready | API integrated |
+| Recommendations | ✅ Done | ✅ Ready | API integrated |
+| Search History | ✅ Done | ✅ Ready | API integrated |
+| Similar Products | ✅ Done | ✅ Ready | API integrated |
+| Interaction Tracking | ✅ Done | ✅ Ready | API integrated |
+| Recently Viewed | ✅ Done | ❌ Not needed | Повністю на клієнті |
+| Share Button | ✅ Done | ❌ Not needed | Повністю на клієнті |
+| Price Range Filter | ✅ Done | ⚠️ Maybe | Фільтрація на фронті |
+| Price History | ✅ Done | ⏳ Pending | localStorage |
+| Activity Log | ✅ Done | ⏳ Pending | localStorage |
+| Product Relations | ✅ Done | ⏳ Pending | localStorage |
+
+---
+
+## 📞 Контакти
+
+Файли фронтенду для інтеграції:
+- `src/components/ProductReviews.tsx` - Відгуки
+- `src/components/CollectionManager.tsx` - Менеджер колекцій
+- `src/components/AddToCollection.tsx` - Додавання в колекцію
+- `src/hooks/useCollections.ts` - Хук колекцій
+- `src/hooks/useSearchHistory.ts` - Хук історії пошуку
+- `src/hooks/useRecentlyViewed.ts` - Хук переглянутих товарів
+- `src/components/ShareButton.tsx` - Кнопка "Поділитися"
+- `src/components/PriceRangeFilter.tsx` - Фільтр цін
+
+**Всі фічі готові до інтеграції з бекендом! 🎉**

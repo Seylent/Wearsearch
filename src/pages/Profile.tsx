@@ -39,6 +39,7 @@ const Profile = () => {
     type: 'website',
   });
   const [loading, setLoading] = useState(false);
+  const [isInitialLoading, setIsInitialLoading] = useState(true);
   const [user, setUser] = useState<UserType | null>(null);
   
   // Profile fields
@@ -74,6 +75,8 @@ const Profile = () => {
       navigate("/auth");
       return;
     }
+    
+    setIsInitialLoading(true);
 
     // Cancel previous request if exists
     if (abortControllerRef.current) {
@@ -104,6 +107,10 @@ const Profile = () => {
           description: 'Failed to load user data. Please try again.',
           variant: 'destructive',
         });
+      }
+    } finally {
+      if (isMounted.current) {
+        setIsInitialLoading(false);
       }
     }
   }, [navigate, toast]);
@@ -242,6 +249,18 @@ const Profile = () => {
       setShowDeleteDialog(false);
     }
   };
+
+  if (isInitialLoading) {
+    return (
+      <div className="min-h-screen bg-black text-white flex items-center justify-center">
+        <Navigation />
+        <div className="flex flex-col items-center gap-4">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-white"></div>
+          <p className="text-muted-foreground">{t('common.loading')}</p>
+        </div>
+      </div>
+    );
+  }
 
   if (!user) {
     return null;

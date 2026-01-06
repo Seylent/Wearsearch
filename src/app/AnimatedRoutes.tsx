@@ -20,6 +20,7 @@ const Auth = lazy(() => import('@/pages/Auth'));
 const Admin = lazy(() => import('@/pages/Admin'));
 const AdminBrands = lazy(() => import('@/pages/AdminBrands'));
 const Favorites = lazy(() => import('@/pages/Favorites'));
+const SharedWishlist = lazy(() => import('@/pages/SharedWishlist'));
 const Profile = lazy(() => import('@/pages/Profile'));
 const NotFound = lazy(() => import('@/pages/NotFound'));
 
@@ -71,6 +72,7 @@ export const AnimatedRoutes = () => {
           <Route path="/contacts" element={<Contacts />} />
           <Route path="/auth" element={<Auth />} />
           <Route path="/favorites" element={<Favorites />} />
+          <Route path="/wishlist/shared/:shareId" element={<SharedWishlist />} />
           <Route path="/admin" element={<Admin />} />
           <Route path="/admin/brands" element={<AdminBrands />} />
           <Route path="/profile" element={<Profile />} />
