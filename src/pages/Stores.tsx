@@ -11,6 +11,7 @@ import { Button } from "@/components/ui/button";
 import { Search, ExternalLink, Star, Package, Send, Instagram } from "lucide-react";
 import { useStoresPageData } from "@/hooks/useAggregatedData";
 import { useSEO } from "@/hooks/useSEO";
+import { SaveStoreButton } from "@/components/SaveStoreButton";
 
 const Stores = () => {
   const navigate = useNavigate();
@@ -229,6 +230,15 @@ const Stores = () => {
                       <div className="flex items-center justify-between">
                         {/* Social Links */}
                         <div className="flex gap-2">
+                          {/* Save Store Button */}
+                          <SaveStoreButton
+                            storeId={String(store.id)}
+                            storeName={store.name}
+                            storeLogo={store.logo_url}
+                            size="icon"
+                            variant="ghost"
+                            showText={false}
+                          />
                           {store.telegram_url && (
                             <a
                               href={store.telegram_url}

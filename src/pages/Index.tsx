@@ -11,6 +11,7 @@ import { useHomepageData } from "@/hooks/useAggregatedData";
 import { useSEO } from "@/hooks/useSEO";
 import { ProductGridSkeleton } from "@/components/common/SkeletonLoader";
 import { seoApi, type SEOData } from "@/services/api/seo.api";
+import RecentlyViewedProducts from "@/components/RecentlyViewedProducts";
 
 const Index: React.FC = () => {
   const navigate = useNavigate();
@@ -203,6 +204,16 @@ const Index: React.FC = () => {
                 <span className="relative">{t('home.viewAllProducts')}</span>
               </button>
             </nav>
+          </div>
+        </section>
+
+        {/* Recently Viewed Section */}
+        <section className="py-8 sm:py-12 bg-black border-t border-white/5">
+          <div className="container mx-auto px-4 sm:px-6">
+            <RecentlyViewedProducts 
+              maxItems={8} 
+              showClearButton={true}
+            />
           </div>
         </section>
       </main>

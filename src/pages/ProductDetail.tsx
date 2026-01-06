@@ -11,6 +11,7 @@ import { convertS3UrlToHttps } from "@/lib/utils";
 import { FavoriteButton } from "@/components/FavoriteButton";
 import { RelatedProducts } from "@/components/RelatedProducts";
 import ShareButton from "@/components/ShareButton";
+import { SaveStoreButton } from "@/components/SaveStoreButton";
 import RecentlyViewedProducts from "@/components/RecentlyViewedProducts";
 import SimilarProducts from "@/components/SimilarProducts";
 import { useRecentlyViewed } from "@/hooks/useRecentlyViewed";
@@ -610,9 +611,20 @@ const ProductDetail = () => {
                         )}
                         
                         <div className="flex-1">
-                          <h3 className="font-semibold mb-1">{store.name}</h3>
+                          <div className="flex items-center justify-between gap-2">
+                            <h3 className="font-semibold">{store.name}</h3>
+                            <SaveStoreButton
+                              storeId={store.id}
+                              storeName={store.name}
+                              storeLogo={store.logo_url}
+                              size="icon"
+                              showText={false}
+                              variant="ghost"
+                              className="h-7 w-7 flex-shrink-0"
+                            />
+                          </div>
                           {store.is_recommended && (
-                            <div className="inline-flex items-center gap-1 px-2 py-1 rounded-full bg-white/10 border border-white/20 text-white">
+                            <div className="inline-flex items-center gap-1 px-2 py-1 rounded-full bg-white/10 border border-white/20 text-white mt-1">
                               <Star className="w-3 h-3 fill-current" />
                               <span className="text-xs font-medium">{t('productDetail.recommended')}</span>
                             </div>

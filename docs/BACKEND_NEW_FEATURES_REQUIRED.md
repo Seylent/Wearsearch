@@ -15,6 +15,163 @@ Frontend реалізував нові user-facing та analytics features, як
 
 ---
 
+## 🚨 КРИТИЧНО: Public Wishlist Sharing (БАГОВИЙ ENDPOINT)
+
+### Проблема
+
+Endpoint `GET /api/v1/wishlist/public/:shareId` повертає **пустий список товарів**, хоча у користувача є 2 збережені favorites.
+
+**Поточна відповідь (НЕПРАВИЛЬНА):**
+```json
+{
+  "owner_name": "User",
+  "items_count": 0,
+  "items": []
+}
+```
+
+**Очікувана відповідь (ПРАВИЛЬНА):**
+```json
+{
+  "owner_name": "Seylent",
+  "items_count": 2,
+  "items": [
+    {
+      "id": "123",
+      "name": "Nike Air Max 90",
+      "brand": "Nike",
+      "image_url": "https://example.com/image.jpg",
+      "price": 150.00,
+      "currency": "UAH",
+      "added_at": "2026-01-05T15:30:00Z"
+    },
+    {
+      "id": "456",
+      "name": "Adidas Ultraboost",
+      "brand": "Adidas", 
+      "image_url": "https://example.com/image2.jpg",
+      "price": 180.00,
+      "currency": "UAH",
+      "added_at": "2026-01-04T10:00:00Z"
+    }
+  ]
+}
+```
+
+### Причина багу
+
+Endpoint `/api/v1/wishlist/public/:shareId` **НЕ робить JOIN** з таблицею favorites.
+
+Favorites зберігаються через `POST /api/user/favorites/:productId`, але публічний wishlist їх не підтягує.
+
+### Як виправити
+
+Endpoint повинен:
+1. Знайти `user_id` по `share_id` в таблиці wishlist_settings
+2. Перевірити що `is_public = true`
+3. **Отримати favorites цього user_id з таблиці favorites**
+4. **JOIN з items щоб отримати деталі товарів**
+5. Повернути результат
+
+### SQL Query для виправлення
+
+```sql
+-- Крок 1: Знайти користувача по share_id
+SELECT 
+  ws.user_id,
+  ws.is_public,
+  u.name as owner_name
+FROM user_wishlist_settings ws
+JOIN users u ON ws.user_id = u.id
+WHERE ws.share_id = 'ba1393cebdfbab2d53138f0521787e01';
+
+-- Крок 2: Отримати favorites з деталями товарів
+SELECT 
+  i.id,
+  i.name,
+  i.price,
+  i.currency,
+  i.image_url,
+  b.name as brand,
+  f.created_at as added_at
+FROM favorites f
+JOIN items i ON f.product_id = i.id   -- або f.item_id = i.id
+LEFT JOIN brands b ON i.brand_id = b.id
+WHERE f.user_id = <user_id_from_step_1>
+ORDER BY f.created_at DESC;
+```
+
+### Приклад виправленого коду (Node.js)
+
+```javascript
+// GET /api/v1/wishlist/public/:shareId
+router.get('/wishlist/public/:shareId', async (req, res) => {
+  const { shareId } = req.params;
+  
+  try {
+    // 1. Знайти налаштування по share_id
+    const settings = await db.query(`
+      SELECT ws.user_id, ws.is_public, u.name as owner_name
+      FROM user_wishlist_settings ws
+      JOIN users u ON ws.user_id = u.id
+      WHERE ws.share_id = $1
+    `, [shareId]);
+    
+    if (!settings.rows.length) {
+      return res.status(404).json({ error: 'Wishlist not found' });
+    }
+    
+    const { user_id, is_public, owner_name } = settings.rows[0];
+    
+    if (!is_public) {
+      return res.status(403).json({ error: 'This wishlist is private' });
+    }
+    
+    // 2. ⚠️ ЦЕ ЧАСТИНА ЩО ВІДСУТНЯ! Отримати favorites з items
+    const favorites = await db.query(`
+      SELECT 
+        i.id,
+        i.name,
+        i.price,
+        i.currency,
+        i.image_url,
+        b.name as brand,
+        f.created_at as added_at
+      FROM favorites f
+      JOIN items i ON f.product_id = i.id
+      LEFT JOIN brands b ON i.brand_id = b.id
+      WHERE f.user_id = $1
+      ORDER BY f.created_at DESC
+    `, [user_id]);
+    
+    // 3. Повернути результат
+    return res.json({
+      owner_name: owner_name || 'User',
+      items_count: favorites.rows.length,
+      items: favorites.rows
+    });
+    
+  } catch (error) {
+    console.error('Public wishlist error:', error);
+    return res.status(500).json({ error: 'Internal server error' });
+  }
+});
+```
+
+### Поточна структура API (для довідки)
+
+| Endpoint | Метод | Auth | Опис |
+|----------|-------|------|------|
+| `/api/user/favorites/:productId` | POST | ✅ Bearer | Додати в favorites |
+| `/api/user/favorites/:productId` | DELETE | ✅ Bearer | Видалити з favorites |
+| `/api/v1/pages/favorites` | GET | ✅ Bearer | Отримати свої favorites |
+| `/api/v1/wishlist/settings` | GET | ✅ Bearer | Налаштування приватності |
+| `/api/v1/wishlist/settings` | PUT | ✅ Bearer | Оновити is_public |
+| `/api/v1/wishlist/share` | POST | ✅ Bearer | Генерувати share_id |
+| `/api/v1/wishlist/public/:shareId` | GET | ❌ Public | **⚠️ БАГОВИЙ** - не підтягує items |
+
+---
+
 ## 5️⃣ Product Reviews & Ratings ⭐
 
 ### Database Migration

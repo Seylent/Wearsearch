@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Globe, Lock, Link2, Copy, Check } from 'lucide-react';
+import { Globe, Lock, Link2, Copy, Check, Share2 } from 'lucide-react';
 import { Switch } from '@/components/ui/switch';
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
@@ -137,18 +137,39 @@ const WishlistPrivacySettings: React.FC<WishlistPrivacySettingsProps> = ({ class
   }
 
   return (
-    <div className={`p-4 rounded-xl bg-white/5 border border-white/10 ${className}`}>
-      <h3 className="text-sm font-medium text-white/80 mb-4 flex items-center gap-2">
+    <div className={`p-5 rounded-xl bg-white/5 border border-white/10 ${className}`}>
+      {/* What is this section */}
+      <div className="mb-5 pb-4 border-b border-white/10">
+        <h3 className="text-base font-semibold text-white mb-2 flex items-center gap-2">
+          <Share2 className="w-5 h-5 text-blue-400" />
+          {t('wishlist.shareTitle')}
+        </h3>
+        <p className="text-sm text-white/60 leading-relaxed">
+          {t('wishlist.shareDescription')}
+        </p>
+      </div>
+
+      {/* How it works */}
+      <div className="mb-5 p-3 rounded-lg bg-blue-500/10 border border-blue-500/20">
+        <p className="text-xs font-medium text-blue-400 mb-2">{t('wishlist.howItWorks')}</p>
+        <ol className="text-xs text-white/50 space-y-1 list-decimal list-inside">
+          <li>{t('wishlist.step1')}</li>
+          <li>{t('wishlist.step2')}</li>
+          <li>{t('wishlist.step3')}</li>
+        </ol>
+      </div>
+
+      <h4 className="text-sm font-medium text-white/80 mb-3 flex items-center gap-2">
         {settings.is_public ? (
-          <Globe className="w-4 h-4" />
+          <Globe className="w-4 h-4 text-green-400" />
         ) : (
-          <Lock className="w-4 h-4" />
+          <Lock className="w-4 h-4 text-yellow-400" />
         )}
         {t('wishlist.privacySettings')}
-      </h3>
+      </h4>
       
       {/* Privacy Toggle */}
-      <div className="flex items-center justify-between mb-4">
+      <div className="flex items-center justify-between mb-4 p-3 rounded-lg bg-white/5">
         <div>
           <p className="text-sm text-white">
             {t('wishlist.publicWishlist')}

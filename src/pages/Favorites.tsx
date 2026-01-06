@@ -15,6 +15,7 @@ import { useFavoritesContext } from "@/contexts/FavoritesContext";
 import { useFavoritesPage } from "@/hooks/useApi";
 import { useSEO } from "@/hooks/useSEO";
 import WishlistPrivacySettings from "@/components/WishlistPrivacySettings";
+import SavedStoresList from "@/components/SavedStoresList";
 
 function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === "object" && value !== null;
@@ -142,21 +143,25 @@ const Favorites = () => {
               <p className="text-muted-foreground text-lg select-none">{t('favorites.subtitle')}</p>
             </div>
             
-            {/* Settings Button */}
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => setShowSettings(!showSettings)}
-              className="shrink-0 mt-2"
-            >
-              <Settings className="w-4 h-4 mr-2" />
-              {t('wishlist.settings')}
-            </Button>
+            {/* Settings Button with hint */}
+            <div className="shrink-0 mt-2 text-right">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setShowSettings(!showSettings)}
+              >
+                <Settings className="w-4 h-4 mr-2" />
+                {t('wishlist.shareWithFriends')}
+              </Button>
+              <p className="text-xs text-muted-foreground mt-1">
+                {t('wishlist.shareHint')}
+              </p>
+            </div>
           </div>
           
           {/* Privacy Settings Panel */}
           {showSettings && (
-            <WishlistPrivacySettings className="mt-6 max-w-md" />
+            <WishlistPrivacySettings className="mt-6 max-w-lg" />
           )}
         </div>
 
@@ -251,6 +256,11 @@ const Favorites = () => {
             </Button>
           </div>
         )}
+
+        {/* Saved Stores Section */}
+        <div className="mt-16 pt-12 border-t border-border/20">
+          <SavedStoresList showClearButton={true} />
+        </div>
       </main>
 
       <Footer />

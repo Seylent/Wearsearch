@@ -67,6 +67,37 @@ const defaultShouldFallbackToLegacy = (config: InternalAxiosRequestConfig, error
   return isRouteNotFoundPayload(error.response?.data);
 };
 
+/**
+ * Public endpoints that don't require authentication
+ * Used to suppress "No token available" warnings for public routes
+ */
+const PUBLIC_ENDPOINT_PATTERNS: Array<string | RegExp> = [
+  '/auth/login',
+  '/auth/register',
+  '/auth/forgot-password',
+  '/auth/reset-password',
+  '/items',
+  '/brands',
+  '/categories',
+  '/stores',
+  '/search',
+  '/seo/',
+  '/pages/',
+  /^\/items\/[^/]+$/,           // GET /items/:id
+  /^\/items\/[^/]+\/similar$/,  // GET /items/:id/similar
+  /^\/items\/[^/]+\/stores$/,   // GET /items/:id/stores
+  /^\/wishlist\/public\//,      // GET /wishlist/public/:shareId
+];
+
+const isPublicEndpoint = (url: string): boolean => {
+  return PUBLIC_ENDPOINT_PATTERNS.some(pattern => {
+    if (typeof pattern === 'string') {
+      return url.includes(pattern);
+    }
+    return pattern.test(url);
+  });
+};
+
 const attachInterceptors = (client: AxiosInstance, fallback?: FallbackConfig) => {
   /**
    * Request interceptor - adds auth token to requests
@@ -74,15 +105,17 @@ const attachInterceptors = (client: AxiosInstance, fallback?: FallbackConfig) =>
   client.interceptors.request.use(
     (config: InternalAxiosRequestConfig) => {
       const token = getAuth();
+      const url = config.url || '';
 
       if (token && config.headers) {
         config.headers.Authorization = `Bearer ${token}`;
-        console.log(`🔑 Adding auth token to ${config.method?.toUpperCase()} ${config.url}`, {
-          tokenPreview: `${token.substring(0, 20)}...`,
-          tokenLength: token.length
-        });
-      } else if (!token && config.url && !config.url.includes('/auth/login') && !config.url.includes('/auth/register')) {
-        console.warn(`⚠️ No token available for ${config.method?.toUpperCase()} ${config.url}`);
+        // Only log in development and for non-trivial requests
+        if (import.meta.env.DEV && !url.includes('/items') && !url.includes('/search')) {
+          console.log(`🔑 Auth token attached to ${config.method?.toUpperCase()} ${url}`);
+        }
+      } else if (!token && url && !isPublicEndpoint(url)) {
+        // Only warn for endpoints that likely require authentication
+        console.warn(`⚠️ No token available for ${config.method?.toUpperCase()} ${url}`);
       }
 
       return config;

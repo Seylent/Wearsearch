@@ -29,8 +29,19 @@ export function UserProfileMenu() {
 
   useEffect(() => {
     loadUser();
+    
+    // Listen for auth events
     window.addEventListener('authChange', loadUser);
-    return () => window.removeEventListener('authChange', loadUser);
+    window.addEventListener('auth:logout', loadUser);
+    window.addEventListener('auth:login', loadUser);
+    window.addEventListener('storage', loadUser);
+    
+    return () => {
+      window.removeEventListener('authChange', loadUser);
+      window.removeEventListener('auth:logout', loadUser);
+      window.removeEventListener('auth:login', loadUser);
+      window.removeEventListener('storage', loadUser);
+    };
   }, []);
 
   const loadUser = () => {
@@ -56,7 +67,7 @@ export function UserProfileMenu() {
   const handleLogout = () => {
     clearAuth();
     setUser(null);
-    window.dispatchEvent(new Event('authChange'));
+    window.dispatchEvent(new Event('auth:logout'));
     navigate('/');
   };
 

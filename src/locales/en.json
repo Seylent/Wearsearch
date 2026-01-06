@@ -241,7 +241,16 @@
     "verified": "Verified",
     "recommend": "Recommend Store",
     "recommended": "Recommended",
-    "viewProducts": "View Products"
+    "viewProducts": "View Products",
+    "saveButton": "Save Store",
+    "savedButton": "Saved",
+    "saved": "Store Saved",
+    "savedDescription": "{{name}} added to your saved stores",
+    "removed": "Store Removed",
+    "removedDescription": "{{name}} removed from saved stores",
+    "savedStores": "Saved Stores",
+    "noSavedStores": "No saved stores yet",
+    "startSaving": "Start saving stores you like!"
   },
   "about": {
     "title": "About Wearsearch",
@@ -308,6 +317,14 @@
   },
   "wishlist": {
     "settings": "Settings",
+    "shareWithFriends": "Share with Friends",
+    "shareHint": "Create a link to share your favorites",
+    "shareTitle": "Share Your Wishlist",
+    "shareDescription": "Want to show your saved items to friends or family? Enable public access and share the link — they'll see what you've saved without needing to log in.",
+    "howItWorks": "How it works:",
+    "step1": "Turn on 'Public Wishlist' below",
+    "step2": "Click 'Generate Share Link'",
+    "step3": "Copy the link and send to anyone!",
     "privacySettings": "Privacy Settings",
     "publicWishlist": "Public Wishlist",
     "anyoneCanView": "Anyone with the link can view your wishlist",

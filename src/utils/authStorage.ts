@@ -129,6 +129,9 @@ export const clearAuth = (): void => {
   localStorage.removeItem('user_id');
   localStorage.removeItem('user');
   localStorage.removeItem('refresh_token');
+  
+  // Dispatch event to notify components about logout
+  window.dispatchEvent(new Event('authChange'));
 };
 
 /**
