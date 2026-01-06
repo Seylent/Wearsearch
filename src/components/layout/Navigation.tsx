@@ -42,15 +42,15 @@ const Navigation: React.FC = () => {
       >
         {/* Left Section - Logo */}
         <button 
-          className="flex items-center gap-2.5 group px-3 sm:px-4 md:px-6 py-2 md:py-2 border-r border-zinc-700/60 md:hover:bg-zinc-800/50 active:bg-zinc-800/50 transition-colors focus-visible:ring-2 focus-visible:ring-white focus-visible:ring-offset-2 focus-visible:ring-offset-zinc-900" 
+          className="flex items-center gap-2.5 group px-4 sm:px-4 md:px-6 py-2.5 md:py-2 border-r border-zinc-700/60 md:hover:bg-zinc-800/50 active:bg-zinc-800/50 transition-colors focus-visible:ring-2 focus-visible:ring-white focus-visible:ring-offset-2 focus-visible:ring-offset-zinc-900" 
           onClick={handleLogoClick}
           aria-label={t('aria.navigateToHomepage')}
         >
           <span 
-            className="text-white text-base sm:text-lg md:text-lg tracking-tight transition-all duration-300"
-            style={{ fontFamily: "'Youre Gone', sans-serif" }}
+            className="text-white text-base sm:text-lg md:text-xl uppercase tracking-wide"
+            style={{ fontFamily: "'Youre Gone', Outfit, system-ui, sans-serif" }}
           >
-            wearsearch
+            Wearsearch
           </span>
         </button>
 

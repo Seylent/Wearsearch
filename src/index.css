@@ -3,10 +3,17 @@
 
 @font-face {
   font-family: 'Youre Gone';
-  src: url('/fonts/Youre Gone.otf') format('opentype');
+  src: url('/fonts/Youre%20Gone.otf') format('opentype');
   font-weight: normal;
   font-style: normal;
   font-display: swap;
+}
+
+/* Logo font class with good fallbacks */
+.font-logo {
+  font-family: 'Youre Gone', 'Outfit', system-ui, -apple-system, sans-serif;
+  font-weight: 400;
+  letter-spacing: -0.02em;
 }
 
 @tailwind base;

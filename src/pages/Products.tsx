@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo } from "react";
+import { useState, useEffect, useMemo, useCallback } from "react";
 import { useSmoothScroll } from '@/hooks/useAnimationFrame';
 import { useTranslation } from "react-i18next";
 import { useSearchParams } from "react-router-dom";
@@ -14,7 +14,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
-import { Filter, Search, Grid3x3, LayoutGrid, Columns3 } from "lucide-react";
+import { Filter, Search, Grid3x3, LayoutGrid, Columns3, ChevronDown } from "lucide-react";
 import {
   Pagination,
   PaginationContent,
@@ -95,6 +95,14 @@ const Products = () => {
   const colors = ["Black", "White", "Gray", "Beige", "Brown", "Red", "Blue", "Navy", "Green", "Olive", "Yellow", "Orange", "Pink", "Purple", "Cream"];
   const genders = ["men", "women", "unisex"];
   const categories = [...PRODUCT_CATEGORIES];
+  
+  // Compact filter states - show only first N items
+  const [showAllColors, setShowAllColors] = useState(false);
+  const [showAllCategories, setShowAllCategories] = useState(false);
+  const COMPACT_LIMIT = 6;
+  
+  const visibleColors = showAllColors ? colors : colors.slice(0, COMPACT_LIMIT);
+  const visibleCategories = showAllCategories ? categories : categories.slice(0, COMPACT_LIMIT);
   
   const itemsPerPage = 24;
 
@@ -279,65 +287,87 @@ const Products = () => {
                   <div className="space-y-6 py-4">
                     {/* Color Filter */}
                     <div>
-                      <h3 className="font-semibold mb-3 text-sm uppercase tracking-widest text-muted-foreground">{t('products.color')}</h3>
-                      <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
-                        {colors.map((color) => (
-                          <div key={color} className="flex items-center gap-3 py-2 min-h-[44px] touch-manipulation">
+                      <h3 className="font-semibold mb-2 text-sm uppercase tracking-widest text-muted-foreground">{t('products.color')}</h3>
+                      <div className="grid grid-cols-3 gap-1">
+                        {visibleColors.map((color) => (
+                          <div key={color} className="flex items-center gap-2 py-1.5 min-h-[36px] touch-manipulation">
                             <Checkbox 
                               id={`filter-color-${color}`}
                               checked={filters.selectedColors.includes(color)}
                               onCheckedChange={() => filters.toggleColor(color)}
-                              className="min-w-[20px] min-h-[20px] h-5 w-5"
+                              className="min-w-[18px] min-h-[18px] h-[18px] w-[18px]"
                             />
                             <Label 
                               htmlFor={`filter-color-${color}`}
-                              className="text-sm cursor-pointer active:text-foreground/80 transition-colors capitalize flex-1"
+                              className="text-xs cursor-pointer active:text-foreground/80 transition-colors capitalize flex-1"
                             >
                               {getColorTranslation(color)}
                             </Label>
                           </div>
                         ))}
                       </div>
+                      {colors.length > COMPACT_LIMIT && (
+                        <button
+                          onClick={() => setShowAllColors(!showAllColors)}
+                          className="mt-2 text-xs text-primary hover:text-primary/80 transition-colors flex items-center gap-1"
+                        >
+                          <ChevronDown className={`w-3 h-3 transition-transform ${showAllColors ? 'rotate-180' : ''}`} />
+                          {showAllColors 
+                            ? t('common.showLess', 'Show less') 
+                            : t('common.showAll', { count: colors.length, defaultValue: `Show all (${colors.length})` })}
+                        </button>
+                      )}
                     </div>
 
                     {/* Category Filter */}
                     <div>
-                      <h3 className="font-semibold mb-3 text-sm uppercase tracking-widest text-muted-foreground">{t('products.category')}</h3>
-                      <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
-                        {categories.map((category) => (
-                          <div key={category} className="flex items-center gap-3 py-2 min-h-[44px] touch-manipulation">
+                      <h3 className="font-semibold mb-2 text-sm uppercase tracking-widest text-muted-foreground">{t('products.category')}</h3>
+                      <div className="grid grid-cols-2 gap-1">
+                        {visibleCategories.map((category) => (
+                          <div key={category} className="flex items-center gap-2 py-1.5 min-h-[36px] touch-manipulation">
                             <Checkbox 
                               id={`filter-category-${category}`}
                               checked={filters.selectedTypes.includes(category)}
                               onCheckedChange={() => filters.toggleType(category)}
-                              className="min-w-[20px] min-h-[20px] h-5 w-5"
+                              className="min-w-[18px] min-h-[18px] h-[18px] w-[18px]"
                             />
                             <Label 
                               htmlFor={`filter-category-${category}`}
-                              className="text-sm cursor-pointer active:text-foreground/80 transition-colors capitalize flex-1"
+                              className="text-xs cursor-pointer active:text-foreground/80 transition-colors capitalize flex-1"
                             >
                               {getCategoryTranslation(category)}
                             </Label>
                           </div>
                         ))}
                       </div>
+                      {categories.length > COMPACT_LIMIT && (
+                        <button
+                          onClick={() => setShowAllCategories(!showAllCategories)}
+                          className="mt-2 text-xs text-primary hover:text-primary/80 transition-colors flex items-center gap-1"
+                        >
+                          <ChevronDown className={`w-3 h-3 transition-transform ${showAllCategories ? 'rotate-180' : ''}`} />
+                          {showAllCategories 
+                            ? t('common.showLess', 'Show less') 
+                            : t('common.showAll', { count: categories.length, defaultValue: `Show all (${categories.length})` })}
+                        </button>
+                      )}
                     </div>
 
                     {/* Gender Filter */}
                     <div>
-                      <h3 className="font-semibold mb-3 text-sm uppercase tracking-widest text-muted-foreground">{t('products.gender')}</h3>
-                      <div className="grid grid-cols-3 gap-2">
+                      <h3 className="font-semibold mb-2 text-sm uppercase tracking-widest text-muted-foreground">{t('products.gender')}</h3>
+                      <div className="grid grid-cols-3 gap-1">
                         {genders.map((gender) => (
-                          <div key={gender} className="flex items-center gap-3 py-2 min-h-[44px] touch-manipulation">
+                          <div key={gender} className="flex items-center gap-2 py-1.5 min-h-[36px] touch-manipulation">
                             <Checkbox 
                               id={`filter-gender-${gender}`}
                               checked={filters.selectedGenders.includes(gender)}
                               onCheckedChange={() => filters.toggleGender(gender)}
-                              className="min-w-[20px] min-h-[20px] h-5 w-5"
+                              className="min-w-[18px] min-h-[18px] h-[18px] w-[18px]"
                             />
                             <Label 
                               htmlFor={`filter-gender-${gender}`}
-                              className="text-sm cursor-pointer active:text-foreground/80 transition-colors capitalize flex-1"
+                              className="text-xs cursor-pointer active:text-foreground/80 transition-colors capitalize flex-1"
                             >
                               {translateGender(gender)}
                             </Label>

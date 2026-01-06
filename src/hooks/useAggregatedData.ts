@@ -48,7 +48,18 @@ export const useHomepageData = (options?: QueryOptions) => {
         // Canonical v1: { item: { products, brands, statistics } }
         // Older/legacy: { success: true, data: {...} }
         return response.data?.item || response.data?.data || response.data;
-      } catch {
+      } catch (error) {
+        // Check for rate limit error
+        const status = (error as { status?: number })?.status;
+        if (status === 429) {
+          console.log('[Homepage] Rate limited, returning cached/empty data');
+          return {
+            products: [],
+            brands: [],
+            statistics: { total_products: 0, total_stores: 0, total_brands: 0 },
+          };
+        }
+        
         // Fallback to individual calls (backend BFF not ready yet)
         if (import.meta.env.DEV) {
           console.log('[Homepage] Using fallback endpoints');
@@ -56,23 +67,32 @@ export const useHomepageData = (options?: QueryOptions) => {
 
         // Prefer v1 endpoints via `api` (base: /api/v1). If v1 route is missing,
         // the axios interceptor can transparently retry via legacy /api.
-        const [productsRes, statsRes] = await Promise.all([
-          api.get('/items', { params: { page: 1, limit: 6, mode: 'card' } }),
-          api.get('/statistics').catch(() => ({ data: { data: { total_products: 0, total_stores: 0, total_brands: 0 } } })),
-        ]);
-        
-        return {
-          products: productsRes.data?.items || productsRes.data?.products || productsRes.data || [],
-          brands: [], // Not critical for homepage
-          statistics: statsRes.data?.data || statsRes.data || { total_products: 0, total_stores: 0, total_brands: 0 },
-        };
+        try {
+          const [productsRes, statsRes] = await Promise.all([
+            api.get('/items', { params: { page: 1, limit: 6, mode: 'card' } }),
+            api.get('/statistics').catch(() => ({ data: { data: { total_products: 0, total_stores: 0, total_brands: 0 } } })),
+          ]);
+          
+          return {
+            products: productsRes.data?.items || productsRes.data?.products || productsRes.data || [],
+            brands: [], // Not critical for homepage
+            statistics: statsRes.data?.data || statsRes.data || { total_products: 0, total_stores: 0, total_brands: 0 },
+          };
+        } catch {
+          // If fallback also fails (rate limited), return empty data
+          return {
+            products: [],
+            brands: [],
+            statistics: { total_products: 0, total_stores: 0, total_brands: 0 },
+          };
+        }
       }
     },
     staleTime: 5 * 60 * 1000, // 5 minutes
     gcTime: 10 * 60 * 1000,
     refetchOnWindowFocus: false,
     refetchOnMount: false,
-    retry: 1,
+    retry: false, // Rate limit handled in API layer
     ...options,
   });
 };

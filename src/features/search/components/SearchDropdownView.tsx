@@ -3,7 +3,7 @@
  * No business logic - only receives props and renders UI
  */
 
-import React, { useMemo } from 'react';
+import React, { useMemo, useEffect } from 'react';
 import { Search, X, Store as StoreIcon, Package, History, TrendingUp, Trash2 } from 'lucide-react';
 import { convertS3UrlToHttps } from '@/lib/utils';
 import { getCategoryTranslation } from '@/utils/translations';
@@ -48,6 +48,17 @@ export const SearchDropdownView: React.FC<SearchDropdownViewProps> = React.memo(
   onClearHistory,
 }) => {
   const { t } = useTranslation();
+
+  // Block scroll when search is open
+  useEffect(() => {
+    document.body.style.overflow = 'hidden';
+    document.body.style.touchAction = 'none';
+    
+    return () => {
+      document.body.style.overflow = '';
+      document.body.style.touchAction = '';
+    };
+  }, []);
 
   const skeletonRows = useMemo(() => Array.from({ length: 5 }, (_, i) => i), []);
 
@@ -224,7 +235,8 @@ export const SearchDropdownView: React.FC<SearchDropdownViewProps> = React.memo(
             </>
           )}
 
-          {!isLoading && query.length < 2 && (
+          {/* Search History and Popular - show when query is empty/short */}
+          {query.length < 2 && (
             <div className="p-4">
               {/* Search History */}
               {searchHistory.length > 0 && (

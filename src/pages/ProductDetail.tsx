@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import Navigation from "@/components/layout/Navigation";
 import Footer from "@/components/layout/Footer";
+import { Breadcrumbs } from "@/components/Breadcrumbs";
 import { useToast } from "@/hooks/use-toast";
 import { convertS3UrlToHttps } from "@/lib/utils";
 import { FavoriteButton } from "@/components/FavoriteButton";
@@ -307,6 +308,16 @@ const ProductDetail = () => {
       <Navigation />
 
       <div className="container mx-auto px-4 sm:px-6 py-12 pt-28">
+        {/* Breadcrumbs */}
+        <Breadcrumbs
+          items={[
+            { label: t('nav.products', 'Products'), href: '/products' },
+            { label: product?.type ? getCategoryTranslation(product.type) : t('nav.product', 'Product'), href: product?.type ? `/products?type=${product.type}` : undefined },
+            { label: product?.name || t('nav.product', 'Product') },
+          ]}
+          className="mb-6"
+        />
+
         {/* Back Button & Edit */}
         <div className="flex justify-between items-center mb-8">
           <Button
@@ -358,6 +369,8 @@ const ProductDetail = () => {
                       description={product.description}
                       variant="ghost"
                       className="w-12 h-12 rounded-full bg-black/60 backdrop-blur-sm text-white md:hover:bg-white md:hover:text-black active:bg-white active:text-black transition-all"
+                      productImage={httpsImageUrl}
+                      productName={product.name}
                     />
                   </div>
                 )}
@@ -397,37 +410,37 @@ const ProductDetail = () => {
             <div className="animate-fade-in-up" style={{ animationDelay: '0.2s' }}>
               {/* Brand */}
               {(brand?.name || product.brand) && (
-                <p className="text-sm text-muted-foreground uppercase tracking-[0.2em] mb-3">
+                <p className="text-xs sm:text-sm text-muted-foreground uppercase tracking-[0.15em] sm:tracking-[0.2em] mb-2 sm:mb-3">
                   {brand?.name || product.brand}
                 </p>
               )}
 
               {/* Title */}
-              <h1 className="font-display text-4xl md:text-5xl font-bold tracking-tight mb-4">
+              <h1 className="font-display text-2xl sm:text-3xl md:text-5xl font-bold tracking-tight mb-4">
                 {product.name}
               </h1>
 
               {/* Details */}
-              <div className="space-y-4 mb-8">
+              <div className="space-y-2 sm:space-y-3 mb-6 sm:mb-8">
                 {product.type && (
-                  <div className="flex items-center gap-3">
-                    <Tag className="w-5 h-5 text-muted-foreground" />
-                    <span className="text-muted-foreground">{t('products.category')}:</span>
-                    <span className="font-medium capitalize">{getCategoryTranslation(product.type)}</span>
+                  <div className="flex items-center gap-2 sm:gap-3">
+                    <Tag className="w-4 h-4 sm:w-5 sm:h-5 text-muted-foreground flex-shrink-0" />
+                    <span className="text-xs sm:text-sm text-muted-foreground">{t('products.category')}:</span>
+                    <span className="text-sm sm:text-base font-medium capitalize">{getCategoryTranslation(product.type)}</span>
                   </div>
                 )}
                 {product.color && (
-                  <div className="flex items-center gap-3">
-                    <Package className="w-5 h-5 text-muted-foreground" />
-                    <span className="text-muted-foreground">{t('products.color')}:</span>
-                    <span className="font-medium capitalize">{getColorTranslation(product.color)}</span>
+                  <div className="flex items-center gap-2 sm:gap-3">
+                    <Package className="w-4 h-4 sm:w-5 sm:h-5 text-muted-foreground flex-shrink-0" />
+                    <span className="text-xs sm:text-sm text-muted-foreground">{t('products.color')}:</span>
+                    <span className="text-sm sm:text-base font-medium capitalize">{getColorTranslation(product.color)}</span>
                   </div>
                 )}
                 {product.gender && (
-                  <div className="flex items-center gap-3">
-                    <Package className="w-5 h-5 text-muted-foreground" />
-                    <span className="text-muted-foreground">{t('products.gender')}:</span>
-                    <span className="font-medium capitalize">
+                  <div className="flex items-center gap-2 sm:gap-3">
+                    <Package className="w-4 h-4 sm:w-5 sm:h-5 text-muted-foreground flex-shrink-0" />
+                    <span className="text-xs sm:text-sm text-muted-foreground">{t('products.gender')}:</span>
+                    <span className="text-sm sm:text-base font-medium capitalize">
                       {translateGender(product.gender)}
                     </span>
                   </div>
@@ -445,7 +458,7 @@ const ProductDetail = () => {
           </div>
 
           {/* Right: Stores Sidebar */}
-          <div className="h-fit animate-fade-in-up" style={{ animationDelay: '0.3s' }}>
+          <div id="stores-section" className="h-fit animate-fade-in-up" style={{ animationDelay: '0.3s' }}>
             <div className="rounded-2xl border border-white/6 bg-white/5 p-6">
               {/* Price Range - Moved Here */}
               <div className="mb-6 pb-6 border-b border-border/50">
@@ -769,8 +782,6 @@ const ProductDetail = () => {
           />
         )}
         
-        {/* Spacer for mobile action bar */}
-        <div className="h-20 md:hidden" />
       </div>
 
       <Footer />

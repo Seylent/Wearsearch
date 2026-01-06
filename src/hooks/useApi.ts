@@ -371,19 +371,22 @@ export const useFavorites = () => {
         // NOTE: items are Products; FavoritesContext can check by fav.id.
         return { favorites: items, total };
       } catch (error: unknown) {
-        console.error('Favorites fetch error:', error);
-        // Return empty array for auth errors or not found
+        // Return empty array for auth errors, not found, or rate limit
         const status = getErrorStatus(error);
-        if (status === 401 || status === 404) {
+        if (status === 401 || status === 404 || status === 429) {
+          if (import.meta.env.DEV && status === 429) {
+            console.log('⏳ Favorites: Rate limited, will retry later');
+          }
           return { favorites: [], total: 0 };
         }
+        console.error('Favorites fetch error:', error);
         throw error;
       }
     },
     staleTime: 5 * 60 * 1000, // 5 minutes - increased from 2
     gcTime: 30 * 60 * 1000,
-    retry: 1,
-    refetchOnMount: true,
+    retry: false, // Don't retry - rate limit handled in API layer
+    refetchOnMount: false, // Don't refetch on mount to reduce requests
     refetchOnWindowFocus: false, // Don't refetch on tab focus
     refetchOnReconnect: false,
     // Only fetch if user is authenticated

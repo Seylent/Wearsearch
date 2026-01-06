@@ -11,6 +11,19 @@ import { Toaster as Sonner } from '@/components/ui/sonner';
 import { ApiError } from '@/services/api/errorHandler';
 import { FavoritesProvider } from '@/contexts/FavoritesContext';
 
+/**
+ * Rate limit error check
+ */
+const isRateLimitError = (error: unknown): boolean => {
+  if (error instanceof ApiError) {
+    return error.status === 429;
+  }
+  if (error && typeof error === 'object' && 'status' in error) {
+    return (error as { status: number }).status === 429;
+  }
+  return false;
+};
+
 // Create QueryClient instance with optimized configuration
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -25,11 +38,19 @@ const queryClient = new QueryClient({
             return false;
           }
         }
+        // Rate limit errors are handled in API layer with retry
+        // Don't retry again at React Query level
+        if (isRateLimitError(error)) {
+          return false;
+        }
         // Retry once on other errors
         return failureCount < 1;
       },
+      retryDelay: (attemptIndex) => Math.min(1000 * 2 ** attemptIndex, 30000),
       staleTime: 10 * 60 * 1000, // 10 minutes - data stays fresh longer
       gcTime: 30 * 60 * 1000, // 30 minutes cache time
+      // Reduce network waterfall by enabling structural sharing
+      structuralSharing: true,
     },
     mutations: {
       retry: false,

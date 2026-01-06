@@ -10,6 +10,82 @@ import { handleApiError as createApiError, ApiError } from './api/errorHandler';
 import type { ApiError as ApiErrorType } from '@/types';
 import { z } from 'zod';
 
+/**
+ * Rate Limit Handler
+ * Implements exponential backoff for 429 responses
+ */
+const RATE_LIMIT_CONFIG = {
+  maxRetries: 3,
+  baseDelay: 1000, // 1 second
+  maxDelay: 30000, // 30 seconds
+};
+
+const sleep = (ms: number): Promise<void> => 
+  new Promise(resolve => setTimeout(resolve, ms));
+
+const getRetryDelay = (retryCount: number, retryAfter?: number): number => {
+  if (retryAfter) {
+    return retryAfter * 1000; // Convert seconds to ms
+  }
+  // Exponential backoff: 1s, 2s, 4s, etc.
+  const delay = RATE_LIMIT_CONFIG.baseDelay * Math.pow(2, retryCount);
+  // Add jitter (±25%) to prevent thundering herd
+  const jitter = delay * 0.25 * (Math.random() - 0.5);
+  return Math.min(delay + jitter, RATE_LIMIT_CONFIG.maxDelay);
+};
+
+/**
+ * Request Queue for throttling
+ * Prevents too many simultaneous requests
+ */
+class RequestQueue {
+  private queue: Array<() => Promise<void>> = [];
+  private running = 0;
+  private readonly maxConcurrent = 6; // Max concurrent requests
+  private readonly minDelay = 50; // Min delay between requests (ms)
+  private lastRequestTime = 0;
+
+  async add<T>(fn: () => Promise<T>): Promise<T> {
+    return new Promise((resolve, reject) => {
+      const execute = async () => {
+        // Enforce minimum delay between requests
+        const now = Date.now();
+        const timeSinceLastRequest = now - this.lastRequestTime;
+        if (timeSinceLastRequest < this.minDelay) {
+          await sleep(this.minDelay - timeSinceLastRequest);
+        }
+        this.lastRequestTime = Date.now();
+        this.running++;
+        
+        try {
+          const result = await fn();
+          resolve(result);
+        } catch (error) {
+          reject(error);
+        } finally {
+          this.running--;
+          this.processNext();
+        }
+      };
+
+      if (this.running < this.maxConcurrent) {
+        execute();
+      } else {
+        this.queue.push(execute);
+      }
+    });
+  }
+
+  private processNext(): void {
+    if (this.queue.length > 0 && this.running < this.maxConcurrent) {
+      const next = this.queue.shift();
+      if (next) next();
+    }
+  }
+}
+
+const requestQueue = new RequestQueue();
+
 // Import AUTH_TOKEN_KEY for checking if user was logged in
 const AUTH_TOKEN_KEY = 'wearsearch.auth';
 
@@ -135,9 +211,40 @@ const attachInterceptors = (client: AxiosInstance, fallback?: FallbackConfig) =>
       return response;
     },
     async (error: AxiosError) => {
+      const config = error.config as (InternalAxiosRequestConfig & { 
+        __wearsearchTriedLegacy?: boolean;
+        __rateLimitRetryCount?: number;
+      }) | undefined;
+
+      // Handle 429 Rate Limit with automatic retry
+      if (error.response?.status === 429 && config) {
+        const retryCount = config.__rateLimitRetryCount || 0;
+        
+        if (retryCount < RATE_LIMIT_CONFIG.maxRetries) {
+          // Get Retry-After header if present
+          const retryAfterHeader = error.response.headers['retry-after'];
+          const retryAfter = retryAfterHeader ? parseInt(retryAfterHeader, 10) : undefined;
+          const delay = getRetryDelay(retryCount, retryAfter);
+          
+          if (import.meta.env.DEV) {
+            console.log(`⏳ Rate limited. Retrying in ${Math.round(delay / 1000)}s (attempt ${retryCount + 1}/${RATE_LIMIT_CONFIG.maxRetries})...`);
+          }
+          
+          await sleep(delay);
+          
+          // Retry the request
+          config.__rateLimitRetryCount = retryCount + 1;
+          return client.request(config);
+        } else {
+          if (import.meta.env.DEV) {
+            console.warn('⚠️ Rate limit: max retries exceeded');
+          }
+        }
+      }
+
       // Automatic fallback: if v1 route is missing, retry the same request against legacy /api.
       try {
-        const cfg = error.config as (InternalAxiosRequestConfig & { __wearsearchTriedLegacy?: boolean }) | undefined;
+        const cfg = config;
         if (
           cfg &&
           !cfg.__wearsearchTriedLegacy &&
