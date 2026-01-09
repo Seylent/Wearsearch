@@ -10,6 +10,7 @@ import { Sparkles, TrendingUp, Heart, Eye, Loader2 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useRecommendations } from '@/hooks/useRecommendations';
 import { isAuthenticated } from '@/utils/authStorage';
+import { useCurrencyConversion } from '@/hooks/useCurrencyConversion';
 
 interface PersonalizedRecommendationsProps {
   limit?: number;
@@ -28,6 +29,7 @@ const PersonalizedRecommendations: React.FC<PersonalizedRecommendationsProps> = 
   className,
 }) => {
   const { t } = useTranslation();
+  const { formatPrice } = useCurrencyConversion();
   const { recommendations, isLoading, isEnabled } = useRecommendations(limit);
 
   // Don't show for non-authenticated users
@@ -114,7 +116,7 @@ const PersonalizedRecommendations: React.FC<PersonalizedRecommendationsProps> = 
                 </h3>
                 <div className="flex items-center justify-between">
                   <span className="text-sm font-semibold text-white">
-                    {product.price} ₴
+                    {formatPrice(Number(product.price) || 0)}
                   </span>
                   {product.brand && (
                     <span className="text-xs text-white/40">

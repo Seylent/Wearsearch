@@ -24,6 +24,7 @@ import { ImageLightbox } from "@/components/ImageLightbox";
 import { useSEO } from "@/hooks/useSEO";
 import { logError } from "@/services/logger";
 import { seoApi, type SEOData } from "@/services/api/seo.api";
+import { useCurrencyConversion } from "@/hooks/useCurrencyConversion";
 
 function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === "object" && value !== null;
@@ -41,6 +42,7 @@ const ProductDetail = () => {
   const { toast } = useToast();
   const navigate = useNavigate();
   const { t } = useTranslation();
+  const { formatPrice } = useCurrencyConversion();
   const [selectedImage, _setSelectedImage] = useState(0);
   const [isAdmin, setIsAdmin] = useState(false);
   const [isLightboxOpen, setIsLightboxOpen] = useState(false);
@@ -278,9 +280,9 @@ const ProductDetail = () => {
     const min = Math.min(...prices);
     const max = Math.max(...prices);
     
-    if (min === max) return `₴${min}`;
-    return `₴${min} - ₴${max}`;
-  }, [stores]);
+    if (min === max) return formatPrice(min);
+    return `${formatPrice(min)} - ${formatPrice(max)}`;
+  }, [stores, formatPrice]);
 
   // Loading state
   if (productLoading) {
@@ -648,7 +650,7 @@ const ProductDetail = () => {
                       {/* Price */}
                       {store.price && (
                         <div className="mb-3">
-                          <p className="font-display text-2xl font-bold">₴{store.price}</p>
+                          <p className="font-display text-2xl font-bold">{formatPrice(store.price)}</p>
                         </div>
                       )}
 

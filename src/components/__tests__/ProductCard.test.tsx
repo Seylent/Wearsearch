@@ -12,7 +12,7 @@ const mockProduct: Product = {
   name: 'Test Product',
   brand: 'Test Brand',
   category: 'Clothing',
-  price: 99.99,
+  price: 100,
   image: 'https://example.com/image.jpg',
   gender: 'unisex',
 };
@@ -23,7 +23,7 @@ describe('ProductCard', () => {
     
     expect(screen.getByText('Test Product')).toBeInTheDocument();
     expect(screen.getByText('Test Brand')).toBeInTheDocument();
-    expect(screen.getByText(/99\.99/)).toBeInTheDocument(); // Price might have currency symbol
+    expect(screen.getByText(/100/)).toBeInTheDocument(); // Price with currency symbol
   });
 
   it('should render product image', () => {

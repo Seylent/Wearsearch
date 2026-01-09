@@ -313,7 +313,9 @@
     "seoTitle": "Favorites",
     "seoDescription": "View and manage your favorite products.",
     "added": "Added to favorites",
-    "removed": "Removed from favorites"
+    "removed": "Removed from favorites",
+    "products": "Favorite Products",
+    "stores": "Favorite Stores"
   },
   "wishlist": {
     "settings": "Settings",
@@ -783,5 +785,24 @@
     "viewStores": "View stores",
     "buy": "Buy",
     "details": "Details"
+  },
+  "errors": {
+    "rateLimited": "Too many requests. Please try again in a few minutes.",
+    "serverError": "Server is temporarily unavailable. Please try again later.",
+    "authRequired": "Please log in to continue.",
+    "requestCanceled": "Request was canceled.",
+    "networkError": "Network connection error. Please check your internet connection.",
+    "unknown": "Something went wrong. Please try again.",
+    "refreshPage": "Refresh Page",
+    "showTechnicalDetails": "Show technical details",
+    "hideTechnicalDetails": "Hide technical details"
+  },
+  "dataSource": {
+    "partialResults": "Showing results from {{available}} of {{total}} sources"
+  },
+  "currency": {
+    "updated": "Updated",
+    "pricesInDollarsNBU": "Prices in USD (NBU rate)",
+    "convertedPrices": "Converted prices"
   }
 }

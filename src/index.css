@@ -559,3 +559,43 @@ select:focus-visible {
 ::-webkit-scrollbar-thumb:hover {
   background: hsl(0 0% 30%);
 }
+
+/* Анімований градієнт для пошукової панелі */
+@keyframes search-border-slide {
+  0% {
+    background-position: 0% 50%;
+  }
+  100% {
+    background-position: 200% 50%;
+  }
+}
+
+.animate-search-border {
+  background: linear-gradient(
+    90deg,
+    transparent,
+    rgba(255, 255, 255, 0.3),
+    rgba(255, 255, 255, 0.8),
+    rgba(255, 255, 255, 0.5),
+    rgba(255, 255, 255, 0.2),
+    transparent
+  );
+  background-size: 200% 100%;
+  animation: search-border-slide 3s linear infinite;
+}
+
+/* Анімації для форм автентифікації */
+@keyframes slide-in-from-top {
+  0% {
+    transform: translateY(-100%);
+    opacity: 0;
+  }
+  100% {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+.animate-slide-in-top {
+  animation: slide-in-from-top 0.5s ease-out;
+}

@@ -4,6 +4,7 @@
  */
 
 import { useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { AlertCircle, Package, Store, ShoppingBag, Search, RefreshCw } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 
@@ -143,25 +144,29 @@ export const ErrorState = ({
 };
 
 // Specific empty states
-export const NoProductsFound = ({ hasFilters = false, onClearFilters }: { hasFilters?: boolean; onClearFilters?: () => void }) => (
-  <EmptyState
-    icon={<Package className="w-10 h-10 text-muted-foreground" />}
-    title={hasFilters ? 'No products match your filters' : 'No products available'}
-    description={
-      hasFilters
-        ? 'Try adjusting your filters or search criteria to discover more products.'
-        : 'We don\'t have any products available at the moment. Please check back soon for new arrivals!'
-    }
-    action={
-      hasFilters && onClearFilters
-        ? {
-            label: 'Clear All Filters',
-            onClick: onClearFilters,
-          }
-        : undefined
-    }
-  />
-);
+export const NoProductsFound = ({ hasFilters = false, onClearFilters }: { hasFilters?: boolean; onClearFilters?: () => void }) => {
+  const { t } = useTranslation();
+  
+  return (
+    <EmptyState
+      icon={<Package className="w-10 h-10 text-muted-foreground" />}
+      title={hasFilters ? t('emptyStates.noProductsMatch', 'No products match your filters') : t('emptyStates.noProductsAvailable', 'No products available')}
+      description={
+        hasFilters
+          ? t('emptyStates.tryAdjustingFilters', 'Try adjusting your filters or search criteria to discover more products.')
+          : t('emptyStates.checkBackSoon', 'We don\'t have any products available at the moment. Please check back soon for new arrivals!')
+      }
+      action={
+        hasFilters && onClearFilters
+          ? {
+              label: t('emptyStates.clearAllFilters', 'Clear All Filters'),
+              onClick: onClearFilters,
+            }
+          : undefined
+      }
+    />
+  );
+};
 
 export const NoStoreProducts = ({ storeName }: { storeName?: string }) => (
   <EmptyState
@@ -226,3 +231,30 @@ export const NoFavoritesYet = ({ onBrowse }: { onBrowse?: () => void }) => (
     }
   />
 );
+
+// Data source indicator for partial results
+export const DataSourceIndicator = ({ 
+  availableSources, 
+  totalSources, 
+  className 
+}: { 
+  availableSources: number; 
+  totalSources: number; 
+  className?: string; 
+}) => {
+  const { t } = useTranslation();
+  
+  if (availableSources === totalSources) return null;
+  
+  return (
+    <div className={`flex items-center gap-2 px-3 py-2 rounded-lg bg-yellow-500/10 border border-yellow-500/20 text-yellow-600 dark:text-yellow-400 text-sm ${className}`}>
+      <AlertCircle className="w-4 h-4" />
+      <span>
+        {t('dataSource.partialResults', 'Showing results from {{available}} of {{total}} sources', {
+          available: availableSources,
+          total: totalSources
+        })}
+      </span>
+    </div>
+  );
+};

@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import ImageDebugger from './ImageDebugger';
 import FavoriteButton from './FavoriteButton';
+import { useCurrencyConversion } from '@/hooks/useCurrencyConversion';
 
 interface ProductCardProps {
   id: number | string;
@@ -16,6 +17,7 @@ interface ProductCardProps {
 
 const ProductCard: React.FC<ProductCardProps> = memo(({ id, name, image, price, category: _category, brand, isNew }) => {
   const { t } = useTranslation();
+  const { formatPrice } = useCurrencyConversion();
   const cardRef = useRef<HTMLDivElement>(null);
   // Handle both 'image' and 'image_url' from different API responses
   const imgSrc = image || '';
@@ -119,7 +121,7 @@ const ProductCard: React.FC<ProductCardProps> = memo(({ id, name, image, price, 
           {/* Price */}
           <div className="mt-2">
             <p className="font-display text-sm sm:text-base font-bold text-white">
-              {t('common.from')} ₴{price ?? '0'}
+              {t('common.from')} {formatPrice(Number(price) || 0)}
             </p>
           </div>
         </div>

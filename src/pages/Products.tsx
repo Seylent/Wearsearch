@@ -7,7 +7,10 @@ import Footer from "@/components/layout/Footer";
 import { NeonAbstractions } from "@/components/NeonAbstractions";
 import ProductCard from "@/components/ProductCard";
 import { ProductGridSkeleton } from "@/components/common/SkeletonLoader";
-import { NoProductsFound, NoStoreProducts, ErrorState } from "@/components/common/EmptyState";
+import { NoProductsFound, NoStoreProducts, ErrorState, NoSearchResults } from "@/components/common/EmptyState";
+import { CurrencyInfo } from "@/components/common/CurrencySwitch";
+import { useCurrency } from "@/contexts/CurrencyContext";
+import { useCurrencyConversion } from "@/hooks/useCurrencyConversion";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -37,11 +40,14 @@ import { seoApi, type SEOData } from "@/services/api/seo.api";
 import PriceRangeFilter from "@/components/PriceRangeFilter";
 import RecentlyViewedProducts from "@/components/RecentlyViewedProducts";
 import PersonalizedRecommendations from "@/components/PersonalizedRecommendations";
+import ShareButton from "@/components/ShareButton";
 
 const Products = () => {
   const { t } = useTranslation();
   const [searchParams] = useSearchParams();
   const { scrollToTop } = useSmoothScroll();
+  const { currency } = useCurrency();
+  const { getCurrencySymbol, convertPrice, convertToUAH } = useCurrencyConversion();
   
   // Dynamic SEO based on filters
   const [seoData, setSeoData] = useState<SEOData | null>(null);
@@ -128,6 +134,7 @@ const Products = () => {
       gender: filters.selectedGenders?.length ? filters.selectedGenders : undefined,
       brandId: filters.selectedBrand ? [filters.selectedBrand] : undefined,
       sort: sort.sortBy !== 'default' ? sort.sortBy : undefined,
+      currency: currency,
     }),
     [
       currentPage,
@@ -138,6 +145,7 @@ const Products = () => {
       filters.selectedGenders,
       filters.selectedBrand,
       sort.sortBy,
+      currency,
     ]
   );
   
@@ -162,6 +170,17 @@ const Products = () => {
   const productsData = !storeIdParam ? pageData?.products : null;
   const brandsData = !storeIdParam ? pageData?.brands : null;
   const loading = !storeIdParam ? pageLoading : false;
+  
+  // Extract currency information from API response
+  const currencyInfo = useMemo(() => {
+    if (!pageData?.currency) return undefined;
+    return pageData.currency as { 
+      code: string; 
+      symbol: string; 
+      convertedFrom?: string; 
+      convertedAt?: string; 
+    };
+  }, [pageData?.currency]);
   
   // Use store products if filtering by store, otherwise use server-paged products
   const products = useMemo(() => {
@@ -248,15 +267,19 @@ const Products = () => {
           
           {/* Search Bar */}
           <div className="relative max-w-2xl mx-auto">
-            <div className="relative flex items-center">
-              <Search className="absolute left-5 w-5 h-5 text-muted-foreground" />
-              <Input
-                type="text"
-                placeholder={t('home.searchPlaceholder')}
-                value={filters.searchQuery}
-                onChange={(e) => filters.setSearchQuery(e.target.value)}
-                className="w-full pl-14 pr-5 h-14 glass-card rounded-full text-foreground placeholder:text-muted-foreground focus-visible:ring-2 focus-visible:ring-foreground/20 border-foreground/10"
-              />
+            <div className="relative group">
+              {/* Анімований бордер */}
+              <div className="absolute -inset-0.5 animate-search-border rounded-full blur-sm opacity-60 group-hover:opacity-85 group-focus-within:opacity-100 transition-opacity duration-300"></div>
+              <div className="relative flex items-center">
+                <Search className="absolute left-5 w-5 h-5 text-muted-foreground z-10" />
+                <Input
+                  type="text"
+                  placeholder={t('home.searchPlaceholder')}
+                  value={filters.searchQuery}
+                  onChange={(e) => filters.setSearchQuery(e.target.value)}
+                  className="w-full pl-14 pr-5 h-14 glass-card rounded-full text-foreground placeholder:text-muted-foreground focus-visible:ring-2 focus-visible:ring-foreground/20 border-foreground/10 bg-background relative"
+                />
+              </div>
             </div>
           </div>
         </div>
@@ -424,16 +447,19 @@ const Products = () => {
                     <div>
                       <PriceRangeFilter
                         min={0}
-                        max={5000}
-                        minValue={filters.priceMin ?? 0}
-                        maxValue={filters.priceMax ?? 5000}
+                        max={Math.round(convertPrice(50000))}
+                        minValue={filters.priceMin ? Math.round(convertPrice(filters.priceMin)) : 0}
+                        maxValue={filters.priceMax ? Math.round(convertPrice(filters.priceMax)) : Math.round(convertPrice(50000))}
                         onApply={(min, max) => {
-                          filters.setPriceRange(min === 0 ? null : min, max === 5000 ? null : max);
+                          // Конвертуємо назад в UAH для API
+                          const minUAH = min === 0 ? null : Math.round(convertToUAH(min));
+                          const maxUAH = max === Math.round(convertPrice(50000)) ? null : Math.round(convertToUAH(max));
+                          filters.setPriceRange(minUAH, maxUAH);
                           setCurrentPage(1);
                         }}
-                        currency="$"
+                        currency={getCurrencySymbol()}
                         showApplyButton={false}
-                        step={50}
+                        step={currency === 'USD' ? 5 : 100}
                       />
                     </div>
 
@@ -499,21 +525,32 @@ const Products = () => {
                 </Button>
               </div>
 
-              {/* Sort */}
-              <Select value={sort.sortBy} onValueChange={sort.setSortBy}>
-                <SelectTrigger className="w-[200px] h-10 border-foreground/20 bg-card/50 text-foreground focus:ring-foreground/20">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent position="popper" className="bg-card border-foreground/10 text-foreground">
-                  <SelectItem value="default">{t('products.default')}</SelectItem>
-                  <SelectItem value="name-asc">Name (A-Z)</SelectItem>
-                  <SelectItem value="name-desc">Name (Z-A)</SelectItem>
-                  <SelectItem value="price-asc">{t('products.priceAsc')}</SelectItem>
-                  <SelectItem value="price-desc">{t('products.priceDesc')}</SelectItem>
-                </SelectContent>
-              </Select>
+              {/* Sort and Share */}
+              <div className="flex items-center gap-3">
+                <ShareButton 
+                  title={`Products ${filters.searchQuery ? `for "${filters.searchQuery}"` : ''}`}
+                  description="Check out these amazing products on Wearsearch"
+                />
+                <Select value={sort.sortBy} onValueChange={sort.setSortBy}>
+                  <SelectTrigger className="w-[200px] h-10 border-foreground/20 bg-card/50 text-foreground focus:ring-foreground/20">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent position="popper" className="bg-card border-foreground/10 text-foreground">
+                    <SelectItem value="default">{t('products.default')}</SelectItem>
+                    <SelectItem value="name-asc">Name (A-Z)</SelectItem>
+                    <SelectItem value="name-desc">Name (Z-A)</SelectItem>
+                    <SelectItem value="price-asc">{t('products.priceAsc')}</SelectItem>
+                    <SelectItem value="price-desc">{t('products.priceDesc')}</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
             </div>
           </div>
+          
+          {/* Currency Information */}
+          {currencyInfo && (
+            <CurrencyInfo currencyInfo={currencyInfo} className="mb-4" />
+          )}
           
           {/* Products Grid */}
           {isLoading ? (

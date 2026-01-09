@@ -182,58 +182,67 @@ const Favorites = () => {
           </div>
         )}
 
-        {/* Content */}
-        {loading || favoritesPageLoading ? (
-          <ProductGridSkeleton count={12} columns={4} />
-        ) : filteredFavorites.length === 0 ? (
-          <div className="text-center py-20 border border-dashed border-border/30 rounded-3xl bg-card/10">
-            <div className="w-16 h-16 rounded-full border-2 border-border/30 flex items-center justify-center mx-auto mb-6 select-none">
-              <Heart className="w-8 h-8 text-muted-foreground" />
+        {/* Favorite Products Section */}
+        <div className="mb-16">
+          <div className="flex items-center gap-3 mb-6">
+            <div className="w-2 h-8 bg-gradient-to-b from-foreground to-foreground/50 rounded-full"></div>
+            <h2 className="font-display text-2xl font-bold">{t('favorites.products', 'Favorite Products')}</h2>
+            <span className="text-sm text-muted-foreground">({filteredFavorites.length})</span>
+          </div>
+          
+          {loading || favoritesPageLoading ? (
+            <ProductGridSkeleton count={12} columns={4} />
+          ) : filteredFavorites.length === 0 ? (
+            <div className="text-center py-16 border border-dashed border-border/30 rounded-2xl bg-card/5">
+              <div className="w-14 h-14 rounded-full border-2 border-border/30 flex items-center justify-center mx-auto mb-4 select-none">
+                <Heart className="w-7 h-7 text-muted-foreground" />
+              </div>
+              <h3 className="font-display text-lg font-semibold mb-2 select-none">
+                {searchQuery ? "No products match your search" : "No favorite products yet"}
+              </h3>
+              <p className="text-muted-foreground mb-4 max-w-md mx-auto text-sm select-none">
+                {searchQuery 
+                  ? "Try adjusting your search terms" 
+                  : "Start exploring and save products you love to see them here"}
+              </p>
+              <Button 
+                onClick={() => navigate("/products")}
+                className="rounded-full"
+                size="sm"
+              >
+                Browse Products
+              </Button>
             </div>
-            <h3 className="font-display text-xl font-semibold mb-2 select-none">
-              {searchQuery ? "No favorites match your search" : "No favorites yet"}
-            </h3>
-            <p className="text-muted-foreground mb-6 max-w-md mx-auto select-none">
-              {searchQuery 
-                ? "Try adjusting your search terms" 
-                : "Start exploring and save items you love to see them here"}
-            </p>
-            <Button 
-              onClick={() => navigate("/products")}
-              className="rounded-full"
-            >
-              Browse Products
-            </Button>
-          </div>
-        ) : (
-          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
-            {filteredFavorites.map((product: unknown, index: number) => {
-              const record = isRecord(product) ? product : {};
-              const productId = getNumberOrString(record["id"], index);
-              const productName = getString(record["name"], "Unknown");
+          ) : (
+            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
+              {filteredFavorites.map((product: unknown, index: number) => {
+                const record = isRecord(product) ? product : {};
+                const productId = getNumberOrString(record["id"], index);
+                const productName = getString(record["name"], "Unknown");
 
-              const productImage = getString(record["image_url"]) || getString(record["image"]);
-              const productPrice = String(record["price"] ?? "0");
-              const productCategory = getString(record["type"]);
+                const productImage = getString(record["image_url"]) || getString(record["image"]);
+                const productPrice = String(record["price"] ?? "0");
+                const productCategory = getString(record["type"]);
 
-              const brandsValue = record["brands"];
-              const brandFromBrands = isRecord(brandsValue) ? brandsValue["name"] : undefined;
-              const productBrand = getString(record["brand"]) || getString(brandFromBrands);
-              
-              return (
-                <ProductCard
-                  key={`${productId}-${index}`}
-                  id={productId}
-                  name={productName}
-                  image={productImage}
-                  price={productPrice}
-                  category={productCategory}
-                  brand={productBrand}
-                />
-              );
-            })}
-          </div>
-        )}
+                const brandsValue = record["brands"];
+                const brandFromBrands = isRecord(brandsValue) ? brandsValue["name"] : undefined;
+                const productBrand = getString(record["brand"]) || getString(brandFromBrands);
+                
+                return (
+                  <ProductCard
+                    key={`${productId}-${index}`}
+                    id={productId}
+                    name={productName}
+                    image={productImage}
+                    price={productPrice}
+                    category={productCategory}
+                    brand={productBrand}
+                  />
+                );
+              })}
+            </div>
+          )}
+        </div>
 
         {!!pagination && pagination.totalPages > 1 && (
           <div className="flex items-center justify-center gap-4 mt-12">
@@ -258,7 +267,11 @@ const Favorites = () => {
         )}
 
         {/* Saved Stores Section */}
-        <div className="mt-16 pt-12 border-t border-border/20">
+        <div className="border-t border-border/20 pt-12">
+          <div className="flex items-center gap-3 mb-6">
+            <div className="w-2 h-8 bg-gradient-to-b from-foreground/80 to-foreground/30 rounded-full"></div>
+            <h2 className="font-display text-2xl font-bold">{t('favorites.stores', 'Favorite Stores')}</h2>
+          </div>
           <SavedStoresList showClearButton={true} />
         </div>
       </main>

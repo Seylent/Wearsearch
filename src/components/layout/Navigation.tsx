@@ -4,6 +4,7 @@ import { useTranslation } from "react-i18next";
 import { UserProfileMenu } from "@/components/UserProfileMenu";
 import { SearchDropdown } from "@/features/search/components";
 import { LanguageSelector } from "@/components/LanguageSelector";
+import { CurrencySwitch } from "@/components/common/CurrencySwitch";
 import { useAuth } from "@/features/auth/hooks/useAuth";
 import { useNavigationState } from "@/features/auth/hooks/useNavigationState";
 import { Search, User as UserIcon, Menu, X } from "lucide-react";
@@ -121,6 +122,11 @@ const Navigation: React.FC = () => {
           {/* Language Selector */}
           <LanguageSelector />
           
+          {/* Currency Selector */}
+          <div className="hidden sm:block">
+            <CurrencySwitch variant="ghost" size="sm" className="h-11 w-auto px-2 text-zinc-400 hover:text-white hover:bg-zinc-800/70" />
+          </div>
+          
           {user ? (
             <UserProfileMenu />
           ) : (
@@ -157,6 +163,12 @@ const Navigation: React.FC = () => {
                 {link.name}
               </Link>
             ))}
+            
+            {/* Currency Switch in mobile menu */}
+            <div className="px-6 py-3 border-b border-zinc-800/50">
+              <CurrencySwitch variant="ghost" size="default" showExchangeRate={true} className="w-full justify-start text-zinc-300 hover:text-white hover:bg-zinc-800/30" />
+            </div>
+            
             <button 
               className="px-6 py-3 text-base font-medium transition-all duration-300 text-zinc-300 active:text-white active:bg-zinc-800/30 text-left border-b border-zinc-800/50"
               onClick={() => {

@@ -9,6 +9,7 @@ import { Link } from 'react-router-dom';
 import { Sparkles, Loader2 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useSimilarProducts } from '@/hooks/useRecommendations';
+import { useCurrencyConversion } from '@/hooks/useCurrencyConversion';
 
 interface SimilarProductsProps {
   productId: string | number;
@@ -22,6 +23,7 @@ const SimilarProducts: React.FC<SimilarProductsProps> = ({
   className,
 }) => {
   const { t } = useTranslation();
+  const { formatPrice } = useCurrencyConversion();
   const { similarProducts, isLoading } = useSimilarProducts(productId, limit);
 
   // Show loading state
@@ -88,7 +90,7 @@ const SimilarProducts: React.FC<SimilarProductsProps> = ({
                   {product.name}
                 </h3>
                 <span className="text-sm font-semibold text-white">
-                  {product.price} ₴
+                  {formatPrice(Number(product.price) || 0)}
                 </span>
               </div>
             </Link>

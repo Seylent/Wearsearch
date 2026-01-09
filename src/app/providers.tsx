@@ -10,6 +10,7 @@ import { Toaster } from '@/components/ui/toaster';
 import { Toaster as Sonner } from '@/components/ui/sonner';
 import { ApiError } from '@/services/api/errorHandler';
 import { FavoritesProvider } from '@/contexts/FavoritesContext';
+import { CurrencyProvider } from '@/contexts/CurrencyContext';
 
 /**
  * Rate limit error check
@@ -64,12 +65,14 @@ interface AppProvidersProps {
 
 export const AppProviders = ({ children }: AppProvidersProps) => (
   <QueryClientProvider client={queryClient}>
-    <FavoritesProvider>
-      <TooltipProvider>
-        {children}
-        <Toaster />
-        <Sonner />
-      </TooltipProvider>
-    </FavoritesProvider>
+    <CurrencyProvider>
+      <FavoritesProvider>
+        <TooltipProvider>
+          {children}
+          <Toaster />
+          <Sonner />
+        </TooltipProvider>
+      </FavoritesProvider>
+    </CurrencyProvider>
   </QueryClientProvider>
 );

@@ -9,6 +9,7 @@ import { useTranslation } from 'react-i18next';
 import { Sparkles } from 'lucide-react';
 import { useRelatedProducts } from '@/hooks/useApi';
 import { convertS3UrlToHttps } from '@/lib/utils';
+import { useCurrencyConversion } from '@/hooks/useCurrencyConversion';
 
 const isRecord = (value: unknown): value is Record<string, unknown> => typeof value === 'object' && value !== null;
 
@@ -29,6 +30,7 @@ interface RelatedProductsProps {
 
 export const RelatedProducts = memo(({ productId, products, total, className = '' }: RelatedProductsProps) => {
   const { t } = useTranslation();
+  const { formatPrice } = useCurrencyConversion();
 
   const hasProvidedProducts = Array.isArray(products);
   const { data, isLoading, error: _error } = useRelatedProducts(productId);
@@ -110,7 +112,7 @@ export const RelatedProducts = memo(({ productId, products, total, className = '
                   )}
                   {priceText && (
                     <p className="text-sm font-semibold">
-                      ₴{priceText}
+                      {formatPrice(Number(priceText) || 0)}
                     </p>
                   )}
                 </div>

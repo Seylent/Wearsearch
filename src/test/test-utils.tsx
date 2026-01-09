@@ -8,6 +8,7 @@ import { render, RenderOptions } from '@testing-library/react';
 import { BrowserRouter } from 'react-router-dom';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { FavoritesProvider } from '@/contexts/FavoritesContext';
+import { CurrencyProvider } from '@/contexts/CurrencyContext';
 
 // Create a test query client with disabled retries and caching
 const createTestQueryClient = () =>
@@ -33,9 +34,11 @@ function AllTheProviders({ children }: AllTheProvidersProps) {
 
   return (
     <QueryClientProvider client={queryClient}>
-      <BrowserRouter>
-        <FavoritesProvider>{children}</FavoritesProvider>
-      </BrowserRouter>
+      <CurrencyProvider>
+        <BrowserRouter>
+          <FavoritesProvider>{children}</FavoritesProvider>
+        </BrowserRouter>
+      </CurrencyProvider>
     </QueryClientProvider>
   );
 }

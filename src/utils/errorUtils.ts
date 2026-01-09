@@ -62,3 +62,64 @@ export function isAuthError(error: unknown): boolean {
          msg.includes('token') ||
          msg.includes('login');
 }
+
+/**
+ * Type guard for rate limit errors (429)
+ */
+export function isRateLimitError(error: unknown): boolean {
+  return isRecord(error) && 
+    ((error.status === 429) || 
+     (isRecord(error.response) && error.response.status === 429) ||
+     (hasMessage(error) && error.message.toLowerCase().includes('rate limit')));
+}
+
+/**
+ * Type guard for server errors (500+)
+ */
+export function isServerError(error: unknown): boolean {
+  const status = getErrorStatus(error);
+  return status !== undefined && status >= 500;
+}
+
+/**
+ * Get error status code
+ */
+export function getErrorStatus(error: unknown): number | undefined {
+  if (isRecord(error)) {
+    if (typeof error.status === 'number') return error.status;
+    if (isRecord(error.response) && typeof error.response.status === 'number') {
+      return error.response.status;
+    }
+  }
+  return undefined;
+}
+
+/**
+ * Get user-friendly error message for different error types
+ */
+export function getLocalizedErrorMessage(error: unknown, t?: (key: string, fallback?: string) => string): string {
+  const translate = t || ((key: string, fallback?: string) => fallback || key);
+  
+  if (isRateLimitError(error)) {
+    return translate('errors.rateLimited', 'Too many requests. Please try again in a few minutes.');
+  }
+  
+  if (isServerError(error)) {
+    return translate('errors.serverError', 'Server is temporarily unavailable. Please try again later.');
+  }
+  
+  if (isAuthError(error)) {
+    return translate('errors.authRequired', 'Please log in to continue.');
+  }
+  
+  if (isCanceledError(error)) {
+    return translate('errors.requestCanceled', 'Request was canceled.');
+  }
+  
+  // Network error
+  if (hasMessage(error) && error.message.toLowerCase().includes('network')) {
+    return translate('errors.networkError', 'Network connection error. Please check your internet connection.');
+  }
+  
+  return getErrorMessage(error, translate('errors.unknown', 'Something went wrong. Please try again.'));
+}

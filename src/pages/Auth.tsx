@@ -8,10 +8,12 @@ import { Label } from '@/components/ui/label';
 import { useToast } from '@/hooks/use-toast';
 import { ArrowLeft } from 'lucide-react';
 import { useSEO } from '@/hooks/useSEO';
+import { getErrorMessage } from '@/utils/errorUtils';
 
 const Auth: React.FC = () => {
   const [identifier, setIdentifier] = useState(''); // Can be email or username
   const [password, setPassword] = useState('');
+  const [username, setUsername] = useState('');
   const [loading, setLoading] = useState(false);
   const [isSignUp, setIsSignUp] = useState(false);
   const navigate = useNavigate();
@@ -65,7 +67,11 @@ const Auth: React.FC = () => {
     e.preventDefault();
     setLoading(true);
     try {
-      const res = await authService.register({ email: identifier, password });
+      const res = await authService.register({ 
+        email: identifier, 
+        password, 
+        username: username.trim() || undefined 
+      });
       if (res.success && res.user) {
         toast({
           title: 'Account created',
@@ -74,6 +80,7 @@ const Auth: React.FC = () => {
         setIsSignUp(false);
         setIdentifier('');
         setPassword('');
+        setUsername('');
       } else {
         throw new Error(res.error || 'Registration failed');
       }
@@ -131,7 +138,25 @@ const Auth: React.FC = () => {
         </div>
 
         {/* Form Card */}
-        <div className="p-8 rounded-2xl border border-border/30 bg-card/20 backdrop-blur-xl">
+        <div className="p-8 rounded-2xl border border-border/30 bg-card/20 backdrop-blur-xl transition-all duration-500 ease-in-out">
+          <div className="mb-4 overflow-hidden">
+            <div className={`transition-all duration-700 ease-in-out transform ${isSignUp ? 'translate-y-0 opacity-100' : '-translate-y-full opacity-0 h-0'}`}>
+              <div className="text-center py-2">
+                <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-green-500/10 border border-green-500/20">
+                  <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
+                  <span className="text-sm text-green-400 font-medium">Creating new account</span>
+                </div>
+              </div>
+            </div>
+            <div className={`transition-all duration-700 ease-in-out transform ${!isSignUp ? 'translate-y-0 opacity-100' : 'translate-y-full opacity-0 h-0'}`}>
+              <div className="text-center py-2">
+                <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-blue-500/10 border border-blue-500/20">
+                  <div className="w-2 h-2 bg-blue-500 rounded-full animate-pulse"></div>
+                  <span className="text-sm text-blue-400 font-medium">Signing into account</span>
+                </div>
+              </div>
+            </div>
+          </div>
           <form onSubmit={isSignUp ? handleSignup : handleLogin} className="space-y-6">
             <div className="space-y-2">
               <Label htmlFor="identifier" className="text-sm font-medium">
@@ -144,18 +169,33 @@ const Auth: React.FC = () => {
                 onChange={(e) => setIdentifier(e.target.value)}
                 required
                 placeholder={isSignUp ? "your@email.com" : "Email or username"}
-                className="h-12 bg-card/50 border-border/50 rounded-xl focus-visible:ring-1 focus-visible:ring-foreground/30"
+                className="h-12 bg-card/50 border-border/50 rounded-xl focus-visible:ring-1 focus-visible:ring-foreground/30 transition-all duration-300"
               />
             </div>
+            
+            {isSignUp && (
+              <div className="space-y-2 animate-in slide-in-from-top-2 duration-500">
+                <Label htmlFor="username" className="text-sm font-medium">{t('profile.username', 'Username')}</Label>
+                <Input
+                  id="username"
+                  type="text"
+                  value={username}
+                  onChange={(e) => setUsername(e.target.value)}
+                  required={isSignUp}
+                  placeholder="Choose a unique username"
+                  className="h-12 bg-card/50 border-border/50 rounded-xl focus-visible:ring-1 focus-visible:ring-foreground/30 transition-all duration-300"
+                />
+              </div>
+            )}
             <div className="space-y-2">
-              <Label htmlFor="password" className="text-sm font-medium">{t('common.password')}</Label>
+              <Label htmlFor="password" className="text-sm font-medium">{t('profile.password', 'Password')}</Label>
               <Input
                 id="password"
                 type="password"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 required
-                placeholder={t('common.enterPassword')}
+                placeholder={t('auth.enterPassword', 'Enter your password')}
                 minLength={6}
                 className="h-12 bg-card/50 border-border/50 rounded-xl focus-visible:ring-1 focus-visible:ring-foreground/30"
               />
@@ -175,8 +215,13 @@ const Auth: React.FC = () => {
               {isSignUp ? 'Already have an account?' : "Don't have an account?"}{' '}
               <button
                 type="button"
-                onClick={() => setIsSignUp(!isSignUp)}
-                className="text-foreground hover:underline font-medium"
+                onClick={() => {
+                  setIsSignUp(!isSignUp);
+                  setIdentifier('');
+                  setPassword('');
+                  setUsername('');
+                }}
+                className="text-foreground hover:underline font-medium transition-all duration-300 hover:text-white"
               >
                 {isSignUp ? 'Sign In' : 'Sign Up'}
               </button>

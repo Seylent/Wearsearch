@@ -2,7 +2,7 @@
 
 ## ✅ Completed Improvements
 
-### 1️⃣ **API Contract & Store Identifiers** ✅
+### 1️⃣ **API Contract &   Store Identifiers** ✅
 **Status:** FIXED
 
 - ✅ **Store Identifier:** Using `store.id` (UUID) consistently throughout the app

@@ -9,6 +9,7 @@ import { convertS3UrlToHttps } from '@/lib/utils';
 import { getCategoryTranslation } from '@/utils/translations';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useTranslation } from 'react-i18next';
+import { useCurrencyConversion } from '@/hooks/useCurrencyConversion';
 import type { SearchResult } from '../hooks/useProductSearch';
 import type { SearchHistoryItem } from '@/hooks/useSearchHistory';
 
@@ -48,6 +49,7 @@ export const SearchDropdownView: React.FC<SearchDropdownViewProps> = React.memo(
   onClearHistory,
 }) => {
   const { t } = useTranslation();
+  const { formatPrice } = useCurrencyConversion();
 
   // Block scroll when search is open
   useEffect(() => {
@@ -213,7 +215,7 @@ export const SearchDropdownView: React.FC<SearchDropdownViewProps> = React.memo(
                       {/* Price (only for products) */}
                       {!isStore && result.price && (
                         <div className="text-white font-medium flex-shrink-0">
-                          ₴{result.price}
+                          {formatPrice(Number(result.price))}
                         </div>
                       )}
                     </button>

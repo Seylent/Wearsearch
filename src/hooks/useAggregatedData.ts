@@ -116,6 +116,7 @@ interface ProductFilters {
   minPrice?: string;
   maxPrice?: string;
   sort?: string;
+  currency?: string;
 }
 
 type PaginationInfo = {
@@ -142,6 +143,7 @@ const buildV1ProductsParams = (filters: ProductFilters): URLSearchParams => {
   if (filters.sort) params.set('sort', filters.sort);
   if (filters.minPrice) params.set('minPrice', filters.minPrice);
   if (filters.maxPrice) params.set('maxPrice', filters.maxPrice);
+  if (filters.currency) params.set('currency', filters.currency);
 
   const appendMany = (key: string, value?: string | string[]) => {
     if (!value) return;
@@ -175,6 +177,7 @@ export const useProductsPageData = (filters: ProductFilters = {}, options?: Quer
         const items = (getArray(body, 'items') ?? []) as unknown[];
         const meta = getRecord(body, 'meta') ?? {};
         const facets = getRecord(body, 'facets') ?? {};
+        const currency = getRecord(body, 'currency');
 
         const page = asNumber(meta.page, filters.page ?? 1);
         const limit = asNumber(meta.limit, filters.limit ?? 24);
@@ -187,7 +190,7 @@ export const useProductsPageData = (filters: ProductFilters = {}, options?: Quer
         const facetsBrands = facets.brands;
         const brands = Array.isArray(facetsBrands) ? facetsBrands : [];
 
-        return { products: items, brands, pagination, facets };
+        return { products: items, brands, pagination, facets, currency };
       } catch {
         // Fallback to individual calls
         if (import.meta.env.DEV) {

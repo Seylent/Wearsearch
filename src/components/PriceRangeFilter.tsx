@@ -5,7 +5,7 @@
 
 import React, { useState, useCallback, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
-import { DollarSign } from 'lucide-react';
+import { Coins } from 'lucide-react';
 import { Slider } from '@/components/ui/slider';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -135,7 +135,7 @@ const PriceRangeFilter: React.FC<PriceRangeFilterProps> = ({
   return (
     <div className={cn('space-y-4', className)}>
       <div className="flex items-center gap-2">
-        <DollarSign className="w-4 h-4 text-white/60" aria-hidden="true" />
+        <Coins className="w-4 h-4 text-white/60" aria-hidden="true" />
         <Label className="text-sm font-medium text-white">
           {t('filters.priceRange', 'Price Range')}
         </Label>
