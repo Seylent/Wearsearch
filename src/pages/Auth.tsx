@@ -36,8 +36,8 @@ const Auth: React.FC = () => {
       // Check if login was successful by verifying token is stored
       if (authService.isAuthenticated()) {
         toast({
-          title: 'Success',
-          description: 'Logged in successfully!',
+          title: t('common.success', 'Success'),
+          description: t('auth.loginSuccess', 'Logged in successfully!'),
         });
         
         // Trigger auth change events
@@ -54,8 +54,8 @@ const Auth: React.FC = () => {
         console.error('❌ Login error:', err);
       }
       toast({
-        title: 'Login Failed',
-        description: getErrorMessage(err, 'Invalid credentials'),
+        title: t('errors.loginFailed', 'Login Failed'),
+        description: getErrorMessage(err, t('errors.invalidCredentials', 'Invalid credentials')),
         variant: 'destructive',
       });
     } finally {
@@ -74,8 +74,8 @@ const Auth: React.FC = () => {
       });
       if (res.success && res.user) {
         toast({
-          title: 'Account created',
-          description: 'Registration successful! You can now log in.',
+          title: t('auth.accountCreated', 'Account created'),
+          description: t('auth.registrationSuccess', 'Registration successful! You can now log in.'),
         });
         setIsSignUp(false);
         setIdentifier('');
@@ -86,8 +86,8 @@ const Auth: React.FC = () => {
       }
     } catch (err: unknown) {
       toast({
-        title: 'Registration Failed',
-        description: getErrorMessage(err, 'Failed to create account'),
+        title: t('errors.registrationFailed', 'Registration Failed'),
+        description: getErrorMessage(err, t('errors.failedToCreateAccount', 'Failed to create account')),
         variant: 'destructive',
       });
     } finally {
@@ -115,36 +115,40 @@ const Auth: React.FC = () => {
         className="absolute top-6 left-6 flex items-center gap-2 text-muted-foreground hover:text-foreground transition-colors z-10"
       >
         <ArrowLeft className="w-4 h-4" />
-        <span className="text-sm">{t('common.backToHome')}</span>
+        <span className="text-sm">{t('common.back', 'Back')}</span>
       </Link>
 
       <div className="w-full max-w-md relative z-10">
         {/* Logo */}
         <div className="text-center mb-8">
           <Link to="/" className="inline-flex items-center gap-3 mb-6">
-            <div className="w-12 h-12 rounded-xl border border-foreground/30 flex items-center justify-center bg-card/30 backdrop-blur-sm">
-              <span className="font-display font-bold text-xl">W</span>
-            </div>
-            <span className="font-display text-2xl font-semibold tracking-tight">
+            <img
+              src="/favicon.png"
+              alt="Wearsearch logo"
+              className="w-12 h-12 rounded-xl border border-foreground/30 bg-card/30 backdrop-blur-sm object-contain"
+            />
+            <span
+              className="text-white text-base sm:text-lg md:text-xl uppercase tracking-wide font-logo"
+            >
               Wearsearch
             </span>
           </Link>
           <h1 className="font-display text-3xl font-bold mb-2">
-            {isSignUp ? 'Create Account' : 'Welcome Back'}
+            {isSignUp ? t('auth.createAccount', 'Create Account') : t('auth.welcomeBack', 'Welcome Back')}
           </h1>
           <p className="text-muted-foreground">
-            {isSignUp ? 'Join the world of exceptional fashion' : 'Sign in to continue your journey'}
+            {isSignUp ? t('auth.subtitleSignUp', 'Join the world of exceptional fashion') : t('auth.subtitleSignIn', 'Sign in to continue your journey')}
           </p>
         </div>
 
         {/* Form Card */}
         <div className="p-8 rounded-2xl border border-border/30 bg-card/20 backdrop-blur-xl transition-all duration-500 ease-in-out">
-          <div className="mb-4 overflow-hidden">
+          <div className="-mt-2 mb-4 overflow-hidden">
             <div className={`transition-all duration-700 ease-in-out transform ${isSignUp ? 'translate-y-0 opacity-100' : '-translate-y-full opacity-0 h-0'}`}>
               <div className="text-center py-2">
                 <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-green-500/10 border border-green-500/20">
                   <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
-                  <span className="text-sm text-green-400 font-medium">Creating new account</span>
+                  <span className="text-sm text-green-400 font-medium">{t('auth.statusCreatingAccount', 'Creating new account')}</span>
                 </div>
               </div>
             </div>
@@ -152,7 +156,7 @@ const Auth: React.FC = () => {
               <div className="text-center py-2">
                 <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-blue-500/10 border border-blue-500/20">
                   <div className="w-2 h-2 bg-blue-500 rounded-full animate-pulse"></div>
-                  <span className="text-sm text-blue-400 font-medium">Signing into account</span>
+                  <span className="text-sm text-blue-400 font-medium">{t('auth.statusSigningIn', 'Signing into account')}</span>
                 </div>
               </div>
             </div>
@@ -160,7 +164,7 @@ const Auth: React.FC = () => {
           <form onSubmit={isSignUp ? handleSignup : handleLogin} className="space-y-6">
             <div className="space-y-2">
               <Label htmlFor="identifier" className="text-sm font-medium">
-                {isSignUp ? 'Email' : 'Email or Username'}
+                {isSignUp ? t('auth.email', 'Email') : t('auth.emailOrUsernameLabel', 'Email or Username')}
               </Label>
               <Input
                 id="identifier"
@@ -168,7 +172,7 @@ const Auth: React.FC = () => {
                 value={identifier}
                 onChange={(e) => setIdentifier(e.target.value)}
                 required
-                placeholder={isSignUp ? "your@email.com" : "Email or username"}
+                placeholder={isSignUp ? t('placeholders.yourEmail', 'your@email.com') : t('placeholders.emailOrUsername', 'Email or username')}
                 className="h-12 bg-card/50 border-border/50 rounded-xl focus-visible:ring-1 focus-visible:ring-foreground/30 transition-all duration-300"
               />
             </div>
@@ -182,7 +186,7 @@ const Auth: React.FC = () => {
                   value={username}
                   onChange={(e) => setUsername(e.target.value)}
                   required={isSignUp}
-                  placeholder="Choose a unique username"
+                  placeholder={t('placeholders.enterNickname', 'Enter your nickname')}
                   className="h-12 bg-card/50 border-border/50 rounded-xl focus-visible:ring-1 focus-visible:ring-foreground/30 transition-all duration-300"
                 />
               </div>
@@ -195,7 +199,7 @@ const Auth: React.FC = () => {
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 required
-                placeholder={t('auth.enterPassword', 'Enter your password')}
+                placeholder={t('placeholders.enterPassword', 'Enter your password')}
                 minLength={6}
                 className="h-12 bg-card/50 border-border/50 rounded-xl focus-visible:ring-1 focus-visible:ring-foreground/30"
               />
@@ -206,13 +210,13 @@ const Auth: React.FC = () => {
               disabled={loading} 
               className="w-full h-12 rounded-full text-base font-medium"
             >
-              {loading ? 'Please wait...' : (isSignUp ? 'Create Account' : 'Sign In')}
+              {loading ? t('common.loading', 'Please wait...') : (isSignUp ? t('auth.signUp', 'Sign Up') : t('auth.signIn', 'Sign In'))}
             </Button>
           </form>
 
           <div className="mt-6 text-center">
             <p className="text-sm text-muted-foreground">
-              {isSignUp ? 'Already have an account?' : "Don't have an account?"}{' '}
+              {isSignUp ? t('auth.alreadyHaveAccount') : t('auth.dontHaveAccount')}{' '}
               <button
                 type="button"
                 onClick={() => {
@@ -223,7 +227,7 @@ const Auth: React.FC = () => {
                 }}
                 className="text-foreground hover:underline font-medium transition-all duration-300 hover:text-white"
               >
-                {isSignUp ? 'Sign In' : 'Sign Up'}
+                {isSignUp ? t('auth.signIn', 'Sign In') : t('auth.signUp', 'Sign Up')}
               </button>
             </p>
           </div>
@@ -231,7 +235,7 @@ const Auth: React.FC = () => {
 
         {/* Footer */}
         <p className="text-center text-xs text-muted-foreground mt-8">
-          By continuing, you agree to our Terms of Service and Privacy Policy
+          {t('auth.byContingTerms')}
         </p>
       </div>
     </div>

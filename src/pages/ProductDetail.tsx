@@ -25,6 +25,7 @@ import { useSEO } from "@/hooks/useSEO";
 import { logError } from "@/services/logger";
 import { seoApi, type SEOData } from "@/services/api/seo.api";
 import { useCurrencyConversion } from "@/hooks/useCurrencyConversion";
+import { useCurrency } from "@/contexts/CurrencyContext";
 
 function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === "object" && value !== null;
@@ -43,6 +44,7 @@ const ProductDetail = () => {
   const navigate = useNavigate();
   const { t } = useTranslation();
   const { formatPrice } = useCurrencyConversion();
+  const { currency } = useCurrency();
   const [selectedImage, _setSelectedImage] = useState(0);
   const [isAdmin, setIsAdmin] = useState(false);
   const [isLightboxOpen, setIsLightboxOpen] = useState(false);
@@ -61,7 +63,7 @@ const ProductDetail = () => {
   const storesPerPage = 3;
 
   // Use aggregated hook for better performance (3 requests → 1 request)
-  const { data: detailData, isLoading: detailLoading, error: productError } = useProductDetailData(id || '');
+  const { data: detailData, isLoading: detailLoading, error: productError } = useProductDetailData(id || '', currency);
   
   // Extract data from aggregated response
   const productData = detailData?.product;
@@ -133,6 +135,14 @@ const ProductDetail = () => {
     const normalized = rawStores.map((store: unknown) => {
       const storeRecord: Record<string, unknown> = isRecord(store) ? store : {};
 
+      const storesObj = isRecord(storeRecord["stores"]) ? (storeRecord["stores"] as Record<string, unknown>) : undefined;
+
+      const rawId = storeRecord["id"] ?? storeRecord["store_id"] ?? (storesObj ? storesObj["id"] : undefined);
+      const id = typeof rawId === "string" || typeof rawId === "number" ? String(rawId) : "";
+
+      const rawName = storeRecord["name"] ?? storeRecord["store_name"] ?? (storesObj ? storesObj["name"] : undefined);
+      const name = typeof rawName === "string" ? rawName : "";
+
       // Try multiple possible price field names from backend
       const rawPrice =
         storeRecord["product_price"] ??
@@ -143,10 +153,35 @@ const ProductDetail = () => {
       // Convert to number if it's a string
       const numericPrice = rawPrice != null ? parseFloat(String(rawPrice)) : null;
       const finalPrice = numericPrice != null && !isNaN(numericPrice) ? numericPrice : null;
+
+      const rawSizes = storeRecord["sizes"] ?? storeRecord["available_sizes"];
+      let sizes: string[] = [];
+      if (Array.isArray(rawSizes)) {
+        sizes = rawSizes.map(String).map((s) => s.trim()).filter(Boolean);
+      } else if (typeof rawSizes === "string") {
+        const trimmed = rawSizes.trim();
+        if (trimmed.startsWith("[") && trimmed.endsWith("]")) {
+          try {
+            const parsed: unknown = JSON.parse(trimmed);
+            if (Array.isArray(parsed)) {
+              sizes = parsed.map(String).map((s) => s.trim()).filter(Boolean);
+            }
+          } catch {
+            // ignore
+          }
+        } else if (trimmed.includes(",")) {
+          sizes = trimmed.split(",").map((s) => s.trim()).filter(Boolean);
+        } else if (trimmed) {
+          sizes = [trimmed];
+        }
+      }
       
       return {
         ...storeRecord,
+        id,
+        name,
         price: finalPrice,
+        sizes,
         // Normalize URL fields
         telegram_url: getFirstString(storeRecord["telegram_url"], storeRecord["telegram"]),
         instagram_url: getFirstString(storeRecord["instagram_url"], storeRecord["instagram"]),
@@ -471,7 +506,7 @@ const ProductDetail = () => {
                     <span className="font-display text-2xl font-bold text-white/60">Price N/A</span>
                   )}
                 </div>
-                <p className="text-sm text-muted-foreground">Price range across all stores</p>
+                <p className="text-sm text-muted-foreground">{t('productDetail.priceRangeAcrossStores')}</p>
               </div>
 
               {/* Header */}
@@ -652,6 +687,13 @@ const ProductDetail = () => {
                         <div className="mb-3">
                           <p className="font-display text-2xl font-bold">{formatPrice(store.price)}</p>
                         </div>
+                      )}
+
+                      {/* Sizes */}
+                      {Array.isArray(store.sizes) && store.sizes.length > 0 && (
+                        <p className="text-sm text-muted-foreground mb-3">
+                          {t('productDetail.sizes', 'Sizes')}: {store.sizes.join(', ')}
+                        </p>
                       )}
 
                       {/* Shipping Info */}

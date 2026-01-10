@@ -1,51 +1,31 @@
 import { useCurrency } from '@/contexts/CurrencyContext';
 
 /**
- * Hook для конвертації цін
+ * Hook для форматування цін (БЕЗ конвертації)
+ * Бекенд відправляє ціни в потрібній валюті через параметр ?currency=UAH/USD
  */
 export const useCurrencyConversion = () => {
-  const { currency, exchangeRate } = useCurrency();
+  const { currency } = useCurrency();
 
-  const convertPrice = (priceUAH: number): number => {
-    if (currency === 'UAH' || !exchangeRate) {
-      return priceUAH;
-    }
-    
-    // Конвертація з UAH в USD
-    return priceUAH / exchangeRate.rate;
-  };
-
-  const formatPrice = (priceUAH: number): string => {
-    const convertedPrice = convertPrice(priceUAH);
+  // Просто форматує ціну з символом валюти
+  const formatPrice = (price: number): string => {
     const symbol = currency === 'USD' ? '$' : '₴';
     
     if (currency === 'USD') {
-      return `${symbol}${convertedPrice.toFixed(2)}`;
+      return `${symbol}${price.toFixed(2)}`;
     } else {
-      return `${convertedPrice.toFixed(0)} ${symbol}`;
+      return `${price.toFixed(0)} ${symbol}`;
     }
   };
 
-  const formatPriceRange = (minPriceUAH: number, maxPriceUAH: number): string => {
-    const minConverted = convertPrice(minPriceUAH);
-    const maxConverted = convertPrice(maxPriceUAH);
+  const formatPriceRange = (minPrice: number, maxPrice: number): string => {
     const symbol = currency === 'USD' ? '$' : '₴';
     
     if (currency === 'USD') {
-      return `${symbol}${minConverted.toFixed(2)} - ${symbol}${maxConverted.toFixed(2)}`;
+      return `${symbol}${minPrice.toFixed(2)} - ${symbol}${maxPrice.toFixed(2)}`;
     } else {
-      return `${minConverted.toFixed(0)} ${symbol} - ${maxConverted.toFixed(0)} ${symbol}`;
+      return `${minPrice.toFixed(0)} ${symbol} - ${maxPrice.toFixed(0)} ${symbol}`;
     }
-  };
-
-  // Конвертація з поточної валюти назад в UAH (для API запитів)
-  const convertToUAH = (price: number): number => {
-    if (currency === 'UAH' || !exchangeRate) {
-      return price;
-    }
-    
-    // Конвертація з USD в UAH
-    return price * exchangeRate.rate;
   };
 
   const getCurrencySymbol = (): string => {
@@ -58,11 +38,8 @@ export const useCurrencyConversion = () => {
 
   return {
     currency,
-    exchangeRate,
-    convertPrice,
     formatPrice,
     formatPriceRange,
-    convertToUAH,
     getCurrencySymbol,
     getCurrencyDecimals
   };

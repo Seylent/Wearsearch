@@ -29,7 +29,7 @@ interface AllTheProvidersProps {
 }
 
 // All providers wrapper
-function AllTheProviders({ children }: AllTheProvidersProps) {
+function AllTheProviders({ children }:Readonly<AllTheProvidersProps>) {
   const queryClient = createTestQueryClient();
 
   return (

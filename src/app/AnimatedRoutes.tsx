@@ -22,6 +22,8 @@ const AdminBrands = lazy(() => import('@/pages/AdminBrands'));
 const Favorites = lazy(() => import('@/pages/Favorites'));
 const SharedWishlist = lazy(() => import('@/pages/SharedWishlist'));
 const Profile = lazy(() => import('@/pages/Profile'));
+const Terms = lazy(() => import('@/pages/Terms'));
+const Privacy = lazy(() => import('@/pages/Privacy'));
 const NotFound = lazy(() => import('@/pages/NotFound'));
 
 // Page transition variants for smooth animations
@@ -76,6 +78,8 @@ export const AnimatedRoutes = () => {
           <Route path="/admin" element={<Admin />} />
           <Route path="/admin/brands" element={<AdminBrands />} />
           <Route path="/profile" element={<Profile />} />
+          <Route path="/terms" element={<Terms />} />
+          <Route path="/privacy" element={<Privacy />} />
           <Route path="*" element={<NotFound />} />
         </Routes>
       </motion.div>

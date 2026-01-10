@@ -25,8 +25,16 @@ const getArray = (value: unknown, key: string): unknown[] | undefined => {
 };
 
 const getErrorMessage = (error: unknown): string => {
-  if (error instanceof Error) return error.message;
-  return String(error);
+  if (error instanceof Error) return error.message || 'Unknown error';
+  if (typeof error === 'string') return error;
+  if (error && typeof error === 'object') {
+    try {
+      return JSON.stringify(error);
+    } catch {
+      return 'Unknown error';
+    }
+  }
+  return 'Unknown error';
 };
 
 /**
@@ -37,13 +45,13 @@ const getErrorMessage = (error: unknown): string => {
  * Backend endpoint: GET /api/pages/home (with fallback)
  * Response: { success: true, data: { products: [...], brands: [...], statistics: {...} } }
  */
-export const useHomepageData = (options?: QueryOptions) => {
+export const useHomepageData = (currency: string = 'UAH', options?: QueryOptions) => {
   return useQuery({
-    queryKey: ['homepage-data'],
+    queryKey: ['homepage-data', currency],
     queryFn: async () => {
       console.log('[API] Fetching homepage data...');
       try {
-        const response = await api.get('/pages/home');
+        const response = await api.get('/pages/home', { params: { currency } });
         console.log('[API] Homepage data received');
         // Canonical v1: { item: { products, brands, statistics } }
         // Older/legacy: { success: true, data: {...} }
@@ -69,7 +77,7 @@ export const useHomepageData = (options?: QueryOptions) => {
         // the axios interceptor can transparently retry via legacy /api.
         try {
           const [productsRes, statsRes] = await Promise.all([
-            api.get('/items', { params: { page: 1, limit: 6, mode: 'card' } }),
+            api.get('/items', { params: { page: 1, limit: 6, mode: 'card', currency } }),
             api.get('/statistics').catch(() => ({ data: { data: { total_products: 0, total_stores: 0, total_brands: 0 } } })),
           ]);
           
@@ -171,10 +179,11 @@ export const useProductsPageData = (filters: ProductFilters = {}, options?: Quer
       try {
         // v1 canonical: GET /api/v1/pages/products -> { items, meta, facets }
         const params = buildV1ProductsParams(filters);
+        // Backend returns prices in requested currency
         const response = await api.get('/pages/products', { params });
 
         const body: unknown = response.data;
-        const items = (getArray(body, 'items') ?? []) as unknown[];
+        const items = (getArray(body, 'items') ?? []);
         const meta = getRecord(body, 'meta') ?? {};
         const facets = getRecord(body, 'facets') ?? {};
         const currency = getRecord(body, 'currency');
@@ -203,7 +212,7 @@ export const useProductsPageData = (filters: ProductFilters = {}, options?: Quer
         ]);
 
         const productsBody: unknown = productsRes.data;
-        const items = (getArray(productsBody, 'items') ?? (Array.isArray(productsBody) ? productsBody : [])) as unknown[];
+        const items = (getArray(productsBody, 'items') ?? (Array.isArray(productsBody) ? productsBody : []));
         const meta = getRecord(productsBody, 'meta') ?? {};
 
         const page = asNumber(meta.page, filters.page ?? 1);
@@ -215,7 +224,7 @@ export const useProductsPageData = (filters: ProductFilters = {}, options?: Quer
         const pagination: PaginationInfo = { page, limit, totalItems, totalPages, hasNext, hasPrev };
 
         const brandsBody: unknown = brandsRes.data;
-        const brands = (getArray(brandsBody, 'items') ?? getArray(brandsBody, 'brands') ?? (Array.isArray(brandsBody) ? brandsBody : [])) as unknown[];
+        const brands = (getArray(brandsBody, 'items') ?? getArray(brandsBody, 'brands') ?? (Array.isArray(brandsBody) ? brandsBody : []));
 
         return { products: items, brands, pagination };
       }
@@ -236,14 +245,46 @@ export const useProductsPageData = (filters: ProductFilters = {}, options?: Quer
  * Backend endpoint (v1): GET /api/v1/pages/product/:id
  * Response: { item: { product, stores, brand, relatedProducts } }
  */
-export const useProductDetailData = (productId: string, options?: QueryOptions) => {
+export const useProductDetailData = (productId: string, currency: string = 'UAH', options?: QueryOptions) => {
+  const extractStoresArray = (storesBody: unknown): unknown[] => {
+    return Array.isArray(storesBody)
+      ? storesBody
+      : (getArray(storesBody, 'stores') ?? getArray(storesBody, 'items') ?? getArray(storesBody, 'data') ?? []);
+  };
+
+  const fetchProductDetailFallback = async (productId: string) => {
+    const productRes = await api.get(`/items/${productId}`, { params: { currency } });
+    const productBody: unknown = productRes.data;
+    const product = (isRecord(productBody) ? productBody.product : undefined) ?? productBody;
+
+    const rawBrandId = isRecord(product) ? product.brand_id : undefined;
+    const brandId = typeof rawBrandId === 'string' || typeof rawBrandId === 'number' ? String(rawBrandId) : '';
+
+    const [storesRes, brandRes] = await Promise.all([
+      api.get(`/items/${productId}/stores`),
+      brandId
+        ? api.get(`/brands/${brandId}`).catch(() => ({ data: null }))
+        : Promise.resolve({ data: null }),
+    ]);
+
+    const storesBody: unknown = storesRes.data;
+    const storesArray = extractStoresArray(storesBody);
+
+    return {
+      product: product ?? null,
+      stores: storesArray,
+      brand: (isRecord(brandRes.data) ? brandRes.data.data : undefined) ?? brandRes.data ?? null,
+      relatedProducts: [],
+    };
+  };
+
   return useQuery({
-    queryKey: ['product-detail-data', productId],
+    queryKey: ['product-detail-data', productId, currency],
     queryFn: async () => {
       if (!productId) throw new Error('Product ID is required');
       try {
         // v1 BFF: single call
-        const response = await api.get(`/pages/product/${productId}`);
+        const response = await api.get(`/pages/product/${productId}`, { params: { currency } });
         const body: unknown = response.data;
         const item = getRecord(body, 'item') ?? {};
 
@@ -256,31 +297,7 @@ export const useProductDetailData = (productId: string, options?: QueryOptions) 
       } catch {
         // Fallback to individual endpoints (keeps the app functional if the BFF isn't deployed yet)
         try {
-          const productRes = await api.get(`/items/${productId}`);
-          const productBody: unknown = productRes.data;
-          const product = (isRecord(productBody) ? productBody.product : undefined) ?? productBody;
-
-          const rawBrandId = isRecord(product) ? product.brand_id : undefined;
-          const brandId = typeof rawBrandId === 'string' || typeof rawBrandId === 'number' ? String(rawBrandId) : '';
-
-          const [storesRes, brandRes] = await Promise.all([
-            api.get(`/items/${productId}/stores`),
-            brandId
-              ? api.get(`/brands/${brandId}`).catch(() => ({ data: null }))
-              : Promise.resolve({ data: null }),
-          ]);
-
-          const storesBody: unknown = storesRes.data;
-          const storesArray: unknown[] = Array.isArray(storesBody)
-            ? storesBody
-            : (getArray(storesBody, 'stores') ?? getArray(storesBody, 'items') ?? getArray(storesBody, 'data') ?? []);
-
-          return {
-            product: product ?? null,
-            stores: storesArray,
-            brand: (isRecord(brandRes.data) ? brandRes.data.data : undefined) ?? brandRes.data ?? null,
-            relatedProducts: [],
-          };
+          return await fetchProductDetailFallback(productId);
         } catch (fallbackError: unknown) {
           logApiError(fallbackError, `/pages/product/${productId}`, { component: 'useProductDetail' });
           throw fallbackError;
@@ -317,7 +334,7 @@ export const useStoresPageData = (
 
         const response = await api.get('/pages/stores', { params: query });
         const body: unknown = response.data;
-        const items = (getArray(body, 'items') ?? []) as unknown[];
+        const items = (getArray(body, 'items') ?? []);
         const meta = getRecord(body, 'meta') ?? {};
 
         const page = asNumber(meta.page, params?.page ?? 1);
@@ -334,13 +351,7 @@ export const useStoresPageData = (
 
         const response = await api.get('/stores');
         const body: unknown = response.data;
-        const stores = getArray(body, 'items')
-          ? (getArray(body, 'items') as unknown[])
-          : getArray(body, 'stores')
-            ? (getArray(body, 'stores') as unknown[])
-            : Array.isArray(body)
-              ? body
-              : [];
+        const stores = getArray(body, 'items') ?? getArray(body, 'stores') ?? (Array.isArray(body) ? body : []);
 
         // Best-effort client-side search for fallback
         const search = params?.search?.trim();
@@ -412,7 +423,7 @@ export const useBatchedRequests = (
   requests: Record<string, () => Promise<{ data: unknown }>>,
   options?: QueryOptions
 ) => {
-  const requestKeys = Object.keys(requests).sort().join(',');
+  const requestKeys = Object.keys(requests).sort((a, b) => a.localeCompare(b)).join(',');
   
   return useQuery({
     queryKey: ['batched-requests', requestKeys],

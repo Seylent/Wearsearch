@@ -49,6 +49,19 @@ const getErrorStatus = (error: unknown): number | undefined => {
   return isRecord(response) && typeof response.status === 'number' ? response.status : undefined;
 };
 
+const formatErrorMessage = (error: unknown): string => {
+  if (error instanceof Error) return error.message || 'Unknown error';
+  if (typeof error === 'string') return error;
+  if (error && typeof error === 'object') {
+    try {
+      return JSON.stringify(error);
+    } catch {
+      return 'Unknown error';
+    }
+  }
+  return 'Unknown error';
+}
+
 // Query keys
 export const queryKeys = {
   products: ['products'] as const,
@@ -164,7 +177,7 @@ export const useStores = (options?: QueryOptions) => {
 export const useStoreProducts = (
   storeId: string, 
   params?: { category?: string; page?: number; limit?: number },
-  options?: UseQueryOptions<unknown>
+  options?: QueryOptions
 ) => {
   return useQuery({
     queryKey: ['storeProducts', storeId, params],
@@ -180,13 +193,7 @@ export const useStoreProducts = (
       const body: unknown = response.data;
       const itemsFromItems = getArray(body, 'items');
       const itemsFromProducts = getArray(body, 'products');
-      const items = itemsFromItems
-        ? itemsFromItems
-        : itemsFromProducts
-          ? itemsFromProducts
-          : Array.isArray(body)
-            ? body
-            : [];
+      const items = itemsFromItems ?? itemsFromProducts ?? (Array.isArray(body) ? body : []);
 
       const store = (isRecord(body) ? body.store : undefined) ?? getRecord(body, 'data')?.store ?? null;
 
@@ -364,7 +371,7 @@ export const useFavorites = () => {
         // This endpoint requires auth; keep it lightweight (first page, larger limit).
         const response = await api.get('/pages/favorites', { params: { page: 1, limit: 100 } });
         const body: unknown = response.data;
-        const items = (getArray(body, 'items') ?? []) as unknown[];
+        const items = (getArray(body, 'items') ?? []);
         const meta = getRecord(body, 'meta');
         const total = typeof meta?.totalItems === 'number' ? meta.totalItems : items.length;
 
@@ -390,7 +397,7 @@ export const useFavorites = () => {
     refetchOnWindowFocus: false, // Don't refetch on tab focus
     refetchOnReconnect: false,
     // Only fetch if user is authenticated
-    enabled: typeof window !== 'undefined' && !!getAuth(),
+    enabled: globalThis.window !== undefined && !!getAuth(),
   });
 };
 
@@ -408,7 +415,7 @@ export const useFavoritesPage = (
 
       const response = await api.get('/pages/favorites', { params: query });
       const body: unknown = response.data;
-      const items = (getArray(body, 'items') ?? []) as unknown[];
+      const items = (getArray(body, 'items') ?? []);
       const meta = getRecord(body, 'meta') ?? {};
 
       const page = asNumber(meta.page, params?.page ?? 1);
@@ -424,7 +431,7 @@ export const useFavoritesPage = (
     staleTime: 30 * 1000,
     gcTime: 5 * 60 * 1000,
     refetchOnWindowFocus: false,
-    enabled: typeof window !== 'undefined' && !!getAuth(),
+    enabled: globalThis.window !== undefined && !!getAuth(),
     ...options,
   });
 };
@@ -555,7 +562,7 @@ export const useSyncGuestFavorites = () => {
       const isRec = (v: unknown): v is Record<string, unknown> => typeof v === 'object' && v !== null;
       const response = isRec(error) ? error.response : undefined;
       const responseData = isRec(response) ? response.data : undefined;
-      const message = isRec(error) && typeof error.message === 'string' ? error.message : String(error);
+      const message = formatErrorMessage(error);
       console.error('❌ Failed to sync guest favorites:', responseData ?? message);
       throw error;
     },

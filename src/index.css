@@ -38,6 +38,14 @@ body {
   overflow-x: hidden;
   /* CSS Containment для ізоляції рендерингу */
   contain: layout style paint;
+  /* Prevent layout shift from scrollbar */
+  min-width: 100vw;
+}
+
+/* Prevent body from shifting when scrollbar disappears */
+body[style*="overflow: hidden"] {
+  width: calc(100vw - var(--scrollbar-width, 0)) !important;
+  overflow: hidden !important;
 }
 
 /* Allow scrolling even when dialogs are open */
@@ -46,9 +54,65 @@ body[style*="pointer-events"] {
   overflow: auto !important;
 }
 
-/* Lock body scroll when dialog/modal is open */
-body:has([data-state="open"][role="dialog"]) {
-  overflow: hidden;
+/* NEVER lock body scroll for dropdown menus */
+body:has([data-radix-dropdown-menu-content]) {
+  overflow: auto !important;
+  pointer-events: auto !important;
+}
+
+/* NEVER lock body scroll for select menus */
+body:has([data-radix-select-content]) {
+  overflow: auto !important;
+  pointer-events: auto !important;
+}
+
+/* Only lock body scroll for actual modal dialogs, not dropdowns/selects */
+body:has([data-state="open"][role="dialog"]:not([data-radix-dropdown-menu-content]):not([data-radix-select-content]):not([data-radix-popper-content-wrapper])) {
+  overflow: hidden !important;
+  /* Prevent layout shift when scrollbar is hidden */
+  padding-right: var(--scrollbar-width, 0) !important;
+}
+
+/* Comprehensive dropdown menu positioning fixes */
+[data-radix-dropdown-menu-content] {
+  position: fixed !important;
+  z-index: 9999 !important;
+  pointer-events: auto !important;
+  will-change: transform;
+  transform: translateZ(0);
+  overflow: visible !important;
+}
+
+/* Select menu positioning fixes */
+[data-radix-select-content] {
+  position: fixed !important;
+  z-index: 9999 !important;
+  pointer-events: auto !important;
+  will-change: transform;
+  transform: translateZ(0);
+  overflow: visible !important;
+}
+
+[data-radix-popper-content-wrapper] {
+  position: fixed !important;
+  z-index: 9999 !important;
+  pointer-events: auto !important;
+  will-change: transform;
+  transform: translateZ(0);
+  overflow: visible !important;
+}
+
+/* Ensure dropdown overlays don't interfere with page */
+[data-radix-dropdown-menu-portal] {
+  position: fixed !important;
+  top: 0 !important;
+  left: 0 !important;
+  z-index: 9999 !important;
+  pointer-events: none !important;
+}
+
+[data-radix-dropdown-menu-portal] [data-radix-dropdown-menu-content] {
+  pointer-events: auto !important;
 }
 
 /* Optimize animations for performance */

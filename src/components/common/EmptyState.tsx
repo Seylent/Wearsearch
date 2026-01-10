@@ -70,7 +70,7 @@ export const ErrorState = ({
     if (!onRetry) return;
     setIsRetrying(true);
     try {
-      await onRetry();
+      await Promise.resolve(onRetry());
     } finally {
       // Keep spinning for a moment for visual feedback
       setTimeout(() => setIsRetrying(false), 500);

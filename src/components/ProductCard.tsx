@@ -10,15 +10,25 @@ interface ProductCardProps {
   name: string;
   image?: string;
   price?: string | number;
+  minPrice?: string | number;
+  maxPrice?: string | number;
+  storeCount?: number;
   category?: string;
   brand?: string;
   isNew?: boolean;
 }
 
-const ProductCard: React.FC<ProductCardProps> = memo(({ id, name, image, price, category: _category, brand, isNew }) => {
+const ProductCard: React.FC<ProductCardProps> = memo(({ id, name, image, price, minPrice, maxPrice, storeCount, category: _category, brand, isNew }) => {
   const { t } = useTranslation();
   const { formatPrice } = useCurrencyConversion();
   const cardRef = useRef<HTMLDivElement>(null);
+  
+  // Backend sends prices in correct currency via ?currency=UAH/USD
+  // Just use the values as-is, no conversion needed
+  const displayMinPrice = minPrice ?? price;
+  const displayMaxPrice = maxPrice;
+  const showPriceRange = displayMinPrice && displayMaxPrice && displayMinPrice !== displayMaxPrice;
+  
   // Handle both 'image' and 'image_url' from different API responses
   const imgSrc = image || '';
 
@@ -120,9 +130,20 @@ const ProductCard: React.FC<ProductCardProps> = memo(({ id, name, image, price, 
           
           {/* Price */}
           <div className="mt-2">
-            <p className="font-display text-sm sm:text-base font-bold text-white">
-              {t('common.from')} {formatPrice(Number(price) || 0)}
-            </p>
+            {showPriceRange ? (
+              <p className="font-display text-sm sm:text-base font-bold text-white">
+                {formatPrice(Number(displayMinPrice) || 0)} - {formatPrice(Number(displayMaxPrice) || 0)}
+              </p>
+            ) : (
+              <p className="font-display text-sm sm:text-base font-bold text-white">
+                {t('common.from')} {formatPrice(Number(displayMinPrice) || 0)}
+              </p>
+            )}
+            {!!(storeCount && storeCount > 0) && (
+              <p className="text-xs text-white/50 mt-0.5">
+                {t('quickView.availableIn', { count: storeCount })}
+              </p>
+            )}
           </div>
         </div>
       </div>

@@ -8,6 +8,7 @@ import { Button } from "@/components/ui/button";
 import { Product } from "@/services/productService";
 import { NeonAbstractions } from "@/components/NeonAbstractions";
 import { useHomepageData } from "@/hooks/useAggregatedData";
+import { useCurrency } from "@/contexts/CurrencyContext";
 import { useSEO } from "@/hooks/useSEO";
 import { ProductGridSkeleton } from "@/components/common/SkeletonLoader";
 import { seoApi, type SEOData } from "@/services/api/seo.api";
@@ -46,9 +47,10 @@ const Index: React.FC = () => {
   // Defer API calls - use enabled flag to prevent automatic fetching
   // Fetch data after initial render to not block FCP/LCP
   const [shouldFetchData, setShouldFetchData] = useState(false);
+  const { currency } = useCurrency();
   
   // Use aggregated hook to reduce API requests (2-3 requests → 1 request)
-  const { data: homepageData, isLoading: productsLoading } = useHomepageData({ 
+  const { data: homepageData, isLoading: productsLoading } = useHomepageData(currency, { 
     enabled: shouldFetchData 
   });
   
@@ -189,6 +191,9 @@ const Index: React.FC = () => {
                     name={product.name}
                     image={product.image_url || product.image}
                     price={product.price}
+                    minPrice={product.min_price}
+                    maxPrice={product.max_price}
+                    storeCount={product.store_count}
                     category={product.type}
                   />
                 ))}

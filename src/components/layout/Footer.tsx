@@ -64,10 +64,10 @@ const Footer = () => {
         {/* Bottom */}
         <div className="pt-8 border-t border-zinc-800/50 flex justify-center items-center">
           <div className="flex gap-6">
-            <Link to="#" className="text-xs text-zinc-600 hover:text-zinc-400 transition-colors select-none">
+            <Link to="/privacy" className="text-xs text-zinc-600 hover:text-zinc-400 transition-colors select-none">
               {t('footer.privacyPolicy')}
             </Link>
-            <Link to="#" className="text-xs text-zinc-600 hover:text-zinc-400 transition-colors select-none">
+            <Link to="/terms" className="text-xs text-zinc-600 hover:text-zinc-400 transition-colors select-none">
               {t('footer.termsOfService')}
             </Link>
           </div>

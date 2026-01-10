@@ -52,6 +52,9 @@ export interface Product {
   type?: string;      // Legacy field for backward compatibility
   color?: string;
   price?: number | string;
+  min_price?: number | string;  // Minimum price across all stores
+  max_price?: number | string;  // Maximum price across all stores
+  store_count?: number;         // Number of stores selling this product
   description?: string;
   image?: string;
   image_url?: string;

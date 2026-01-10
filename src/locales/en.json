@@ -11,7 +11,12 @@
     "brands": "Brands",
     "signIn": "Sign In",
     "signOut": "Sign Out",
-    "search": "Search"
+    "pleaseLoginAgain": "Please log in again to continue",
+    "subtitleSignIn": "Sign in to continue your journey",
+    "subtitleSignUp": "Join the world of exceptional fashion",
+    "statusSigningIn": "Signing into account",
+    "statusCreatingAccount": "Creating new account",
+    "emailOrUsernameLabel": "Email or Username"
   },
   "home": {
     "title": "Discover Exceptional Fashion",
@@ -804,5 +809,112 @@
     "updated": "Updated",
     "pricesInDollarsNBU": "Prices in USD (NBU rate)",
     "convertedPrices": "Converted prices"
+  },
+  "terms": {
+    "title": "Terms of Use",
+    "subtitle": "Please carefully review the terms of use of our service",
+    "seoTitle": "Terms of Use - Wearsearch",
+    "seoDescription": "Terms of use and user agreement for the Wearsearch platform",
+    "lastUpdated": "Last updated: January 10, 2026",
+    "section1": {
+      "title": "General Provisions",
+      "p1": "The site is an information platform (aggregator) that provides access to product information and links to third-party online stores.",
+      "p2": "The site is not a seller, intermediary, or party to the purchase and sale agreement."
+    },
+    "section2": {
+      "title": "User Registration",
+      "intro": "The user is fully responsible for:",
+      "li1": "the accuracy of the data provided during registration;",
+      "li2": "preserving login and password;",
+      "li3": "all actions performed under their account.",
+      "admin": "Administration has the right to block or delete an account in case of violation of these Terms."
+    },
+    "section3": {
+      "title": "Stores and Third-Party Services",
+      "p1": "All information about products, prices, availability, delivery, and warranties is provided by third parties.",
+      "adminIntro": "Site administration:",
+      "li1": "does not verify store reliability;",
+      "li2": "does not guarantee information accuracy;",
+      "li3": "is not responsible for sellers' fulfillment of obligations.",
+      "userResponsibility": "The user is obligated to independently verify the store before making a purchase."
+    },
+    "section4": {
+      "title": "Limitation of Liability",
+      "intro": "Site administration is not responsible for:",
+      "li1": "financial losses, damages, or harm;",
+      "li2": "product quality;",
+      "li3": "payment, delivery, return, or warranty;",
+      "li4": "any disputes between user and seller.",
+      "userRisk": "All purchases are made by the user at their own risk."
+    },
+    "section5": {
+      "title": "Advertising",
+      "p1": "The site may display third-party advertising, including through the Adsterra advertising network.",
+      "p2": "Site administration is not responsible for the content of advertising materials and advertisers' actions."
+    },
+    "section6": {
+      "title": "Changes to Terms",
+      "p1": "Terms may be changed without prior notice. The current version is available on the site."
+    },
+    "section7": {
+      "title": "Intellectual Property",
+      "p1": "All site materials (design, logos, texts, program code) are protected by copyright.",
+      "p2": "Copying and use of materials without written permission is prohibited."
+    },
+    "section8": {
+      "title": "Contact Information",
+      "p1": "For questions regarding terms of use, please contact:",
+      "social": "Social media: available on"
+    }
+  },
+  "privacy": {
+    "title": "Privacy Policy",
+    "subtitle": "Please carefully review our privacy policy",
+    "seoTitle": "Privacy Policy - Wearsearch",
+    "seoDescription": "Privacy policy and personal data protection on the Wearsearch platform",
+    "lastUpdated": "Last updated: January 10, 2026",
+    "section1": {
+      "title": "What Information We Collect",
+      "intro": "During registration and use of the site, we may collect:",
+      "li1": "email, username (or other registration data);",
+      "li2": "IP address;",
+      "li3": "technical information (browser, device, language);",
+      "li4": "cookies and similar technologies."
+    },
+    "section2": {
+      "title": "Use of Information",
+      "intro": "Data is used for:",
+      "li1": "account operations;",
+      "li2": "ensuring site functionality;",
+      "li3": "analytics and service improvement;",
+      "li4": "displaying advertisements."
+    },
+    "section3": {
+      "title": "Cookies and Advertising",
+      "p1": "The site uses cookies, including third-party cookies, particularly from the Adsterra advertising network, which may:",
+      "li1": "collect anonymized data;",
+      "li2": "display personalized or non-personalized advertising.",
+      "browserSettings": "Users can restrict the use of cookies in their browser settings."
+    },
+    "section4": {
+      "title": "Data Sharing with Third Parties",
+      "intro": "We do not sell personal data. Data may be shared with:",
+      "li1": "advertising and analytics services (within their policies);",
+      "li2": "in cases required by law."
+    },
+    "section5": {
+      "title": "Third-Party Sites",
+      "p1": "By following links to stores or advertising resources, users are subject to the privacy policies of those sites.",
+      "p2": "Administration is not responsible for their content or actions."
+    },
+    "section6": {
+      "title": "Information Protection",
+      "p1": "We apply reasonable technical security measures, but cannot guarantee absolute data security on the Internet."
+    },
+    "contact": {
+      "title": "Contact Information",
+      "p1": "For questions regarding privacy policy, please contact:",
+      "social": "Social media: available on"
+    }
   }
 }

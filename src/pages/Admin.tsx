@@ -11,7 +11,7 @@ import { Combobox } from "@/components/ui/combobox";
 import { useToast } from "@/hooks/use-toast";
 import Navigation from "@/components/layout/Navigation";
 import Footer from "@/components/layout/Footer";
-import { Package, Store, Plus, Edit, Trash2, Search, ShieldCheck, X, LayoutGrid, Table as TableIcon, Download, Upload, FileJson, FileSpreadsheet, Copy, Images, Star, Save, Clock, Archive, BookTemplate, TrendingUp, Activity, Link, BarChart3, Loader2 } from "lucide-react";
+import { Package, Store, Plus, Edit, Trash2, Search, ShieldCheck, X, LayoutGrid, Table as TableIcon, Download, Upload, FileJson, FileSpreadsheet, Images, Star, BookTemplate, TrendingUp, Activity, Link, BarChart3, Loader2 } from "lucide-react";
 import { ImageUploader } from "@/components/ImageUploader";
 import { productService } from "@/services/productService";
 import { storeService } from "@/services/storeService";
@@ -46,6 +46,52 @@ const getErrorMessage = (error: unknown): string => {
   return "Unknown error";
 };
 
+const normalizeId = (value: unknown): string | null => {
+  if (typeof value === "string") return value;
+  if (typeof value === "number") return String(value);
+  return null;
+};
+
+type NormalizedProductStore = {
+  store_id: string;
+  store_name: string;
+  price: number;
+  sizes: string[];
+  stores?: unknown;
+};
+
+const normalizeProductStoreEntry = (store: unknown): NormalizedProductStore | null => {
+  if (!isRecord(store)) return null;
+
+  const storesObj =
+    (isRecord(store.stores) ? store.stores : undefined) ??
+    (isRecord(store.store) ? store.store : undefined);
+
+  const storeId =
+    (typeof store.store_id === "string" ? store.store_id : undefined) ??
+    (typeof store.id === "string" ? store.id : undefined) ??
+    (storesObj && typeof storesObj.id === "string" ? storesObj.id : undefined);
+
+  if (!storeId) return null;
+
+  const storeName =
+    (typeof store.store_name === "string" ? store.store_name : undefined) ??
+    (typeof store.name === "string" ? store.name : undefined) ??
+    (storesObj && typeof storesObj.name === "string" ? storesObj.name : undefined) ??
+    "Unknown Store";
+
+  const storePrice = store.price ?? store.store_price ?? store.product_price;
+  const price = typeof storePrice === "number" ? storePrice : Number(storePrice || 0);
+
+  return {
+    store_id: storeId,
+    store_name: storeName,
+    price,
+    sizes: Array.isArray(store.sizes) ? (store.sizes as string[]) : [],
+    stores: storesObj ?? { id: storeId, name: storeName },
+  };
+};
+
 const Admin = () => {
   const navigate = useNavigate();
   const { t } = useTranslation();
@@ -54,26 +100,25 @@ const Admin = () => {
   const didInitRef = useRef(false);
 
   const normalizeCategoryValue = useCallback((raw: unknown): string => {
-    const value = String(raw || '').trim();
-    if (!value) return '';
+    if (typeof raw !== "string") return "";
+    const value = raw.trim();
+    if (!value) return "";
+
     const lower = value.toLowerCase();
+    const normalized = lower.replaceAll(/\s+/g, "");
+    if (normalized.replaceAll(/[^a-z]/g, "") === "tshirts") return "T-shirts";
 
-    if (lower === 'tshirts' || lower === 't-shirts' || lower === 'tshirts ') return 'T-shirts';
-    if (lower === 't-shirts' || lower === 'tshirts') return 'T-shirts';
+    const canonical: Record<string, string> = {
+      jackets: "jackets",
+      hoodies: "hoodies",
+      pants: "pants",
+      jeans: "jeans",
+      shorts: "shorts",
+      shoes: "shoes",
+      accessories: "accessories",
+    };
 
-    // Keep canonical values used by SelectItem.value
-    if (lower === 'jackets') return 'jackets';
-    if (lower === 'hoodies') return 'hoodies';
-    if (lower === 'pants') return 'pants';
-    if (lower === 'jeans') return 'jeans';
-    if (lower === 'shorts') return 'shorts';
-    if (lower === 'shoes') return 'shoes';
-    if (lower === 'accessories') return 'accessories';
-
-    // If backend already returns the canonical casing, keep it
-    if (value === 'T-shirts') return 'T-shirts';
-
-    return value;
+    return canonical[lower] ?? value;
   }, []);
 
   useSEO({
@@ -162,7 +207,7 @@ const Admin = () => {
   
   // Inventory/Stock state
   const [showStockManagement, setShowStockManagement] = useState(false);
-  const [stockData, setStockData] = useState<Record<string, Record<string, number>>>({});  // {productId: {storeId: stock}}
+  const [stockData, setStockData] = useState<Record<string, Record<string, number>>>({});
   
   // Scheduled publishing state
   const [publishAt, setPublishAt] = useState<string>("");
@@ -184,10 +229,19 @@ const Admin = () => {
   const [selectedProductForRelations, setSelectedProductForRelations] = useState<string | null>(null);
   
   // Multi-store selection state
-  const [selectedStores, setSelectedStores] = useState<Array<{ store_id: string; store_name: string; price: number }>>([]);
+  const [selectedStores, setSelectedStores] = useState<Array<{ store_id: string; store_name: string; price: number; sizes: string[] }>>([]);
   const [currentStore, setCurrentStore] = useState("");
   const [currentStorePrice, setCurrentStorePrice] = useState("");
+  const [currentStoreSizes, setCurrentStoreSizes] = useState<string[]>([]);
+  const [currentSizeInput, setCurrentSizeInput] = useState("");
   const [storeSearchQuery, setStoreSearchQuery] = useState("");
+  
+  // Editing state for Product↔Store rows (sizes/price)
+  const [editingProductStore, setEditingProductStore] = useState<{store_id: string; price: number; sizes: string[]} | null>(null);
+  const [editingProductStoreSizeInput, setEditingProductStoreSizeInput] = useState("");
+
+  // Editing state for Store entity (Stores tab)
+  const [editingStore, setEditingStore] = useState<Record<string, unknown> | null>(null);
   
   // Editing state (for tracking which product is being edited)
   const [editingProductId, setEditingProductId] = useState<string | null>(null);
@@ -201,12 +255,8 @@ const Admin = () => {
   
   // Search and filter state
   const [searchQuery, setSearchQuery] = useState("");
-  const [filterCategory, setFilterCategory] = useState<string>("");
-  const [filterBrand, setFilterBrand] = useState<string>("");
   const [filterCategories, setFilterCategories] = useState<Set<string>>(new Set());
   const [filterBrands, setFilterBrands] = useState<Set<string>>(new Set());
-  const [filterPriceMin, setFilterPriceMin] = useState<string>("");
-  const [filterPriceMax, setFilterPriceMax] = useState<string>("");
   const [priceRangeMin, setPriceRangeMin] = useState<number>(0);
   const [priceRangeMax, setPriceRangeMax] = useState<number>(1000);
   const [sortBy, setSortBy] = useState<"name" | "price-asc" | "price-desc" | "newest">("newest");
@@ -218,7 +268,6 @@ const Admin = () => {
   const importFileRef = useRef<HTMLInputElement>(null);
   
   // Loading states for API calls
-  const [loadingTemplates, setLoadingTemplates] = useState(false);
   const [loadingExport, setLoadingExport] = useState(false);
   const [loadingImport, setLoadingImport] = useState(false);
   const [loadingPriceHistory, setLoadingPriceHistory] = useState(false);
@@ -243,7 +292,6 @@ const Admin = () => {
   const [storeShipping, setStoreShipping] = useState("");
   const [storeLogoUrl, setStoreLogoUrl] = useState("");
   const [storeRecommended, setStoreRecommended] = useState<boolean>(false);
-  const [editingStore, setEditingStore] = useState<Record<string, unknown> | null>(null);
   
   const [submitting, setSubmitting] = useState(false);
   
@@ -258,16 +306,16 @@ const Admin = () => {
     if (!isRecord(product)) return;
 
     // Load product data into form
-    setProductName(typeof product.name === "string" ? product.name : String(product.name ?? ""));
+    setProductName(typeof product.name === "string" ? product.name : "");
 
     const rawCategory = product.type ?? product.category ?? "";
     const categoryValue = normalizeCategoryValue(rawCategory);
     setProductCategory(categoryValue);
-    setProductColor(typeof product.color === "string" ? product.color : String(product.color ?? ""));
-    setProductGender(typeof product.gender === "string" ? product.gender : String(product.gender ?? ""));
-    setProductBrandId(typeof product.brand_id === "string" ? product.brand_id : String(product.brand_id ?? ""));
-    setProductDescription(typeof product.description === "string" ? product.description : String(product.description ?? ""));
-    setProductImageUrl(typeof product.image_url === "string" ? product.image_url : String(product.image_url ?? ""));
+    setProductColor(typeof product.color === "string" ? product.color : "");
+    setProductGender(typeof product.gender === "string" ? product.gender : "");
+    setProductBrandId(typeof product.brand_id === "string" ? product.brand_id : "");
+    setProductDescription(typeof product.description === "string" ? product.description : "");
+    setProductImageUrl(typeof product.image_url === "string" ? product.image_url : "");
     
     // Load stores from product_stores
     const productStoresRaw = product.product_stores;
@@ -277,7 +325,7 @@ const Admin = () => {
           if (!isRecord(ps)) return null;
 
           const storesObj = isRecord(ps.stores) ? ps.stores : undefined;
-          const storeId = typeof ps.store_id === "string" ? ps.store_id : String(ps.store_id ?? "");
+          const storeId = typeof ps.store_id === "string" ? ps.store_id : "";
           const storeName =
             (storesObj && typeof storesObj.name === "string" ? storesObj.name : undefined) ??
             (typeof ps.store_name === "string" ? ps.store_name : undefined) ??
@@ -286,10 +334,16 @@ const Admin = () => {
           const priceRaw = ps.price ?? (storesObj ? storesObj.price : undefined) ?? 0;
           const price = typeof priceRaw === "number" ? priceRaw : Number(priceRaw || 0);
 
+          const sizes = Array.isArray(ps.sizes) ? (ps.sizes as string[]) : [];
+
           if (!storeId) return null;
-          return { store_id: storeId, store_name: storeName, price };
+          return { store_id: storeId, store_name: storeName, price, sizes };
         })
-        .filter(Boolean) as Array<{ store_id: string; store_name: string; price: number }>;
+        .filter(
+          (
+            store
+          ): store is { store_id: string; store_name: string; price: number; sizes: string[] } => store !== null
+        );
 
       setSelectedStores(productStores);
     } else {
@@ -297,15 +351,14 @@ const Admin = () => {
     }
     
     // Store product ID for update
-    const productIdValue = product.id;
-    const normalizedProductId = typeof productIdValue === "string" ? productIdValue : productIdValue != null ? String(productIdValue) : null;
+    const normalizedProductId = normalizeId(product.id);
     if (normalizedProductId) setEditingProductId(normalizedProductId);
     
     // Switch to "Add Product" tab (which is now dual-purpose)
     setActiveTab("add-product");
     
     // Scroll to form
-    window.scrollTo({ top: 0, behavior: 'smooth' });
+    globalThis.scrollTo({ top: 0, behavior: "smooth" });
   }, [normalizeCategoryValue]);
 
   const loadProductForEdit = useCallback(async (productId: string) => {
@@ -323,7 +376,7 @@ const Admin = () => {
       const productResult: unknown = productSettled.value;
       const productDataCandidate =
         (isRecord(productResult) ? productResult.item : undefined) ||
-        (getRecord(productResult, "data") ? getRecord(productResult, "data")!.item : undefined) ||
+        getRecord(productResult, "data")?.item ||
         (isRecord(productResult) ? productResult.data : undefined) ||
         (isRecord(productResult) ? productResult.product : undefined) ||
         productResult;
@@ -331,62 +384,66 @@ const Admin = () => {
       if (!isRecord(productDataCandidate)) return;
       const productData: Record<string, unknown> = { ...productDataCandidate };
 
-      let rawStores: unknown[] = [];
+      // Merge stores from the dedicated stores endpoint with the product detail payload.
+      // Some backends return richer data (like `sizes`) only in one of these responses.
+      const rawFromProduct = Array.isArray(productDataCandidate.product_stores)
+        ? (productDataCandidate.product_stores as unknown[])
+        : [];
+
+      let rawFromEndpoint: unknown[] = [];
       if (storesSettled.status === "fulfilled") {
         const storesValue: unknown = storesSettled.value;
-        rawStores = getArray(storesValue, "items") ?? (Array.isArray(storesValue) ? storesValue : []);
-      } else {
-        const fromProduct = productData.product_stores;
-        rawStores = Array.isArray(fromProduct) ? (fromProduct as unknown[]) : [];
+        rawFromEndpoint = getArray(storesValue, "items") ?? (Array.isArray(storesValue) ? storesValue : []);
       }
 
       if (!productData?.id) return;
 
-      const normalizedStores: unknown[] = Array.isArray(rawStores) ? rawStores : [];
+      const normalizedFromProduct = rawFromProduct
+        .map(normalizeProductStoreEntry)
+        .filter((store): store is NormalizedProductStore => store !== null);
 
-      if (normalizedStores.length > 0) {
-        productData.product_stores = normalizedStores
-          .map((store: unknown) => {
-            if (!isRecord(store)) return null;
+      const normalizedFromEndpoint = (Array.isArray(rawFromEndpoint) ? rawFromEndpoint : [])
+        .map(normalizeProductStoreEntry)
+        .filter((store): store is NormalizedProductStore => store !== null);
 
-            const storesObj = (isRecord(store.stores) ? store.stores : undefined) ?? (isRecord(store.store) ? store.store : undefined);
-
-            const storeId =
-              (typeof store.store_id === "string" ? store.store_id : undefined) ??
-              (typeof store.id === "string" ? store.id : undefined) ??
-              (storesObj && typeof storesObj.id === "string" ? storesObj.id : undefined);
-
-            const storeName =
-              (typeof store.store_name === "string" ? store.store_name : undefined) ??
-              (typeof store.name === "string" ? store.name : undefined) ??
-              (storesObj && typeof storesObj.name === "string" ? storesObj.name : undefined);
-
-            const storePrice = store.price ?? store.store_price ?? store.product_price;
-
-            if (!storeId) return null;
-
-            const resolvedStoresObj = storesObj ?? {
-              id: storeId,
-              name: storeName || "Unknown Store",
-            };
-
-            return {
-              store_id: storeId,
-              store_name: storeName || (isRecord(resolvedStoresObj) && typeof resolvedStoresObj.name === "string" ? resolvedStoresObj.name : undefined) || "Unknown Store",
-              price: typeof storePrice === 'number' ? storePrice : Number(storePrice || 0),
-              stores: resolvedStoresObj,
-            };
-          })
-          .filter(Boolean);
-      } else {
-        productData.product_stores = [];
+      const mergedByStoreId = new Map<string, NormalizedProductStore>();
+      for (const entry of normalizedFromProduct) {
+        mergedByStoreId.set(entry.store_id, entry);
       }
 
+      for (const entry of normalizedFromEndpoint) {
+        const existing = mergedByStoreId.get(entry.store_id);
+        if (!existing) {
+          mergedByStoreId.set(entry.store_id, entry);
+          continue;
+        }
+
+        const mergedSizes =
+          Array.isArray(existing.sizes) && existing.sizes.length > 0
+            ? existing.sizes
+            : Array.isArray(entry.sizes)
+              ? entry.sizes
+              : [];
+
+        const endpointPriceIsValid = Number.isFinite(entry.price) && entry.price > 0;
+
+        mergedByStoreId.set(entry.store_id, {
+          ...existing,
+          ...entry,
+          store_name: entry.store_name || existing.store_name,
+          price: endpointPriceIsValid ? entry.price : existing.price,
+          sizes: mergedSizes,
+        });
+      }
+
+      productData.product_stores = Array.from(mergedByStoreId.values());
+
       editProduct(productData);
-    } catch {
+    } catch (error_) {
+      console.error("Failed to load product for editing", error_);
       toast({
         title: 'Error',
-        description: 'Failed to load product for editing',
+        description: getErrorMessage(error_) || 'Failed to load product for editing',
         variant: 'destructive',
       });
     }
@@ -426,13 +483,13 @@ const Admin = () => {
         if (contacts.instagram) setContactInstagram(contacts.instagram);
         if (contacts.tiktok) setContactTiktok(contacts.tiktok);
         if (contacts.email) setContactEmail(contacts.email);
-      } catch (_e) {
-        console.error('Failed to load saved contacts');
+      } catch (error_) {
+        console.error("Failed to load saved contacts", error_);
       }
     }
 
     // Check if we should edit a product from URL
-    const urlParams = new URLSearchParams(window.location.search);
+    const urlParams = new URLSearchParams(globalThis.location.search);
     const editProductId = urlParams.get('editProduct');
     if (editProductId) {
       loadProductForEdit(editProductId);
@@ -441,66 +498,87 @@ const Admin = () => {
 
   // Keyboard shortcuts
   useEffect(() => {
-    const handleKeyDown = (e: KeyboardEvent) => {
-      // Ctrl/Cmd + S to save (prevent default browser save)
-      if ((e.ctrlKey || e.metaKey) && e.key === 's') {
-        e.preventDefault();
-        if (activeTab === 'add-product') {
-          // Trigger form submit
-          const form = document.querySelector('form') as HTMLFormElement;
-          if (form) form.requestSubmit();
-        }
-      }
-
-      // Escape to cancel edit
-      if (e.key === 'Escape') {
-        if (editingProductId) {
-          // Cancel edit inline
-          setEditingProductId(null);
-          setProductName("");
-          setProductCategory("");
-          setProductColor("");
-          setProductGender("");
-          setProductBrandId("");
-          setProductDescription("");
-          setProductImageUrl("");
-          setSelectedStores([]);
-          setCurrentStore("");
-          setCurrentStorePrice("");
-          window.history.replaceState({}, '', '/admin');
-          
-          toast({
-            title: "Cancelled",
-            description: "Product editing cancelled",
-          });
-        }
-        if (isSelectMode) {
-          // Toggle select mode inline
-          setIsSelectMode(false);
-          setSelectedProductIds(new Set());
-        }
-      }
-
-      // Ctrl/Cmd + K for search focus
-      if ((e.ctrlKey || e.metaKey) && e.key === 'k') {
-        e.preventDefault();
-        const searchInput = document.querySelector('input[placeholder*="Search"]') as HTMLInputElement;
-        if (searchInput) searchInput.focus();
-      }
-
-      // Ctrl/Cmd + N for new product
-      if ((e.ctrlKey || e.metaKey) && e.key === 'n' && activeTab !== 'add-product') {
-        e.preventDefault();
-        setActiveTab('add-product');
-        toast({
-          title: "New Product",
-          description: "Switched to Add Product tab",
-        });
-      }
+    const submitActiveForm = () => {
+      const form = document.querySelector<HTMLFormElement>("form");
+      form?.requestSubmit();
     };
 
-    window.addEventListener('keydown', handleKeyDown);
-    return () => window.removeEventListener('keydown', handleKeyDown);
+    const focusSearchInput = () => {
+      const searchInput = document.querySelector<HTMLInputElement>(
+        'input[placeholder*="Search"]'
+      );
+      searchInput?.focus();
+    };
+
+    const cancelProductEdit = () => {
+      setEditingProductId(null);
+      setProductName("");
+      setProductCategory("");
+      setProductColor("");
+      setProductGender("");
+      setProductBrandId("");
+      setProductDescription("");
+      setProductImageUrl("");
+      setSelectedStores([]);
+      setCurrentStore("");
+      setCurrentStorePrice("");
+      setCurrentStoreSizes([]);
+      setCurrentSizeInput("");
+      setEditingProductStore(null);
+      globalThis.history.replaceState(null, "", "/admin");
+
+      toast({
+        title: "Cancelled",
+        description: "Product editing cancelled",
+      });
+    };
+
+    const handleSaveShortcut = (e: KeyboardEvent): boolean => {
+      if (!(e.ctrlKey || e.metaKey) || e.key !== "s") return false;
+      e.preventDefault();
+      if (activeTab === "add-product") submitActiveForm();
+      return true;
+    };
+
+    const handleEscapeKey = (e: KeyboardEvent): boolean => {
+      if (e.key !== "Escape") return false;
+      if (editingProductId) cancelProductEdit();
+      if (isSelectMode) {
+        setIsSelectMode(false);
+        setSelectedProductIds(new Set());
+      }
+      return true;
+    };
+
+    const handleSearchShortcut = (e: KeyboardEvent): boolean => {
+      if (!(e.ctrlKey || e.metaKey) || e.key !== "k") return false;
+      e.preventDefault();
+      focusSearchInput();
+      return true;
+    };
+
+    const handleNewProductShortcut = (e: KeyboardEvent): boolean => {
+      if (!(e.ctrlKey || e.metaKey) || e.key !== "n") return false;
+      if (activeTab === "add-product") return true;
+
+      e.preventDefault();
+      setActiveTab("add-product");
+      toast({
+        title: "New Product",
+        description: "Switched to Add Product tab",
+      });
+      return true;
+    };
+
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (handleSaveShortcut(e)) return;
+      if (handleEscapeKey(e)) return;
+      if (handleSearchShortcut(e)) return;
+      handleNewProductShortcut(e);
+    };
+
+    globalThis.addEventListener("keydown", handleKeyDown);
+    return () => globalThis.removeEventListener("keydown", handleKeyDown);
   }, [activeTab, editingProductId, isSelectMode, toast]);
 
   // Auto-save draft to localStorage
@@ -544,7 +622,7 @@ const Admin = () => {
         }
 
         // Ask user if they want to restore
-        const restore = window.confirm(
+        const restore = globalThis.confirm(
           `Found a saved draft from ${new Date(draft.timestamp).toLocaleString()}. Do you want to restore it?`
         );
 
@@ -556,7 +634,12 @@ const Admin = () => {
           setProductBrandId(draft.productBrandId || "");
           setProductDescription(draft.productDescription || "");
           setProductImageUrl(draft.productImageUrl || "");
-          setSelectedStores(draft.selectedStores || []);
+          setSelectedStores(
+            (Array.isArray(draft.selectedStores) ? draft.selectedStores : []).map((store: any) => ({
+              ...store,
+              sizes: Array.isArray(store?.sizes) ? store.sizes : [],
+            }))
+          );
           
           toast({
             title: "Draft Restored",
@@ -612,13 +695,169 @@ const Admin = () => {
       {
         store_id: store.id,
         store_name: store.name,
-        price: parseFloat(currentStorePrice)
+        price: Number.parseFloat(currentStorePrice),
+        sizes: [...currentStoreSizes]
       }
     ]);
 
     // Reset current selection
     setCurrentStore("");
     setCurrentStorePrice("");
+    setCurrentStoreSizes([]);
+    setCurrentSizeInput("");
+  };
+
+  const addSize = () => {
+    const next = currentSizeInput.trim();
+    if (!next) return;
+
+    setCurrentStoreSizes((prev) => (prev.includes(next) ? prev : [...prev, next]));
+    setCurrentSizeInput("");
+  };
+
+  const removeSize = (size: string) => {
+    setCurrentStoreSizes((prev) => prev.filter((s) => s !== size));
+  };
+
+  const startEditingStore = (storeId: string) => {
+    const store = selectedStores.find(s => s.store_id === storeId);
+    if (store) {
+      setEditingProductStore({ store_id: storeId, price: store.price, sizes: store.sizes || [] });
+      setEditingProductStoreSizeInput("");
+    }
+  };
+
+  const commitEditingProductStoreSizeInput = useCallback(() => {
+    const next = editingProductStoreSizeInput.trim();
+    if (!next) return;
+    setEditingProductStore((current) => {
+      if (!current) return current;
+      if (current.sizes.includes(next)) return current;
+      return { ...current, sizes: [...current.sizes, next] };
+    });
+    setEditingProductStoreSizeInput("");
+  }, [editingProductStoreSizeInput]);
+
+  const verifySizesPersisted = useCallback(
+    async (productId: string, expected: Array<{ store_id: string; sizes: string[] }>) => {
+      const expectedWithSizes = expected.filter((s) => Array.isArray(s.sizes) && s.sizes.length > 0);
+      if (expectedWithSizes.length === 0) return;
+
+      try {
+        const productUnknown: unknown = await productService.getProductById(productId);
+        if (!isRecord(productUnknown)) return;
+
+        const productStoresRaw: unknown = productUnknown.product_stores;
+        const normalized = Array.isArray(productStoresRaw)
+          ? productStoresRaw
+              .map(normalizeProductStoreEntry)
+              .filter((store): store is NormalizedProductStore => store !== null)
+          : [];
+
+        const byId = new Map(normalized.map((s) => [s.store_id, s] as const));
+        const missing = expectedWithSizes.filter((s) => {
+          const got = byId.get(s.store_id);
+          return !got || !Array.isArray(got.sizes) || got.sizes.length === 0;
+        });
+
+        if (missing.length > 0) {
+          toast({
+            variant: "destructive",
+            title: "Розміри не збережені",
+            description:
+              "Схоже, бекенд не зберігає або не повертає поле sizes для зв’язку продукт↔магазин. Це потрібно додати на бекенді.",
+          });
+        }
+      } catch (e) {
+        if (import.meta.env.DEV) console.debug("verifySizesPersisted failed", e);
+      }
+    },
+    [toast]
+  );
+
+  const saveStoreEdit = async () => {
+    if (!editingProductStore) return;
+
+    // If user typed a size but didn't press Enter, commit it before saving.
+    commitEditingProductStoreSizeInput();
+
+    const nextSelectedStores = selectedStores.map((store) =>
+      store.store_id === editingProductStore.store_id
+        ? { ...store, price: editingProductStore.price, sizes: editingProductStore.sizes }
+        : store
+    );
+
+    setSelectedStores(nextSelectedStores);
+    setEditingProductStore(null);
+
+    // If editing an existing product, persist immediately.
+    if (!editingProductId) {
+      toast({
+        title: "Зміни застосовано",
+        description: "Щоб зберегти на сервері, натисніть «Створити продукт» / «Оновити продукт».",
+      });
+      return;
+    }
+
+    setSubmitting(true);
+    try {
+      const avgPrice = nextSelectedStores.reduce((sum, store) => sum + store.price, 0) / nextSelectedStores.length;
+      const updateData = {
+        name: productName,
+        price: avgPrice,
+        type: productCategory,
+        category: productCategory,
+        color: productColor,
+        gender: productGender || null,
+        brand_id: productBrandId || null,
+        description: productDescription || null,
+        image_url: productImageUrl,
+        stores: nextSelectedStores.map((store) => ({
+          store_id: store.store_id,
+          price: store.price,
+          sizes: store.sizes || [],
+        })),
+      };
+
+      if (import.meta.env.DEV) {
+        console.debug("Auto-saving product stores (sizes)", { productId: editingProductId, updateData });
+      }
+
+      await productService.updateProduct(editingProductId, updateData);
+      await verifySizesPersisted(
+        editingProductId,
+        nextSelectedStores.map((s) => ({ store_id: s.store_id, sizes: s.sizes || [] }))
+      );
+
+      toast({
+        title: "Збережено",
+        description: "Розміри/ціна для цього магазину збережені.",
+      });
+    } catch (e) {
+      toast({
+        variant: "destructive",
+        title: "Помилка",
+        description: getErrorMessage(e) || "Не вдалося зберегти зміни",
+      });
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  const cancelStoreEdit = () => {
+    setEditingProductStore(null);
+    setEditingProductStoreSizeInput("");
+  };
+
+  const cancelStoreEntityEdit = () => {
+    setEditingStore(null);
+    setStoreName("");
+    setStoreTelegram("");
+    setStoreInstagram("");
+    setStoreTiktok("");
+    setStoreShipping("");
+    setStoreLogoUrl("");
+    setStoreRecommended(false);
   };
 
   // ===== TEMPLATES FUNCTIONS =====
@@ -626,7 +865,6 @@ const Admin = () => {
   // Load templates from API on mount
   useEffect(() => {
     const loadTemplates = async () => {
-      setLoadingTemplates(true);
       try {
         const response = await advancedApi.getTemplates();
         if (response?.templates || Array.isArray(response)) {
@@ -643,8 +881,6 @@ const Admin = () => {
             console.error("Failed to load templates", e);
           }
         }
-      } finally {
-        setLoadingTemplates(false);
       }
     };
     
@@ -668,7 +904,6 @@ const Admin = () => {
       }
     };
 
-    setLoadingTemplates(true);
     try {
       const response = await advancedApi.createTemplate(templateData);
       const template = response.template || response;
@@ -694,8 +929,6 @@ const Admin = () => {
         title: "Template Saved (Offline)",
         description: `Template "${templateName}" saved locally`,
       });
-    } finally {
-      setLoadingTemplates(false);
     }
   };
 
@@ -720,7 +953,6 @@ const Admin = () => {
   const deleteTemplate = async (templateId: string) => {
     if (!confirm("Delete this template?")) return;
     
-    setLoadingTemplates(true);
     try {
       await advancedApi.deleteTemplate(templateId);
       const updated = savedTemplates.filter(t => t.id !== templateId);
@@ -741,8 +973,6 @@ const Admin = () => {
         title: "Template Deleted (Offline)",
         description: "Template removed locally",
       });
-    } finally {
-      setLoadingTemplates(false);
     }
   };
 
@@ -792,12 +1022,10 @@ const Admin = () => {
 
   // Update stock for product/store
   const updateStock = (productId: string, storeId: string, stock: number) => {
+    const existing = stockData[productId];
     const updated = {
       ...stockData,
-      [productId]: {
-        ...(stockData[productId] || {}),
-        [storeId]: stock
-      }
+      [productId]: existing ? { ...existing, [storeId]: stock } : { [storeId]: stock },
     };
     setStockData(updated);
     localStorage.setItem('admin_stock_data', JSON.stringify(updated));
@@ -833,7 +1061,7 @@ const Admin = () => {
           id: h.id?.toString() || Date.now().toString(),
           store_id: h.store_id,
           store_name: h.store_name,
-          price: parseFloat(h.price),
+          price: Number.parseFloat(h.price),
           changed_at: h.changed_at,
         }))
       }));
@@ -843,31 +1071,6 @@ const Admin = () => {
     } finally {
       setLoadingPriceHistory(false);
     }
-  };
-  
-  // Record price change - backend auto-tracks via trigger, this is for optimistic UI
-  const recordPriceChange = (productId: string, storeId: string, storeName: string, oldPrice: number, newPrice: number) => {
-    // Backend automatically records price changes via database trigger
-    // We just update local state for optimistic UI
-    const historyEntry = {
-      id: Date.now().toString(),
-      store_id: storeId,
-      store_name: storeName,
-      price: newPrice,
-      changed_at: new Date().toISOString(),
-    };
-    
-    const updated = {
-      ...priceHistory,
-      [productId]: [...(priceHistory[productId] || []), historyEntry]
-    };
-    
-    setPriceHistory(updated);
-    
-    // Log to activity log
-    logActivity('items', productId, 'update', {
-      price: { old: oldPrice, new: newPrice, store: storeName }
-    });
   };
   
   const getPriceHistory = (productId: string, storeId?: string) => {
@@ -903,37 +1106,6 @@ const Admin = () => {
     }
   };
   
-  // Log activity - backend auto-logs most actions, this is for manual entries
-  const logActivity = async (entityType: string, entityId: string, action: 'create' | 'update' | 'delete', changes: any) => {
-    // Optimistic UI update
-    const logEntry = {
-      id: Date.now().toString(),
-      entity_type: entityType,
-      entity_id: entityId,
-      action,
-      changes,
-      user_name: "Admin User",
-      created_at: new Date().toISOString(),
-    };
-    
-    const updated = [logEntry, ...activityLog].slice(0, 100);
-    setActivityLog(updated);
-    
-    // Backend auto-logs most actions via middleware
-    // Manual log is optional for custom events
-    try {
-      await advancedApi.createManualLogEntry({
-        entity_type: entityType,
-        entity_id: entityId,
-        action,
-        changes,
-      });
-    } catch (error) {
-      // Silent fail - backend logs automatically anyway
-      console.debug("Manual log entry failed (OK - backend auto-logs)", error);
-    }
-  };
-
   // ===== PRODUCT RELATIONS FUNCTIONS =====
   
   // Load relations from API for a specific product
@@ -1066,7 +1238,15 @@ const Admin = () => {
     
     if (!editingProductId) return;
 
-    if (selectedStores.length === 0) {
+    const effectiveStores = editingProductStore
+      ? selectedStores.map((store) =>
+          store.store_id === editingProductStore.store_id
+            ? { ...store, price: editingProductStore.price, sizes: editingProductStore.sizes }
+            : store
+        )
+      : selectedStores;
+
+    if (effectiveStores.length === 0) {
       toast({
         title: "Error",
         description: "Please add at least one store",
@@ -1075,10 +1255,16 @@ const Admin = () => {
       return;
     }
 
+    // Keep UI state consistent in case user submits without pressing "Save" in the store row.
+    if (editingProductStore) {
+      setSelectedStores(effectiveStores);
+      setEditingProductStore(null);
+    }
+
     setSubmitting(true);
 
     try {
-      const avgPrice = selectedStores.reduce((sum, store) => sum + store.price, 0) / selectedStores.length;
+      const avgPrice = effectiveStores.reduce((sum, store) => sum + store.price, 0) / effectiveStores.length;
 
       const updateData = {
         name: productName,
@@ -1090,9 +1276,10 @@ const Admin = () => {
         brand_id: productBrandId || null,
         description: productDescription || null,
         image_url: productImageUrl,
-        stores: selectedStores.map(store => ({
+        stores: effectiveStores.map(store => ({
           store_id: store.store_id,
-          price: store.price
+          price: store.price,
+          sizes: store.sizes || []
         }))
       };
 
@@ -1104,13 +1291,13 @@ const Admin = () => {
       }
 
       {
-        const normalized = isRecord(result) && "data" in result ? (result.data as unknown) : result;
+        const normalized = isRecord(result) && "data" in result ? result.data : result;
 
         // Backend may not return stores in response; fall back to selectedStores.
         const storesCount =
           isRecord(normalized) && Array.isArray(normalized.stores)
             ? normalized.stores.length
-            : selectedStores.length;
+            : effectiveStores.length;
         
         toast({
           title: "Success",
@@ -1129,10 +1316,13 @@ const Admin = () => {
         setSelectedStores([]);
         setCurrentStore("");
         setCurrentStorePrice("");
+        setCurrentStoreSizes([]);
+        setCurrentSizeInput("");
+        setEditingProductStore(null);
         refetchDashboard();
         
         // Clear URL param
-        window.history.replaceState({}, '', '/admin');
+        globalThis.history.replaceState(null, "", "/admin");
       }
     } catch (error: unknown) {
       toast({
@@ -1157,13 +1347,24 @@ const Admin = () => {
     setSelectedStores([]);
     setCurrentStore("");
     setCurrentStorePrice("");
-    window.history.replaceState({}, '', '/admin');
+    setCurrentStoreSizes([]);
+    setCurrentSizeInput("");
+    setEditingStore(null);
+    globalThis.history.replaceState(null, "", "/admin");
   };
 
   const handleCreateProduct = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    if (selectedStores.length === 0) {
+    const effectiveStores = editingProductStore
+      ? selectedStores.map((store) =>
+          store.store_id === editingProductStore.store_id
+            ? { ...store, price: editingProductStore.price, sizes: editingProductStore.sizes }
+            : store
+        )
+      : selectedStores;
+
+    if (effectiveStores.length === 0) {
       toast({
         title: "Error",
         description: "Please add at least one store",
@@ -1172,11 +1373,16 @@ const Admin = () => {
       return;
     }
 
+    if (editingProductStore) {
+      setSelectedStores(effectiveStores);
+      setEditingProductStore(null);
+    }
+
     setSubmitting(true);
 
     try {
       // Calculate average price for the main product record
-      const avgPrice = selectedStores.reduce((sum, store) => sum + store.price, 0) / selectedStores.length;
+      const avgPrice = effectiveStores.reduce((sum, store) => sum + store.price, 0) / effectiveStores.length;
 
       const createData = {
         name: productName,
@@ -1188,9 +1394,10 @@ const Admin = () => {
         brand_id: productBrandId || null,
         description: productDescription || null,
         image_url: productImageUrl,
-        stores: selectedStores.map(store => ({
+        stores: effectiveStores.map(store => ({
           store_id: store.store_id,
-          price: store.price
+          price: store.price,
+          sizes: store.sizes || []
         }))
       };
 
@@ -1207,7 +1414,7 @@ const Admin = () => {
         triggerConfetti();
         toast({
           title: "Success",
-          description: `Product created and added to ${selectedStores.length} store(s)!`,
+          description: `Product created and added to ${effectiveStores.length} store(s)!`,
         });
 
         // Clear saved draft
@@ -1225,10 +1432,13 @@ const Admin = () => {
         setSelectedStores([]);
         setCurrentStore("");
         setCurrentStorePrice("");
+        setCurrentStoreSizes([]);
+        setCurrentSizeInput("");
+        setEditingProductStore(null);
         refetchDashboard();
 
         // Clear URL param if editing
-        window.history.replaceState({}, '', '/admin');
+        globalThis.history.replaceState(null, "", "/admin");
         return;
       } catch (err: unknown) {
         const message = getErrorMessage(err);
@@ -1292,7 +1502,7 @@ const Admin = () => {
           refetchDashboard();
 
           // Clear URL param if editing
-          window.history.replaceState({}, '', '/admin');
+          globalThis.history.replaceState(null, "", "/admin");
         } else {
           console.error('❌ All fallback attempts failed');
           throw new Error('Failed to create products in any store');
@@ -1300,7 +1510,7 @@ const Admin = () => {
       }
       
       // Clear URL param if editing
-      window.history.replaceState({}, '', '/admin');
+      globalThis.history.replaceState(null, "", "/admin");
     } catch (error: unknown) {
       toast({
         variant: "destructive",
@@ -1323,18 +1533,7 @@ const Admin = () => {
     setStoreLogoUrl(typeof store.logo_url === "string" ? store.logo_url : "");
     setStoreRecommended(Boolean(store.is_recommended));
     // Scroll to form
-    window.scrollTo({ top: 0, behavior: 'smooth' });
-  };
-
-  const cancelStoreEdit = () => {
-    setEditingStore(null);
-    setStoreName("");
-    setStoreTelegram("");
-    setStoreInstagram("");
-    setStoreTiktok("");
-    setStoreShipping("");
-    setStoreLogoUrl("");
-    setStoreRecommended(false);
+    globalThis.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
   // Bulk operations functions
@@ -1364,7 +1563,7 @@ const Admin = () => {
   const handleBulkDelete = async () => {
     if (selectedProductIds.size === 0) return;
 
-    const confirmed = window.confirm(
+    const confirmed = globalThis.confirm(
       `Are you sure you want to delete ${selectedProductIds.size} product(s)? This action cannot be undone.`
     );
 
@@ -1387,15 +1586,18 @@ const Admin = () => {
 
       await Promise.all(deletePromises);
 
+      const errorSuffix = errorCount > 0 ? ` ${errorCount} failed.` : "";
+
       toast({
         title: "Bulk Delete Complete",
-        description: `Successfully deleted ${successCount} product(s).${errorCount > 0 ? ` ${errorCount} failed.` : ''}`,
+        description: `Successfully deleted ${successCount} product(s).${errorSuffix}`,
       });
 
       setSelectedProductIds(new Set());
       setIsSelectMode(false);
       refetchDashboard();
     } catch (error) {
+      console.error("Failed to complete bulk delete operation", error);
       toast({
         variant: "destructive",
         title: "Error",
@@ -1415,8 +1617,8 @@ const Admin = () => {
       const query = searchQuery.toLowerCase();
       filtered = filtered.filter(p =>
         p.name.toLowerCase().includes(query) ||
-        (p.description && p.description.toLowerCase().includes(query)) ||
-        (p.brand && p.brand.toLowerCase().includes(query))
+        (p.description?.toLowerCase().includes(query) ?? false) ||
+        (p.brand?.toLowerCase().includes(query) ?? false)
       );
     }
 
@@ -1559,7 +1761,7 @@ const Admin = () => {
       link.style.visibility = "hidden";
       document.body.appendChild(link);
       link.click();
-      document.body.removeChild(link);
+      link.remove();
       URL.revokeObjectURL(url);
 
       toast({
@@ -1577,13 +1779,13 @@ const Admin = () => {
           
           return [
             product.id,
-            `"${product.name.replace(/"/g, '""')}"`,
+            `"${product.name.replaceAll('"', '""')}"`,
             product.type || product.category || "",
             brand?.name || "",
             product.price,
             product.color || "",
             product.gender || "",
-            `"${(product.description || "").replace(/"/g, '""')}"`,
+            `"${(product.description || "").replaceAll('"', '""')}"`,
             product.image_url || "",
             `"${storesData}"`
           ].join(",");
@@ -1599,7 +1801,7 @@ const Admin = () => {
         link.style.visibility = "hidden";
         document.body.appendChild(link);
         link.click();
-        document.body.removeChild(link);
+        link.remove();
 
         toast({
           title: "Export Successful (Offline)",
@@ -1634,7 +1836,7 @@ const Admin = () => {
       link.style.visibility = "hidden";
       document.body.appendChild(link);
       link.click();
-      document.body.removeChild(link);
+      link.remove();
       URL.revokeObjectURL(url);
 
       toast({
@@ -1672,7 +1874,7 @@ const Admin = () => {
         link.style.visibility = "hidden";
         document.body.appendChild(link);
         link.click();
-        document.body.removeChild(link);
+        link.remove();
 
         toast({
           title: "Export Successful (Offline)",
@@ -1719,12 +1921,112 @@ const Admin = () => {
     link.style.visibility = "hidden";
     document.body.appendChild(link);
     link.click();
-    document.body.removeChild(link);
+    link.remove();
 
     toast({
       title: "Template Downloaded",
       description: "Use this template to prepare your import file",
     });
+  };
+
+  const tryImportProductsViaApi = async (file: File) => {
+    try {
+      return await advancedApi.importProducts(file);
+    } catch (error_) {
+      console.error("API import failed, using local fallback", error_);
+      return null;
+    }
+  };
+
+  const parseCsvRow = (row: string): string[] => {
+    return row
+      .split(/,(?=(?:[^"]*[\"][^"]*[\"])*[^"]*$)/)
+      .map((value) => {
+        const trimmed = value.trim();
+        if (trimmed.startsWith('"') && trimmed.endsWith('"')) {
+          return trimmed.slice(1, -1).replaceAll('""', '"').trim();
+        }
+        return trimmed;
+      });
+  };
+
+  const findBrandId = (brandName: string | undefined): string => {
+    if (!brandName) return "";
+    const existingBrand = brands.find(
+      (brand) => brand.name.toLowerCase() === brandName.toLowerCase()
+    );
+    return existingBrand?.id ?? "";
+  };
+
+  const parseStoresList = (storesData: string | undefined) => {
+    const storesList: Array<{ store_id: string; store_name: string; price: number }> = [];
+    if (!storesData) return storesList;
+
+    const storeEntries = storesData
+      .split(";")
+      .map((s) => s.trim())
+      .filter(Boolean);
+
+    for (const entry of storeEntries) {
+      const [storeName, storePrice] = entry.split(":").map((s) => s.trim());
+      const store = stores.find((s) => s.name.toLowerCase() === storeName.toLowerCase());
+      if (store && storePrice) {
+        storesList.push({
+          store_id: store.id,
+          store_name: store.name,
+          price: Number.parseFloat(storePrice),
+        });
+      }
+    }
+
+    return storesList;
+  };
+
+  const importSingleCsvRow = async (row: string) => {
+    const [name, category, brandName, price, color, gender, description, imageUrl, storesData] =
+      parseCsvRow(row);
+
+    if (!name || !price) return "skipped" as const;
+
+    await productService.createProduct({
+      name,
+      type: category || "other",
+      category: category || "other",
+      brand_id: findBrandId(brandName),
+      price: Number.parseFloat(price),
+      color: color || "",
+      gender: gender || "unisex",
+      description: description || "",
+      image_url: imageUrl || "",
+      stores: parseStoresList(storesData),
+    });
+
+    return "success" as const;
+  };
+
+  const importProductsViaCsvFallback = async (file: File) => {
+    const text = await file.text();
+    const lines = text.split("\n").filter((line) => line.trim());
+    if (lines.length < 2) {
+      throw new Error("File is empty or invalid");
+    }
+
+    const rows = lines.slice(1);
+    let successCount = 0;
+    let errorCount = 0;
+
+    for (const row of rows) {
+      try {
+        const result = await importSingleCsvRow(row);
+        if (result === "success") successCount++;
+        else errorCount++;
+      } catch (rowError) {
+        console.error("Failed to import row:", rowError);
+        errorCount++;
+      }
+    }
+
+    return { successCount, errorCount };
   };
 
   // Import from CSV - using backend API
@@ -1734,120 +2036,30 @@ const Admin = () => {
 
     setLoadingImport(true);
     try {
-      // Try backend API first
-      const response = await advancedApi.importProducts(file);
-      
-      toast({
-        title: "✅ Import Complete",
-        description: `Successfully imported ${response.imported} product(s).${response.failed > 0 ? ` ${response.failed} failed.` : ''}`,
-      });
-
-      refetchDashboard();
-    } catch (error) {
-      console.error("API import failed, using local fallback", error);
-      
-      // Fallback to local CSV parsing
-      try {
-        const text = await file.text();
-        const lines = text.split("\n").filter(line => line.trim());
-        
-        if (lines.length < 2) {
-          throw new Error("File is empty or invalid");
-        }
-
-        const rows = lines.slice(1);
-
-        let successCount = 0;
-        let errorCount = 0;
-
-        for (const row of rows) {
-          try {
-            // Parse CSV row (handle quotes)
-            const values: string[] = [];
-            let currentValue = "";
-            let inQuotes = false;
-
-            for (let i = 0; i < row.length; i++) {
-              const char = row[i];
-              
-              if (char === '"') {
-                inQuotes = !inQuotes;
-              } else if (char === ',' && !inQuotes) {
-                values.push(currentValue.trim());
-                currentValue = "";
-              } else {
-                currentValue += char;
-              }
-            }
-            values.push(currentValue.trim());
-
-            const [name, category, brandName, price, color, gender, description, imageUrl, storesData] = values;
-
-            if (!name || !price) {
-              errorCount++;
-              continue;
-            }
-
-            // Find or create brand
-            let brandId = "";
-            if (brandName) {
-              const existingBrand = brands.find(b => b.name.toLowerCase() === brandName.toLowerCase());
-              if (existingBrand) {
-                brandId = existingBrand.id;
-              }
-            }
-
-            // Parse stores
-            const storesList: Array<{ store_id: string; store_name: string; price: number }> = [];
-            if (storesData) {
-              const storeEntries = storesData.split(";").map(s => s.trim()).filter(Boolean);
-              for (const entry of storeEntries) {
-                const [storeName, storePrice] = entry.split(":").map(s => s.trim());
-                const store = stores.find(s => s.name.toLowerCase() === storeName.toLowerCase());
-                if (store && storePrice) {
-                  storesList.push({
-                    store_id: store.id,
-                    store_name: store.name,
-                    price: parseFloat(storePrice)
-                  });
-                }
-              }
-            }
-
-            // Create product
-            await productService.createProduct({
-              name,
-              type: category || "other",
-              category: category || "other",
-              brand_id: brandId,
-              price: parseFloat(price),
-              color: color || "",
-              gender: gender || "unisex",
-              description: description || "",
-              image_url: imageUrl || "",
-              stores: storesList
-            });
-
-            successCount++;
-          } catch (rowError) {
-            console.error("Failed to import row:", rowError);
-            errorCount++;
-          }
-        }
-
+      const response = await tryImportProductsViaApi(file);
+      if (response) {
+        const failureSuffix = response.failed > 0 ? ` ${response.failed} failed.` : "";
         toast({
-          title: "Import Complete (Offline)",
-          description: `Successfully imported ${successCount} product(s).${errorCount > 0 ? ` ${errorCount} failed.` : ''}`,
+          title: "✅ Import Complete",
+          description: `Successfully imported ${response.imported} product(s).${failureSuffix}`,
         });
-
         refetchDashboard();
-      } catch (fallbackError) {
-        toast({
-          variant: "destructive",
-          title: "Import Failed",
-          description: getErrorMessage(fallbackError),
-        });
+        return;
       }
+
+      const { successCount, errorCount } = await importProductsViaCsvFallback(file);
+      const failureSuffix = errorCount > 0 ? ` ${errorCount} failed.` : "";
+      toast({
+        title: "Import Complete (Offline)",
+        description: `Successfully imported ${successCount} product(s).${failureSuffix}`,
+      });
+      refetchDashboard();
+    } catch (error_) {
+      toast({
+        variant: "destructive",
+        title: "Import Failed",
+        description: getErrorMessage(error_),
+      });
     } finally {
       setLoadingImport(false);
       if (importFileRef.current) {
@@ -1939,22 +2151,20 @@ const Admin = () => {
         throw new Error(apiError || `Failed to ${editingStore ? 'update' : 'create'} store`);
       }
 
-      {
-        toast({
-          title: "Success",
-          description: editingStore ? "Store updated successfully" : "Store created successfully",
-        });
-        // Reset form
-        setEditingStore(null);
-        setStoreName("");
-        setStoreTelegram("");
-        setStoreInstagram("");
-        setStoreTiktok("");
-        setStoreShipping("");
-        setStoreLogoUrl("");
-        setStoreRecommended(false);
-        refetchDashboard();
-      }
+      toast({
+        title: "Success",
+        description: editingStore ? "Store updated successfully" : "Store created successfully",
+      });
+      // Reset form
+      setEditingStore(null);
+      setStoreName("");
+      setStoreTelegram("");
+      setStoreInstagram("");
+      setStoreTiktok("");
+      setStoreShipping("");
+      setStoreLogoUrl("");
+      setStoreRecommended(false);
+      refetchDashboard();
     } catch (error: unknown) {
       toast({
         variant: "destructive",
@@ -1965,6 +2175,28 @@ const Admin = () => {
       setSubmitting(false);
     }
   };
+
+  const productVerb = editingProductId ? "Update" : "Create";
+  const productVerbProgress = editingProductId ? "Updating" : "Creating";
+  const productSubmitText = submitting
+    ? `${productVerbProgress} Product...`
+    : `${productVerb} Product`;
+
+  const storeVerb = editingStore ? "Update" : "Create";
+  const storeVerbProgress = editingStore ? "Updating" : "Creating";
+  const storeSubmitText = submitting ? `${storeVerbProgress}...` : `${storeVerb} Store`;
+
+  const removeManagedStoreSize = useCallback((sizeToRemove: string) => {
+    setEditingProductStore((current) => {
+      if (!current) return current;
+      return { ...current, sizes: current.sizes.filter((s) => s !== sizeToRemove) };
+    });
+  }, []);
+
+  const visibleStores = useMemo(() => {
+    const query = storeSearchQuery.toLowerCase();
+    return stores.filter((store) => store.name.toLowerCase().includes(query));
+  }, [stores, storeSearchQuery]);
 
   return (
     <div className="min-h-screen bg-background text-foreground font-sans">
@@ -2184,6 +2416,54 @@ const Admin = () => {
                       </div>
                     </div>
 
+                    {/* Sizes Section */}
+                    <div className="space-y-3 pt-3 border-t border-border/30">
+                      <Label className="text-sm font-medium">Available Sizes (Optional)</Label>
+                      <div className="flex gap-2">
+                        <Input
+                          value={currentSizeInput}
+                          onChange={(e) => setCurrentSizeInput(e.target.value)}
+                          placeholder="Enter size (e.g., S, M, L, XL, 42, 43)"
+                          className="flex-1 bg-card/50 border-border/50 rounded-lg"
+                          onKeyDown={(e) => {
+                            if (e.key === 'Enter') {
+                              e.preventDefault();
+                              addSize();
+                            }
+                          }}
+                        />
+                        <Button
+                          type="button"
+                          onClick={addSize}
+                          variant="outline"
+                          size="sm"
+                          disabled={!currentSizeInput.trim()}
+                        >
+                          Add
+                        </Button>
+                      </div>
+                      
+                      {currentStoreSizes.length > 0 && (
+                        <div className="flex flex-wrap gap-2">
+                          {currentStoreSizes.map((size) => (
+                            <span
+                              key={size}
+                              className="inline-flex items-center gap-1 px-2 py-1 bg-primary/10 text-primary text-xs rounded-full border border-primary/20"
+                            >
+                              {size}
+                              <button
+                                type="button"
+                                onClick={() => removeSize(size)}
+                                className="hover:text-destructive"
+                              >
+                                ×
+                              </button>
+                            </span>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+
                     <Button
                       type="button"
                       onClick={addStoreToProduct}
@@ -2212,7 +2492,7 @@ const Admin = () => {
                           variant="outline"
                           onClick={() => {
                             const batchPriceInput = document.getElementById('batch-price-input') as HTMLInputElement;
-                            const batchPrice = parseFloat(batchPriceInput?.value || '0');
+                            const batchPrice = Number.parseFloat(batchPriceInput?.value || '0');
                             
                             if (!batchPrice || batchPrice <= 0) {
                               toast({
@@ -2238,7 +2518,8 @@ const Admin = () => {
                             const newStores = remainingStores.map(store => ({
                               store_id: store.id,
                               store_name: store.name,
-                              price: batchPrice
+                              price: batchPrice,
+                              sizes: []
                             }));
 
                             setSelectedStores([...selectedStores, ...newStores]);
@@ -2266,24 +2547,127 @@ const Admin = () => {
                           {selectedStores.map((store) => (
                             <div
                               key={store.store_id}
-                              className="flex items-center justify-between p-3 rounded-lg bg-card/40 border border-border/50"
+                              className="p-3 rounded-lg bg-card/40 border border-border/50"
                             >
-                              <div className="flex items-center gap-3">
-                                <Store className="w-4 h-4 text-primary" />
-                                <div>
-                                  <p className="font-medium">{store.store_name}</p>
-                                  <p className="text-sm text-muted-foreground">${store.price}</p>
+                              {editingProductStore?.store_id === store.store_id ? (
+                                // Edit mode
+                                <div className="space-y-3">
+                                  <div className="flex items-center gap-3">
+                                    <Store className="w-4 h-4 text-primary flex-shrink-0" />
+                                    <p className="font-medium">{store.store_name}</p>
+                                  </div>
+                                  
+                                  <div className="grid grid-cols-1 gap-3">
+                                    <div>
+                                      <Label className="text-xs text-muted-foreground">Price ($)</Label>
+                                      <Input
+                                        type="number"
+                                        step="0.01"
+                                        value={editingProductStore.price}
+                                        onChange={(e) => setEditingProductStore({
+                                          ...editingProductStore,
+                                          price: Number.parseFloat(e.target.value) || 0
+                                        })}
+                                        className="h-8 bg-card/50 border-border/50"
+                                      />
+                                    </div>
+                                    
+                                    <div>
+                                      <Label className="text-xs text-muted-foreground">Sizes</Label>
+                                      <div className="flex flex-wrap gap-1 mt-1">
+                                        {editingProductStore.sizes.map((size) => (
+                                          <span
+                                            key={size}
+                                            className="inline-flex items-center gap-1 px-1.5 py-0.5 bg-primary/10 text-primary text-xs rounded border border-primary/20"
+                                          >
+                                            {size}
+                                            <button
+                                              type="button"
+                                              onClick={() => removeManagedStoreSize(size)}
+                                              className="hover:text-destructive"
+                                            >
+                                              ×
+                                            </button>
+                                          </span>
+                                        ))}
+                                        <Input
+                                          size="sm"
+                                          placeholder="Add size"
+                                          className="w-20 h-6 text-xs"
+                                          value={editingProductStoreSizeInput}
+                                          onChange={(e) => setEditingProductStoreSizeInput(e.target.value)}
+                                          onKeyDown={(e) => {
+                                            if (e.key === 'Enter') {
+                                              e.preventDefault();
+                                              commitEditingProductStoreSizeInput();
+                                            }
+                                          }}
+                                          onBlur={() => commitEditingProductStoreSizeInput()}
+                                        />
+                                      </div>
+                                    </div>
+                                  </div>
+                                  
+                                  <div className="flex gap-2">
+                                    <Button
+                                      type="button"
+                                      onClick={saveStoreEdit}
+                                      size="sm"
+                                      className="text-xs"
+                                    >
+                                      Save
+                                    </Button>
+                                    <Button
+                                      type="button"
+                                      onClick={cancelStoreEdit}
+                                      variant="outline"
+                                      size="sm"
+                                      className="text-xs"
+                                    >
+                                      Cancel
+                                    </Button>
+                                  </div>
                                 </div>
-                              </div>
-                              <Button
-                                type="button"
-                                variant="ghost"
-                                size="sm"
-                                onClick={() => removeStoreFromProduct(store.store_id)}
-                                className="text-destructive hover:text-destructive hover:bg-destructive/10"
-                              >
-                                <Trash2 className="w-4 h-4" />
-                              </Button>
+                              ) : (
+                                // View mode
+                                <div className="flex items-center justify-between">
+                                  <div className="flex items-center gap-3">
+                                    <Store className="w-4 h-4 text-primary" />
+                                    <div>
+                                      <p className="font-medium">{store.store_name}</p>
+                                      <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                                        <span>${store.price}</span>
+                                        {Array.isArray(store.sizes) && store.sizes.length > 0 && (
+                                          <>
+                                            <span>•</span>
+                                            <span>Sizes: {store.sizes.join(', ')}</span>
+                                          </>
+                                        )}
+                                      </div>
+                                    </div>
+                                  </div>
+                                  <div className="flex gap-1">
+                                    <Button
+                                      type="button"
+                                      variant="ghost"
+                                      size="sm"
+                                      onClick={() => startEditingStore(store.store_id)}
+                                      className="text-primary hover:text-primary hover:bg-primary/10 h-8 w-8 p-0"
+                                    >
+                                      <Edit className="w-3 h-3" />
+                                    </Button>
+                                    <Button
+                                      type="button"
+                                      variant="ghost"
+                                      size="sm"
+                                      onClick={() => removeStoreFromProduct(store.store_id)}
+                                      className="text-destructive hover:text-destructive hover:bg-destructive/10 h-8 w-8 p-0"
+                                    >
+                                      <Trash2 className="w-3 h-3" />
+                                    </Button>
+                                  </div>
+                                </div>
+                              )}
                             </div>
                           ))}
                         </div>
@@ -2369,7 +2753,7 @@ const Admin = () => {
                       <div className="grid grid-cols-3 gap-3">
                         {productImages.map((img, index) => (
                           <div 
-                            key={index} 
+                            key={img} 
                             className="relative group cursor-move"
                             draggable
                             onDragStart={(e) => {
@@ -2382,7 +2766,7 @@ const Admin = () => {
                             }}
                             onDrop={(e) => {
                               e.preventDefault();
-                              const fromIndex = parseInt(e.dataTransfer.getData('text/plain'));
+                              const fromIndex = Number.parseInt(e.dataTransfer.getData('text/plain'));
                               const toIndex = index;
                               if (fromIndex !== toIndex) {
                                 const newImages = [...productImages];
@@ -2518,7 +2902,7 @@ const Admin = () => {
                           variant="outline"
                           size="sm"
                           onClick={() => {
-                            const input = document.querySelector('input[placeholder="Paste image URL and press Enter"]') as HTMLInputElement;
+                            const input = document.querySelector<HTMLInputElement>('input[placeholder="Paste image URL and press Enter"]');
                             if (input?.value.trim()) {
                               setProductImages([...productImages, input.value.trim()]);
                               input.value = '';
@@ -2584,10 +2968,7 @@ const Admin = () => {
                       disabled={submitting}
                       className="flex-1 h-12 bg-foreground text-background hover:bg-foreground/90 hover:shadow-[0_0_30px_rgba(255,255,255,0.3)] rounded-lg font-medium transition-all"
                     >
-                      {submitting 
-                        ? (editingProductId ? 'Updating Product...' : 'Creating Product...') 
-                        : (editingProductId ? 'Update Product' : 'Create Product')
-                      }
+                      {productSubmitText}
                     </Button>
                     
                     {!editingProductId && (
@@ -3090,8 +3471,8 @@ const Admin = () => {
                                         price: s.price || 0
                                       })));
                                     }
-                                  } catch (e) {
-                                    console.warn('Could not load stores for duplicate');
+                                  } catch (error_) {
+                                    console.warn('Could not load stores for duplicate', error_);
                                   }
                                   
                                   // Clear editing ID (this is a new product)
@@ -3105,6 +3486,7 @@ const Admin = () => {
                                     description: "Edit the details and save as a new product",
                                   });
                                 } catch (error) {
+                                  console.error("Failed to duplicate product", error);
                                   toast({
                                     variant: "destructive",
                                     title: "Error",
@@ -3121,7 +3503,7 @@ const Admin = () => {
                               size="sm"
                               className="hover:bg-red-500/20 hover:text-red-400 border-border/50"
                               onClick={async () => {
-                                if (window.confirm(`Delete "${product.name}"?`)) {
+                                if (globalThis.confirm(`Delete "${product.name}"?`)) {
                                   try {
                                     await productService.deleteProduct(product.id);
                                     toast({
@@ -3184,7 +3566,7 @@ const Admin = () => {
                                       type="number"
                                       min="0"
                                       value={currentStock}
-                                      onChange={(e) => updateStock(product.id, store.store_id, parseInt(e.target.value) || 0)}
+                                      onChange={(e) => updateStock(product.id, store.store_id, Number.parseInt(e.target.value) || 0)}
                                       className="w-20 h-8 text-center"
                                       placeholder="Stock"
                                     />
@@ -3286,7 +3668,7 @@ const Admin = () => {
                                       size="sm"
                                       className="h-8 w-8 p-0 hover:text-red-400"
                                       onClick={async () => {
-                                        if (window.confirm(`Delete "${product.name}"?`)) {
+                                        if (globalThis.confirm(`Delete "${product.name}"?`)) {
                                           try {
                                             await productService.deleteProduct(product.id);
                                             toast({ title: "Success", description: "Product deleted" });
@@ -3347,13 +3729,17 @@ const Admin = () => {
                     <Button
                       type="button"
                       variant="ghost"
-                      onClick={cancelStoreEdit}
+                      onClick={cancelStoreEntityEdit}
                       className="text-muted-foreground hover:text-foreground"
                     >
                       Cancel Edit
                     </Button>
                   )}
                 </div>
+
+                <p className="text-sm text-muted-foreground mb-4">
+                  Важливо: «Розміри» зберігаються для зв’язку продукт↔магазин (у продукті), а не в картці магазину.
+                </p>
 
                 <form onSubmit={handleCreateStore} className="space-y-6 overflow-visible">
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-6 overflow-visible">
@@ -3448,7 +3834,7 @@ const Admin = () => {
                     disabled={submitting}
                     className="w-full h-12 bg-foreground text-background hover:bg-foreground/90 hover:shadow-[0_0_30px_rgba(255,255,255,0.3)] rounded-lg font-medium transition-all"
                   >
-                    {submitting ? (editingStore ? 'Updating...' : 'Creating...') : (editingStore ? 'Update Store' : 'Create Store')}
+                    {storeSubmitText}
                   </Button>
                 </form>
               </div>
@@ -3470,13 +3856,9 @@ const Admin = () => {
                   </div>
                 </div>
                 
-                {stores.filter(store => 
-                  store.name.toLowerCase().includes(storeSearchQuery.toLowerCase())
-                ).length > 0 ? (
+                {visibleStores.length > 0 ? (
                   <div className="space-y-4">
-                    {stores.filter(store => 
-                      store.name.toLowerCase().includes(storeSearchQuery.toLowerCase())
-                    ).map((store) => (
+                    {visibleStores.map((store) => (
                       <div
                         key={store.id}
                         className="flex items-center gap-4 p-4 rounded-lg border border-border/50 bg-card/20 hover:bg-card/40 transition-colors"
@@ -3501,7 +3883,7 @@ const Admin = () => {
                             size="sm"
                             className="hover:bg-red-500/20 hover:text-red-400 border border-white/20"
                             onClick={async () => {
-                              if (window.confirm(`Delete "${store.name}"?`)) {
+                              if (globalThis.confirm(`Delete "${store.name}"?`)) {
                                 try {
                                   await storeService.deleteStore(store.id);
                                   toast({
@@ -3614,7 +3996,7 @@ const Admin = () => {
                           size="sm"
                           className="hover:bg-red-500/20 hover:text-red-400 border border-white/20 ml-2"
                           onClick={async () => {
-                            if (window.confirm(`Delete brand "${brand.name}"?`)) {
+                            if (globalThis.confirm(`Delete brand "${brand.name}"?`)) {
                               try {
                                 await brandsApi.delete(brand.id);
 
@@ -4087,7 +4469,7 @@ const Admin = () => {
       <StickyActionBar
         show={activeTab === 'add-product'}
         onSave={() => {
-          const form = document.querySelector('form') as HTMLFormElement;
+          const form = document.querySelector<HTMLFormElement>('form');
           if (form) form.requestSubmit();
         }}
         onCancel={editingProductId ? cancelEdit : undefined}
@@ -4097,13 +4479,15 @@ const Admin = () => {
 
       {/* Product Preview Modal */}
       {previewProduct && (
-        <div 
-          className="fixed inset-0 z-[9999] bg-black/80 backdrop-blur-sm flex items-center justify-center p-4"
-          onClick={() => setPreviewProduct(null)}
-        >
+        <div className="fixed inset-0 z-[9999] bg-black/80 backdrop-blur-sm flex items-center justify-center p-4">
+          <button
+            type="button"
+            aria-label="Close product preview"
+            className="absolute inset-0 bg-transparent border-0 p-0 cursor-default"
+            onClick={() => setPreviewProduct(null)}
+          />
           <div 
             className="relative max-w-4xl w-full bg-card/95 backdrop-blur-xl rounded-2xl border border-border/50 overflow-hidden"
-            onClick={(e) => e.stopPropagation()}
           >
             <div className="absolute top-4 right-4 z-10">
               <Button

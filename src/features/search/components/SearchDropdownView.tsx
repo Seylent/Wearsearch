@@ -51,17 +51,6 @@ export const SearchDropdownView: React.FC<SearchDropdownViewProps> = React.memo(
   const { t } = useTranslation();
   const { formatPrice } = useCurrencyConversion();
 
-  // Block scroll when search is open
-  useEffect(() => {
-    document.body.style.overflow = 'hidden';
-    document.body.style.touchAction = 'none';
-    
-    return () => {
-      document.body.style.overflow = '';
-      document.body.style.touchAction = '';
-    };
-  }, []);
-
   const skeletonRows = useMemo(() => Array.from({ length: 5 }, (_, i) => i), []);
 
   return (

@@ -60,16 +60,16 @@ export const CurrencyProvider: React.FC<CurrencyProviderProps> = ({ children }) 
       if (response.status === 200) {
         const data = response.data;
         setExchangeRate({
-          rate: data.USD_UAH || 37.50, // fallback rate
+          rate: data.USD_UAH || 40.50, // Updated fallback rate
           updatedAt: data.updatedAt || new Date().toISOString()
         });
       } else {
         throw new Error('Failed to fetch exchange rate');
       }
     } catch (err) {
-      console.warn('Exchange rate API not available, using fallback');
+      console.warn('Exchange rate API not available, using fallback rate of 40.50 UAH/USD');
       setExchangeRate({
-        rate: 37.50, // fallback rate
+        rate: 40.50, // Updated fallback rate (January 2026)
         updatedAt: new Date().toISOString()
       });
       setError('Exchange rate service unavailable');
