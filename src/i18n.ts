@@ -59,8 +59,8 @@ export const languageService = {
    */
   detectLanguageFromURL(): SupportedLanguage | null {
     try {
-      const pathParts = window.location.pathname.split('/').filter(Boolean);
-      const firstPart = pathParts[0];
+      const pathname = globalThis.location?.pathname;
+      const firstPart = pathname?.split('/').find((part) => part.length > 0);
       
       if (firstPart && LANGUAGE_CONFIG.SUPPORTED.includes(firstPart as SupportedLanguage)) {
         return firstPart as SupportedLanguage;
@@ -139,4 +139,4 @@ i18n.on('languageChanged', (lng) => {
 // Set initial HTML lang attribute
 document.documentElement.lang = initialLanguage;
 
-export default i18n;
+export { default } from 'i18next';

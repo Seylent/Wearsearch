@@ -71,6 +71,7 @@ export const ProductGridSkeleton: React.FC<GridSkeletonProps> = ({
   columns = 4 
 }) => {
   const { t } = useTranslation();
+  const itemKeys = useMemo(() => Array.from({ length: count }, (_, idx) => `product-skeleton-${idx + 1}`), [count]);
   
   const gridClass = {
     2: 'grid-cols-1 sm:grid-cols-2',
@@ -80,15 +81,14 @@ export const ProductGridSkeleton: React.FC<GridSkeletonProps> = ({
   }[columns];
 
   return (
-    <div 
-      className={`grid ${gridClass} gap-3 sm:gap-4 md:gap-6`}
-      role="status" 
-      aria-label={t('aria.loadingProducts')}
-    >
-      {Array.from({ length: count }).map((_, i) => (
+    <div className={`grid ${gridClass} gap-3 sm:gap-4 md:gap-6`} aria-busy="true">
+      <output className="sr-only" aria-live="polite">
+        {t('aria.loadingProducts')}
+      </output>
+      {itemKeys.map((key, idx) => (
         <div 
-          key={i}
-          style={{ animationDelay: `${i * 50}ms` }}
+          key={key}
+          style={{ animationDelay: `${idx * 50}ms` }}
           className="animate-in fade-in-0 slide-in-from-bottom-4 duration-500"
         >
           <ProductCardSkeleton />
@@ -130,17 +130,17 @@ export const StoreCardSkeleton: React.FC = () => {
  */
 export const StoreGridSkeleton: React.FC<{ count?: number }> = ({ count = 6 }) => {
   const { t } = useTranslation();
+  const itemKeys = useMemo(() => Array.from({ length: count }, (_, idx) => `store-skeleton-${idx + 1}`), [count]);
   
   return (
-    <div 
-      className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 md:gap-8"
-      role="status"
-      aria-label={t('aria.loadingStores')}
-    >
-      {Array.from({ length: count }).map((_, i) => (
+    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 md:gap-8" aria-busy="true">
+      <output className="sr-only" aria-live="polite">
+        {t('aria.loadingStores')}
+      </output>
+      {itemKeys.map((key, idx) => (
         <div
-          key={i}
-          style={{ animationDelay: `${i * 50}ms` }}
+          key={key}
+          style={{ animationDelay: `${idx * 50}ms` }}
           className="animate-in fade-in-0 slide-in-from-bottom-4 duration-500"
         >
           <StoreCardSkeleton />
@@ -162,13 +162,14 @@ export const TextSkeleton: React.FC<TextSkeletonProps> = ({
   className = '', 
   lines = 1 
 }) => {
+  const lineKeys = useMemo(() => Array.from({ length: lines }, (_, idx) => `text-skeleton-${idx + 1}`), [lines]);
   return (
     <div className={`space-y-2 ${className}`}>
-      {Array.from({ length: lines }).map((_, i) => (
+      {lineKeys.map((key, idx) => (
         <div 
-          key={i} 
+          key={key} 
           className="h-4 bg-muted/30 rounded animate-pulse"
-          style={{ width: `${100 - (i * 10)}%` }}
+          style={{ width: `${100 - (idx * 10)}%` }}
         />
       ))}
     </div>
