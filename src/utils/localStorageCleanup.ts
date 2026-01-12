@@ -38,9 +38,9 @@ export function cleanupLocalStorage(): void {
             console.warn(`Removed invalid ${key} data`);
           }
         }
-      } catch (_error) {
+      } catch (error) {
         localStorage.removeItem(key);
-        console.warn(`Removed corrupted ${key} data`);
+        console.warn(`Removed corrupted ${key} data:`, error);
       }
     });
 

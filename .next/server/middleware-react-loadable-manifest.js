@@ -1,1 +1,1 @@
-self.__REACT_LOADABLE_MANIFEST='{"utils\\\\currencyStorage.ts -> next/headers":{"id":5854,"files":["static/chunks/5854.e3ac8487162c16bc.js"]}}';
+self.__REACT_LOADABLE_MANIFEST="{\"utils\\\\currencyStorage.ts -> next/headers\":{\"id\":\"utils\\\\currencyStorage.ts -> next/headers\",\"files\":[\"static/chunks/_app-pages-browser_node_modules_next_dist_api_headers_js.js\"]}}"

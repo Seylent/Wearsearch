@@ -4,7 +4,7 @@
  */
 
 import axios, { AxiosInstance, AxiosError, InternalAxiosRequestConfig, AxiosResponse } from 'axios';
-import { getAuth, clearAuth } from '@/utils/authStorage';
+import { getAuth } from '@/utils/authStorage';
 import { API_CONFIG } from '@/config/api.config';
 import { handleApiError as createApiError, ApiError } from './api/errorHandler';
 import type { ApiError as ApiErrorType } from '@/types';
@@ -49,12 +49,12 @@ const getRetryDelay = (retryCount: number, retryAfter?: number): number => {
  * Prevents too many simultaneous requests
  */
 class RequestQueue {
-  private queue: Array<() => Promise<void>> = [];
+  private readonly queue: Array<() => Promise<void>> = [];
   private running = 0;
   private readonly maxConcurrent = process.env.NODE_ENV === 'production' ? 6 : 3; // Lower limit in dev
   private readonly minDelay = process.env.NODE_ENV === 'production' ? 50 : 100; // Higher delay in dev
   private lastRequestTime = 0;
-  private pendingRequests = new Map<string, Promise<any>>(); // Request deduplication
+  private readonly pendingRequests = new Map<string, Promise<any>>(); // Request deduplication
 
   async add<T>(fn: () => Promise<T>, dedupKey?: string): Promise<T> {
     // Request deduplication - if same request is already pending, return the same promise
@@ -243,111 +243,26 @@ const attachInterceptors = (client: AxiosInstance, fallback?: FallbackConfig) =>
       }) | undefined;
 
       // Handle 429 Rate Limit with automatic retry
-      if (error.response?.status === 429 && config) {
-        const retryCount = config.__rateLimitRetryCount || 0;
-        
-        if (retryCount < RATE_LIMIT_CONFIG.maxRetries) {
-          // Get Retry-After header if present
-          const retryAfterHeader = error.response.headers['retry-after'];
-          const retryAfter = retryAfterHeader ? parseInt(retryAfterHeader, 10) : undefined;
-          const delay = getRetryDelay(retryCount, retryAfter);
-          
-          if (process.env.NODE_ENV !== 'production' && retryCount === 0) {
-            // Only log on first retry attempt to reduce noise
-            console.log(`⏳ Rate limited. Retrying in ${Math.round(delay / 1000)}s (attempt ${retryCount + 1}/${RATE_LIMIT_CONFIG.maxRetries})...`);
-          }
-          
-          await sleep(delay);
-          
-          // Retry the request
-          config.__rateLimitRetryCount = retryCount + 1;
-          return client.request(config);
-        } else {
-          if (process.env.NODE_ENV !== 'production') {
-            console.warn('⚠️ Rate limit: max retries exceeded');
-          }
-        }
+      if (config) {
+        const rateLimitResult = await handleRateLimitError(error, config, client);
+        if (rateLimitResult) return rateLimitResult;
       }
 
-      // Automatic fallback: if v1 route is missing, retry the same request against legacy /api.
-      try {
-        const cfg = config;
-        if (
-          cfg &&
-          !cfg.__wearsearchTriedLegacy &&
-          fallback?.fallbackClient &&
-          (fallback.shouldFallbackToLegacy ?? defaultShouldFallbackToLegacy)(cfg, error)
-        ) {
-          cfg.__wearsearchTriedLegacy = true;
-
-          // Ensure fallback client uses its own baseURL.
-          const retryConfig: InternalAxiosRequestConfig = { ...cfg };
-          delete retryConfig.baseURL;
-
-          if (process.env.NODE_ENV !== 'production') {
-            console.warn('↩️ v1 route missing; retrying via legacy API:', {
-              method: retryConfig.method,
-              url: retryConfig.url,
-            });
-          }
-
-          return await fallback.fallbackClient.request(retryConfig);
-        }
-      } catch {
-        // If fallback logic fails, continue with normal error handling.
+      // Automatic fallback: if v1 route is missing, retry against legacy /api
+      if (config) {
+        const fallbackResult = await handleLegacyFallback(error, config, fallback);
+        if (fallbackResult) return fallbackResult;
       }
 
       const apiError = createApiError(error);
 
       // Handle authentication errors globally
-      if (apiError.isAuthError()) {
-        // Check if user was actually logged in before
-        const wasAuthenticated = typeof window !== 'undefined' && (!!localStorage.getItem(AUTH_TOKEN_KEY) || !!localStorage.getItem('access_token'));
-
-        console.log('🚨 Authentication error detected:', {
-          status: apiError.status,
-          message: apiError.message,
-          url: error.config?.url,
-          wasAuthenticated
-        });
-
-        // Only clear auth and show message if user was actually logged in
-        // Also check if we haven't already cleared auth recently to prevent cascades
-        const lastAuthClear = sessionStorage.getItem('lastAuthClear');
-        const now = Date.now();
-        const recentlyClearedAuth = lastAuthClear && (now - parseInt(lastAuthClear, 10)) < 5000; // 5 seconds
-
-        if (wasAuthenticated && !recentlyClearedAuth) {
-          console.log('🧹 Clearing auth and dispatching logout event');
-          
-          // Mark that we're clearing auth to prevent cascades
-          sessionStorage.setItem('lastAuthClear', now.toString());
-          
-          clearAuth();
-
-          // Dispatch custom event for auth handling (avoid direct window.location)
-          window.dispatchEvent(new CustomEvent('auth:logout', {
-            detail: { reason: 'unauthorized' }
-          }));
-        } else if (recentlyClearedAuth) {
-          console.log('⏭️ Auth error but recently cleared - skipping to prevent cascade');
-        } else {
-          console.log('ℹ️ Auth error for non-authenticated user - ignoring');
-        }
-      }
+      handleAuthError(apiError, error);
 
       // Log errors in development
-      if (process.env.NODE_ENV !== 'production') {
-        if (apiError.isServerError()) {
-          console.error('Server error:', apiError);
-        } else if (apiError.isNetworkError()) {
-          console.error('Network error:', apiError);
-        } else if (!apiError.isNotFound()) {
-          console.log('API error:', apiError);
-        }
-      }
+      logApiError(apiError);
 
-      return Promise.reject(apiError);
+      throw apiError;
     }
   );
 };

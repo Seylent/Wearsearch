@@ -105,7 +105,7 @@ const PaginationControls: React.FC<PaginationControlsProps> = ({
                 e.preventDefault();
                 if (hasPrev) onPageChange(currentPage - 1);
               }}
-              className={!hasPrev ? 'pointer-events-none opacity-50' : 'cursor-pointer'}
+              className={hasPrev ? 'cursor-pointer' : 'pointer-events-none opacity-50'}
               aria-disabled={!hasPrev}
             >
               <ChevronLeft className="h-4 w-4" />
@@ -197,7 +197,7 @@ const PaginationControls: React.FC<PaginationControlsProps> = ({
                 e.preventDefault();
                 if (hasNext) onPageChange(currentPage + 1);
               }}
-              className={!hasNext ? 'pointer-events-none opacity-50' : 'cursor-pointer'}
+              className={hasNext ? 'cursor-pointer' : 'pointer-events-none opacity-50'}
               aria-disabled={!hasNext}
             >
               <span className="hidden sm:inline">

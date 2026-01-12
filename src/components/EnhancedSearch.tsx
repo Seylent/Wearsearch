@@ -274,12 +274,14 @@ const SuggestionItem: React.FC<SuggestionItemProps> = ({
   };
 
   return (
-    <div
+    <button
+      type="button"
       className={cn(
-        'flex items-center justify-between px-3 py-2 rounded-lg cursor-pointer transition-colors group',
+        'flex w-full items-center justify-between px-3 py-2 rounded-lg cursor-pointer transition-colors group text-left',
         isSelected ? 'bg-white/10' : 'hover:bg-white/5'
       )}
       onClick={onSelect}
+      aria-pressed={isSelected}
     >
       <div className="flex items-center gap-3">
         {isHistory ? (
@@ -302,7 +304,7 @@ const SuggestionItem: React.FC<SuggestionItemProps> = ({
           <X className="w-4 h-4" />
         </button>
       )}
-    </div>
+    </button>
   );
 };
 

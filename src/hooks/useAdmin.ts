@@ -84,17 +84,18 @@ export const useAdmin = () => {
   // Analytics
   const [showPriceHistory, setShowPriceHistory] = useState(false);
   const [showActivityLog, setShowActivityLog] = useState(false);
-  const [loadingPriceHistory, setLoadingPriceHistory] = useState(false);
-  const [loadingActivityLog, setLoadingActivityLog] = useState(false);
+  // Price history and activity log are not yet implemented
+  const loadingPriceHistory = false;
+  const loadingActivityLog = false;
   const [selectedProductForHistory, setSelectedProductForHistory] = useState<string | null>(null);
-  const [priceHistory, setPriceHistory] = useState<Record<string, Array<{
+  const priceHistory: Record<string, Array<{
     id: string;
     store_id: string;
     store_name: string;
     price: number;
     changed_at: string;
-  }>>>({});
-  const [activityLog, setActivityLog] = useState<Array<{
+  }>> = {}; // Price history feature pending backend implementation
+  const activityLog: Array<{
     id: string;
     action: string;
     entity_type: string;
@@ -102,7 +103,7 @@ export const useAdmin = () => {
     user_name: string;
     created_at: string;
     changes?: any;
-  }>>([]);
+  }> = []; // Activity log placeholder
 
   // Load dashboard data
   const loadDashboard = useCallback(async () => {
@@ -372,7 +373,7 @@ export const useAdmin = () => {
     };
 
     try {
-      await advancedApi.saveTemplate(templateData);
+      await advancedApi.createTemplate(templateData);
       await loadTemplates();
       toast({
         title: "Template saved",

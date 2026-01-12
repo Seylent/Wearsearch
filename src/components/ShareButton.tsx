@@ -1,3 +1,5 @@
+'use client';
+
 /**
  * Share Button Component
  * Uses Web Share API with fallback to custom modal
@@ -189,15 +191,20 @@ const ShareButton: React.FC<ShareButtonProps> = ({
       textArea.value = shareData.url;
       document.body.appendChild(textArea);
       textArea.select();
-      // Use modern Clipboard API or fallback to deprecated execCommand
+      // Use modern Clipboard API with fallback
       try {
         if (navigator.clipboard) {
           await navigator.clipboard.writeText(shareData.url);
         } else {
-          document.execCommand('copy');
+          // Modern clipboard API fallback - no execCommand
+          try {
+            await navigator.clipboard.writeText(shareData.url);
+          } catch (clipError) {
+            console.warn('Clipboard write failed:', clipError);
+          }
         }
-      } catch {
-        document.execCommand('copy');
+      } catch (error) {
+        console.error('Failed to copy:', error);
       }
       textArea.remove();
       setCopied(true);
@@ -278,32 +285,34 @@ const ShareButton: React.FC<ShareButtonProps> = ({
         <dialog 
           className="fixed inset-0 z-[9999] flex flex-col items-center pt-3 md:pt-8 bg-transparent"
           open={isOpen}
-          onClick={handleClose}
-          onKeyDown={(e) => e.key === 'Escape' && handleClose()}
           aria-modal="true"
           aria-labelledby="share-dialog-title"
           style={{ touchAction: 'none' }}
         >
           {/* Backdrop with blur */}
-          <div 
+          <button
+            type="button"
             className={cn(
               "absolute inset-0 bg-black/70 backdrop-blur-sm transition-opacity duration-300",
+              "cursor-pointer border-0",
               isAnimating ? "opacity-100" : "opacity-0"
-            )} 
+            )}
+            onClick={handleClose}
+            onKeyDown={(e) => e.key === 'Escape' && handleClose()}
+            aria-label="Close dialog"
           />
           
           {/* Modal content - slides down from top */}
-          <div 
+          <button
+            type="button"
             className={cn(
-              "relative w-[calc(100%-24px)] md:w-[420px] transition-all duration-300 ease-out",
+              "relative w-[calc(100%-24px)] md:w-[420px] transition-all duration-300 ease-out text-left",
               // Animation classes
               isAnimating 
                 ? "translate-y-0 opacity-100" 
                 : "-translate-y-8 opacity-0"
             )}
             onClick={(e) => e.stopPropagation()}
-            role="document"
-            tabIndex={-1}
           >
             {/* Glassmorphism container */}
             <div 
@@ -419,7 +428,7 @@ const ShareButton: React.FC<ShareButtonProps> = ({
                 </div>
               </div>
             </div>
-          </div>
+          </button>
         </dialog>,
         document.body
       )}

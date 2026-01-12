@@ -29,7 +29,7 @@ interface SearchDropdownViewProps {
   onClearHistory?: () => void;
 }
 
-export const SearchDropdownView: React.FC<SearchDropdownViewProps> = React.memo(({
+export const SearchDropdownView: React.FC<Readonly<SearchDropdownViewProps>> = React.memo(({
   query,
   onQueryChange,
   results,
@@ -49,10 +49,10 @@ export const SearchDropdownView: React.FC<SearchDropdownViewProps> = React.memo(
   const { t } = useTranslation();
 
   return (
-    <div 
-      role="dialog"
+    <dialog 
+      open
       aria-modal="true"
-      className="fixed inset-0 z-[100] bg-black/60 backdrop-blur-sm flex items-start justify-center pt-24"
+      className="fixed inset-0 z-[100] bg-black/60 backdrop-blur-sm flex items-start justify-center pt-24 border-0"
       aria-label={t('aria.searchResults')}
     >
       <div 
@@ -88,7 +88,7 @@ export const SearchDropdownView: React.FC<SearchDropdownViewProps> = React.memo(
           />
         </div>
       </div>
-    </div>
+    </dialog>
   );
 });
 

@@ -67,13 +67,13 @@ export const useAuthEvents = () => {
     };
     
     // Register event listeners
-    window.addEventListener('auth:logout', handleLogout);
-    window.addEventListener('auth:tokenRefreshed', handleTokenRefresh);
+    globalThis.window.addEventListener('auth:logout', handleLogout);
+    globalThis.window.addEventListener('auth:tokenRefreshed', handleTokenRefresh);
     
     // Cleanup
     return () => {
-      window.removeEventListener('auth:logout', handleLogout);
-      window.removeEventListener('auth:tokenRefreshed', handleTokenRefresh);
+      globalThis.window.removeEventListener('auth:logout', handleLogout);
+      globalThis.window.removeEventListener('auth:tokenRefreshed', handleTokenRefresh);
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [navigate, queryClient, toast, t]);
@@ -83,7 +83,7 @@ export const useAuthEvents = () => {
  * Dispatch logout event
  */
 export const dispatchLogout = (reason?: AuthLogoutEventDetail['reason']) => {
-  window.dispatchEvent(new CustomEvent('auth:logout', {
+  globalThis.window.dispatchEvent(new CustomEvent('auth:logout', {
     detail: { reason: reason || 'manual' }
   }));
 };

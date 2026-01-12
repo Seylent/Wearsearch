@@ -46,7 +46,7 @@ const ProductDetail = () => {
   const { t } = useTranslation();
   const { formatPrice } = useCurrencyConversion();
   const { currency } = useCurrency();
-  const [selectedImage, _setSelectedImage] = useState(0);
+  const selectedImage = 0; // Currently always showing first image
   const [isAdmin, setIsAdmin] = useState(false);
   const [isLightboxOpen, setIsLightboxOpen] = useState(false);
   
@@ -130,13 +130,64 @@ const ProductDetail = () => {
   
   // Extract stores array
   const stores = useMemo(() => {
+    // Helper function to parse sizes from various formats
+    const parseSizes = (rawSizes: unknown): string[] => {
+      if (Array.isArray(rawSizes)) {
+        return rawSizes.map(String).map((s) => s.trim()).filter(Boolean);
+      }
+      
+      if (typeof rawSizes === "string") {
+        const trimmed = rawSizes.trim();
+        
+        // Try parsing as JSON array
+        if (trimmed.startsWith("[") && trimmed.endsWith("]")) {
+          try {
+            const parsed: unknown = JSON.parse(trimmed);
+            if (Array.isArray(parsed)) {
+              return parsed.map(String).map((s) => s.trim()).filter(Boolean);
+            }
+          } catch {
+            // ignore parse error
+          }
+        }
+        
+        // Try parsing as comma-separated
+        if (trimmed.includes(",")) {
+          return trimmed.split(",").map((s) => s.trim()).filter(Boolean);
+        }
+        
+        // Single value
+        if (trimmed) {
+          return [trimmed];
+        }
+      }
+      
+      return [];
+    };
+    
+    // Helper function to extract price from various field names
+    const extractPrice = (storeRecord: Record<string, unknown>): number | null => {
+      const rawPrice =
+        storeRecord["product_price"] ??
+        storeRecord["price"] ??
+        storeRecord["item_price"] ??
+        storeRecord["store_price"] ??
+        null;
+        
+      const numericPrice = rawPrice != null && (typeof rawPrice === 'string' || typeof rawPrice === 'number') 
+        ? Number.parseFloat(String(rawPrice)) 
+        : null;
+        
+      return numericPrice != null && !Number.isNaN(numericPrice) ? numericPrice : null;
+    };
+    
     // The stores from the API might have price in different fields
     const rawStores = Array.isArray(storesData) ? (storesData as unknown[]) : [];
     
     const normalized = rawStores.map((store: unknown) => {
       const storeRecord: Record<string, unknown> = isRecord(store) ? store : {};
 
-      const storesObj = isRecord(storeRecord["stores"]) ? (storeRecord["stores"] as Record<string, unknown>) : undefined;
+      const storesObj = isRecord(storeRecord["stores"]) ? storeRecord["stores"] : undefined;
 
       const rawId = storeRecord["id"] ?? storeRecord["store_id"] ?? (storesObj ? storesObj["id"] : undefined);
       const id = typeof rawId === "string" || typeof rawId === "number" ? String(rawId) : "";
@@ -144,38 +195,9 @@ const ProductDetail = () => {
       const rawName = storeRecord["name"] ?? storeRecord["store_name"] ?? (storesObj ? storesObj["name"] : undefined);
       const name = typeof rawName === "string" ? rawName : "";
 
-      // Try multiple possible price field names from backend
-      const rawPrice =
-        storeRecord["product_price"] ??
-        storeRecord["price"] ??
-        storeRecord["item_price"] ??
-        storeRecord["store_price"] ??
-        null;
-      // Convert to number if it's a string
-      const numericPrice = rawPrice != null ? Number.parseFloat(String(rawPrice)) : null;
-      const finalPrice = numericPrice != null && !Number.isNaN(numericPrice) ? numericPrice : null;
-
+      const finalPrice = extractPrice(storeRecord);
       const rawSizes = storeRecord["sizes"] ?? storeRecord["available_sizes"];
-      let sizes: string[] = [];
-      if (Array.isArray(rawSizes)) {
-        sizes = rawSizes.map(String).map((s) => s.trim()).filter(Boolean);
-      } else if (typeof rawSizes === "string") {
-        const trimmed = rawSizes.trim();
-        if (trimmed.startsWith("[") && trimmed.endsWith("]")) {
-          try {
-            const parsed: unknown = JSON.parse(trimmed);
-            if (Array.isArray(parsed)) {
-              sizes = parsed.map(String).map((s) => s.trim()).filter(Boolean);
-            }
-          } catch {
-            // ignore
-          }
-        } else if (trimmed.includes(",")) {
-          sizes = trimmed.split(",").map((s) => s.trim()).filter(Boolean);
-        } else if (trimmed) {
-          sizes = [trimmed];
-        }
-      }
+      const sizes = parseSizes(rawSizes);
       
       return {
         ...storeRecord,
@@ -219,8 +241,8 @@ const ProductDetail = () => {
         const user = JSON.parse(userStr);
         setIsAdmin(user.role === 'admin');
         return;
-      } catch (_e) {
-        logError(new Error('Failed to parse user data'), { component: 'ProductDetail', action: 'PARSE_USER' });
+      } catch (error) {
+        logError(new Error('Failed to parse user data'), { component: 'ProductDetail', action: 'PARSE_USER', error });
       }
     }
     
@@ -230,7 +252,8 @@ const ProductDetail = () => {
       try {
         const payload = JSON.parse(atob(token.split('.')[1]));
         setIsAdmin(payload.role === 'admin');
-      } catch (_e) {
+      } catch (error) {
+        logError(new Error('Failed to decode token'), { component: 'ProductDetail', action: 'DECODE_TOKEN', error });
         setIsAdmin(false);
       }
     }
@@ -410,15 +433,13 @@ const ProductDetail = () => {
                     />
                   </div>
                 )}
-                <div 
-                  className="w-full rounded-3xl flex items-center justify-center p-8 cursor-zoom-in" 
+                <button 
+                  type="button"
+                  className="w-full rounded-3xl flex items-center justify-center p-8 cursor-zoom-in border-0" 
                   style={{
                     background: 'radial-gradient(circle at 20% 30%, rgba(255,255,255,0.08) 0%, transparent 50%), radial-gradient(circle at 80% 70%, rgba(255,255,255,0.06) 0%, transparent 50%), linear-gradient(135deg, rgba(0,0,0,0.9) 0%, rgba(20,20,20,0.95) 100%)'
                   }}
                   onClick={() => setIsLightboxOpen(true)}
-                  role="button"
-                  tabIndex={0}
-                  onKeyDown={(e) => e.key === 'Enter' && setIsLightboxOpen(true)}
                   aria-label={t('products.zoomImage', 'Click to zoom image')}
                 >
                   <img
@@ -428,7 +449,7 @@ const ProductDetail = () => {
                     loading="lazy"
                     draggable={false}
                   />
-                </div>
+                </button>
               </div>
             </div>
 
@@ -545,7 +566,7 @@ const ProductDetail = () => {
                       <span className="sm:inline">{t('products.filters')}</span>
                       {(showRecommendedOnly || sortBy !== 'name') && (
                         <span className="ml-2 bg-primary text-primary-foreground rounded-full w-5 h-5 flex items-center justify-center text-[10px] font-bold">
-                          {(showRecommendedOnly ? 1 : 0) + (sortBy !== 'name' ? 1 : 0)}
+                          {(showRecommendedOnly ? 1 : 0) + (sortBy === 'name' ? 0 : 1)}
                         </span>
                       )}
                     </Button>
@@ -638,9 +659,12 @@ const ProductDetail = () => {
 
               {/* Stores List */}
               <div className="space-y-4 max-h-[600px] overflow-y-auto pr-2">
-                {filteredStores.length > 0 ? (
-                  <>
-                    {paginatedStores.map((store) => (
+                {(() => {
+                  // Render stores list with pagination or empty states
+                  if (filteredStores.length > 0) {
+                    return (
+                      <>
+                        {paginatedStores.map((store) => (
                       <div
                         key={store.id}
                         className="p-4 rounded-xl border border-white/6 bg-black/20 hover:bg-white/6 transition-colors"
@@ -682,7 +706,7 @@ const ProductDetail = () => {
                       </div>
 
                       {/* Price */}
-                      {store.price && (
+                      {Boolean(store.price) && (
                         <div className="mb-3">
                           <p className="font-display text-2xl font-bold">{formatPrice(store.price)}</p>
                         </div>
@@ -770,31 +794,41 @@ const ProductDetail = () => {
                   </div>
                 )}
               </>
-                ) : stores.length > 0 ? (
-                  <div className="text-center py-8 text-muted-foreground">
-                    <p>{t('productDetail.noStoresMatch')}</p>
-                    <Button
-                      variant="link"
-                      onClick={() => {
-                        setStoreSearch("");
-                        setShowRecommendedOnly(false);
-                      }}
-                      className="mt-2"
-                    >
-                      {t('productDetail.clearFilters')}
-                    </Button>
-                  </div>
-                ) : (
-                  <div className="text-center py-8 border border-dashed border-border/50 rounded-xl">
-                    <Package className="w-12 h-12 mx-auto mb-3 text-muted-foreground" />
-                    <p className="text-muted-foreground select-none mb-2">{t('productDetail.noStoresAvailable')}</p>
-                    {isAdmin && (
-                      <p className="text-xs text-muted-foreground">
-                        {t('productDetail.addStores')}
-                      </p>
-                    )}
-                  </div>
-                )}
+                    );
+                  }
+                  
+                  // No stores match filters
+                  if (stores.length > 0) {
+                    return (
+                      <div className="text-center py-8 text-muted-foreground">
+                        <p>{t('productDetail.noStoresMatch')}</p>
+                        <Button
+                          variant="link"
+                          onClick={() => {
+                            setStoreSearch("");
+                            setShowRecommendedOnly(false);
+                          }}
+                          className="mt-2"
+                        >
+                          {t('productDetail.clearFilters')}
+                        </Button>
+                      </div>
+                    );
+                  }
+                  
+                  // No stores available at all
+                  return (
+                    <div className="text-center py-8 border border-dashed border-border/50 rounded-xl">
+                      <Package className="w-12 h-12 mx-auto mb-3 text-muted-foreground" />
+                      <p className="text-muted-foreground select-none mb-2">{t('productDetail.noStoresAvailable')}</p>
+                      {isAdmin && (
+                        <p className="text-xs text-muted-foreground">
+                          {t('productDetail.addStores')}
+                        </p>
+                      )}
+                    </div>
+                  );
+                })()}
               </div>
             </div>
           </div>

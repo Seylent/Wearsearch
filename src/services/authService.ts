@@ -3,7 +3,7 @@
  * Refactored to use unified API and auth storage
  */
 
-import { api, apiLegacy, handleApiError } from './api';
+import { api, apiLegacy } from './api';
 import { setAuth, clearAuth, isAuthenticated } from '@/utils/authStorage';
 import { getValidGuestFavorites, clearGuestFavorites } from './guestFavorites';
 import { logAuthError } from './logger';
@@ -14,7 +14,10 @@ function isRecord(value: unknown): value is Record<string, unknown> {
 }
 
 function asError(value: unknown): Error {
-  return value instanceof Error ? value : new Error(String(value));
+  if (value instanceof Error) return value;
+  if (typeof value === 'string') return new Error(value);
+  if (value && typeof value === 'object') return new Error(JSON.stringify(value));
+  return new Error(value instanceof Error ? value.message : JSON.stringify(value));
 }
 
 function getErrorStatus(error: unknown): number | undefined {
@@ -109,14 +112,12 @@ export const authService = {
           return legacyResponse.data;
         } catch (legacyError) {
           console.error('❌ Legacy login failed:', legacyError);
-          const legacyApiError = handleApiError(legacyError);
-          throw new Error(legacyApiError.message);
+          throw asError(legacyError);
         }
       }
 
       console.error('❌ Login failed:', error);
-      const apiError = handleApiError(error);
-      throw new Error(apiError.message);
+      throw asError(error);
     }
   },
 
@@ -154,13 +155,11 @@ export const authService = {
           const legacyResponse = await apiLegacy.post(ENDPOINTS.REGISTER, registerData);
           return legacyResponse.data;
         } catch (legacyError) {
-          const legacyApiError = handleApiError(legacyError);
-          throw new Error(legacyApiError.message);
+          throw asError(legacyError);
         }
       }
 
-      const apiError = handleApiError(error);
-      throw new Error(apiError.message);
+      throw asError(error);
     }
   },
 
@@ -190,7 +189,7 @@ export const authService = {
    */
   async getCurrentUser(): Promise<User> {
     // Return existing promise if already fetching
-    if (currentUserPromise) {
+    if (currentUserPromise !== null) {
       return currentUserPromise;
     }
 

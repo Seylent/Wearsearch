@@ -21,7 +21,7 @@ const sortOptions = [
   { value: 'price-desc', label: 'Price High to Low' },
 ];
 
-export default function SortDropdown({ currentSort = 'newest' }: SortDropdownProps) {
+export default function SortDropdown({ currentSort = 'newest' }: Readonly<SortDropdownProps>) {
   const router = useRouter();
   const searchParams = useSearchParams();
 

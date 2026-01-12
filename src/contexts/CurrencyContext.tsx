@@ -5,14 +5,14 @@
 
 'use client';
 
-import React, { createContext, useContext, useState, useEffect, useCallback, ReactNode } from 'react';
+import React, { createContext, useContext, useState, useEffect, useCallback, useMemo, ReactNode } from 'react';
 import { api } from '@/services/api';
 import { 
   CurrencyCode, 
-  currencyStorage, 
-  getCurrencySymbol as getSymbol, 
-  getCurrencyName as getName 
+  currencyStorage
 } from '@/utils/currencyStorage';
+
+export { getCurrencySymbol, getCurrencyName } from '@/utils/currencyStorage';
 
 export interface ExchangeRate {
   rate: number;
@@ -38,7 +38,7 @@ export const CurrencyProvider: React.FC<CurrencyProviderProps> = ({
   children, 
   initialCurrency 
 }) => {
-  const [currency, setCurrencyInternal] = useState<CurrencyCode>(
+  const [currency, setCurrency] = useState<CurrencyCode>(
     initialCurrency || 'UAH'
   );
   const [exchangeRate, setExchangeRate] = useState<ExchangeRate | null>(null);
@@ -50,13 +50,13 @@ export const CurrencyProvider: React.FC<CurrencyProviderProps> = ({
   useEffect(() => {
     if (!initialCurrency) {
       const savedCurrency = currencyStorage.getCurrency();
-      setCurrencyInternal(savedCurrency);
+      setCurrency(savedCurrency);
     }
     setIsHydrated(true);
   }, [initialCurrency]);
 
-  const setCurrency = useCallback((newCurrency: CurrencyCode) => {
-    setCurrencyInternal(newCurrency);
+  const updateCurrency = useCallback((newCurrency: CurrencyCode) => {
+    setCurrency(newCurrency);
     if (isHydrated) {
       currencyStorage.setCurrency(newCurrency);
     }
@@ -70,7 +70,7 @@ export const CurrencyProvider: React.FC<CurrencyProviderProps> = ({
     }
 
     // Check if we have fresh rate (less than 30 minutes old)
-    if (exchangeRate && exchangeRate.updatedAt) {
+    if (exchangeRate?.updatedAt) {
       const lastUpdate = new Date(exchangeRate.updatedAt);
       const now = new Date();
       const thirtyMinutes = 30 * 60 * 1000;
@@ -89,14 +89,14 @@ export const CurrencyProvider: React.FC<CurrencyProviderProps> = ({
       if (response.status === 200) {
         const data = response.data;
         setExchangeRate({
-          rate: data.USD_UAH || 40.50,
+          rate: data.USD_UAH || 40.5,
           updatedAt: data.updatedAt || new Date().toISOString()
         });
       } else {
         throw new Error('Failed to fetch exchange rate');
       }
-    } catch (_error) {
-      console.warn('Exchange rate API not available, using fallback rate');
+    } catch (error) {
+      console.warn('Exchange rate API not available, using fallback rate', error);
       setExchangeRate({
         rate: 40.5,
         updatedAt: new Date().toISOString()
@@ -117,13 +117,13 @@ export const CurrencyProvider: React.FC<CurrencyProviderProps> = ({
     }
   }, [currency, isHydrated, fetchExchangeRate]);
 
-  const value = {
+  const value = useMemo(() => ({
     currency,
-    setCurrency,
+    setCurrency: updateCurrency,
     exchangeRate,
     loading,
     error
-  };
+  }), [currency, exchangeRate, loading, error, updateCurrency]);
 
   return (
     <CurrencyContext.Provider value={value}>
@@ -151,7 +151,3 @@ export const useAPIWithCurrency = () => {
   
   return { addCurrencyParam, currency };
 };
-
-// Re-export utility functions for backward compatibility
-export const getCurrencySymbol = getSymbol;
-export const getCurrencyName = getName;

@@ -20,7 +20,7 @@ export const currencyStorage = {
    * Get currency from cookies (client-side)
    */
   getCurrency(): CurrencyCode {
-    if (typeof window === 'undefined') return 'UAH';
+    if (globalThis.window === undefined) return 'UAH';
     
     const value = document.cookie
       .split('; ')
@@ -34,7 +34,7 @@ export const currencyStorage = {
    * Set currency in cookies (client-side)
    */
   setCurrency(currency: CurrencyCode): void {
-    if (typeof window === 'undefined') return;
+    if (globalThis.window === undefined) return;
     
     const cookieValue = `${CURRENCY_COOKIE.name}=${currency}; Max-Age=${CURRENCY_COOKIE.maxAge}; Path=${CURRENCY_COOKIE.path}; SameSite=${CURRENCY_COOKIE.sameSite}${CURRENCY_COOKIE.secure ? '; Secure' : ''}`;
     document.cookie = cookieValue;
@@ -45,7 +45,7 @@ export const currencyStorage = {
  * Server-side currency detection (use in server components only)
  */
 export async function getServerCurrency(): Promise<CurrencyCode> {
-  if (typeof window !== 'undefined') {
+  if (globalThis.window !== undefined) {
     // Client-side fallback
     return currencyStorage.getCurrency();
   }
@@ -53,7 +53,7 @@ export async function getServerCurrency(): Promise<CurrencyCode> {
   try {
     // Dynamic import to avoid bundling in client
     const { cookies } = await import('next/headers');
-    const cookieStore = await cookies();
+    const cookieStore = cookies();
     const currency = cookieStore.get(CURRENCY_COOKIE.name)?.value;
     return (currency === 'USD' || currency === 'UAH') ? currency : 'UAH';
   } catch {

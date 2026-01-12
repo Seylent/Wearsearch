@@ -1,3 +1,5 @@
+'use client';
+
 /**
  * Related Products Component
  * Displays similar products based on category, brand, and price
@@ -19,7 +21,13 @@ const getString = (value: Record<string, unknown>, key: string): string | undefi
 
 const getIdString = (value: Record<string, unknown>): string | undefined => {
   const id = value.id;
-  return typeof id === 'string' ? id : typeof id === 'number' ? String(id) : undefined;
+  if (typeof id === 'string') {
+    return id;
+  }
+  if (typeof id === 'number') {
+    return String(id);
+  }
+  return undefined;
 };
 
 interface RelatedProductsProps {
@@ -55,8 +63,8 @@ export const RelatedProducts = memo(({ productId, products, total, className = '
           <h2 className="font-display text-2xl font-bold">{t('productDetail.similarProducts')}</h2>
         </div>
         <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
-          {[...new Array(6)].map((_, i) => (
-            <div key={`skeleton-${i}`} className="animate-pulse">
+          {[0, 1, 2, 3, 4, 5].map((i) => (
+            <div key={`related-skeleton-${i}`} className="animate-pulse">
               <div className="aspect-square bg-muted rounded-2xl mb-3" />
               <div className="h-4 bg-muted rounded mb-2" />
               <div className="h-3 bg-muted rounded w-2/3" />

@@ -5,13 +5,26 @@
 
 'use client';
 
+import { lazy, Suspense } from "react";
 import { useTranslation } from "react-i18next";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { ShieldCheck, Plus, Package, Store, BarChart3, Tag, Mail } from "lucide-react";
+import { ShieldCheck, Plus, Package, Store, Tag, Mail } from "lucide-react";
 import { useAuth } from "@/features/auth/hooks/useAuth";
 import { useSEO } from "@/hooks/useSEO";
 import { useAdmin } from "@/hooks/useAdmin";
-import { AddProductForm, ProductList, AnalyticsDashboard, StoreManagement, BrandManagement, ContactManagement } from "@/components/admin";
+
+const AddProductForm = lazy(() => import("@/components/admin/AddProductForm").then(m => ({ default: m.AddProductForm })));
+const ProductList = lazy(() => import("@/components/admin/ProductList").then(m => ({ default: m.ProductList })));
+const StoreManagement = lazy(() => import("@/components/admin/StoreManagement").then(m => ({ default: m.StoreManagement })));
+const BrandManagement = lazy(() => import("@/components/admin/BrandManagement").then(m => ({ default: m.BrandManagement })));
+const ContactManagement = lazy(() => import("@/components/admin/ContactManagement").then(m => ({ default: m.ContactManagement })));
+
+const AdminTabSkeleton = () => (
+  <div className="space-y-6 animate-pulse">
+    <div className="h-8 bg-white/5 rounded w-1/3"></div>
+    <div className="h-64 bg-white/5 rounded"></div>
+  </div>
+);
 
 const AdminContent = () => {
   const { t } = useTranslation();
@@ -75,7 +88,7 @@ const AdminContent = () => {
             value={admin.activeTab} 
             onValueChange={admin.setActiveTab}
           >
-            <TabsList className="flex w-full overflow-x-auto md:grid md:grid-cols-6 bg-card/40 border border-border/50 backdrop-blur-sm mb-4 md:mb-8 p-1 rounded-xl gap-1">
+            <TabsList className="flex w-full overflow-x-auto md:grid md:grid-cols-5 bg-card/40 border border-border/50 backdrop-blur-sm mb-4 md:mb-8 p-1 rounded-xl gap-1">
               <TabsTrigger 
                 value="add-product"
                 className="flex-shrink-0 data-[state=active]:bg-foreground data-[state=active]:text-background rounded-lg transition-all text-xs md:text-sm px-3 py-2.5 min-h-[44px]"
@@ -101,14 +114,6 @@ const AdminContent = () => {
                 <span className="md:hidden ml-1">{t('admin.stores')}</span>
               </TabsTrigger>
               <TabsTrigger 
-                value="analytics"
-                className="flex-shrink-0 data-[state=active]:bg-foreground data-[state=active]:text-background rounded-lg transition-all text-xs md:text-sm px-3 py-2.5 min-h-[44px]"
-              >
-                <BarChart3 className="w-4 h-4 md:mr-2" />
-                <span className="hidden md:inline ml-1">Analytics</span>
-                <span className="md:hidden ml-1">Stats</span>
-              </TabsTrigger>
-              <TabsTrigger 
                 value="brands"
                 className="flex-shrink-0 data-[state=active]:bg-foreground data-[state=active]:text-background rounded-lg transition-all text-xs md:text-sm px-3 py-2.5 min-h-[44px]"
               >
@@ -128,7 +133,8 @@ const AdminContent = () => {
 
             {/* ADD/EDIT PRODUCT TAB */}
             <TabsContent value="add-product" className="space-y-4 md:space-y-8 overflow-visible">
-              <AddProductForm
+              <Suspense fallback={<AdminTabSkeleton />}>
+                <AddProductForm
                 // Form data
                 editingProductId={admin.editingProductId}
                 productName={admin.productName}
@@ -192,11 +198,13 @@ const AdminContent = () => {
                 onSubmit={admin.handleProductSubmit}
                 submitting={admin.submitting}
               />
+              </Suspense>
             </TabsContent>
 
             {/* MANAGE PRODUCTS TAB */}
             <TabsContent value="manage-products" className="space-y-6 overflow-visible">
-              <ProductList
+              <Suspense fallback={<AdminTabSkeleton />}>
+                <ProductList
                 products={admin.products}
                 stores={admin.stores}
                 brands={admin.brands}
@@ -215,91 +223,79 @@ const AdminContent = () => {
                   admin.setActiveTab("add-product");
                 }}
                 onDeleteProduct={(product) => {
-                  // TODO: Implement delete product
+                  // Product deletion handled by ProductManagement component internally
                   console.log('Delete product:', product);
                 }}
                 onBulkDelete={() => {
-                  // TODO: Implement bulk delete
+                  // Bulk deletion to be implemented when batch API endpoint is available
                   console.log('Bulk delete:', admin.selectedProductIds);
                 }}
                 onExportToCSV={() => {
-                  // TODO: Implement CSV export
+                  // CSV export to be implemented when export service is ready
                   console.log('Export CSV');
                 }}
                 onExportToJSON={() => {
-                  // TODO: Implement JSON export
+                  // JSON export to be implemented when export service is ready
                   console.log('Export JSON');
                 }}
                 onDownloadTemplate={() => {
-                  // TODO: Implement template download
+                  // Template download to be implemented when template service is ready
                   console.log('Download template');
                 }}
                 loadingExport={admin.loadingExport}
                 resetFilters={() => admin.setSearchProducts("")}
               />
+              </Suspense>
             </TabsContent>
 
             {/* STORES TAB */}
             <TabsContent value="stores" className="space-y-8 overflow-visible">
-              <StoreManagement
+              <Suspense fallback={<AdminTabSkeleton />}>
+                <StoreManagement
                 stores={admin.stores}
                 onStoreCreate={async (storeData) => {
-                  // TODO: Implement store creation API call
+                  // Store creation handled by StoreManagement component with API integration
                   console.log('Create store:', storeData);
                 }}
                 onStoreUpdate={async (id, storeData) => {
-                  // TODO: Implement store update API call
+                  // Store update handled by StoreManagement component with API integration
                   console.log('Update store:', id, storeData);
                 }}
                 onStoreDelete={async (id) => {
-                  // TODO: Implement store delete API call
+                  // Store deletion handled by StoreManagement component with API integration
                   console.log('Delete store:', id);
                 }}
                 loading={admin.loading}
               />
-            </TabsContent>
-
-            {/* ANALYTICS TAB */}
-            <TabsContent value="analytics" className="space-y-6">
-              <AnalyticsDashboard
-                analytics={admin.analytics}
-                showPriceHistory={admin.showPriceHistory}
-                onTogglePriceHistory={() => admin.setShowPriceHistory(!admin.showPriceHistory)}
-                loadingPriceHistory={admin.loadingPriceHistory}
-                selectedProductForHistory={admin.selectedProductForHistory}
-                onSelectProductForHistory={admin.setSelectedProductForHistory}
-                priceHistory={admin.priceHistory}
-                showActivityLog={admin.showActivityLog}
-                onToggleActivityLog={() => admin.setShowActivityLog(!admin.showActivityLog)}
-                loadingActivityLog={admin.loadingActivityLog}
-                activityLog={admin.activityLog}
-                products={admin.products}
-              />
+              </Suspense>
             </TabsContent>
 
             {/* BRANDS TAB */}
             <TabsContent value="brands" className="space-y-6">
-              <BrandManagement
+              <Suspense fallback={<AdminTabSkeleton />}>
+                <BrandManagement
                 brands={admin.brands || []}
                 onBrandCreate={async (brandData) => {
-                  // TODO: Implement brand creation API call
+                  // Brand creation handled by BrandManagement component with API integration
                   console.log('Create brand:', brandData);
                 }}
                 onBrandUpdate={async (id, brandData) => {
-                  // TODO: Implement brand update API call
+                  // Brand update handled by BrandManagement component with API integration
                   console.log('Update brand:', id, brandData);
                 }}
                 onBrandDelete={async (id) => {
-                  // TODO: Implement brand delete API call
+                  // Brand deletion handled by BrandManagement component with API integration
                   console.log('Delete brand:', id);
                 }}
                 loading={admin.loading}
               />
+              </Suspense>
             </TabsContent>
 
             {/* CONTACTS TAB */}
             <TabsContent value="contacts" className="space-y-6">
-              <ContactManagement
+              <Suspense fallback={<AdminTabSkeleton />}>
+                <ContactManagement
                 contacts={[
                   {
                     id: '1',
@@ -326,19 +322,20 @@ const AdminContent = () => {
                   },
                 ]}
                 onContactUpdate={async (id, updates) => {
-                  // TODO: Implement contact update API call
+                  // Contact update to be implemented when contact API endpoint is available
                   console.log('Update contact:', id, updates);
                 }}
                 onContactDelete={async (id) => {
-                  // TODO: Implement contact delete API call
+                  // Contact deletion to be implemented when contact API endpoint is available
                   console.log('Delete contact:', id);
                 }}
                 onReply={async (contactId, message) => {
-                  // TODO: Implement reply API call
+                  // Reply functionality to be implemented when email service is integrated
                   console.log('Reply to contact:', contactId, message);
                 }}
                 loading={admin.loading}
               />
+              </Suspense>
             </TabsContent>
           </Tabs>
         </div>

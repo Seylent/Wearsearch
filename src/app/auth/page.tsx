@@ -35,71 +35,78 @@ export default function AuthPage() {
     });
   };
 
+  const handleLogin = async () => {
+    const response = await api.post('/auth/login', {
+      identifier: formData.identifier,
+      password: formData.password,
+    });
+
+    if (response.data?.success) {
+      localStorage.setItem('access_token', response.data.access_token);
+      localStorage.setItem('refresh_token', response.data.refresh_token);
+      
+      if (response.data.user) {
+        localStorage.setItem('user', JSON.stringify(response.data.user));
+      }
+      
+      toast({
+        title: t('auth.loginSuccess', 'Успішний вхід'),
+        description: t('auth.welcomeBack', 'Ласкаво просимо назад!'),
+      });
+      router.push('/');
+    }
+  };
+
+  const handleSignup = async () => {
+    if (formData.password !== formData.confirmPassword) {
+      toast({
+        variant: 'destructive',
+        title: t('auth.passwordMismatch', 'Паролі не співпадають'),
+        description: t('auth.passwordMismatchDesc', 'Будь ласка, переконайтеся що паролі однакові'),
+      });
+      throw new Error('Password mismatch');
+    }
+
+    const response = await api.post('/auth/register', {
+      email: formData.email,
+      password: formData.password,
+      display_name: formData.display_name || undefined,
+      username: formData.username || undefined,
+    });
+
+    if (response.data?.success) {
+      toast({
+        title: t('auth.signupSuccess', 'Реєстрація успішна'),
+        description: t('auth.pleaseLogin', 'Тепер ви можете увійти'),
+      });
+      setIsLogin(true);
+      setFormData({
+        email: '',
+        display_name: '',
+        username: '',
+        identifier: formData.email,
+        password: formData.password,
+        confirmPassword: '',
+      });
+    }
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
 
     try {
       if (isLogin) {
-        // Login logic згідно з API документацією
-        const response = await api.post('/auth/login', {
-          identifier: formData.identifier,
-          password: formData.password,
-        });
-
-        if (response.data?.success) {
-          // Зберігаємо обидва токени згідно з документацією
-          localStorage.setItem('access_token', response.data.access_token);
-          localStorage.setItem('refresh_token', response.data.refresh_token);
-          
-          // Зберігаємо інформацію про користувача
-          if (response.data.user) {
-            localStorage.setItem('user', JSON.stringify(response.data.user));
-          }
-          
-          toast({
-            title: t('auth.loginSuccess', 'Успішний вхід'),
-            description: t('auth.welcomeBack', 'Ласкаво просимо назад!'),
-          });
-          router.push('/');
-        }
+        await handleLogin();
       } else {
-        // Signup logic
-        if (formData.password !== formData.confirmPassword) {
-          toast({
-            variant: 'destructive',
-            title: t('auth.passwordMismatch', 'Паролі не співпадають'),
-            description: t('auth.passwordMismatchDesc', 'Будь ласка, переконайтеся що паролі однакові'),
-          });
-          setIsLoading(false);
-          return;
-        }
-
-        const response = await api.post('/auth/register', {
-          email: formData.email,
-          password: formData.password,
-          display_name: formData.display_name || undefined,
-          username: formData.username || undefined,
-        });
-
-        if (response.data && response.data.success) {
-          toast({
-            title: t('auth.signupSuccess', 'Реєстрація успішна'),
-            description: t('auth.pleaseLogin', 'Тепер ви можете увійти'),
-          });
-          setIsLogin(true);
-          // Очищуємо форму і переносимо email в identifier для входу
-          setFormData({
-            email: '',
-            display_name: '',
-            username: '',
-            identifier: formData.email,
-            password: formData.password,
-            confirmPassword: '',
-          });
-        }
+        await handleSignup();
       }
     } catch (error: unknown) {
+      if (error instanceof Error && error.message === 'Password mismatch') {
+        // Already handled in handleSignup
+        return;
+      }
+      
       const apiError = error as { response?: { data?: { message?: string } }; message?: string };
       const message = apiError?.response?.data?.message || apiError?.message;
       toast({
@@ -282,14 +289,17 @@ export default function AuthPage() {
                 disabled={isLoading}
                 className="w-full h-12 text-base font-medium bg-white text-black hover:bg-white/90 disabled:opacity-50"
               >
-                {isLoading ? (
-                  <>
-                    <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                    {isLogin ? t('auth.signingIn', 'Входимо...') : t('auth.signingUp', 'Реєструємо...')}
-                  </>
-                ) : (
-                  isLogin ? t('auth.loginButton', 'Увійти') : t('auth.signupButton', 'Зареєструватися')
-                )}
+                {(() => {
+                  if (isLoading) {
+                    return (
+                      <>
+                        <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                        {isLogin ? t('auth.signingIn', 'Входимо...') : t('auth.signingUp', 'Реєструємо...')}
+                      </>
+                    );
+                  }
+                  return isLogin ? t('auth.loginButton', 'Увійти') : t('auth.signupButton', 'Зареєструватися');
+                })()}
               </Button>
             </form>
 

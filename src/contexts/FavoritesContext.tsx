@@ -1,6 +1,6 @@
 'use client';
 
-import { createContext, useContext, ReactNode } from 'react';
+import { createContext, useContext, ReactNode, useMemo } from 'react';
 import { useFavorites } from '@/hooks/useApi';
 import { useAuth } from '@/features/auth/hooks/useAuth';
 
@@ -29,7 +29,7 @@ interface FavoritesContextType {
 
 const FavoritesContext = createContext<FavoritesContextType | undefined>(undefined);
 
-export function FavoritesProvider({ children }: { children: ReactNode }) {
+export function FavoritesProvider({ children }: Readonly<{ children: ReactNode }>) {
   const { isAuthenticated } = useAuth();
   
   // Only fetch favorites if user is authenticated
@@ -46,8 +46,14 @@ export function FavoritesProvider({ children }: { children: ReactNode }) {
     });
   };
   
+  const value = useMemo(() => ({
+    favorites,
+    isLoading,
+    isFavorited
+  }), [favorites, isLoading, isFavorited]);
+
   return (
-    <FavoritesContext.Provider value={{ favorites, isLoading, isFavorited }}>
+    <FavoritesContext.Provider value={value}>
       {children}
     </FavoritesContext.Provider>
   );

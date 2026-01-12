@@ -4,6 +4,8 @@ import { memo, useState, useEffect } from 'react';
 
 export const NeonAbstractions = memo(() => {
   const [stars, setStars] = useState<Array<{ left: string; top: string; opacity: number; animation: string; delay: string }>>([]);
+  const [sparkles, setSparkles] = useState<Array<{ top: string; left: string; width: number; height: number; opacity: number; animation: string; delay: string; boxShadow: string }>>([]);
+  const [crosses, setCrosses] = useState<Array<{ top: string; left: string; animation: string; delay: string }>>([]);
 
   // Generate stars only on client to avoid hydration mismatch
   useEffect(() => {
@@ -15,6 +17,41 @@ export const NeonAbstractions = memo(() => {
       delay: `${Math.random() * 3}s`,
     }));
     setStars(generatedStars);
+
+    const generatedSparkles = [...Array(10)].map(() => {
+      const width = 1 + Math.random() * 3;
+      const height = 1 + Math.random() * 3;
+      const opacity = 0.3 + Math.random() * 0.5;
+      const animDuration = 2 + Math.random() * 3;
+      const delay = Math.random() * 4;
+      const shadowSize = 4 + Math.random() * 10;
+      const shadowOpacity = 0.3 + Math.random() * 0.4;
+      
+      return {
+        top: `${5 + Math.random() * 90}%`,
+        left: `${5 + Math.random() * 90}%`,
+        width,
+        height,
+        opacity,
+        animation: `sparkle ${animDuration}s ease-in-out infinite`,
+        delay: `${delay}s`,
+        boxShadow: `0 0 ${shadowSize}px rgba(255,255,255,${shadowOpacity})`,
+      };
+    });
+    setSparkles(generatedSparkles);
+
+    const generatedCrosses = [...Array(4)].map(() => {
+      const animDuration = 3 + Math.random() * 2;
+      const delay = Math.random() * 5;
+      
+      return {
+        top: `${15 + Math.random() * 70}%`,
+        left: `${10 + Math.random() * 80}%`,
+        animation: `sparkle ${animDuration}s ease-in-out infinite`,
+        delay: `${delay}s`,
+      };
+    });
+    setCrosses(generatedCrosses);
   }, []);
 
   return (
@@ -126,19 +163,19 @@ export const NeonAbstractions = memo(() => {
       />
 
       {/* Sparkles / Stars - increased count and variety */}
-      {[...Array(10)].map((_, i) => (
+      {sparkles.map((sparkle, i) => (
         <div
-          key={i}
+          key={`sparkle-${i}`}
           className="absolute rounded-full bg-foreground"
           style={{
-            top: `${5 + Math.random() * 90}%`,
-            left: `${5 + Math.random() * 90}%`,
-            width: `${1 + Math.random() * 3}px`,
-            height: `${1 + Math.random() * 3}px`,
-            opacity: 0.3 + Math.random() * 0.5,
-            animation: `sparkle ${2 + Math.random() * 3}s ease-in-out infinite`,
-            animationDelay: `${Math.random() * 4}s`,
-            boxShadow: `0 0 ${4 + Math.random() * 10}px rgba(255,255,255,${0.3 + Math.random() * 0.4})`,
+            top: sparkle.top,
+            left: sparkle.left,
+            width: `${sparkle.width}px`,
+            height: `${sparkle.height}px`,
+            opacity: sparkle.opacity,
+            animation: sparkle.animation,
+            animationDelay: sparkle.delay,
+            boxShadow: sparkle.boxShadow,
             willChange: 'opacity, transform',
             transform: 'translateZ(0)'
           }}
@@ -146,13 +183,13 @@ export const NeonAbstractions = memo(() => {
       ))}
 
       {/* Cross sparkles - brighter accent points */}
-      {[...Array(4)].map((_, i) => (
+      {crosses.map((cross, i) => (
         <div
           key={`cross-${i}`}
           className="absolute"
           style={{
-            top: `${15 + Math.random() * 70}%`,
-            left: `${10 + Math.random() * 80}%`,
+            top: cross.top,
+            left: cross.left,
           }}
         >
           <div
@@ -160,8 +197,8 @@ export const NeonAbstractions = memo(() => {
             style={{
               transform: 'translateX(-50%)',
               boxShadow: '0 0 10px rgba(255,255,255,0.5)',
-              animation: `sparkle ${3 + Math.random() * 2}s ease-in-out infinite`,
-              animationDelay: `${Math.random() * 5}s`
+              animation: cross.animation,
+              animationDelay: cross.delay
             }}
           />
           <div
@@ -169,8 +206,8 @@ export const NeonAbstractions = memo(() => {
             style={{
               transform: 'translateY(-50%)',
               boxShadow: '0 0 10px rgba(255,255,255,0.5)',
-              animation: `sparkle ${3 + Math.random() * 2}s ease-in-out infinite`,
-              animationDelay: `${Math.random() * 5}s`
+              animation: cross.animation,
+              animationDelay: cross.delay
             }}
           />
         </div>

@@ -25,7 +25,12 @@ const getErrorStatus = (error: unknown): number | undefined => {
   return typeof status === 'number' ? status : undefined;
 };
 
-const asError = (error: unknown): Error => (error instanceof Error ? error : new Error(String(error)));
+const asError = (error: unknown): Error => {
+  if (error instanceof Error) return error;
+  if (typeof error === 'string') return new Error(error);
+  if (error && typeof error === 'object') return new Error(JSON.stringify(error));
+  return new Error(error instanceof Error ? error.message : JSON.stringify(error));
+};
 
 export const useAuth = () => {
   const queryClient = useQueryClient();
@@ -75,7 +80,7 @@ export const useAuth = () => {
     },
     retryDelay: (attemptIndex) => Math.min(2000 * 2 ** attemptIndex, 60000), // Збільшено затримку
     // Only enable query if user might be authenticated (check on client-side only)
-    enabled: typeof window !== 'undefined' && authService.isAuthenticated(),
+    enabled: globalThis.window !== undefined && authService.isAuthenticated(),
   });
 
   const isAdmin = user?.role === 'admin';
@@ -91,7 +96,7 @@ export const useAuth = () => {
       await authService.logout();
       // Clear the cached user data
       queryClient.setQueryData(AUTH_QUERY_KEY, null);
-      window.dispatchEvent(new Event('auth:logout'));
+      globalThis.window.dispatchEvent(new Event('auth:logout'));
     } catch (error) {
       logAuthError(asError(error), 'LOGOUT');
     }
@@ -107,12 +112,12 @@ export const useAuth = () => {
       queryClient.setQueryData(AUTH_QUERY_KEY, null);
     };
 
-    window.addEventListener('auth:login', handleAuthLogin);
-    window.addEventListener('auth:logout', handleAuthLogout);
+    globalThis.window.addEventListener('auth:login', handleAuthLogin);
+    globalThis.window.addEventListener('auth:logout', handleAuthLogout);
 
     return () => {
-      window.removeEventListener('auth:login', handleAuthLogin);
-      window.removeEventListener('auth:logout', handleAuthLogout);
+      globalThis.window.removeEventListener('auth:login', handleAuthLogin);
+      globalThis.window.removeEventListener('auth:logout', handleAuthLogout);
     };
   }, [checkAuth, queryClient]);
 

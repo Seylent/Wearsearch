@@ -1,7 +1,7 @@
 /* eslint-env node */
-import fs from 'fs';
-import path from 'path';
-import { fileURLToPath } from 'url';
+import fs from 'node:fs';
+import path from 'node:path';
+import { fileURLToPath } from 'node:url';
 
 const _filename = fileURLToPath(import.meta.url);
 const _dirname = path.dirname(_filename);
@@ -30,21 +30,21 @@ function removeNavigationAndFooter(filePath) {
 
   // Remove Navigation import
   if (content.includes('import Navigation')) {
-    content = content.replace(/import Navigation from ['"]@\/components\/layout\/Navigation['"];?\n?/g, '');
+    content = content.replaceAll(/import Navigation from ['" ]@\/components\/layout\/Navigation['" ];?\n?/g, '');
     modified = true;
   }
 
   // Remove Footer import
   if (content.includes('import Footer')) {
-    content = content.replace(/import Footer from ['"]@\/components\/layout\/Footer['"];?\n?/g, '');
+    content = content.replaceAll(/import Footer from ['" ]@\/components\/layout\/Footer['" ];?\n?/g, '');
     modified = true;
   }
 
   // Remove <Navigation /> render
-  content = content.replace(/<Navigation\s*\/>/g, '');
+  content = content.replaceAll(/<Navigation\s*\/>/g, '');
   
   // Remove <Footer /> render
-  content = content.replace(/<Footer\s*\/>/g, '');
+  content = content.replaceAll(/<Footer\s*\/>/g, '');
 
   if (modified || content !== fs.readFileSync(filePath, 'utf8')) {
     fs.writeFileSync(filePath, content, 'utf8');

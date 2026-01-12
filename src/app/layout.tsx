@@ -1,10 +1,17 @@
 import type { Metadata, Viewport } from 'next';
+import { Inter } from 'next/font/google';
 import { NextProviders } from './providers';
 import Navigation from '@/components/layout/Navigation';
 import Footer from '@/components/layout/Footer';
 import NavigationProgress from '@/components/NavigationProgress';
 import { ResourceHintsInitializer } from '@/components/ResourceHintsInitializer';
 import "./globals.css";
+
+const inter = Inter({ 
+  subsets: ['latin', 'cyrillic'],
+  display: 'swap',
+  variable: '--font-inter'
+});
 
 // Basic metadata - pages will override this
 export const metadata: Metadata = {
@@ -43,12 +50,10 @@ export default function RootLayout({
     <html lang={htmlLang} className="dark" suppressHydrationWarning> 
       <head>
         {/* Preconnect to external domains for faster loading */}
-        <link rel="preconnect" href="https://fonts.googleapis.com" />
-        <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
         <link rel="dns-prefetch" href="//images.unsplash.com" />
         <link rel="dns-prefetch" href="//api.wearsearch.com" />
       </head>
-      <body className="min-h-screen bg-black text-white font-sans antialiased overflow-x-hidden selection:bg-white/20" suppressHydrationWarning>
+      <body className={`min-h-screen bg-black text-white font-sans antialiased overflow-x-hidden selection:bg-white/20 ${inter.variable}`} suppressHydrationWarning>
          {/* Skip to main content link for accessibility */}
          <a 
            href="#main-content"

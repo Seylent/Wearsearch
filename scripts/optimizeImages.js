@@ -7,7 +7,7 @@
 
 import sharp from 'sharp';
 import { S3Client, ListObjectsV2Command, GetObjectCommand, PutObjectCommand } from '@aws-sdk/client-s3';
-import { Readable } from 'node:stream';
+
 import dotenv from 'dotenv';
 
 dotenv.config();
@@ -190,4 +190,4 @@ async function main() {
 }
 
 // Run
-main().catch(console.error);
+await main();

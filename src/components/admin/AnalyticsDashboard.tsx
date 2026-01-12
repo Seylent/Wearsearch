@@ -204,8 +204,9 @@ export const AnalyticsDashboard: React.FC<AnalyticsDashboardProps> = ({
               <div className="space-y-4">
                 {/* Product Selector */}
                 <div>
-                  <label className="text-sm font-medium mb-2 block">Select Product:</label>
+                  <label htmlFor="product-history-select" className="text-sm font-medium mb-2 block">Select Product:</label>
                   <select
+                    id="product-history-select"
                     value={selectedProductForHistory || ''}
                     onChange={(e) => onSelectProductForHistory(e.target.value)}
                     className="w-full p-3 rounded-lg bg-card/50 border border-border/50"
@@ -220,7 +221,11 @@ export const AnalyticsDashboard: React.FC<AnalyticsDashboardProps> = ({
                 </div>
 
                 {/* Price History Display */}
-                {selectedProductForHistory && priceHistory[selectedProductForHistory] ? (
+                {(() => {
+                  if (!selectedProductForHistory || !priceHistory[selectedProductForHistory]) {
+                    return null;
+                  }
+                  return (
                   <div className="space-y-2 max-h-64 overflow-y-auto">
                     <h4 className="font-medium">Price Changes:</h4>
                     {priceHistory[selectedProductForHistory].map((entry) => (
@@ -237,11 +242,13 @@ export const AnalyticsDashboard: React.FC<AnalyticsDashboardProps> = ({
                       </div>
                     ))}
                   </div>
-                ) : selectedProductForHistory ? (
+                  );
+                })()}
+                {selectedProductForHistory && !priceHistory[selectedProductForHistory] && (
                   <div className="text-center py-8 text-muted-foreground">
                     No price history available for this product
                   </div>
-                ) : null}
+                )}
               </div>
             )}
           </div>
@@ -272,11 +279,12 @@ export const AnalyticsDashboard: React.FC<AnalyticsDashboardProps> = ({
                   activityLog.slice(0, 20).map((log) => (
                     <div key={log.id} className="p-3 rounded-lg bg-card/30 border border-border/30 space-y-1">
                       <div className="flex items-center justify-between">
-                        <span className={`text-xs px-2 py-0.5 rounded ${
-                          log.action === 'create' ? 'bg-green-500/20 text-green-600' :
-                          log.action === 'update' ? 'bg-blue-500/20 text-blue-600' :
-                          'bg-red-500/20 text-red-600'
-                        }`}>
+                        <span className={(() => {
+                          const baseClasses = 'text-xs px-2 py-0.5 rounded';
+                          if (log.action === 'create') return `${baseClasses} bg-green-500/20 text-green-600`;
+                          if (log.action === 'update') return `${baseClasses} bg-blue-500/20 text-blue-600`;
+                          return `${baseClasses} bg-red-500/20 text-red-600`;
+                        })()}>
                           {log.action.toUpperCase()}
                         </span>
                         <span className="text-xs text-muted-foreground">

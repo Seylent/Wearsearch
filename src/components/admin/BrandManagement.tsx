@@ -3,6 +3,8 @@
  * Управління брендами в адмін панелі
  */
 
+'use client';
+
 import React, { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Button } from "@/components/ui/button";
@@ -192,7 +194,11 @@ export const BrandManagement: React.FC<BrandManagementProps> = ({
                   {t('common.cancel')}
                 </Button>
                 <Button type="submit" disabled={submitting}>
-                  {submitting ? t('common.saving') : (editingBrand ? t('common.save') : t('common.create'))}
+                {(() => {
+                  if (submitting) return t('common.saving');
+                  if (editingBrand) return t('common.save');
+                  return t('common.create');
+                })()}
                 </Button>
               </div>
             </form>
@@ -213,18 +219,26 @@ export const BrandManagement: React.FC<BrandManagementProps> = ({
 
       {/* Brands Grid */}
       <div className="grid gap-4 md:gap-6">
-        {loading ? (
-          <div className="text-center py-12">
-            <p className="text-muted-foreground">{t('common.loading')}</p>
-          </div>
-        ) : filteredBrands.length === 0 ? (
-          <div className="text-center py-12">
-            <Tag className="w-12 h-12 mx-auto mb-4 text-muted-foreground" />
-            <h3 className="text-lg font-medium mb-2">{t('admin.noBrands')}</h3>
-            <p className="text-sm text-muted-foreground">{t('admin.createFirstBrand')}</p>
-          </div>
-        ) : (
-          filteredBrands.map((brand) => (
+        {(() => {
+          if (loading) {
+            return (
+              <div className="text-center py-12">
+                <p className="text-muted-foreground">{t('common.loading')}</p>
+              </div>
+            );
+          }
+          
+          if (filteredBrands.length === 0) {
+            return (
+              <div className="text-center py-12">
+                <Tag className="w-12 h-12 mx-auto mb-4 text-muted-foreground" />
+                <h3 className="text-lg font-medium mb-2">{t('admin.noBrands')}</h3>
+                <p className="text-sm text-muted-foreground">{t('admin.createFirstBrand')}</p>
+              </div>
+            );
+          }
+          
+          return filteredBrands.map((brand) => (
             <Card key={brand.id} className="bg-card/40 border-border/50">
               <CardHeader className="pb-3">
                 <div className="flex items-start justify-between">
@@ -278,8 +292,8 @@ export const BrandManagement: React.FC<BrandManagementProps> = ({
                 </div>
               </CardContent>
             </Card>
-          ))
-        )}
+          ));
+        })()}
       </div>
     </div>
   );

@@ -40,7 +40,10 @@ export interface HomepageAPIResponse {
 
 export async function getHomepageData(): Promise<HomepageAPIResponse> {
   try {
+    // Use backend URL from env or fallback to localhost backend
     const baseUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000';
+    
+    console.log('📡 Fetching homepage data from:', baseUrl);
     
     // Parallel requests for better performance
     const [featuredRes, newRes, popularRes, categoriesRes, seoRes, statsRes] = await Promise.allSettled([
@@ -68,14 +71,20 @@ export async function getHomepageData(): Promise<HomepageAPIResponse> {
     const featuredProducts = featuredRes.status === 'fulfilled' && featuredRes.value.ok
       ? (await featuredRes.value.json())?.data?.items || []
       : [];
+    
+    console.log('✅ Featured products:', featuredProducts.length);
       
     const newProducts = newRes.status === 'fulfilled' && newRes.value.ok
       ? (await newRes.value.json())?.data?.items || []
       : [];
+    
+    console.log('✅ New products:', newProducts.length);
       
     const popularProducts = popularRes.status === 'fulfilled' && popularRes.value.ok
       ? (await popularRes.value.json())?.data?.items || []
       : [];
+    
+    console.log('✅ Popular products:', popularProducts.length);
       
     const categories = categoriesRes.status === 'fulfilled' && categoriesRes.value.ok
       ? (await categoriesRes.value.json())?.data?.items || []
@@ -88,6 +97,14 @@ export async function getHomepageData(): Promise<HomepageAPIResponse> {
     const stats = statsRes.status === 'fulfilled' && statsRes.value.ok
       ? (await statsRes.value.json())?.data || { totalProducts: 0, totalBrands: 0, totalCategories: 0 }
       : { totalProducts: 0, totalBrands: 0, totalCategories: 0 };
+
+    // If no products loaded, log warning
+    const totalProductsCount = featuredProducts.length + newProducts.length + popularProducts.length;
+    if (totalProductsCount === 0) {
+      console.warn('⚠️ No products loaded from API. Check backend connection.');
+      console.warn('   Backend URL:', baseUrl);
+      console.warn('   Consider starting backend with: npm run dev (backend)');
+    }
 
     return {
       featuredProducts,

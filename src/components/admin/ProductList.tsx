@@ -17,11 +17,8 @@ import {
   LayoutGrid, 
   Table as TableIcon, 
   Download, 
-  Upload, 
   FileSpreadsheet,
-  FileJson,
-  Star,
-  X 
+  FileJson
 } from "lucide-react";
 import { getCategoryTranslation, getColorTranslation } from "@/utils/translations";
 
@@ -137,7 +134,7 @@ export const ProductList: React.FC<ProductListProps> = ({
       {isSelectMode && selectedProductIds.size > 0 && (
         <div className="mb-4 p-4 rounded-xl bg-primary/10 border border-primary/20 flex items-center justify-between">
           <span className="text-sm font-medium">
-            {selectedProductIds.size} product{selectedProductIds.size !== 1 ? 's' : ''} selected
+            {selectedProductIds.size} product{selectedProductIds.size === 1 ? '' : 's'} selected
           </span>
           <Button
             onClick={onBulkDelete}
@@ -215,8 +212,16 @@ export const ProductList: React.FC<ProductListProps> = ({
 
       {/* Products Grid/Table */}
       <div className="overflow-visible">
-        {filteredProducts.length > 0 ? (
-          viewMode === 'grid' ? (
+        {(() => {
+          if (filteredProducts.length === 0) {
+            return (
+              <div className="text-center py-12 text-muted-foreground">
+                <p>No products found</p>
+              </div>
+            );
+          }
+          
+          return viewMode === 'grid' ? (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 overflow-visible">
               {filteredProducts.map((product) => (
                 <div key={product.id} className="group p-4 rounded-xl border border-border/30 bg-card/30 backdrop-blur-sm hover:bg-card/50 transition-colors overflow-visible">
@@ -387,26 +392,8 @@ export const ProductList: React.FC<ProductListProps> = ({
                 </tbody>
               </table>
             </div>
-          )
-        ) : (
-          <div className="text-center py-20 border border-dashed border-border/50 rounded-xl">
-            <Package className="w-16 h-16 mx-auto mb-4 text-muted-foreground opacity-50" />
-            <p className="text-muted-foreground text-lg mb-2">
-              {products.length === 0 ? 'No products yet' : 'No products match your filters'}
-            </p>
-            <p className="text-sm text-muted-foreground">
-              {products.length === 0 
-                ? 'Create your first product in the Add Product tab'
-                : 'Try adjusting your search or filters'
-              }
-            </p>
-            {products.length > 0 && (
-              <Button onClick={resetFilters} variant="outline" className="mt-4">
-                Clear Filters
-              </Button>
-            )}
-          </div>
-        )}
+          );
+        })()}
       </div>
     </div>
   );

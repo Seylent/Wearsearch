@@ -1,6 +1,7 @@
 /* Google Fonts - using link tag in HTML for better caching and preconnect */
 /* Fonts are loaded via <link> in index.html for optimal performance */
 
+/* Custom logo font - Youre Gone */
 @font-face {
   font-family: 'Youre Gone';
   src: url('/fonts/Youre%20Gone.otf') format('opentype');
@@ -11,7 +12,7 @@
 
 /* Logo font class with good fallbacks */
 .font-logo {
-  font-family: 'Youre Gone', 'Outfit', system-ui, -apple-system, sans-serif;
+  font-family: 'Youre Gone', 'Outfit', 'Montserrat', system-ui, -apple-system, sans-serif;
   font-weight: 400;
   letter-spacing: -0.02em;
 }

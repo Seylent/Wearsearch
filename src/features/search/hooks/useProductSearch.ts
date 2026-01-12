@@ -25,7 +25,7 @@ const toStringOrEmpty = (value: unknown): string => {
 
 const toOptionalNumber = (value: unknown): number | undefined => {
   if (typeof value === 'number' && Number.isFinite(value)) return value;
-  const num = typeof value === 'string' ? Number(value) : NaN;
+  const num = typeof value === 'string' ? Number(value) : Number.NaN;
   return Number.isFinite(num) ? num : undefined;
 };
 
@@ -86,8 +86,8 @@ export const useProductSearch = () => {
         const filtered = allStores.filter(store => {
           const storeName = store.name.toLowerCase().trim();
           // Remove spaces and special characters for better matching
-          const normalizedStoreName = storeName.replace(/[^a-z0-9]/g, '');
-          const normalizedQueryComparable = normalizedQuery.replace(/[^a-z0-9]/g, '');
+          const normalizedStoreName = storeName.replaceAll(/[^a-z0-9]/g, '');
+          const normalizedQueryComparable = normalizedQuery.replaceAll(/[^a-z0-9]/g, '');
           
           const match = storeName.includes(normalizedQuery) || normalizedStoreName.includes(normalizedQueryComparable);
           

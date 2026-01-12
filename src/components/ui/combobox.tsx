@@ -24,13 +24,13 @@ export function Combobox({
   searchValue,
   onSearchChange,
   emptyMessage = "No items found",
-}: ComboboxProps) {
+}: Readonly<ComboboxProps>) {
   const [open, setOpen] = React.useState(false);
   const [internalSearch, setInternalSearch] = React.useState("");
   const containerRef = React.useRef<HTMLDivElement>(null);
   const searchInputRef = React.useRef<HTMLInputElement>(null);
   
-  const search = searchValue !== undefined ? searchValue : internalSearch;
+  const search = searchValue ?? internalSearch;
   const setSearch = onSearchChange || setInternalSearch;
 
   const selectedItem = (items || []).find((item) => item.value === value);

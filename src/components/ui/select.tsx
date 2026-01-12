@@ -80,7 +80,7 @@ const SelectContent = React.forwardRef<
       sideOffset={sideOffset}
       collisionPadding={collisionPadding}
       avoidCollisions={avoidCollisions}
-      collisionBoundary={globalThis.window !== undefined ? document.body : undefined}
+      collisionBoundary={globalThis.window === undefined ? undefined : document.body}
       sticky="always"
       hideWhenDetached
       className={cn(

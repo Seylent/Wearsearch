@@ -25,17 +25,17 @@ export const AuthErrorBoundary = ({ children }: AuthErrorBoundaryProps) => {
       queryClient.clear();
       
       // Only redirect if the reason is 'unauthorized' and we're not already on auth page
-      if (reason === 'unauthorized' && !window.location.pathname.includes('/auth')) {
+      if (reason === 'unauthorized' && !globalThis.window.location.pathname.includes('/auth')) {
         // Don't redirect immediately to prevent loops, just clear state
         console.log('🔄 Auth session ended, clearing cache');
       }
     };
 
     // Listen for auth logout events
-    window.addEventListener('auth:logout', handleAuthLogout as EventListener);
+    globalThis.window.addEventListener('auth:logout', handleAuthLogout as EventListener);
 
     return () => {
-      window.removeEventListener('auth:logout', handleAuthLogout as EventListener);
+      globalThis.window.removeEventListener('auth:logout', handleAuthLogout as EventListener);
     };
   }, [router, queryClient]);
 

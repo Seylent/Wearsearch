@@ -9,8 +9,8 @@ import { LANGUAGE_CONFIG, type SupportedLanguage } from '@/i18n';
  * Detect language from URL pathname
  */
 export function detectLanguageFromPath(pathname: string): SupportedLanguage {
-  const segments = pathname.split('/').filter(Boolean);
-  const firstSegment = segments[0];
+  const segments = pathname.split('/');
+  const firstSegment = segments.find(segment => segment !== '');
   
   if (firstSegment && LANGUAGE_CONFIG.SUPPORTED.includes(firstSegment as SupportedLanguage)) {
     return firstSegment as SupportedLanguage;

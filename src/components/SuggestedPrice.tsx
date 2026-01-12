@@ -1,3 +1,5 @@
+'use client';
+
 import { useState, useEffect, useCallback } from "react";
 import { DollarSign } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -107,8 +109,8 @@ export const SuggestedPrice = ({ productId, currentPrice }: SuggestedPriceProps)
       return;
     }
 
-    const price = parseFloat(suggestedPrice);
-    if (isNaN(price) || price <= 0) {
+    const price = Number.parseFloat(suggestedPrice);
+    if (Number.isNaN(price) || price <= 0) {
       toast({
         title: "Invalid Price",
         description: "Please enter a valid price",
@@ -190,11 +192,15 @@ export const SuggestedPrice = ({ productId, currentPrice }: SuggestedPriceProps)
                 />
               </div>
               <Button type="submit" disabled={loading}>
-                {loading ? 'Submitting...' : userSuggestion ? 'Update' : 'Submit'}
+                {(() => {
+                  if (loading) return 'Submitting...';
+                  if (userSuggestion) return 'Update';
+                  return 'Submit';
+                })()}
               </Button>
             </div>
           </div>
-          {userSuggestion && (
+          {!!userSuggestion && (
             <p className="text-xs text-muted-foreground select-none">
               Your current suggestion: ${userSuggestion.toFixed(2)}
             </p>

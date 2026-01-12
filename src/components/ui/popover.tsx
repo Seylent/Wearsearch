@@ -18,7 +18,7 @@ const PopoverContent = React.forwardRef<
       sideOffset={sideOffset}
       avoidCollisions={true}
       collisionPadding={12}
-      collisionBoundary={globalThis.window !== undefined ? document.body : undefined}
+      collisionBoundary={globalThis.window === undefined ? undefined : document.body}
       sticky="always"
       hideWhenDetached
       className={cn(

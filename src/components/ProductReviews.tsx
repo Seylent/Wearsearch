@@ -352,19 +352,23 @@ const StarRating: React.FC<StarRatingProps> = ({ rating, size = 'md', className 
 
   return (
     <div className={cn('flex gap-0.5', className)}>
-      {[1, 2, 3, 4, 5].map((star) => (
-        <Star
-          key={star}
-          className={cn(
-            sizes[size],
-            rating >= star
-              ? 'text-yellow-400 fill-yellow-400'
-              : rating >= star - 0.5
-              ? 'text-yellow-400 fill-yellow-400/50'
-              : 'text-white/20'
-          )}
-        />
-      ))}
+      {[1, 2, 3, 4, 5].map((star) => {
+        let fillClass: string;
+        if (rating >= star) {
+          fillClass = 'text-yellow-400 fill-yellow-400';
+        } else if (rating >= star - 0.5) {
+          fillClass = 'text-yellow-400 fill-yellow-400/50';
+        } else {
+          fillClass = 'text-white/20';
+        }
+        
+        return (
+          <Star
+            key={star}
+            className={cn(sizes[size], fillClass)}
+          />
+        );
+      })}
     </div>
   );
 };

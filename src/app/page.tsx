@@ -5,7 +5,7 @@ import { Metadata } from 'next';
 import { getHomepageData } from './api/getHomepageData';
 
 // Components
-import HomeContent from '@/components/HomePageContentNew';
+import HomeContent from '@/components/home/HomeContentServer';
 
 // Metadata
 export const metadata: Metadata = {
