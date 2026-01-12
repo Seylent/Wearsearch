@@ -3,8 +3,10 @@
  * Adds smooth fade/slide animations between pages
  */
 
+'use client';
+
 import React, { useEffect, useState } from 'react';
-import { useLocation } from 'react-router-dom';
+import { usePathname } from 'next/navigation';
 import { cn } from '@/lib/utils';
 
 interface PageTransitionProps {
@@ -16,7 +18,7 @@ export const PageTransition: React.FC<PageTransitionProps> = ({
   children, 
   className 
 }) => {
-  const location = useLocation();
+  const pathname = usePathname();
   const [isVisible, setIsVisible] = useState(false);
   const [displayChildren, setDisplayChildren] = useState(children);
 
@@ -31,7 +33,7 @@ export const PageTransition: React.FC<PageTransitionProps> = ({
     }, 50);
 
     return () => clearTimeout(showTimeout);
-  }, [location.pathname, children]);
+  }, [pathname, children]);
 
   return (
     <div

@@ -1,5 +1,8 @@
+'use client';
+
 import React from "react";
-import { useNavigate, useLocation, Link } from "react-router-dom";
+import { useRouter, usePathname } from "next/navigation";
+import Link from "next/link";
 import { useTranslation } from "react-i18next";
 import { UserProfileMenu } from "@/components/UserProfileMenu";
 import { SearchDropdown } from "@/features/search/components";
@@ -10,8 +13,8 @@ import { useNavigationState } from "@/features/auth/hooks/useNavigationState";
 import { Search, User as UserIcon, Menu, X } from "lucide-react";
 
 const Navigation: React.FC = () => {
-  const navigate = useNavigate();
-  const location = useLocation();
+  const router = useRouter();
+  const pathname = usePathname();
   const { t } = useTranslation();
   
   // Use centralized auth hook
@@ -21,10 +24,10 @@ const Navigation: React.FC = () => {
   const nav = useNavigationState();
 
   const handleLogoClick = () => {
-    if (location.pathname === "/") {
+    if (pathname === "/") {
       window.scrollTo({ top: 0, behavior: 'smooth' });
     } else {
-      navigate("/");
+      router.push("/");
     }
   };
 
@@ -40,12 +43,14 @@ const Navigation: React.FC = () => {
         className="flex items-center justify-between gap-0 rounded-full border border-zinc-700/80 bg-zinc-900/80 backdrop-blur-2xl shadow-[0_8px_32px_rgba(0,0,0,0.6)] max-w-7xl w-full overflow-hidden"
         role="navigation"
         aria-label={t('aria.mainNavigation')}
+        suppressHydrationWarning
       >
         {/* Left Section - Logo */}
         <button 
           className="flex items-center gap-2.5 group px-4 sm:px-4 md:px-6 py-2.5 md:py-2 border-r border-zinc-700/60 md:hover:bg-zinc-800/50 active:bg-zinc-800/50 transition-colors focus-visible:ring-2 focus-visible:ring-white focus-visible:ring-offset-2 focus-visible:ring-offset-zinc-900" 
           onClick={handleLogoClick}
           aria-label={t('aria.navigateToHomepage')}
+          suppressHydrationWarning
         >
           <span 
             className="text-white text-base sm:text-lg md:text-xl uppercase tracking-wide"
@@ -60,9 +65,9 @@ const Navigation: React.FC = () => {
           {navLinks.map((link, index) => (
             <Link
               key={link.name}
-              to={link.href}
+              href={link.href}
               className={`px-3 py-1 text-sm font-medium transition-all duration-300 rounded-full ${
-                location.pathname === link.href 
+                pathname === link.href 
                   ? "text-white bg-zinc-800/90" 
                   : "text-zinc-400 hover:text-white hover:bg-zinc-800/60"
               } ${index === 0 ? 'neon-text' : ''}`}
@@ -71,9 +76,9 @@ const Navigation: React.FC = () => {
             </Link>
           ))}
           <Link
-            to="/contacts"
+            href="/contacts"
             className={`px-4 py-2 text-sm font-medium transition-all duration-300 rounded-full ${
-              location.pathname === "/contacts"
+              pathname === "/contacts"
                 ? "text-white bg-white/10 shadow-[0_0_15px_rgba(255,255,255,0.2)]"
                 : "text-white/70 hover:text-white hover:bg-white/10 hover:shadow-[0_0_15px_rgba(255,255,255,0.2)]"
             }`}
@@ -82,9 +87,9 @@ const Navigation: React.FC = () => {
           </Link>
           {isAdmin && (
             <Link
-              to="/admin"
+              href="/admin"
               className={`px-3 py-1 text-sm font-medium transition-all duration-300 rounded-full ${
-                location.pathname === "/admin" 
+                pathname === "/admin" 
                   ? "text-white bg-zinc-800/90" 
                   : "text-zinc-400 hover:text-white hover:bg-zinc-800/60"
               }`}
@@ -132,7 +137,7 @@ const Navigation: React.FC = () => {
           ) : (
             <button 
               className="min-w-[44px] min-h-[44px] w-11 h-11 md:w-9 md:h-9 md:min-w-0 md:min-h-0 rounded-full flex items-center justify-center md:hover:bg-zinc-800/70 active:bg-zinc-800/70 active:scale-95 transition-all duration-150 touch-manipulation group"
-              onClick={() => navigate("/auth")}
+              onClick={() => router.push("/auth")}
               aria-label={t('aria.signIn')}
             >
               <UserIcon className="w-5 h-5 text-zinc-400 md:group-hover:text-white transition-colors" />
@@ -152,10 +157,10 @@ const Navigation: React.FC = () => {
             {navLinks.map((link) => (
               <Link
                 key={link.name}
-                to={link.href}
+                href={link.href}
                 onClick={nav.closeMobileMenu}
                 className={`px-6 py-4 min-h-[52px] text-base font-medium transition-all duration-150 border-b border-zinc-800/50 touch-manipulation active:scale-[0.98] ${
-                  location.pathname === link.href 
+                  pathname === link.href 
                     ? "text-white bg-zinc-800/60" 
                     : "text-zinc-300 active:text-white active:bg-zinc-800/30"
                 }`}
@@ -181,10 +186,10 @@ const Navigation: React.FC = () => {
             </button>
             {isAdmin && (
               <Link
-                to="/admin"
+                href="/admin"
                 onClick={nav.closeMobileMenu}
                 className={`px-6 py-3 text-base font-medium transition-all duration-300 ${
-                  location.pathname === "/admin" 
+                  pathname === "/admin" 
                     ? "text-white bg-zinc-800/60" 
                     : "text-zinc-300 active:text-white active:bg-zinc-800/30"
                 }`}

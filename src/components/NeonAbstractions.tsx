@@ -1,6 +1,22 @@
-import { memo } from 'react';
+'use client';
+
+import { memo, useState, useEffect } from 'react';
 
 export const NeonAbstractions = memo(() => {
+  const [stars, setStars] = useState<Array<{ left: string; top: string; opacity: number; animation: string; delay: string }>>([]);
+
+  // Generate stars only on client to avoid hydration mismatch
+  useEffect(() => {
+    const generatedStars = [...Array(15)].map(() => ({
+      left: `${Math.random() * 100}%`,
+      top: `${Math.random() * 80}%`,
+      opacity: Math.random() * 0.5 + 0.1,
+      animation: `twinkle ${Math.random() * 4 + 3}s ease-in-out infinite`,
+      delay: `${Math.random() * 3}s`,
+    }));
+    setStars(generatedStars);
+  }, []);
+
   return (
     <div className="absolute inset-0 overflow-hidden pointer-events-none" style={{ 
       transform: 'translateZ(0)',
@@ -53,17 +69,17 @@ export const NeonAbstractions = memo(() => {
       
       {/* Scattered dots/stars effect */}
       <div className="absolute inset-0" style={{ willChange: 'opacity', transform: 'translateZ(0)' }}>
-        {[...Array(15)].map((_, i) => (
+        {stars.map((star, i) => (
           <div
             key={i}
             className="absolute w-[1px] h-[1px] bg-white rounded-full"
             style={{
-              left: `${Math.random() * 100}%`,
-              top: `${Math.random() * 80}%`,
-              opacity: Math.random() * 0.5 + 0.1,
+              left: star.left,
+              top: star.top,
+              opacity: star.opacity,
               boxShadow: '0 0 1px rgba(255, 255, 255, 0.8)',
-              animation: `twinkle ${Math.random() * 4 + 3}s ease-in-out infinite`,
-              animationDelay: `${Math.random() * 3}s`,
+              animation: star.animation,
+              animationDelay: star.delay,
               willChange: 'opacity'
             }}
           />

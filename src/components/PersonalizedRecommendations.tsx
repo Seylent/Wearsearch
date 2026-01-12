@@ -5,7 +5,7 @@
 
 import React from 'react';
 import { useTranslation } from 'react-i18next';
-import { Link } from 'react-router-dom';
+import Link from 'next/link';
 import { Sparkles, TrendingUp, Heart, Eye, Loader2 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useRecommendations } from '@/hooks/useRecommendations';
@@ -79,7 +79,7 @@ const PersonalizedRecommendations: React.FC<PersonalizedRecommendationsProps> = 
           return (
             <Link
               key={product.id || `rec-${index}`}
-              to={`/product/${product.id}`}
+              href={`/product/${product.id}`}
               className="group block"
             >
               <div className="relative aspect-square rounded-lg overflow-hidden bg-white/5 border border-white/10 transition-all group-hover:border-white/30">

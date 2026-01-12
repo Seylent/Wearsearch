@@ -40,8 +40,7 @@ class SimpleCache {
 
   has(key: string): boolean {
     const entry = this.cache.get(key);
-    if (!entry) return false;
-    return Date.now() - entry.timestamp <= entry.ttl;
+    return entry !== null && (Date.now() - entry.timestamp <= entry.ttl);
   }
 }
 

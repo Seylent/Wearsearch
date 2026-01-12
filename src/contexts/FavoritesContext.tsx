@@ -1,4 +1,6 @@
-import React, { createContext, useContext, ReactNode } from 'react';
+'use client';
+
+import { createContext, useContext, ReactNode, useState, useEffect } from 'react';
 import { useFavorites } from '@/hooks/useApi';
 import { isAuthenticated } from '@/utils/authStorage';
 
@@ -28,7 +30,11 @@ interface FavoritesContextType {
 const FavoritesContext = createContext<FavoritesContextType | undefined>(undefined);
 
 export function FavoritesProvider({ children }: { children: ReactNode }) {
-  const isLoggedIn = isAuthenticated();
+  const [isLoggedIn, setIsLoggedIn] = useState(false);
+  
+  useEffect(() => {
+    setIsLoggedIn(isAuthenticated());
+  }, []);
   
   // Only fetch favorites if user is logged in
   const { data: favoritesData, isLoading } = useFavorites();

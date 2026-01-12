@@ -3,12 +3,14 @@
  * Displays a horizontal scrollable list of recently viewed products
  */
 
+'use client';
+
 import React from 'react';
-import { Link } from 'react-router-dom';
+import Link from 'next/link';
 import { useTranslation } from 'react-i18next';
 import { History, X, Trash2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import ImageDebugger from '@/components/ImageDebugger';
+import { LazyImage } from '@/components/common/LazyImage';
 import { useRecentlyViewed, type RecentlyViewedItem } from '@/hooks/useRecentlyViewed';
 import { cn } from '@/lib/utils';
 
@@ -97,14 +99,14 @@ const RecentlyViewedCard: React.FC<RecentlyViewedCardProps> = ({ item, onRemove 
       style={{ scrollSnapAlign: 'start' }}
     >
       <Link
-        to={`/product/${item.id}`}
+        href={`/product/${item.id}`}
         className="block rounded-lg overflow-hidden border border-white/10 bg-white/5 backdrop-blur-sm transition-all duration-300 hover:border-white/20 hover:bg-white/10"
       >
         <div className="relative aspect-[3/4] overflow-hidden">
-          <ImageDebugger
+          <LazyImage
             src={imageSrc}
             alt={item.name}
-            loading="lazy"
+            rootMargin="250px"
             className="w-full h-full object-cover filter grayscale group-hover:grayscale-0 transition-all duration-300"
           />
         </div>

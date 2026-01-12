@@ -69,7 +69,7 @@ export const useHomepageData = (currency: string = 'UAH', options?: QueryOptions
         }
         
         // Fallback to individual calls (backend BFF not ready yet)
-        if (import.meta.env.DEV) {
+        if (process.env.NODE_ENV !== 'production') {
           console.log('[Homepage] Using fallback endpoints');
         }
 
@@ -202,7 +202,7 @@ export const useProductsPageData = (filters: ProductFilters = {}, options?: Quer
         return { products: items, brands, pagination, facets, currency };
       } catch {
         // Fallback to individual calls
-        if (import.meta.env.DEV) {
+        if (process.env.NODE_ENV !== 'production') {
           console.log('[Products Page] Using fallback endpoints');
         }
         

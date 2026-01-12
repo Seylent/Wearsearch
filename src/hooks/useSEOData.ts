@@ -10,8 +10,8 @@
  */
 
 import { useQuery, UseQueryOptions } from '@tanstack/react-query';
-import { api } from '../services/api';
-import i18n from '../i18n';
+import { api } from '@/services/api';
+import i18n from '@/i18n';
 
 export interface SEOData {
   meta_title: string;

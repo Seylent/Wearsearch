@@ -1,6 +1,8 @@
+'use client';
+
 import { useState, useEffect, useMemo, type ReactNode } from "react";
 import { useTranslation } from "react-i18next";
-import { useSearchParams } from "react-router-dom";
+import { useSearchParams } from "next/navigation";
 import { NeonAbstractions } from "@/components/NeonAbstractions";
 import ProductCard from "@/components/ProductCard";
 import { ProductGridSkeleton } from "@/components/common/SkeletonLoader";
@@ -572,16 +574,16 @@ type FiltersDialogProps = Readonly<{
 
 export function ProductsContent() {
   const { t } = useTranslation();
-  const [searchParams] = useSearchParams();
+  const searchParams = useSearchParams();
   const { currency } = useCurrency();
   const { getCurrencySymbol } = useCurrencyConversion();
   const maxPriceLimit = getMaxPriceLimit(currency);
   
   // Dynamic SEO based on filters
   const [seoData, setSeoData] = useState<SEOData | null>(null);
-  const typeParam = searchParams.get('type');
-  const colorParam = searchParams.get('color');
-  const storeIdParam = searchParams.get('store_id');
+  const typeParam = searchParams?.get('type');
+  const colorParam = searchParams?.get('color');
+  const storeIdParam = searchParams?.get('store_id');
   
   // Fetch dynamic SEO data when filters change
   useEffect(() => {

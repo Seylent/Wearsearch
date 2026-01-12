@@ -1,9 +1,9 @@
+'use client';
+
 import { useState, useMemo, useEffect } from "react";
-import { useNavigate, useSearchParams } from "react-router-dom";
+import { useRouter, useSearchParams as useNextSearchParams } from "next/navigation";
 import { useTranslation } from "react-i18next";
 import { useToast } from "@/hooks/use-toast";
-import Navigation from "@/components/layout/Navigation";
-import Footer from "@/components/layout/Footer";
 import ProductCard from "@/components/ProductCard";
 import { ProductGridSkeleton } from "@/components/common/SkeletonLoader";
 import { Input } from "@/components/ui/input";
@@ -30,10 +30,10 @@ function getNumberOrString(value: unknown, fallback: number | string): number | 
 }
 
 const Favorites = () => {
-  const navigate = useNavigate();
+  const router = useRouter();
   const { toast } = useToast();
   const { t } = useTranslation();
-  const [searchParams, setSearchParams] = useSearchParams();
+  const searchParams = useNextSearchParams();
   const [searchQuery, setSearchQuery] = useState("");
   const [showSettings, setShowSettings] = useState(false);
   const debouncedSearch = useDebounce(searchQuery, 300);
@@ -72,10 +72,12 @@ const Favorites = () => {
     if (trimmed) next.set('search', trimmed);
     else next.delete('search');
 
-    if (next.toString() !== searchParams.toString()) {
-      setSearchParams(next, { replace: true });
+    const newUrl = `?${next.toString()}`;
+    const currentUrl = `?${searchParams.toString()}`;
+    if (newUrl !== currentUrl) {
+      router.replace(`/favorites${newUrl}`);
     }
-  }, [currentPage, searchQuery, searchParams, setSearchParams]);
+  }, [currentPage, searchQuery, searchParams, router]);
   
   // Use context for favorites (prevents duplicate requests)
   const { favorites: favoritesArray, isLoading: loading } = useFavoritesContext();
@@ -102,9 +104,9 @@ const Favorites = () => {
         description: "Please login to view your favorites",
         variant: "destructive",
       });
-      navigate("/auth");
+      router.push("/auth");
     }
-  }, [navigate, toast]);
+  }, [router, toast]);
 
   useEffect(() => {
     setCurrentPage(1);
@@ -128,7 +130,6 @@ const Favorites = () => {
 
   return (
     <div className="min-h-screen bg-background text-foreground">
-      <Navigation />
       
       <main className="container mx-auto px-6 pt-28 pb-16">
         {/* Header */}
@@ -206,7 +207,7 @@ const Favorites = () => {
                   : "Start exploring and save products you love to see them here"}
               </p>
               <Button 
-                onClick={() => navigate("/products")}
+                onClick={() => router.push("/products")}
                 className="rounded-full"
                 size="sm"
               >
@@ -275,8 +276,6 @@ const Favorites = () => {
           <SavedStoresList showClearButton={true} />
         </div>
       </main>
-
-      <Footer />
     </div>
   );
 };

@@ -3,7 +3,7 @@
  * Integration with backend advanced endpoints
  */
 
-const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:3000';
+const API_BASE = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000';
 const ADVANCED_BASE = `${API_BASE}/api/v1/advanced`;
 
 const getAuthHeaders = () => {
@@ -175,7 +175,7 @@ export const getPriceHistory = async (productId: string, storeId?: string, limit
   const params = new URLSearchParams({ limit: limit.toString() });
   if (storeId) params.append('store_id', storeId);
   
-  const response = await fetch(`${ADVANCED_BASE}/items/${productId}/price-history?${params}`, {
+  const response = await fetch(`${API_BASE}/api/v1/items/${productId}/price-history?${params}`, {
     headers: getAuthHeaders(),
   });
   
@@ -186,7 +186,7 @@ export const getPriceHistory = async (productId: string, storeId?: string, limit
 export const getStorePriceHistory = async (productId: string, storeId: string, limit: number = 50) => {
   const params = new URLSearchParams({ limit: limit.toString() });
   
-  const response = await fetch(`${ADVANCED_BASE}/items/${productId}/stores/${storeId}/price-history?${params}`, {
+  const response = await fetch(`${API_BASE}/api/v1/items/${productId}/stores/${storeId}/price-history?${params}`, {
     headers: getAuthHeaders(),
   });
   
@@ -208,7 +208,7 @@ export const getActivityLog = async (params?: {
   if (params?.limit) searchParams.append('limit', params.limit.toString());
   if (params?.offset) searchParams.append('offset', params.offset.toString());
   
-  const response = await fetch(`${ADVANCED_BASE}/audit-log?${searchParams}`, {
+  const response = await fetch(`${API_BASE}/api/v1/audit-log?${searchParams}`, {
     headers: getAuthHeaders(),
   });
   
@@ -222,7 +222,7 @@ export const createManualLogEntry = async (data: {
   action: string;
   changes: any;
 }) => {
-  const response = await fetch(`${ADVANCED_BASE}/audit-log`, {
+  const response = await fetch(`${API_BASE}/api/v1/audit-log`, {
     method: 'POST',
     headers: getAuthHeaders(),
     body: JSON.stringify(data),
@@ -236,7 +236,7 @@ export const createManualLogEntry = async (data: {
 
 export const getRelatedProducts = async (productId: string, type?: 'similar' | 'bundle' | 'frequently_bought') => {
   const params = type ? `?type=${type}` : '';
-  const response = await fetch(`${ADVANCED_BASE}/items/${productId}/related${params}`, {
+  const response = await fetch(`${API_BASE}/api/v1/items/${productId}/related${params}`, {
     headers: getAuthHeaders(),
   });
   
@@ -249,7 +249,7 @@ export const addProductRelation = async (productId: string, data: {
   relation_type: 'similar' | 'bundle' | 'frequently_bought';
   strength?: number;
 }) => {
-  const response = await fetch(`${ADVANCED_BASE}/items/${productId}/relations`, {
+  const response = await fetch(`${API_BASE}/api/v1/items/${productId}/relations`, {
     method: 'POST',
     headers: getAuthHeaders(),
     body: JSON.stringify(data),
@@ -260,7 +260,7 @@ export const addProductRelation = async (productId: string, data: {
 };
 
 export const deleteProductRelation = async (productId: string, relationId: string) => {
-  const response = await fetch(`${ADVANCED_BASE}/items/${productId}/relations/${relationId}`, {
+  const response = await fetch(`${API_BASE}/api/v1/items/${productId}/relations/${relationId}`, {
     method: 'DELETE',
     headers: getAuthHeaders(),
   });

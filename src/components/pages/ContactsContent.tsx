@@ -1,7 +1,8 @@
+"use client";
+
 import { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Send, Instagram, Mail, Video, Store, Lightbulb } from 'lucide-react';
-import Navigation from '@/components/layout/Navigation';
 import { NeonAbstractions } from '@/components/NeonAbstractions';
 
 interface ContactInfo {
@@ -35,8 +36,6 @@ const ContactsContent = () => {
 
   return (
     <div className="min-h-screen bg-black text-white overflow-x-hidden font-sans">
-      <Navigation />
-      
       {/* Hero Section */}
       <section className="relative min-h-[40vh] flex items-center justify-center overflow-hidden pt-28 pb-12">
         <NeonAbstractions />

@@ -1,0 +1,6 @@
+/*
+ * Next.js global styles entrypoint.
+ * We reuse the existing Vite global stylesheet to avoid duplication.
+ */
+
+@import "../index.css";

@@ -1,3 +1,5 @@
+'use client';
+
 /**
  * Product Filters Hook
  * Manages all filtering logic for products page
@@ -5,7 +7,7 @@
  */
 
 import { useCallback, useEffect, useMemo, useState, useRef } from 'react';
-import { useSearchParams } from 'react-router-dom';
+import { useSearchParams, useRouter, usePathname } from 'next/navigation';
 import type { Brand, Product } from '@/types';
 
 export interface ProductFiltersState {
@@ -32,21 +34,23 @@ const URL_PARAMS = {
 } as const;
 
 export const useProductFilters = () => {
-  const [searchParams, setSearchParams] = useSearchParams();
+  const searchParams = useSearchParams();
+  const router = useRouter();
+  const pathname = usePathname();
   const isInitialized = useRef(false);
   
   // Parse initial values from URL
-  const getInitialColors = () => searchParams.getAll(URL_PARAMS.COLORS);
-  const getInitialTypes = () => searchParams.getAll(URL_PARAMS.TYPES);
-  const getInitialGenders = () => searchParams.getAll(URL_PARAMS.GENDERS);
-  const getInitialSearch = () => searchParams.get(URL_PARAMS.SEARCH) || '';
-  const getInitialBrand = () => searchParams.get(URL_PARAMS.BRAND) || '';
+  const getInitialColors = () => searchParams?.getAll(URL_PARAMS.COLORS) || [];
+  const getInitialTypes = () => searchParams?.getAll(URL_PARAMS.TYPES) || [];
+  const getInitialGenders = () => searchParams?.getAll(URL_PARAMS.GENDERS) || [];
+  const getInitialSearch = () => searchParams?.get(URL_PARAMS.SEARCH) || '';
+  const getInitialBrand = () => searchParams?.get(URL_PARAMS.BRAND) || '';
   const getInitialPriceMin = () => {
-    const val = searchParams.get(URL_PARAMS.PRICE_MIN);
+    const val = searchParams?.get(URL_PARAMS.PRICE_MIN);
     return val ? parseFloat(val) : null;
   };
   const getInitialPriceMax = () => {
-    const val = searchParams.get(URL_PARAMS.PRICE_MAX);
+    const val = searchParams?.get(URL_PARAMS.PRICE_MAX);
     return val ? parseFloat(val) : null;
   };
   
@@ -60,7 +64,7 @@ export const useProductFilters = () => {
   const [priceMax, setPriceMax] = useState<number | null>(getInitialPriceMax);
 
   // Get store_id from URL params
-  const storeIdParam = searchParams.get(URL_PARAMS.STORE);
+  const storeIdParam = searchParams?.get(URL_PARAMS.STORE);
   
   // Sync state to URL when filters change
   useEffect(() => {
@@ -99,8 +103,9 @@ export const useProductFilters = () => {
     }
     
     // Update URL without navigation (replace instead of push to avoid history spam)
-    setSearchParams(newParams, { replace: true });
-  }, [searchQuery, selectedColors, selectedTypes, selectedGenders, selectedBrand, priceMin, priceMax, storeIdParam, setSearchParams]);
+    const newUrl = `${pathname}?${newParams.toString()}`;
+    router.replace(newUrl);
+  }, [searchQuery, selectedColors, selectedTypes, selectedGenders, selectedBrand, priceMin, priceMax, storeIdParam, router, pathname]);
 
   // Toggle filters
   const toggleColor = useCallback((color: string) => {

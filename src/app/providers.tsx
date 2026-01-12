@@ -3,7 +3,9 @@
  * Centralized provider configuration
  */
 
-import { ReactNode } from 'react';
+'use client';
+
+import { ReactNode, useEffect } from 'react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { TooltipProvider } from '@/components/ui/tooltip';
 import { Toaster } from '@/components/ui/toaster';
@@ -63,16 +65,22 @@ interface AppProvidersProps {
   children: ReactNode;
 }
 
-export const AppProviders = ({ children }: AppProvidersProps) => (
-  <QueryClientProvider client={queryClient}>
-    <CurrencyProvider>
-      <FavoritesProvider>
-        <TooltipProvider>
-          {children}
-          <Toaster />
-          <Sonner />
-        </TooltipProvider>
-      </FavoritesProvider>
-    </CurrencyProvider>
-  </QueryClientProvider>
-);
+export const AppProviders = ({ children }: AppProvidersProps) => {
+  // Resource hints будуть додані через окремий компонент в layout
+  
+  return (
+    <QueryClientProvider client={queryClient}>
+      <CurrencyProvider>
+        <FavoritesProvider>
+          <TooltipProvider>
+            {children}
+            <Toaster />
+            <Sonner />
+          </TooltipProvider>
+        </FavoritesProvider>
+      </CurrencyProvider>
+    </QueryClientProvider>
+  );
+};
+
+export { AppProviders as NextProviders };

@@ -1,3 +1,5 @@
+'use client';
+
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import { api } from '@/services/api';
 
@@ -31,6 +33,7 @@ interface CurrencyProviderProps {
 
 export const CurrencyProvider: React.FC<CurrencyProviderProps> = ({ children }) => {
   const [currency, setCurrencyState] = useState<CurrencyCode>(() => {
+    if (typeof window === 'undefined') return 'UAH';
     const saved = localStorage.getItem('preferredCurrency');
     return (saved === 'USD' || saved === 'UAH') ? saved : 'UAH';
   });

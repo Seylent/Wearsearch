@@ -1,11 +1,9 @@
-import { useParams, useNavigate } from "react-router-dom";
+import { useParams, useRouter } from "next/navigation";
 import { useState, useEffect, useMemo, useRef } from "react";
 import { useTranslation } from "react-i18next";
 import { ArrowLeft, Edit, Package, Tag, MapPin, Search, Filter, ChevronDown, SortAsc, Star, Send, Instagram, X, ZoomIn } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import Navigation from "@/components/layout/Navigation";
-import Footer from "@/components/layout/Footer";
 import { Breadcrumbs } from "@/components/Breadcrumbs";
 import { useToast } from "@/hooks/use-toast";
 import { convertS3UrlToHttps } from "@/lib/utils";
@@ -39,9 +37,10 @@ function getFirstString(...values: unknown[]): string | null {
 }
 
 const ProductDetail = () => {
-  const { id } = useParams();
+  const params = useParams();
+  const id = params?.id as string | undefined;
   const { toast } = useToast();
-  const navigate = useNavigate();
+  const router = useRouter();
   const { t } = useTranslation();
   const { formatPrice } = useCurrencyConversion();
   const { currency } = useCurrency();
@@ -332,7 +331,7 @@ const ProductDetail = () => {
     return (
       <div className="min-h-screen bg-background text-foreground flex flex-col items-center justify-center">
         <h2 className="font-display text-2xl font-bold mb-4">Product Not Found</h2>
-        <Button onClick={() => navigate('/')} className="rounded-full">Go Home</Button>
+        <Button onClick={() => router.push('/')} className="rounded-full">Go Home</Button>
       </div>
     );
   }
@@ -342,8 +341,6 @@ const ProductDetail = () => {
 
   return (
     <div className="min-h-screen bg-background text-foreground font-sans">
-      <Navigation />
-
       <div className="container mx-auto px-4 sm:px-6 py-12 pt-28">
         {/* Breadcrumbs */}
         <Breadcrumbs
@@ -359,7 +356,7 @@ const ProductDetail = () => {
         <div className="flex justify-between items-center mb-8">
           <Button
             variant="ghost"
-            onClick={() => navigate(-1)}
+            onClick={() => router.back()}
             className="group"
           >
             <ArrowLeft className="w-4 h-4 mr-2 md:group-hover:-translate-x-1 transition-transform" />
@@ -369,7 +366,7 @@ const ProductDetail = () => {
           {isAdmin && (
             <Button
               variant="outline"
-              onClick={() => navigate(`/admin?editProduct=${id}`)}
+              onClick={() => router.push(`/admin?editProduct=${id}`)}
               className="gap-2"
             >
               <Edit className="w-4 h-4" />
@@ -827,8 +824,6 @@ const ProductDetail = () => {
         )}
         
       </div>
-
-      <Footer />
     </div>
   );
 };

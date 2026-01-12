@@ -3,8 +3,10 @@
  * Handles business logic, data fetching, and event handling
  */
 
+'use client';
+
 import React, { useCallback, useEffect, useRef } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useRouter } from 'next/navigation';
 import { useProductSearch } from '../hooks/useProductSearch';
 import { SearchDropdownView } from './SearchDropdownView';
 import { detectSearchFilter } from '@/utils/searchFilters';
@@ -15,7 +17,7 @@ interface SearchDropdownContainerProps {
 }
 
 export const SearchDropdownContainer: React.FC<SearchDropdownContainerProps> = React.memo(({ onClose }) => {
-  const navigate = useNavigate();
+  const router = useRouter();
   const inputRef = useRef<HTMLInputElement>(null);
   const dropdownRef = useRef<HTMLDivElement>(null);
 
@@ -58,13 +60,13 @@ export const SearchDropdownContainer: React.FC<SearchDropdownContainerProps> = R
   const handleResultClick = useCallback((result: { id: string; type: 'product' | 'store' }) => {
     if (result.type === 'store') {
       // Navigate to products page filtered by store
-      navigate(`/products?store_id=${result.id}`);
+      router.push(`/products?store_id=${result.id}`);
     } else {
       // Navigate to product detail page
-      navigate(`/product/${result.id}`);
+      router.push(`/product/${result.id}`);
     }
     onClose();
-  }, [navigate, onClose]);
+  }, [router, onClose]);
 
   const handleViewAll = useCallback(() => {
     if (search.query.trim()) {
@@ -76,26 +78,26 @@ export const SearchDropdownContainer: React.FC<SearchDropdownContainerProps> = R
       // If we detected a color or category filter, navigate with that filter
       if (detectedFilter.type && detectedFilter.value) {
         if (detectedFilter.type === 'color') {
-          navigate(`/products?color=${encodeURIComponent(detectedFilter.value)}`);
+          router.push(`/products?color=${encodeURIComponent(detectedFilter.value)}`);
         } else if (detectedFilter.type === 'category') {
-          navigate(`/products?type=${encodeURIComponent(detectedFilter.value)}`);
+          router.push(`/products?type=${encodeURIComponent(detectedFilter.value)}`);
         }
       } else {
         // Otherwise, use standard search
-        navigate(`/products?search=${encodeURIComponent(search.query)}`);
+        router.push(`/products?search=${encodeURIComponent(search.query)}`);
       }
       
       onClose();
     }
-  }, [navigate, onClose, search.query, addToHistory]);
+  }, [router, onClose, search.query, addToHistory]);
 
   // Handle history item click
   const handleHistoryClick = useCallback((query: string) => {
     search.setQuery(query);
     addToHistory(query);
-    navigate(`/products?search=${encodeURIComponent(query)}`);
+    router.push(`/products?search=${encodeURIComponent(query)}`);
     onClose();
-  }, [navigate, onClose, search, addToHistory]);
+  }, [router, onClose, search, addToHistory]);
 
   return (
     <SearchDropdownView

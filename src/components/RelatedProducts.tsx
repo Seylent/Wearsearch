@@ -3,13 +3,14 @@
  * Displays similar products based on category, brand, and price
  */
 
-import { memo } from 'react';
-import { Link } from 'react-router-dom';
+import { memo, useRef } from 'react';
+import Link from 'next/link';
 import { useTranslation } from 'react-i18next';
 import { Sparkles } from 'lucide-react';
 import { useRelatedProducts } from '@/hooks/useApi';
 import { convertS3UrlToHttps } from '@/lib/utils';
 import { useCurrencyConversion } from '@/hooks/useCurrencyConversion';
+import { useLazyLoad } from '@/hooks/useIntersectionObserver';
 
 const isRecord = (value: unknown): value is Record<string, unknown> => typeof value === 'object' && value !== null;
 
@@ -31,9 +32,11 @@ interface RelatedProductsProps {
 export const RelatedProducts = memo(({ productId, products, total, className = '' }: RelatedProductsProps) => {
   const { t } = useTranslation();
   const { formatPrice } = useCurrencyConversion();
+  const sectionRef = useRef<HTMLDivElement>(null);
+  const isVisible = useLazyLoad(sectionRef, { rootMargin: '400px', freezeOnceVisible: true });
 
   const hasProvidedProducts = Array.isArray(products);
-  const { data, isLoading, error: _error } = useRelatedProducts(productId);
+  const { data, isLoading, error: _error } = useRelatedProducts(productId, { enabled: isVisible || hasProvidedProducts });
 
   const resolvedProducts: unknown[] = hasProvidedProducts ? (products ?? []) : (Array.isArray(data) ? data : []);
   const resolvedTotal = typeof total === 'number' ? total : resolvedProducts.length;
@@ -65,7 +68,7 @@ export const RelatedProducts = memo(({ productId, products, total, className = '
   }
   
   return (
-    <div className={`animate-fade-in ${className}`}>
+    <div ref={sectionRef} className={`animate-fade-in ${className}`} style={{ minHeight: isVisible ? 'auto' : '300px' }}>
       <div className="flex items-center gap-2 mb-6">
         <Sparkles className="w-5 h-5 text-primary" />
         <h2 className="font-display text-2xl font-bold">{t('productDetail.similarProducts')}</h2>
@@ -90,7 +93,7 @@ export const RelatedProducts = memo(({ productId, products, total, className = '
             return [
               <Link
                 key={id}
-                to={`/product/${id}`}
+                href={`/product/${id}`}
                 className="group block"
               >
                 <div className="relative rounded-2xl overflow-hidden bg-muted aspect-square mb-3 transition-transform md:group-hover:scale-105">

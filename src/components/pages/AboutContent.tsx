@@ -1,12 +1,13 @@
-import { useNavigate } from "react-router-dom";
+"use client";
+
+import { useRouter } from "next/navigation";
 import { useTranslation } from "react-i18next";
 import { Button } from "@/components/ui/button";
 import { ArrowLeft, Sparkles, Shield, Globe, Heart } from "lucide-react";
-import Navigation from "@/components/layout/Navigation";
 import { NeonAbstractions } from "@/components/NeonAbstractions";
 
 const AboutContent = () => {
-  const navigate = useNavigate();
+  const router = useRouter();
   const { t } = useTranslation();
 
   const values = [
@@ -34,8 +35,6 @@ const AboutContent = () => {
 
   return (
     <div className="min-h-screen bg-background text-foreground">
-      <Navigation />
-      
       {/* Hero Section */}
       <section className="relative pt-32 pb-20 overflow-hidden">
         {/* NeonAbstractions background - stars and round objects ONLY */}
@@ -52,7 +51,7 @@ const AboutContent = () => {
         <div className="container mx-auto px-6 relative z-10">
           <Button 
             variant="ghost" 
-            onClick={() => navigate(-1)} 
+            onClick={() => router.back()} 
             className="mb-8 text-muted-foreground hover:text-foreground"
           >
             <ArrowLeft className="w-4 h-4 mr-2" />
@@ -131,7 +130,7 @@ const AboutContent = () => {
           <Button 
             size="lg" 
             className="px-8 h-14 text-base rounded-full"
-            onClick={() => navigate("/products")}
+            onClick={() => router.push("/products")}
           >
             Browse Collections
           </Button>

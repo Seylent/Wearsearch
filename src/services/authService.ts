@@ -47,7 +47,7 @@ const ENDPOINTS = {
   CHANGE_PASSWORD: '/auth/password',
 };
 
-const ENABLE_LEGACY_FALLBACK = import.meta.env.VITE_ENABLE_LEGACY_FALLBACK === 'true';
+const ENABLE_LEGACY_FALLBACK = process.env.NEXT_PUBLIC_ENABLE_LEGACY_FALLBACK === 'true';
 
 export const authService = {
   isNotFound(error: unknown): boolean {

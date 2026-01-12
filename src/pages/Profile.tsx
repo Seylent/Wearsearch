@@ -1,5 +1,7 @@
+'use client';
+
 import { useState, useEffect, useCallback, useRef } from "react";
-import { useNavigate } from "react-router-dom";
+import { useRouter } from "next/navigation";
 import { useTranslation } from "react-i18next";
 import { authService } from "@/services/authService";
 import { userService } from "@/services/userService";
@@ -19,8 +21,6 @@ import {
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
 import { useToast } from "@/hooks/use-toast";
-import Navigation from "@/components/layout/Navigation";
-import Footer from "@/components/layout/Footer";
 import { NeonAbstractions } from "@/components/NeonAbstractions";
 import { User, Lock, LogOut, Sparkles, Trash2 } from "lucide-react";
 import { useSEO } from "@/hooks/useSEO";
@@ -28,7 +28,7 @@ import { getErrorMessage, isCanceledError } from "@/utils/errorUtils";
 import type { User as UserType } from "@/types";
 
 const Profile = () => {
-  const navigate = useNavigate();
+  const router = useRouter();
   const { toast } = useToast();
   const { t } = useTranslation();
 
@@ -72,7 +72,7 @@ const Profile = () => {
 
   const checkUser = useCallback(async () => {
     if (!authService.isAuthenticated()) {
-      navigate("/auth");
+      router.push("/auth");
       return;
     }
     
@@ -113,7 +113,7 @@ const Profile = () => {
         setIsInitialLoading(false);
       }
     }
-  }, [navigate, toast]);
+  }, [router, toast]);
 
   useEffect(() => {
     checkUser();
@@ -212,7 +212,7 @@ const Profile = () => {
       title: "Logged out",
       description: "You have been logged out successfully",
     });
-    navigate("/");
+    router.push("/");
   };
 
   const handleDeleteAccount = async () => {
@@ -236,7 +236,7 @@ const Profile = () => {
 
       // Logout and redirect to home
       await authService.logout();
-      navigate("/");
+      router.push("/");
     } catch (error: unknown) {
       toast({
         title: t('common.error'),
@@ -253,7 +253,6 @@ const Profile = () => {
   if (isInitialLoading) {
     return (
       <div className="min-h-screen bg-black text-white flex items-center justify-center">
-        <Navigation />
         <div className="flex flex-col items-center gap-4">
           <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-white"></div>
           <p className="text-muted-foreground">{t('common.loading')}</p>
@@ -268,7 +267,6 @@ const Profile = () => {
 
   return (
     <div className="min-h-screen bg-black text-white">
-      <Navigation />
       
       {/* Hero Section */}
       <section className="relative min-h-[35vh] flex items-center justify-center overflow-hidden pt-28 pb-8">
@@ -504,8 +502,6 @@ const Profile = () => {
           </Tabs>
         </div>
       </main>
-
-      <Footer />
     </div>
   );
 };

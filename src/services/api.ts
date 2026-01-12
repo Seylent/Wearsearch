@@ -105,7 +105,7 @@ type FallbackConfig = {
   shouldFallbackToLegacy?: (config: InternalAxiosRequestConfig, error: AxiosError) => boolean;
 };
 
-const ENABLE_LEGACY_FALLBACK = import.meta.env.VITE_ENABLE_LEGACY_FALLBACK === 'true';
+const ENABLE_LEGACY_FALLBACK = process.env.NEXT_PUBLIC_ENABLE_LEGACY_FALLBACK === 'true';
 
 const isRecord = (value: unknown): value is Record<string, unknown> => typeof value === 'object' && value !== null;
 
@@ -186,7 +186,7 @@ const attachInterceptors = (client: AxiosInstance, fallback?: FallbackConfig) =>
       if (token && config.headers) {
         config.headers.Authorization = `Bearer ${token}`;
         // Only log in development and for non-trivial requests
-        if (import.meta.env.DEV && !url.includes('/items') && !url.includes('/search')) {
+        if (process.env.NODE_ENV !== 'production' && !url.includes('/items') && !url.includes('/search')) {
           console.log(`🔑 Auth token attached to ${config.method?.toUpperCase()} ${url}`);
         }
       } else if (!token && url && !isPublicEndpoint(url)) {
@@ -226,7 +226,7 @@ const attachInterceptors = (client: AxiosInstance, fallback?: FallbackConfig) =>
           const retryAfter = retryAfterHeader ? parseInt(retryAfterHeader, 10) : undefined;
           const delay = getRetryDelay(retryCount, retryAfter);
           
-          if (import.meta.env.DEV) {
+          if (process.env.NODE_ENV !== 'production') {
             console.log(`⏳ Rate limited. Retrying in ${Math.round(delay / 1000)}s (attempt ${retryCount + 1}/${RATE_LIMIT_CONFIG.maxRetries})...`);
           }
           
@@ -236,7 +236,7 @@ const attachInterceptors = (client: AxiosInstance, fallback?: FallbackConfig) =>
           config.__rateLimitRetryCount = retryCount + 1;
           return client.request(config);
         } else {
-          if (import.meta.env.DEV) {
+          if (process.env.NODE_ENV !== 'production') {
             console.warn('⚠️ Rate limit: max retries exceeded');
           }
         }
@@ -257,7 +257,7 @@ const attachInterceptors = (client: AxiosInstance, fallback?: FallbackConfig) =>
           const retryConfig: InternalAxiosRequestConfig = { ...cfg };
           delete retryConfig.baseURL;
 
-          if (import.meta.env.DEV) {
+          if (process.env.NODE_ENV !== 'production') {
             console.warn('↩️ v1 route missing; retrying via legacy API:', {
               method: retryConfig.method,
               url: retryConfig.url,
@@ -275,7 +275,7 @@ const attachInterceptors = (client: AxiosInstance, fallback?: FallbackConfig) =>
       // Handle authentication errors globally
       if (apiError.isAuthError()) {
         // Check if user was actually logged in before
-        const wasAuthenticated = !!localStorage.getItem(AUTH_TOKEN_KEY) || !!localStorage.getItem('access_token');
+        const wasAuthenticated = typeof window !== 'undefined' && (!!localStorage.getItem(AUTH_TOKEN_KEY) || !!localStorage.getItem('access_token'));
 
         console.log('🚨 Authentication error detected:', {
           status: apiError.status,
@@ -299,7 +299,7 @@ const attachInterceptors = (client: AxiosInstance, fallback?: FallbackConfig) =>
       }
 
       // Log errors in development
-      if (import.meta.env.DEV) {
+      if (process.env.NODE_ENV !== 'production') {
         if (apiError.isServerError()) {
           console.error('Server error:', apiError);
         } else if (apiError.isNetworkError()) {
@@ -353,7 +353,7 @@ export const apiGet = async <T>(
     try {
       return schema.parse(response.data);
     } catch (error) {
-      if (import.meta.env.DEV) {
+      if (process.env.NODE_ENV !== 'production') {
         console.error('API response validation failed:', {
           url,
           error: error instanceof z.ZodError ? error.errors : error,
@@ -379,7 +379,7 @@ export const apiPost = async <T>(
     try {
       return schema.parse(response.data);
     } catch (error) {
-      if (import.meta.env.DEV) {
+      if (process.env.NODE_ENV !== 'production') {
         console.error('API response validation failed:', {
           url,
           error: error instanceof z.ZodError ? error.errors : error,
@@ -404,7 +404,7 @@ export const apiPut = async <T>(
     try {
       return schema.parse(response.data);
     } catch (error) {
-      if (import.meta.env.DEV) {
+      if (process.env.NODE_ENV !== 'production') {
         console.error('API response validation failed:', { url, error });
       }
       throw new ApiError('Invalid API response format', undefined, undefined, 'VALIDATION_ERROR');
@@ -426,7 +426,7 @@ export const apiPatch = async <T>(
     try {
       return schema.parse(response.data);
     } catch (error) {
-      if (import.meta.env.DEV) {
+      if (process.env.NODE_ENV !== 'production') {
         console.error('API response validation failed:', { url, error });
       }
       throw new ApiError('Invalid API response format', undefined, undefined, 'VALIDATION_ERROR');
@@ -447,7 +447,7 @@ export const apiDelete = async <T>(
     try {
       return schema.parse(response.data);
     } catch (error) {
-      if (import.meta.env.DEV) {
+      if (process.env.NODE_ENV !== 'production') {
         console.error('API response validation failed:', { url, error });
       }
       throw new ApiError('Invalid API response format', undefined, undefined, 'VALIDATION_ERROR');

@@ -1,5 +1,7 @@
+'use client';
+
 import { useState, useEffect, useCallback, useRef, useMemo } from "react";
-import { useNavigate } from "react-router-dom";
+import { useRouter } from "next/navigation";
 import { useTranslation } from "react-i18next";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -9,17 +11,12 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Combobox } from "@/components/ui/combobox";
 import { useToast } from "@/hooks/use-toast";
-import Navigation from "@/components/layout/Navigation";
-import Footer from "@/components/layout/Footer";
 import { Package, Store, Plus, Edit, Trash2, Search, ShieldCheck, X, LayoutGrid, Table as TableIcon, Download, Upload, FileJson, FileSpreadsheet, Images, Star, BookTemplate, TrendingUp, Activity, Link, BarChart3, Loader2 } from "lucide-react";
 import { ImageUploader } from "@/components/ImageUploader";
-import { productService } from "@/services/productService";
-import { storeService } from "@/services/storeService";
-import { brandsApi } from "@/services/api/brands.api";
+import { adminApi } from "@/services/api/admin.api";
 import { advancedApi } from "@/services/api/advanced.api";
-import { useAdminDashboardData } from "@/hooks/useAggregatedData";
+import { productService } from "@/services/productService";
 import { getCategoryTranslation, getColorTranslation } from "@/utils/translations";
-import { useProducts, useStores, useBrands } from "@/hooks/useApi";
 import { useAuth } from "@/features/auth/hooks/useAuth";
 import { useSEO } from "@/hooks/useSEO";
 import { triggerConfetti } from "@/lib/confetti";
@@ -93,7 +90,7 @@ const normalizeProductStoreEntry = (store: unknown): NormalizedProductStore | nu
 };
 
 const Admin = () => {
-  const navigate = useNavigate();
+  const router = useRouter();
   const { t } = useTranslation();
   const { toast } = useToast();
   const { isAdmin, isAuthenticated, isLoading: authLoading } = useAuth();
@@ -129,66 +126,52 @@ const Admin = () => {
     noindex: true,
   });
   
-  // v1: Single dashboard request for initial admin load
-  const {
-    data: dashboardData,
-    isLoading: _dashboardLoading,
-    refetch: refetchDashboard,
-  } = useAdminDashboardData();
-
-  // Legacy hooks kept for now (mutations and non-dashboard flows may still rely on them)
-  // NOTE: They are not used for the initial lists anymore.
-  const { data: productsData = [] } = useProducts({ enabled: false });
-  const { data: storesData = [] } = useStores({ enabled: false });
-  const { data: brandsData = [] } = useBrands({ enabled: false });
+  // State for dashboard data
+  const [dashboardData, setDashboardData] = useState<any>(null);
+  const [isLoadingDashboard, setIsLoadingDashboard] = useState(true);
   
-  // Normalize data (handle different API response formats)
-  const products = useMemo(() => {
-    const body: unknown = dashboardData;
-    const items = getArray(getRecord(body, "products"), "items");
-    if (items) return items;
-
-    // Fallback (should not be the main path)
-    if (Array.isArray(productsData)) return productsData;
-    if (isRecord(productsData) && productsData.success === true) {
-      const data = productsData.data;
-      return Array.isArray(data) ? data : [];
+  // Load dashboard data using new API
+  const loadDashboard = useCallback(async () => {
+    try {
+      setIsLoadingDashboard(true);
+      const data = await adminApi.getDashboard({
+        productsLimit: 100,
+        storesLimit: 100,
+        brandsLimit: 100,
+      });
+      setDashboardData(data);
+    } catch (error) {
+      console.error('Failed to load dashboard:', error);
+      toast({
+        variant: 'destructive',
+        title: 'Failed to load dashboard',
+        description: getErrorMessage(error),
+      });
+    } finally {
+      setIsLoadingDashboard(false);
     }
-    if (isRecord(productsData) && Array.isArray(productsData.products)) return productsData.products;
-    return [];
-  }, [dashboardData, productsData]);
+  }, [toast]);
+
+  useEffect(() => {
+    if (isAuthenticated && isAdmin) {
+      loadDashboard();
+    }
+  }, [isAuthenticated, isAdmin, loadDashboard]);
+
+  const refetchDashboard = loadDashboard;
+  
+  // Normalize data from new API format
+  const products = useMemo(() => {
+    return dashboardData?.products?.items || [];
+  }, [dashboardData]);
   
   const stores = useMemo(() => {
-    const body: unknown = dashboardData;
-    const items = getArray(getRecord(body, "stores"), "items");
-    if (items) return items;
-
-    // Fallback
-    if (Array.isArray(storesData)) return storesData;
-    if (isRecord(storesData) && storesData.success === true) {
-      const data = storesData.data;
-      return Array.isArray(data) ? data : [];
-    }
-    return [];
-  }, [dashboardData, storesData]);
+    return dashboardData?.stores?.items || [];
+  }, [dashboardData]);
   
   const brands = useMemo(() => {
-    const body: unknown = dashboardData;
-    const items = getArray(getRecord(body, "brands"), "items");
-    if (items) return items;
-
-    // Fallback
-    if (Array.isArray(brandsData)) return brandsData;
-
-    if (isRecord(brandsData)) {
-      const data = brandsData.data;
-      if (isRecord(data) && Array.isArray(data.brands)) return data.brands;
-      if (Array.isArray(brandsData.brands)) return brandsData.brands;
-      if (Array.isArray(data)) return data;
-      if (brandsData.success === true && Array.isArray(data)) return data;
-    }
-    return [];
-  }, [dashboardData, brandsData]);
+    return dashboardData?.brands?.items || [];
+  }, [dashboardData]);
   
   // Product form state - always initialize with empty string to avoid controlled/uncontrolled issues
   const [productName, setProductName] = useState("");
@@ -454,7 +437,7 @@ const Admin = () => {
     if (authLoading) return;
 
     if (!isAuthenticated) {
-      navigate('/auth');
+      router.push('/auth');
       return;
     }
 
@@ -464,9 +447,9 @@ const Admin = () => {
         description: "Admin access required",
         variant: "destructive",
       });
-      navigate('/');
+      router.push('/');
     }
-  }, [authLoading, isAuthenticated, isAdmin, navigate, toast]);
+  }, [authLoading, isAuthenticated, isAdmin, router, toast]);
 
   // One-time admin-only initialization
   useEffect(() => {
@@ -525,7 +508,7 @@ const Admin = () => {
       setCurrentStoreSizes([]);
       setCurrentSizeInput("");
       setEditingProductStore(null);
-      globalThis.history.replaceState(null, "", "/admin");
+      router.replace("/admin");
 
       toast({
         title: "Cancelled",
@@ -769,7 +752,7 @@ const Admin = () => {
           });
         }
       } catch (e) {
-        if (import.meta.env.DEV) console.debug("verifySizesPersisted failed", e);
+        if (process.env.NODE_ENV !== 'production') console.debug("verifySizesPersisted failed", e);
       }
     },
     [toast]
@@ -819,7 +802,7 @@ const Admin = () => {
         })),
       };
 
-      if (import.meta.env.DEV) {
+      if (process.env.NODE_ENV !== 'production') {
         console.debug("Auto-saving product stores (sizes)", { productId: editingProductId, updateData });
       }
 
@@ -1270,12 +1253,11 @@ const Admin = () => {
         name: productName,
         price: avgPrice,
         type: productCategory,
-        category: productCategory,
         color: productColor,
-        gender: productGender || null,
-        brand_id: productBrandId || null,
-        description: productDescription || null,
-        image_url: productImageUrl,
+        gender: productGender || undefined,
+        brand_id: productBrandId || undefined,
+        description: productDescription || undefined,
+        image_url: productImageUrl || undefined,
         stores: effectiveStores.map(store => ({
           store_id: store.store_id,
           price: store.price,
@@ -1283,25 +1265,12 @@ const Admin = () => {
         }))
       };
 
-      const result: unknown = await productService.updateProduct(editingProductId, updateData);
+      const result = await adminApi.updateProduct(editingProductId, updateData);
 
-      if (isRecord(result) && result.success === false) {
-        const apiError = typeof result.error === "string" ? result.error : undefined;
-        throw new Error(apiError || "Failed to update product");
-      }
-
-      {
-        const normalized = isRecord(result) && "data" in result ? result.data : result;
-
-        // Backend may not return stores in response; fall back to selectedStores.
-        const storesCount =
-          isRecord(normalized) && Array.isArray(normalized.stores)
-            ? normalized.stores.length
-            : effectiveStores.length;
-        
+      if (result.success) {
         toast({
           title: "Success",
-          description: `Product and ${storesCount} store(s) updated successfully!`,
+          description: result.message || `Product and ${effectiveStores.length} store(s) updated successfully!`,
         });
 
         // Reset form
@@ -1322,7 +1291,7 @@ const Admin = () => {
         refetchDashboard();
         
         // Clear URL param
-        globalThis.history.replaceState(null, "", "/admin");
+        router.replace("/admin");
       }
     } catch (error: unknown) {
       toast({
@@ -1350,7 +1319,7 @@ const Admin = () => {
     setCurrentStoreSizes([]);
     setCurrentSizeInput("");
     setEditingStore(null);
-    globalThis.history.replaceState(null, "", "/admin");
+    router.replace("/admin");
   };
 
   const handleCreateProduct = async (e: React.FormEvent) => {
@@ -1388,12 +1357,11 @@ const Admin = () => {
         name: productName,
         price: avgPrice,
         type: productCategory,
-        category: productCategory,
         color: productColor,
-        gender: productGender || null,
-        brand_id: productBrandId || null,
-        description: productDescription || null,
-        image_url: productImageUrl,
+        gender: productGender || undefined,
+        brand_id: productBrandId || undefined,
+        description: productDescription || undefined,
+        image_url: productImageUrl || undefined,
         stores: effectiveStores.map(store => ({
           store_id: store.store_id,
           price: store.price,
@@ -1401,20 +1369,14 @@ const Admin = () => {
         }))
       };
 
-      // Try NEW format first: Create ONE product with multiple stores.
-      // NOTE: productService throws on HTTP errors; don't rely on { success: false } envelopes.
-      try {
-        const result: unknown = await productService.createProduct(createData);
+      // Use new admin API
+      const result = await adminApi.createProduct(createData);
 
-        if (isRecord(result) && result.success === false) {
-          const apiError = typeof result.error === "string" ? result.error : undefined;
-          throw new Error(apiError || "Failed to create product");
-        }
-
+      if (result.success) {
         triggerConfetti();
         toast({
           title: "Success",
-          description: `Product created and added to ${effectiveStores.length} store(s)!`,
+          description: result.message || `Product created and added to ${effectiveStores.length} store(s)!`,
         });
 
         // Clear saved draft
@@ -1438,79 +1400,8 @@ const Admin = () => {
         refetchDashboard();
 
         // Clear URL param if editing
-        globalThis.history.replaceState(null, "", "/admin");
-        return;
-      } catch (err: unknown) {
-        const message = getErrorMessage(err);
-        const looksLikeMultiStoreNotSupported =
-          /stores|store_id|product_stores/i.test(message);
-
-        if (!looksLikeMultiStoreNotSupported) {
-          throw err;
-        }
-
-        console.warn('⚠️ Backend doesn\'t support multi-store format, using fallback...', message);
-
-        // OLD FORMAT: Create separate product for each store
-        const results = await Promise.allSettled(
-          selectedStores.map(async (store) => {
-            const fallbackData = {
-              name: productName,
-              price: store.price,
-              store_price: store.price,
-              type: productCategory,
-              category: productCategory,
-              color: productColor,
-              gender: productGender || null,
-              brand_id: productBrandId || null,
-              description: productDescription || null,
-              image_url: productImageUrl,
-              store_id: store.store_id,
-            };
-            return await productService.createProduct(fallbackData);
-          })
-        );
-
-        const successCount = results.filter((r) => {
-          if (r.status !== 'fulfilled') return false;
-          const value: unknown = r.value;
-          return !(isRecord(value) && value.success === false);
-        }).length;
-
-        if (successCount > 0) {
-          triggerConfetti();
-          toast({
-            title: "Success",
-            description: `Product created in ${successCount} store(s) using fallback`,
-          });
-
-          // Clear saved draft
-          localStorage.removeItem('admin_product_draft');
-
-          // Reset form
-          setEditingProductId(null);
-          setProductName("");
-          setProductCategory("");
-          setProductColor("");
-          setProductGender("");
-          setProductBrandId("");
-          setProductDescription("");
-          setProductImageUrl("");
-          setSelectedStores([]);
-          setCurrentStore("");
-          setCurrentStorePrice("");
-          refetchDashboard();
-
-          // Clear URL param if editing
-          globalThis.history.replaceState(null, "", "/admin");
-        } else {
-          console.error('❌ All fallback attempts failed');
-          throw new Error('Failed to create products in any store');
-        }
+        router.replace("/admin");
       }
-      
-      // Clear URL param if editing
-      globalThis.history.replaceState(null, "", "/admin");
     } catch (error: unknown) {
       toast({
         variant: "destructive",
@@ -1576,7 +1467,7 @@ const Admin = () => {
     try {
       const deletePromises = Array.from(selectedProductIds).map(async (id) => {
         try {
-          await productService.deleteProduct(id);
+          await adminApi.deleteProduct(id);
           successCount++;
         } catch (error) {
           console.error(`Failed to delete product ${id}:`, error);
@@ -2142,29 +2033,27 @@ const Admin = () => {
         throw new Error("Invalid store id");
       }
 
-      const result: unknown = editingStoreId
-        ? await storeService.updateStore(editingStoreId, payload)
-        : await storeService.createStore(payload);
+      const result = editingStoreId
+        ? await adminApi.updateStore(editingStoreId, payload)
+        : await adminApi.createStore(payload);
 
-      if (isRecord(result) && result.success === false) {
-        const apiError = typeof result.error === "string" ? result.error : undefined;
-        throw new Error(apiError || `Failed to ${editingStore ? 'update' : 'create'} store`);
+      if (result.success) {
+        toast({
+          title: "Success",
+          description: result.message || (editingStore ? "Store updated successfully" : "Store created successfully"),
+        });
+        
+        // Reset form
+        setEditingStore(null);
+        setStoreName("");
+        setStoreTelegram("");
+        setStoreInstagram("");
+        setStoreTiktok("");
+        setStoreShipping("");
+        setStoreLogoUrl("");
+        setStoreRecommended(false);
+        refetchDashboard();
       }
-
-      toast({
-        title: "Success",
-        description: editingStore ? "Store updated successfully" : "Store created successfully",
-      });
-      // Reset form
-      setEditingStore(null);
-      setStoreName("");
-      setStoreTelegram("");
-      setStoreInstagram("");
-      setStoreTiktok("");
-      setStoreShipping("");
-      setStoreLogoUrl("");
-      setStoreRecommended(false);
-      refetchDashboard();
     } catch (error: unknown) {
       toast({
         variant: "destructive",
@@ -2200,7 +2089,6 @@ const Admin = () => {
 
   return (
     <div className="min-h-screen bg-background text-foreground font-sans">
-      <Navigation />
       
       {/* Header */}
       <section className="relative pt-28 pb-12 border-b border-border/30">
@@ -3505,7 +3393,7 @@ const Admin = () => {
                               onClick={async () => {
                                 if (globalThis.confirm(`Delete "${product.name}"?`)) {
                                   try {
-                                    await productService.deleteProduct(product.id);
+                                    await adminApi.deleteProduct(product.id);
                                     toast({
                                       title: "Success",
                                     description: "Product deleted",
@@ -3670,7 +3558,7 @@ const Admin = () => {
                                       onClick={async () => {
                                         if (globalThis.confirm(`Delete "${product.name}"?`)) {
                                           try {
-                                            await productService.deleteProduct(product.id);
+                                            await adminApi.deleteProduct(product.id);
                                             toast({ title: "Success", description: "Product deleted" });
                                             refetchDashboard();
                                           } catch (error: unknown) {
@@ -3885,7 +3773,7 @@ const Admin = () => {
                             onClick={async () => {
                               if (globalThis.confirm(`Delete "${store.name}"?`)) {
                                 try {
-                                  await storeService.deleteStore(store.id);
+                                  await adminApi.deleteStore(store.id);
                                   toast({
                                     title: "Success",
                                     description: "Store deleted successfully",
@@ -3939,7 +3827,7 @@ const Admin = () => {
                   }
 
                   try {
-                    await brandsApi.create({ name: brandName });
+                    await adminApi.createBrand({ name: brandName });
 
                     toast({
                       title: "Success",
@@ -3998,7 +3886,7 @@ const Admin = () => {
                           onClick={async () => {
                             if (globalThis.confirm(`Delete brand "${brand.name}"?`)) {
                               try {
-                                await brandsApi.delete(brand.id);
+                                await adminApi.deleteBrand(brand.id);
 
                                 toast({
                                   title: "Success",
@@ -4578,8 +4466,6 @@ const Admin = () => {
           </div>
         </div>
       )}
-
-      <Footer />
     </div>
   );
 };

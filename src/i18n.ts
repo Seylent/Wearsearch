@@ -28,9 +28,11 @@ export const languageService = {
    */
   getLanguage(): SupportedLanguage {
     try {
-      const stored = localStorage.getItem(LANGUAGE_CONFIG.STORAGE_KEY);
-      if (stored && LANGUAGE_CONFIG.SUPPORTED.includes(stored as SupportedLanguage)) {
-        return stored as SupportedLanguage;
+      if (typeof window !== 'undefined') {
+        const stored = localStorage.getItem(LANGUAGE_CONFIG.STORAGE_KEY);
+        if (stored && LANGUAGE_CONFIG.SUPPORTED.includes(stored as SupportedLanguage)) {
+          return stored as SupportedLanguage;
+        }
       }
     } catch (error) {
       console.warn('Failed to read language from localStorage:', error);
@@ -54,34 +56,19 @@ export const languageService = {
   },
 
   /**
-   * Detect language from URL path (for future SEO implementation)
+   * Detect language from URL path (DISABLED - not using URL-based i18n)
    * Example: /en/products -> 'en', /uk/about -> 'uk'
    */
   detectLanguageFromURL(): SupportedLanguage | null {
-    try {
-      const pathname = globalThis.location?.pathname;
-      const firstPart = pathname?.split('/').find((part) => part.length > 0);
-      
-      if (firstPart && LANGUAGE_CONFIG.SUPPORTED.includes(firstPart as SupportedLanguage)) {
-        return firstPart as SupportedLanguage;
-      }
-    } catch (error) {
-      console.warn('Failed to detect language from URL:', error);
-    }
+    // Disabled - we use localStorage only for language preference
     return null;
   },
 
   /**
-   * Get initial language (URL > localStorage > default)
+   * Get initial language (localStorage > default)
    */
   getInitialLanguage(): SupportedLanguage {
-    // Priority 1: URL path (for SEO-friendly URLs in future)
-    const urlLang = this.detectLanguageFromURL();
-    if (urlLang) {
-      return urlLang;
-    }
-
-    // Priority 2: Stored preference
+    // URL detection disabled - use stored preference only
     return this.getLanguage();
   }
 };
@@ -95,48 +82,61 @@ const resources = {
   }
 };
 
-// Initialize with centralized language detection
-const initialLanguage = languageService.getInitialLanguage();
+// Initialize with centralized language detection - ONLY on client side
+const initialLanguage = typeof window !== 'undefined' 
+  ? languageService.getInitialLanguage() 
+  : LANGUAGE_CONFIG.DEFAULT;
 
-i18n
-  .use(initReactI18next)
-  .init({
-    resources,
-    lng: initialLanguage,
-    fallbackLng: LANGUAGE_CONFIG.DEFAULT,
-    
-    interpolation: {
-      escapeValue: false
-    },
+if (!i18n.isInitialized) {
+  i18n
+    .use(initReactI18next)
+    .init({
+      resources,
+      lng: initialLanguage,
+      fallbackLng: LANGUAGE_CONFIG.DEFAULT,
+      
+      interpolation: {
+        escapeValue: false
+      },
 
-    // Missing key handling for better debugging
-    saveMissing: true,
-    missingKeyHandler: (lngs, ns, key, fallbackValue) => {
-      // Only log in development and use debug level to reduce noise
-      if (import.meta.env.DEV) {
-        console.debug(`[i18n] Missing key: "${key}" (${lngs.join(', ')}) -> "${fallbackValue}"`);
+      // Missing key handling for better debugging
+      saveMissing: true,
+      missingKeyHandler: (lngs, ns, key, fallbackValue) => {
+        // Only log in development and use debug level to reduce noise
+        if (process.env.NODE_ENV !== 'production') {
+          console.debug(`[i18n] Missing key: "${key}" (${lngs.join(', ')}) -> "${fallbackValue}"`);
+        }
+      },
+
+      // Return key if translation is missing (instead of empty string)
+      returnNull: false,
+      returnEmptyString: false,
+      
+      // Prevent hydration issues
+      react: {
+        useSuspense: false
       }
-    },
+    });
 
-    // Return key if translation is missing (instead of empty string)
-    returnNull: false,
-    returnEmptyString: false,
+  // Centralized language change handler
+  i18n.on('languageChanged', (lng) => {
+    languageService.setLanguage(lng as SupportedLanguage);
+    
+    // Update HTML lang attribute for accessibility and SEO
+    if (typeof document !== 'undefined') {
+      document.documentElement.lang = lng;
+    }
+    
+    // Log language change in development
+    if (process.env.NODE_ENV !== 'production') {
+      console.log(`Language changed to: ${lng}`);
+    }
   });
+}
 
-// Centralized language change handler
-i18n.on('languageChanged', (lng) => {
-  languageService.setLanguage(lng as SupportedLanguage);
-  
-  // Update HTML lang attribute for accessibility and SEO
-  document.documentElement.lang = lng;
-  
-  // Log language change in development
-  if (import.meta.env.DEV) {
-    console.log(`Language changed to: ${lng}`);
-  }
-});
-
-// Set initial HTML lang attribute
-document.documentElement.lang = initialLanguage;
+// Set initial HTML lang attribute - client-side only
+if (typeof window !== 'undefined' && typeof document !== 'undefined') {
+  document.documentElement.lang = initialLanguage;
+}
 
 export { default } from 'i18next';

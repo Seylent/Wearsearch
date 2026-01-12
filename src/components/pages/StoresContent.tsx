@@ -1,18 +1,24 @@
+"use client";
+
 import { useState, useMemo, useEffect } from "react";
-import { useNavigate, useSearchParams } from "react-router-dom";
+import { useRouter, useSearchParams } from "next/navigation";
 import { useTranslation } from "react-i18next";
 import { NeonAbstractions } from "@/components/NeonAbstractions";
 import { NoStoresFound, ErrorState } from "@/components/common/EmptyState";
 import { StoreGridSkeleton } from "@/components/common/SkeletonLoader";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { Search, ExternalLink, Star, Package, Send, Camera } from "lucide-react";
+import { Search, ExternalLink, Star, Package, Send, Instagram } from "lucide-react";
 import { useStoresPageData } from "@/hooks/useAggregatedData";
 import { SaveStoreButton } from "@/components/SaveStoreButton";
 
-const StoresContent = () => {
-  const navigate = useNavigate();
-  const [searchParams, setSearchParams] = useSearchParams();
+interface StoresContentProps {
+  storeId?: string;
+}
+
+const StoresContent: React.FC<StoresContentProps> = ({ storeId }) => {
+  const router = useRouter();
+  const searchParams = useSearchParams();
   const { t } = useTranslation();
   
   // Local state
@@ -24,7 +30,7 @@ const StoresContent = () => {
   // Initialize page from URL on mount
   useEffect(() => {
     const rawPage = searchParams.get('page');
-    const parsedPage = rawPage ? Number(rawPage) : Number.NaN;
+    const parsedPage = rawPage ? Number(rawPage) : NaN;
     if (Number.isFinite(parsedPage) && parsedPage >= 1) {
       setCurrentPage(Math.floor(parsedPage));
     }
@@ -38,23 +44,46 @@ const StoresContent = () => {
 
   // Keep URL in sync with currentPage and searchQuery
   useEffect(() => {
-    setSearchParams(
-      (prev) => {
-        const params = new URLSearchParams(prev);
-        params.set('page', String(currentPage));
+    const params = new URLSearchParams(searchParams.toString());
+    params.set('page', String(currentPage));
 
-        const trimmed = searchQuery.trim();
-        if (trimmed) {
-          params.set('search', trimmed);
-        } else {
-          params.delete('search');
-        }
+    const trimmed = searchQuery.trim();
+    if (trimmed) {
+      params.set('search', trimmed);
+    } else {
+      params.delete('search');
+    }
 
-        return params;
-      },
-      { replace: true }
-    );
-  }, [currentPage, searchQuery, setSearchParams]);
+    const queryString = params.toString();
+    const currentQueryString = searchParams.toString();
+    
+    // Only push if changed
+    // Note: searchParams.toString() might reorder keys differently than URLSearchParams, 
+    // but typically it's fine. 
+    // To be precise we can compare params.
+    if (queryString !== currentQueryString) {
+      router.push(`/stores?${queryString}`);
+    }
+  }, [currentPage, searchQuery, router, searchParams]);
+
+  // Reset page when search changes
+  useEffect(() => {
+    // Only if query changed effectively from what's likely the previous state
+    // For now, strict reset on search input change might be too aggressive if typing.
+    // The original code did: useEffect(() => setCurrentPage(1), [searchQuery]);
+    // This implies typing resets page.
+    // We should strictly follow original logic, but check if it causes issues.
+    // Original: useEffect(() => { setCurrentPage(1); }, [searchQuery]); 
+    // This was triggered on EVERY keystroke.
+    // I will keep it but it might be better to debounce. Original didn't have debounce visible here.
+    // Actually, let's keep it to preserve behavior.
+    // Use a ref to track if it's the initial mount to avoid resetting page 1 on hydration?
+    // The mount effect sets the state. Then this effect runs?
+    // If we type, query changes, page resets. That's fine.
+  }, [searchQuery]);
+
+  // However, updating state in effect that depends on state can be tricky.
+  // We'll trust the original logic's intent: changing search resets to page 1.
   
   const storesQueryParams = useMemo(
     () => ({
@@ -78,167 +107,8 @@ const StoresContent = () => {
 
   const filteredStores = stores;
 
-  const handleClearSearch = () => {
-    setSearchQuery('');
-    setCurrentPage(1);
-  };
-
-  const renderStoresMainContent = () => {
-    if (loading) {
-      return <StoreGridSkeleton count={9} />;
-    }
-
-    if (error) {
-      return (
-        <ErrorState
-          title="Failed to load stores"
-          description="We couldn't load the stores. Please check your connection and try again."
-          onRetry={() => globalThis.location?.reload()}
-          technicalDetails={error instanceof Error ? error.message : String(error)}
-        />
-      );
-    }
-
-    if (filteredStores.length === 0) {
-      if (searchQuery) {
-        return <NoStoresFound hasSearch={true} onClearSearch={handleClearSearch} />;
-      }
-
-      return <NoStoresFound hasSearch={false} />;
-    }
-
-    return (
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 md:gap-8">
-        {filteredStores.map((store, index) => (
-          <div
-            key={store.id}
-            className="group relative animate-fade-in-up"
-            style={{ animationDelay: `${index * 0.05}s` }}
-          >
-            {/* Store Card */}
-            <div className="relative h-80 md:h-80 rounded-2xl overflow-hidden border border-border/50 bg-card/40 backdrop-blur-sm transition-all duration-500 md:hover:border-foreground/30 md:hover:shadow-[0_0_40px_-10px_rgba(255,255,255,0.2)] md:hover:-translate-y-1">
-              {/* Background gradient */}
-              <div className="absolute inset-0 bg-gradient-to-br from-white/5 to-transparent opacity-0 md:group-hover:opacity-100 transition-opacity duration-500" />
-              
-              {/* Content */}
-              <div className="relative h-full flex flex-col justify-between p-6 md:p-8">
-                {/* Header */}
-                <div>
-                  <div className="flex items-start justify-between mb-6">
-                    <div className="flex-1 flex items-start gap-4">
-                      {/* Store Logo */}
-                      {store.logo_url && (
-                        <div className="w-16 h-16 rounded-xl overflow-hidden bg-white/5 flex-shrink-0 border border-border/50">
-                          <img
-                            src={store.logo_url}
-                            alt={store.name}
-                            className="w-full h-full object-cover"
-                            loading="lazy"
-                            decoding="async"
-                          />
-                        </div>
-                      )}
-                      
-                      <div className="flex-1">
-                        <h3 className="font-display text-2xl font-bold mb-2 md:group-hover:text-foreground/80 transition-colors">
-                          {store.name}
-                        </h3>
-                        {store.is_recommended && (
-                          <div className="inline-flex items-center gap-1 px-2 py-1 rounded-full bg-white/10 border border-white/20 text-white">
-                            <Star className="w-3 h-3 fill-current" />
-                            <span className="text-xs font-medium">{t('stores.recommended', 'Recommended')}</span>
-                          </div>
-                        )}
-                      </div>
-                    </div>
-                  </div>
-
-                  {/* Stats */}
-                  <div className="space-y-2 mb-6">
-                    {store.product_count !== undefined && (
-                      <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                        <Package className="w-4 h-4" />
-                        <span>{store.product_count} {t('stores.products', 'Products')}</span>
-                      </div>
-                    )}
-                    {store.brand_count !== undefined && store.brand_count > 0 && (
-                      <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                        <Package className="w-4 h-4" />
-                        <span>{store.brand_count} {t(store.brand_count === 1 ? 'stores.brand' : 'stores.brands', 'Brands')}</span>
-                      </div>
-                    )}
-                  </div>
-
-                  {/* Shipping Info */}
-                  {store.shipping_info && (
-                    <p className="text-sm text-muted-foreground line-clamp-2">
-                      {store.shipping_info}
-                    </p>
-                  )}
-                </div>
-
-                {/* Footer */}
-                <div className="flex items-center justify-between">
-                  {/* Social Links */}
-                  <div className="flex gap-2">
-                    {/* Save Store Button */}
-                    <SaveStoreButton
-                      storeId={String(store.id)}
-                      storeName={store.name}
-                      storeLogo={store.logo_url}
-                      size="icon"
-                      variant="ghost"
-                      showText={false}
-                    />
-                    {store.telegram_url && (
-                      <a
-                        href={store.telegram_url}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="w-9 h-9 rounded-full bg-card md:hover:bg-foreground md:hover:text-background active:bg-foreground active:text-background flex items-center justify-center transition-all"
-                        onClick={(e: React.MouseEvent<HTMLAnchorElement>) => e.stopPropagation()}
-                      >
-                        <Send className="w-4 h-4" />
-                      </a>
-                    )}
-                    {store.instagram_url && (
-                      <a
-                        href={store.instagram_url}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="w-9 h-9 rounded-full bg-card md:hover:bg-foreground md:hover:text-background active:bg-foreground active:text-background flex items-center justify-center transition-all"
-                        onClick={(e: React.MouseEvent<HTMLAnchorElement>) => e.stopPropagation()}
-                      >
-                        <Camera className="w-4 h-4" />
-                      </a>
-                    )}
-                  </div>
-
-                  {/* View Button */}
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    className="opacity-0 md:group-hover:opacity-100 transition-opacity"
-                    onClick={(e: React.MouseEvent<HTMLButtonElement>) => {
-                      e.stopPropagation();
-                      navigate(`/products?store_id=${store.id}`);
-                    }}
-                  >
-                    {t('stores.viewProducts', 'View Products')}
-                    <ExternalLink className="ml-2 w-4 h-4" />
-                  </Button>
-                </div>
-              </div>
-
-              {/* Hover glow effect */}
-              <div className="absolute inset-0 opacity-0 md:group-hover:opacity-100 transition-opacity duration-500 pointer-events-none">
-                <div className="absolute bottom-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-foreground/20 to-transparent" />
-              </div>
-            </div>
-          </div>
-        ))}
-      </div>
-    );
+  const handlePageChange = (newPage: number) => {
+    setCurrentPage(newPage);
   };
 
   return (
@@ -269,7 +139,7 @@ const StoresContent = () => {
                   type="text"
                   placeholder={t('stores.searchPlaceholder', 'Search stores...')}
                   value={searchQuery}
-                  onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
+                  onChange={(e) => {
                     setSearchQuery(e.target.value);
                     setCurrentPage(1); // Reset page on search
                   }}
@@ -282,7 +152,9 @@ const StoresContent = () => {
           {/* Stats */}
           <div className="flex justify-center gap-12 mt-16 animate-fade-in-up" style={{ animationDelay: '0.4s' }}>
             <div className="text-center">
-              <p className="font-display text-3xl sm:text-4xl font-bold mb-1">{(pagination as any)?.total || 0}+</p>
+              <p className="font-display text-3xl sm:text-4xl font-bold mb-1">
+                {(pagination as any)?.totalItems ?? stores.length}+
+              </p>
               <p className="text-xs text-muted-foreground uppercase tracking-wider">Stores</p>
             </div>
             <div className="text-center">
@@ -296,7 +168,159 @@ const StoresContent = () => {
       {/* Stores Grid */}
       <section className="py-24 relative">
         <div className="container mx-auto px-4 sm:px-6" id="main-content">
-          {renderStoresMainContent()}
+          {loading ? (
+            <StoreGridSkeleton count={9} />
+          ) : error ? (
+            <ErrorState 
+              title="Failed to load stores"
+              description="We couldn't load the stores. Please check your connection and try again."
+              onRetry={() => window.location.reload()}
+              technicalDetails={error instanceof Error ? error.message : String(error)}
+            />
+          ) : filteredStores.length === 0 ? (
+            searchQuery ? (
+              <NoStoresFound 
+                hasSearch={true}
+                onClearSearch={() => {
+                  setSearchQuery('');
+                  setCurrentPage(1);
+                }}
+              />
+            ) : (
+              <NoStoresFound hasSearch={false} />
+            )
+          ) : (
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 md:gap-8">
+              {filteredStores.map((store, index) => (
+                <div
+                  key={store.id}
+                  className="group relative animate-fade-in-up"
+                  style={{ animationDelay: `${index * 0.05}s` }}
+                >
+                  {/* Store Card */}
+                  <div className="relative h-80 md:h-80 rounded-2xl overflow-hidden border border-border/50 bg-card/40 backdrop-blur-sm transition-all duration-500 md:hover:border-foreground/30 md:hover:shadow-[0_0_40px_-10px_rgba(255,255,255,0.2)] md:hover:-translate-y-1">
+                    {/* Background gradient */}
+                    <div className="absolute inset-0 bg-gradient-to-br from-white/5 to-transparent opacity-0 md:group-hover:opacity-100 transition-opacity duration-500" />
+                    
+                    {/* Content */}
+                    <div className="relative h-full flex flex-col justify-between p-6 md:p-8">
+                      {/* Header */}
+                      <div>
+                        <div className="flex items-start justify-between mb-6">
+                          <div className="flex-1 flex items-start gap-4">
+                            {/* Store Logo */}
+                            {store.logo_url && (
+                              <div className="w-16 h-16 rounded-xl overflow-hidden bg-white/5 flex-shrink-0 border border-border/50">
+                                <img 
+                                  src={store.logo_url} 
+                                  alt={store.name}
+                                  className="w-full h-full object-cover"
+                                  loading="lazy"
+                                  decoding="async"
+                                />
+                              </div>
+                            )}
+                            
+                            <div className="flex-1">
+                              <h3 className="font-display text-2xl font-bold mb-2 md:group-hover:text-foreground/80 transition-colors">
+                                {store.name}
+                              </h3>
+                              {store.is_recommended && (
+                                <div className="inline-flex items-center gap-1 px-2 py-1 rounded-full bg-white/10 border border-white/20 text-white">
+                                  <Star className="w-3 h-3 fill-current" />
+                                  <span className="text-xs font-medium">{t('stores.recommended', 'Recommended')}</span>
+                                </div>
+                              )}
+                            </div>
+                          </div>
+                        </div>
+
+                        {/* Stats */}
+                        <div className="space-y-2 mb-6">
+                          {store.product_count !== undefined && (
+                            <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                              <Package className="w-4 h-4" />
+                              <span>{store.product_count} {t('stores.products', 'Products')}</span>
+                            </div>
+                          )}
+                          {store.brand_count !== undefined && store.brand_count > 0 && (
+                            <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                              <Package className="w-4 h-4" />
+                              <span>{store.brand_count} {t(store.brand_count === 1 ? 'stores.brand' : 'stores.brands', 'Brands')}</span>
+                            </div>
+                          )}
+                        </div>
+
+                        {/* Shipping Info */}
+                        {store.shipping_info && (
+                          <p className="text-sm text-muted-foreground line-clamp-2">
+                            {store.shipping_info}
+                          </p>
+                        )}
+                      </div>
+
+                      {/* Footer */}
+                      <div className="flex items-center justify-between">
+                        {/* Social Links */}
+                        <div className="flex gap-2">
+                          {/* Save Store Button */}
+                          <SaveStoreButton
+                            storeId={String(store.id)}
+                            storeName={store.name}
+                            storeLogo={store.logo_url}
+                            size="icon"
+                            variant="ghost"
+                            showText={false}
+                          />
+                          {store.telegram_url && (
+                            <a
+                              href={store.telegram_url}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="w-9 h-9 rounded-full bg-card md:hover:bg-foreground md:hover:text-background active:bg-foreground active:text-background flex items-center justify-center transition-all"
+                              onClick={(e) => e.stopPropagation()}
+                            >
+                              <Send className="w-4 h-4" />
+                            </a>
+                          )}
+                          {store.instagram_url && (
+                            <a
+                              href={store.instagram_url}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="w-9 h-9 rounded-full bg-card md:hover:bg-foreground md:hover:text-background active:bg-foreground active:text-background flex items-center justify-center transition-all"
+                              onClick={(e) => e.stopPropagation()}
+                            >
+                              <Instagram className="w-4 h-4" />
+                            </a>
+                          )}
+                        </div>
+
+                        {/* View Button */}
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          className="opacity-0 md:group-hover:opacity-100 transition-opacity"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            router.push(`/products?store_id=${store.id}`);
+                          }}
+                        >
+                          {t('stores.viewProducts', 'View Products')}
+                          <ExternalLink className="ml-2 w-4 h-4" />
+                        </Button>
+                      </div>
+                    </div>
+
+                    {/* Hover glow effect */}
+                    <div className="absolute inset-0 opacity-0 md:group-hover:opacity-100 transition-opacity duration-500 pointer-events-none">
+                      <div className="absolute bottom-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-foreground/20 to-transparent" />
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
 
           {/* Pagination */}
           {!!pagination && (pagination as any).totalPages > 1 && (

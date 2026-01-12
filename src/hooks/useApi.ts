@@ -381,7 +381,7 @@ export const useFavorites = () => {
         // Return empty array for auth errors, not found, or rate limit
         const status = getErrorStatus(error);
         if (status === 401 || status === 404 || status === 429) {
-          if (import.meta.env.DEV && status === 429) {
+          if (process.env.NODE_ENV !== 'production' && status === 429) {
             console.log('⏳ Favorites: Rate limited, will retry later');
           }
           return { favorites: [], total: 0 };

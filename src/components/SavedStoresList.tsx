@@ -4,7 +4,7 @@
  */
 
 import React from 'react';
-import { Link } from 'react-router-dom';
+import Link from 'next/link';
 import { useTranslation } from 'react-i18next';
 import { Store, Bookmark, Trash2, ExternalLink } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -97,14 +97,14 @@ export const SavedStoresList: React.FC<SavedStoresListProps> = ({
               
               <div className="flex-1 min-w-0">
                 <h3 className="font-medium text-white truncate">{store.name}</h3>
-                <p className="text-xs text-white/40">
-                  {new Date(store.savedAt).toLocaleDateString()}
+                <p className="text-xs text-white/40" suppressHydrationWarning>
+                  {typeof window !== 'undefined' && new Date(store.savedAt).toLocaleDateString()}
                 </p>
               </div>
               
               <div className="flex items-center gap-1">
                 <Link
-                  to={`/products?store_id=${store.id}`}
+                  href={`/products?store_id=${store.id}`}
                   className="p-2 rounded-lg hover:bg-white/10 transition-colors"
                 >
                   <ExternalLink className="w-4 h-4 text-white/60" />

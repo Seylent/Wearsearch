@@ -10,7 +10,7 @@
 export function getImageUrl(s3Url: string): string {
   if (!s3Url) return '/placeholder.svg';
   
-  const CLOUDFRONT_DOMAIN = import.meta.env.VITE_CLOUDFRONT_DOMAIN;
+  const CLOUDFRONT_DOMAIN = process.env.NEXT_PUBLIC_CLOUDFRONT_DOMAIN;
   
   // If CloudFront is not configured, return original URL
   if (!CLOUDFRONT_DOMAIN) return s3Url;

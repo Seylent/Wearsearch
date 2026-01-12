@@ -4,7 +4,7 @@
  * Base URL: http://localhost:4000/api
  */
 
-import { api } from '../api';
+import { api } from '@/services/api';
 
 interface Product {
   id?: string;
@@ -89,22 +89,22 @@ export const adminApi = {
   // ===== PRODUCTS =====
   
   async getProducts() {
-    const response = await api.get('/admin/products');
+    const response = await api.get('/admin/items');
     return response.data;
   },
 
   async createProduct(product: Product) {
-    const response = await api.post('/admin/products', product);
+    const response = await api.post('/admin/items', product);
     return response.data;
   },
 
   async updateProduct(id: string, product: Partial<Product>) {
-    const response = await api.put(`/admin/products/${id}`, product);
+    const response = await api.put(`/admin/items/${id}`, product);
     return response.data;
   },
 
   async deleteProduct(id: string) {
-    const response = await api.delete(`/admin/products/${id}`);
+    const response = await api.delete(`/admin/items/${id}`);
     return response.data;
   },
 
@@ -112,22 +112,22 @@ export const adminApi = {
   
   async getStores(search?: string) {
     const params = search ? `?search=${encodeURIComponent(search)}` : '';
-    const response = await api.get(`/admin/stores${params}`);
+    const response = await api.get(`/stores${params}`);
     return response.data;
   },
 
   async createStore(store: Store) {
-    const response = await api.post('/admin/stores', store);
+    const response = await api.post('/stores', store);
     return response.data;
   },
 
   async updateStore(id: string, store: Partial<Store>) {
-    const response = await api.put(`/admin/stores/${id}`, store);
+    const response = await api.put(`/stores/${id}`, store);
     return response.data;
   },
 
   async deleteStore(id: string) {
-    const response = await api.delete(`/admin/stores/${id}`);
+    const response = await api.delete(`/stores/${id}`);
     return response.data;
   },
 

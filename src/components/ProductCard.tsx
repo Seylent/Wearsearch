@@ -1,7 +1,9 @@
+'use client';
+
 import React, { memo, useRef } from 'react';
-import { Link } from 'react-router-dom';
+import Link from 'next/link';
 import { useTranslation } from 'react-i18next';
-import ImageDebugger from './ImageDebugger';
+import { LazyImage } from './common/LazyImage';
 import FavoriteButton from './FavoriteButton';
 import { useCurrencyConversion } from '@/hooks/useCurrencyConversion';
 
@@ -57,7 +59,7 @@ const ProductCard: React.FC<ProductCardProps> = memo(({ id, name, image, price, 
 
   return (
     <Link 
-      to={`/product/${id}`} 
+      href={`/product/${id}`} 
       className="group block h-full"
       aria-label={t('aria.viewProduct', { product: name })}
     >
@@ -78,10 +80,10 @@ const ProductCard: React.FC<ProductCardProps> = memo(({ id, name, image, price, 
         <div className="relative aspect-[3/4] sm:aspect-[4/5] overflow-hidden" style={{
           background: 'radial-gradient(circle at 20% 30%, rgba(255,255,255,0.05) 0%, transparent 50%), radial-gradient(circle at 80% 70%, rgba(255,255,255,0.03) 0%, transparent 50%), linear-gradient(135deg, rgba(0,0,0,0.9) 0%, rgba(20,20,20,0.95) 100%)'
         }}>
-          <ImageDebugger 
+          <LazyImage 
             src={imgSrc} 
             alt={name} 
-            loading="lazy"
+            rootMargin="200px"
             className="w-full h-full object-cover transition-transform duration-500 md:group-hover:scale-105 filter grayscale md:group-hover:grayscale-0" 
             style={{
               filter: 'grayscale(100%) contrast(1.2) brightness(1.1)',

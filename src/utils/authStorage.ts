@@ -22,6 +22,8 @@ export const setAuth = (token: string, userId?: string, expiresAt?: number): voi
     userId,
     expiresAt,
   };
+  if (typeof window === 'undefined') return;
+  
   localStorage.setItem(AUTH_TOKEN_KEY, JSON.stringify(authData));
   
   // Also set the legacy key for backward compatibility during transition
@@ -32,6 +34,7 @@ export const setAuth = (token: string, userId?: string, expiresAt?: number): voi
  * Get authentication token
  */
 export const getAuth = (): string | null => {
+  if (typeof window === 'undefined') return null;
   try {
     const authDataStr = localStorage.getItem(AUTH_TOKEN_KEY);
     if (authDataStr) {
@@ -63,11 +66,8 @@ export const getAuth = (): string | null => {
       return authData.token;
     }
     
-    // Fallback to legacy token
+    // Fallback to legacy token (silent - don't spam console)
     const legacyToken = localStorage.getItem('access_token');
-    if (legacyToken) {
-      console.log('ℹ️ Using legacy token from access_token');
-    }
     return legacyToken;
   } catch (error) {
     console.error('❌ Error getting auth token:', error);
@@ -120,6 +120,8 @@ export const clearAuth = (): void => {
   if (hadAuth || hadLegacy) {
     console.log('Clearing auth tokens:', { hadAuth, hadLegacy });
   }
+  
+  if (typeof window === 'undefined') return;
   
   localStorage.removeItem(AUTH_TOKEN_KEY);
   

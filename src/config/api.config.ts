@@ -15,15 +15,15 @@ const deriveLegacyBaseUrl = (baseUrl: string): string => {
 };
 
 export const API_CONFIG = {
-  BASE_URL: import.meta.env.VITE_API_BASE_URL || '/api/v1',
-  LEGACY_BASE_URL: deriveLegacyBaseUrl(import.meta.env.VITE_API_BASE_URL || '/api/v1'),
+  BASE_URL: process.env.NEXT_PUBLIC_API_BASE_URL || '/api/v1',
+  LEGACY_BASE_URL: deriveLegacyBaseUrl(process.env.NEXT_PUBLIC_API_BASE_URL || '/api/v1'),
   TIMEOUT: 15000,
   WITH_CREDENTIALS: true,
 } as const;
 
 // Validation - warn if not configured in production
-if (!import.meta.env.VITE_API_BASE_URL && import.meta.env.PROD) {
-  console.warn('⚠️ VITE_API_BASE_URL is not configured. Using default /api/v1.');
+if (!process.env.NEXT_PUBLIC_API_BASE_URL && process.env.NODE_ENV === 'production') {
+  console.warn('⚠️ NEXT_PUBLIC_API_BASE_URL is not configured. Using default /api/v1.');
 }
 
 // Legacy exports for backward compatibility (deprecated)

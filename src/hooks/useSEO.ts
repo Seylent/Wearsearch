@@ -1,3 +1,5 @@
+'use client';
+
 /**
  * useSEO Hook - Dynamic SEO Meta Tags Management
  * 
@@ -6,7 +8,7 @@
  */
 
 import { useEffect } from 'react';
-import { useLocation } from 'react-router-dom';
+import { usePathname } from 'next/navigation';
 
 interface SEOProps {
   title: string;
@@ -43,9 +45,12 @@ export const useSEO = ({
   noindex = false,
   structuredData,
 }: SEOProps) => {
-  const location = useLocation();
+  const pathname = usePathname();
 
   useEffect(() => {
+    // Guard for SSR and cleanup edge cases
+    if (typeof window === 'undefined' || typeof document === 'undefined') return;
+    
     // Full title with site name
     const fullTitle = title.includes(DEFAULT_SITE_NAME) 
       ? title 
@@ -55,21 +60,27 @@ export const useSEO = ({
     document.title = fullTitle;
 
     // Canonical URL - use provided or construct from current location
-    const canonicalUrl = canonical || `${window.location.origin}${location.pathname}`;
+    const canonicalUrl = canonical || `${window.location.origin}${pathname}`;
 
     // Helper to update or create meta tag
     const updateMeta = (selector: string, attribute: string, content: string) => {
-      let element = document.querySelector(selector);
-      if (!element) {
-        element = document.createElement('meta');
-        if (attribute === 'property') {
-          element.setAttribute('property', selector.replace('meta[property="', '').replace('"]', ''));
-        } else {
-          element.setAttribute('name', selector.replace('meta[name="', '').replace('"]', ''));
+      try {
+        if (!document.head) return;
+        let element = document.querySelector(selector);
+        if (!element) {
+          element = document.createElement('meta');
+          if (attribute === 'property') {
+            element.setAttribute('property', selector.replace('meta[property="', '').replace('"]', ''));
+          } else {
+            element.setAttribute('name', selector.replace('meta[name="', '').replace('"]', ''));
+          }
+          document.head.appendChild(element);
         }
-        document.head.appendChild(element);
+        element.setAttribute('content', content);
+      } catch (error) {
+        // Silently fail if DOM is not available
+        console.debug('Failed to update meta tag:', selector, error);
       }
-      element.setAttribute('content', content);
     };
 
     // Update basic meta tags
@@ -85,8 +96,14 @@ export const useSEO = ({
     if (noindex) {
       updateMeta('meta[name="robots"]', 'name', 'noindex, nofollow');
     } else {
-      const robotsMeta = document.querySelector('meta[name="robots"]');
-      if (robotsMeta) robotsMeta.remove();
+      try {
+        const robotsMeta = document.querySelector('meta[name="robots"]');
+        if (robotsMeta && robotsMeta.parentNode) {
+          robotsMeta.parentNode.removeChild(robotsMeta);
+        }
+      } catch (error) {
+        // Silently fail
+      }
     }
 
     // Open Graph tags
@@ -112,24 +129,36 @@ export const useSEO = ({
     updateMeta('meta[name="twitter:image"]', 'name', image);
 
     // Canonical URL
-    let linkCanonical = document.querySelector('link[rel="canonical"]') as HTMLLinkElement;
-    if (!linkCanonical) {
-      linkCanonical = document.createElement('link');
-      linkCanonical.rel = 'canonical';
-      document.head.appendChild(linkCanonical);
+    try {
+      if (document.head) {
+        let linkCanonical = document.querySelector('link[rel="canonical"]') as HTMLLinkElement;
+        if (!linkCanonical) {
+          linkCanonical = document.createElement('link');
+          linkCanonical.rel = 'canonical';
+          document.head.appendChild(linkCanonical);
+        }
+        linkCanonical.href = canonicalUrl;
+      }
+    } catch (error) {
+      console.debug('Failed to update canonical link:', error);
     }
-    linkCanonical.href = canonicalUrl;
 
     // Structured Data (JSON-LD)
     if (structuredData) {
-      let script = document.querySelector('script[type="application/ld+json"][data-dynamic]') as HTMLScriptElement;
-      if (!script) {
-        script = document.createElement('script');
-        script.type = 'application/ld+json';
-        script.setAttribute('data-dynamic', 'true');
-        document.head.appendChild(script);
+      try {
+        if (document.head) {
+          let script = document.querySelector('script[type="application/ld+json"][data-dynamic]') as HTMLScriptElement;
+          if (!script) {
+            script = document.createElement('script');
+            script.type = 'application/ld+json';
+            script.setAttribute('data-dynamic', 'true');
+            document.head.appendChild(script);
+          }
+          script.textContent = JSON.stringify(structuredData);
+        }
+      } catch (error) {
+        console.debug('Failed to update structured data:', error);
       }
-      script.textContent = JSON.stringify(structuredData);
     }
 
     // Cleanup function for SSR hydration
@@ -137,7 +166,7 @@ export const useSEO = ({
       // Note: In SSR, this cleanup ensures no memory leaks
       // Meta tags are managed per-page, not removed on unmount
     };
-  }, [title, description, keywords, image, type, author, publishedTime, modifiedTime, canonical, noindex, structuredData, location.pathname]);
+  }, [title, description, keywords, image, type, author, publishedTime, modifiedTime, canonical, noindex, structuredData, pathname]);
 };
 
 /**

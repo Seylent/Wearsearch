@@ -1,7 +1,9 @@
+'use client';
+
 import { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import { User, Heart, LogOut, Settings, Shield } from 'lucide-react';
-import { useNavigate } from 'react-router-dom';
+import { useRouter } from 'next/navigation';
 import { isAuthenticated, clearAuth } from '@/utils/authStorage';
 import {
   DropdownMenu,
@@ -23,7 +25,7 @@ interface UserData {
 }
 
 export function UserProfileMenu() {
-  const navigate = useNavigate();
+  const router = useRouter();
   const { t } = useTranslation();
   const [user, setUser] = useState<UserData | null>(null);
 
@@ -68,7 +70,7 @@ export function UserProfileMenu() {
     clearAuth();
     setUser(null);
     window.dispatchEvent(new Event('auth:logout'));
-    navigate('/');
+    router.push('/');
   };
 
   if (!user) return null;
@@ -129,7 +131,7 @@ export function UserProfileMenu() {
         <DropdownMenuSeparator className="bg-border/50 my-2" />
         
         <DropdownMenuItem 
-          onClick={() => navigate('/profile')} 
+          onClick={() => router.push('/profile')} 
           className="cursor-pointer rounded-lg px-4 py-3 min-h-[44px] touch-manipulation"
         >
           <User className="h-5 w-5 mr-3" />
@@ -137,7 +139,7 @@ export function UserProfileMenu() {
         </DropdownMenuItem>
         
         <DropdownMenuItem 
-          onClick={() => navigate('/favorites')} 
+          onClick={() => router.push('/favorites')} 
           className="cursor-pointer rounded-lg px-4 py-3 min-h-[44px] touch-manipulation"
         >
           <Heart className="h-5 w-5 mr-3" />
@@ -146,7 +148,7 @@ export function UserProfileMenu() {
         
         {isAdmin && (
           <DropdownMenuItem 
-            onClick={() => navigate('/admin')} 
+            onClick={() => router.push('/admin')} 
             className="cursor-pointer rounded-lg px-4 py-3 min-h-[44px] touch-manipulation"
           >
             <Settings className="h-5 w-5 mr-3" />

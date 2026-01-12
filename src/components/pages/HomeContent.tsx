@@ -1,6 +1,9 @@
-import { useNavigate } from 'react-router-dom';
+"use client";
+
+import { useRouter } from 'next/navigation';
 import { useTranslation } from 'react-i18next';
 import ProductCard from "@/components/ProductCard";
+import { Button } from "@/components/ui/button";
 import { NeonAbstractions } from "@/components/NeonAbstractions";
 import { ProductGridSkeleton } from "@/components/common/SkeletonLoader";
 import RecentlyViewedProducts from "@/components/RecentlyViewedProducts";
@@ -14,7 +17,7 @@ interface HomeContentProps {
 }
 
 export function HomeContent({ products, seoData, isLoading }: HomeContentProps) {
-  const navigate = useNavigate();
+  const router = useRouter(); 
   const { t } = useTranslation();
   
   return (
@@ -113,7 +116,7 @@ export function HomeContent({ products, seoData, isLoading }: HomeContentProps) 
             {/* View All Button - Glassmorphism */}
             <nav className="text-center mt-12">
               <button 
-                onClick={() => navigate("/products")}
+                onClick={() => router.push("/products")}
                 className="relative px-8 py-3 rounded-full border border-white/20 bg-white/5 backdrop-blur-[30px] text-white font-medium text-sm hover:bg-white/10 hover:border-white/30 transition-all duration-300 overflow-hidden group"
               >
                 <span className="relative">{t('home.viewAllProducts')}</span>

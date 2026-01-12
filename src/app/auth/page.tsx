@@ -1,6 +1,7 @@
+'use client';
 
 import { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useRouter } from 'next/navigation';
 import { useTranslation } from 'react-i18next';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -8,10 +9,10 @@ import { Label } from '@/components/ui/label';
 import { ArrowLeft, Lock, Mail, User, Loader2 } from 'lucide-react';
 import { NeonAbstractions } from '@/components/NeonAbstractions';
 import { useToast } from '@/hooks/use-toast';
-import api from '@/services/api';
+import { api } from '@/services/api';
 
 export default function AuthPage() {
-  const navigate = useNavigate();
+  const router = useRouter();
   const { t } = useTranslation();
   const { toast } = useToast();
   const [isLogin, setIsLogin] = useState(true);
@@ -34,113 +35,83 @@ export default function AuthPage() {
     });
   };
 
-  const showToast = (options: { title: string; description: string; variant?: 'destructive' }) => {
-    toast({
-      title: options.title,
-      description: options.description,
-      ...(options.variant ? { variant: options.variant } : {}),
-    });
-  };
-
-  const persistAuth = (payload: any) => {
-    localStorage.setItem('access_token', payload.access_token);
-    localStorage.setItem('refresh_token', payload.refresh_token);
-    if (payload.user) {
-      localStorage.setItem('user', JSON.stringify(payload.user));
-    }
-  };
-
-  const validateSignup = (): boolean => {
-    if (formData.password === formData.confirmPassword) return true;
-    showToast({
-      variant: 'destructive',
-      title: t('auth.passwordMismatch', 'Паролі не співпадають'),
-      description: t('auth.passwordMismatchDesc', 'Будь ласка, переконайтеся що паролі однакові'),
-    });
-    return false;
-  };
-
-  const doLogin = async () => {
-    const response = await api.post('/auth/login', {
-      identifier: formData.identifier,
-      password: formData.password,
-    });
-
-    if (response.data?.success) {
-      persistAuth(response.data);
-      showToast({
-        title: t('auth.loginSuccess', 'Успішний вхід'),
-        description: t('auth.welcomeBack', 'Ласкаво просимо назад!'),
-      });
-      navigate('/');
-    }
-  };
-
-  const doSignup = async () => {
-    if (!validateSignup()) return;
-
-    const email = formData.email;
-    const password = formData.password;
-
-    const response = await api.post('/auth/register', {
-      email,
-      password,
-      display_name: formData.display_name || undefined,
-      username: formData.username || undefined,
-    });
-
-    if (response.data?.success) {
-      showToast({
-        title: t('auth.signupSuccess', 'Реєстрація успішна'),
-        description: t('auth.pleaseLogin', 'Тепер ви можете увійти'),
-      });
-      setIsLogin(true);
-      // Очищуємо форму і переносимо email в identifier для входу
-      setFormData({
-        email: '',
-        display_name: '',
-        username: '',
-        identifier: email,
-        password,
-        confirmPassword: '',
-      });
-    }
-  };
-
-  const getAuthErrorTitle = () =>
-    isLogin ? t('auth.loginError', 'Помилка входу') : t('auth.signupError', 'Помилка реєстрації');
-
-  const getAuthErrorDescription = (message?: string) => {
-    if (message) return message;
-    return isLogin
-      ? t('auth.invalidCredentials', 'Невірний email/нікнейм або пароль')
-      : t('auth.signupFailed', 'Не вдалося зареєструватися');
-  };
-
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
 
     try {
       if (isLogin) {
-        await doLogin();
+        // Login logic згідно з API документацією
+        const response = await api.post('/auth/login', {
+          identifier: formData.identifier,
+          password: formData.password,
+        });
+
+        if (response.data && response.data.success) {
+          // Зберігаємо обидва токени згідно з документацією
+          localStorage.setItem('access_token', response.data.access_token);
+          localStorage.setItem('refresh_token', response.data.refresh_token);
+          
+          // Зберігаємо інформацію про користувача
+          if (response.data.user) {
+            localStorage.setItem('user', JSON.stringify(response.data.user));
+          }
+          
+          toast({
+            title: t('auth.loginSuccess', 'Успішний вхід'),
+            description: t('auth.welcomeBack', 'Ласкаво просимо назад!'),
+          });
+          router.push('/');
+        }
       } else {
-        await doSignup();
+        // Signup logic
+        if (formData.password !== formData.confirmPassword) {
+          toast({
+            variant: 'destructive',
+            title: t('auth.passwordMismatch', 'Паролі не співпадають'),
+            description: t('auth.passwordMismatchDesc', 'Будь ласка, переконайтеся що паролі однакові'),
+          });
+          setIsLoading(false);
+          return;
+        }
+
+        const response = await api.post('/auth/register', {
+          email: formData.email,
+          password: formData.password,
+          display_name: formData.display_name || undefined,
+          username: formData.username || undefined,
+        });
+
+        if (response.data && response.data.success) {
+          toast({
+            title: t('auth.signupSuccess', 'Реєстрація успішна'),
+            description: t('auth.pleaseLogin', 'Тепер ви можете увійти'),
+          });
+          setIsLogin(true);
+          // Очищуємо форму і переносимо email в identifier для входу
+          setFormData({
+            email: '',
+            display_name: '',
+            username: '',
+            identifier: formData.email,
+            password: formData.password,
+            confirmPassword: '',
+          });
+        }
       }
     } catch (error: any) {
       const message = error?.response?.data?.message || error?.message;
-      showToast({
+      toast({
         variant: 'destructive',
-        title: getAuthErrorTitle(),
-        description: getAuthErrorDescription(message),
+        title: isLogin ? t('auth.loginError', 'Помилка входу') : t('auth.signupError', 'Помилка реєстрації'),
+        description: message || (isLogin 
+          ? t('auth.invalidCredentials', 'Невірний email/нікнейм або пароль')
+          : t('auth.signupFailed', 'Не вдалося зареєструватися')),
       });
     } finally {
       setIsLoading(false);
     }
   };
-
-  const submitText = isLogin ? t('auth.loginButton', 'Увійти') : t('auth.signupButton', 'Зареєструватися');
-  const submittingText = isLogin ? t('auth.signingIn', 'Входимо...') : t('auth.signingUp', 'Реєструємо...');
 
   return (
     <div className="min-h-screen bg-background text-foreground">
@@ -163,7 +134,7 @@ export default function AuthPage() {
             {/* Back button */}
             <Button 
               variant="ghost" 
-              onClick={() => navigate('/')}
+              onClick={() => router.push('/')}
               className="mb-6 -ml-2 text-muted-foreground hover:text-foreground"
             >
               <ArrowLeft className="w-4 h-4 mr-2" />
@@ -313,10 +284,10 @@ export default function AuthPage() {
                 {isLoading ? (
                   <>
                     <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                    {submittingText}
+                    {isLogin ? t('auth.signingIn', 'Входимо...') : t('auth.signingUp', 'Реєструємо...')}
                   </>
                 ) : (
-                  submitText
+                  isLogin ? t('auth.loginButton', 'Увійти') : t('auth.signupButton', 'Зареєструватися')
                 )}
               </Button>
             </form>

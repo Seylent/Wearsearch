@@ -1,10 +1,12 @@
+'use client';
+
 /**
  * Authentication Events Hook
  * Handles global authentication events (logout, session expiration, etc.)
  */
 
 import { useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useRouter } from 'next/navigation';
 import { useQueryClient } from '@tanstack/react-query';
 import { useToast } from './use-toast';
 import { useTranslation } from 'react-i18next';
@@ -14,7 +16,7 @@ interface AuthLogoutEventDetail {
 }
 
 export const useAuthEvents = () => {
-  const navigate = useNavigate();
+  const router = useRouter();
   const queryClient = useQueryClient();
   const { toast } = useToast();
   const { t } = useTranslation();
@@ -47,7 +49,7 @@ export const useAuthEvents = () => {
       // Navigate to auth page if not already there
       if (!window.location.pathname.includes('/auth')) {
         console.log('🔀 Redirecting to /auth page');
-        navigate('/auth', { replace: true });
+        router.replace('/auth');
       } else {
         console.log('ℹ️ Already on /auth page, skipping redirect');
       }

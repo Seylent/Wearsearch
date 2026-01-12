@@ -4,7 +4,7 @@
  */
 
 import React, { useState, useRef, useEffect, useCallback } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useRouter } from 'next/navigation';
 import { useTranslation } from 'react-i18next';
 import { Search, X, History, TrendingUp, ArrowRight, Trash2 } from 'lucide-react';
 import { Input } from '@/components/ui/input';
@@ -29,7 +29,7 @@ const EnhancedSearch: React.FC<EnhancedSearchProps> = ({
   autoFocus = false,
 }) => {
   const { t } = useTranslation();
-  const navigate = useNavigate();
+  const router = useRouter();
   const inputRef = useRef<HTMLInputElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
 
@@ -67,10 +67,10 @@ const EnhancedSearch: React.FC<EnhancedSearchProps> = ({
       if (onSearch) {
         onSearch(trimmed);
       } else {
-        navigate(`/products?search=${encodeURIComponent(trimmed)}`);
+        router.push(`/products?search=${encodeURIComponent(trimmed)}`);
       }
     },
-    [addToHistory, navigate, onSearch]
+    [addToHistory, router, onSearch]
   );
 
   const handleKeyDown = useCallback(

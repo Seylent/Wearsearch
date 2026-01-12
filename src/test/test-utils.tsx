@@ -5,7 +5,7 @@
 
 import { ReactElement } from 'react';
 import { render, RenderOptions } from '@testing-library/react';
-import { BrowserRouter } from 'react-router-dom';
+// React Router imports removed
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { FavoritesProvider } from '@/contexts/FavoritesContext';
 import { CurrencyProvider } from '@/contexts/CurrencyContext';
@@ -55,3 +55,4 @@ function renderWithProviders(
 export * from '@testing-library/react';
 export { renderWithProviders as render };
 export { createTestQueryClient };
+

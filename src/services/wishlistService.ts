@@ -50,7 +50,7 @@ export const getPublicWishlist = async (shareId: string): Promise<PublicWishlist
   const data = response.data;
   
   // Debug logging - show full structure
-  if (import.meta.env.DEV) {
+  if (process.env.NODE_ENV !== 'production') {
     console.log('📋 Public wishlist raw response:', JSON.stringify(data, null, 2));
     console.log('📋 Raw data keys:', Object.keys(data));
     if (data.items) console.log('📋 items array length:', data.items.length);
@@ -85,7 +85,7 @@ export const getPublicWishlist = async (shareId: string): Promise<PublicWishlist
   
   result.items_count = data.items_count ?? data.total ?? data.count ?? result.items.length;
   
-  if (import.meta.env.DEV) {
+  if (process.env.NODE_ENV !== 'production') {
     console.log('📋 Parsed public wishlist:', result);
   }
   

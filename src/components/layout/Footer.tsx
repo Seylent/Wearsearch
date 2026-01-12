@@ -1,4 +1,6 @@
-﻿import { Link } from "react-router-dom";
+'use client';
+
+import Link from "next/link";
 import { useTranslation } from "react-i18next";
 
 const Footer = () => {
@@ -27,7 +29,7 @@ const Footer = () => {
               {footerLinks.shop.map((link) => (
                 <li key={link.name}>
                   <Link
-                    to={link.href}
+                    href={link.href}
                     className="text-sm text-muted-foreground hover:text-foreground transition-colors select-none"
                   >
                     {link.name}
@@ -45,7 +47,7 @@ const Footer = () => {
               {footerLinks.company.map((link) => (      
                 <li key={link.name}>
                   <Link
-                    to={link.href}
+                    href={link.href}
                     className="text-sm text-muted-foreground hover:text-foreground transition-colors select-none"
                   >
                     {link.name}
@@ -53,7 +55,7 @@ const Footer = () => {
                 </li>
               ))}
               <li>
-                <Link to="/contacts" className="text-sm text-muted-foreground hover:text-foreground transition-colors">
+                <Link href="/contacts" className="text-sm text-muted-foreground hover:text-foreground transition-colors">
                   {t('footer.contact')}
                 </Link>
               </li>
@@ -64,10 +66,10 @@ const Footer = () => {
         {/* Bottom */}
         <div className="pt-8 border-t border-zinc-800/50 flex justify-center items-center">
           <div className="flex gap-6">
-            <Link to="/privacy" className="text-xs text-zinc-600 hover:text-zinc-400 transition-colors select-none">
+            <Link href="/privacy" className="text-xs text-zinc-600 hover:text-zinc-400 transition-colors select-none">
               {t('footer.privacyPolicy')}
             </Link>
-            <Link to="/terms" className="text-xs text-zinc-600 hover:text-zinc-400 transition-colors select-none">
+            <Link href="/terms" className="text-xs text-zinc-600 hover:text-zinc-400 transition-colors select-none">
               {t('footer.termsOfService')}
             </Link>
           </div>

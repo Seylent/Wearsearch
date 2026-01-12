@@ -65,8 +65,8 @@ export const useAuth = () => {
       return failureCount < 2;
     },
     retryDelay: (attemptIndex) => Math.min(1000 * 2 ** attemptIndex, 30000),
-    // Only enable query if user might be authenticated
-    enabled: authService.isAuthenticated(),
+    // Only enable query if user might be authenticated (check on client-side only)
+    enabled: typeof window !== 'undefined' && authService.isAuthenticated(),
   });
 
   const isAdmin = user?.role === 'admin';

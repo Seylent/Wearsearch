@@ -18,7 +18,7 @@ export const getCategoryTranslation = (category: string): string => {
     const fallbackTranslated = i18n.t(fallbackKey);
     
     if (fallbackTranslated === fallbackKey) {
-      if (import.meta.env.DEV) {
+      if (process.env.NODE_ENV !== 'production') {
         console.warn(`Missing product type translation: ${category}`);
       }
       return category;
@@ -38,7 +38,7 @@ export const getColorTranslation = (color: string): string => {
   
   // If translation not found, return original color
   if (translated === key) {
-    if (import.meta.env.DEV) {
+    if (process.env.NODE_ENV !== 'production') {
       console.warn(`Missing color translation: ${color}`);
     }
     return color;
@@ -60,7 +60,7 @@ export const getGenderTranslation = (gender: string): string => {
     const fallbackTranslated = i18n.t(fallbackKey);
     
     if (fallbackTranslated === fallbackKey) {
-      if (import.meta.env.DEV) {
+      if (process.env.NODE_ENV !== 'production') {
         console.warn(`Missing gender translation: ${gender}`);
       }
       return gender;

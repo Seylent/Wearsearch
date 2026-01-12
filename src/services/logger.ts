@@ -24,7 +24,7 @@ class ErrorLogger {
   private maxLogs = 100; // Keep last 100 errors in memory
 
   constructor() {
-    this.isDevelopment = import.meta.env.DEV;
+    this.isDevelopment = process.env.NODE_ENV !== 'production';
   }
 
   /**

@@ -36,7 +36,7 @@ export function translateErrorCode(errorCode: string | undefined | null): string
   // If translation is the same as the key, it means it wasn't found
   if (translated === key) {
     // Log missing error code in development
-    if (import.meta.env.DEV) {
+    if (process.env.NODE_ENV !== 'production') {
       console.warn(`Missing error code translation: ${errorCode}`);
     }
     
@@ -62,7 +62,7 @@ export function translateSuccessCode(successCode: string | undefined | null): st
   // If translation is the same as the key, it means it wasn't found
   if (translated === key) {
     // Log missing success code in development
-    if (import.meta.env.DEV) {
+    if (process.env.NODE_ENV !== 'production') {
       console.warn(`Missing success code translation: ${successCode}`);
     }
     
@@ -87,7 +87,7 @@ export function translateProductType(type: string | undefined | null): string {
 
   // If translation not found, return original type
   if (translated === key) {
-    if (import.meta.env.DEV) {
+    if (process.env.NODE_ENV !== 'production') {
       console.warn(`Missing product type translation: ${type}`);
     }
     return type;
@@ -110,7 +110,7 @@ export function translateGender(gender: string | undefined | null): string {
 
   // If translation not found, return original gender
   if (translated === key) {
-    if (import.meta.env.DEV) {
+    if (process.env.NODE_ENV !== 'production') {
       console.warn(`Missing gender translation: ${gender}`);
     }
     return gender;

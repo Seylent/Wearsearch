@@ -1,20 +1,19 @@
+"use client";
+
 import { useTranslation } from 'react-i18next';
-import { Link } from 'react-router-dom';
+import Link from 'next/link';
 import { ChevronLeft } from 'lucide-react';
-import Navigation from '@/components/layout/Navigation';
 
 const PrivacyContent = () => {
   const { t } = useTranslation();
 
   return (
     <div className="min-h-screen bg-black text-white">
-      <Navigation />
-      
       <main className="pt-24 pb-16">
         <div className="container mx-auto px-4 max-w-4xl">
           {/* Back Button */}
           <Link 
-            to="/" 
+            href="/" 
             className="inline-flex items-center gap-2 text-muted-foreground hover:text-foreground transition-colors mb-8 text-sm group"
           >
             <ChevronLeft className="w-4 h-4 group-hover:-translate-x-1 transition-transform" />
@@ -358,7 +357,7 @@ const PrivacyContent = () => {
               </p>
               <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4">
                 <Link 
-                  to="/contacts" 
+                  href="/contacts" 
                   className="btn-glass px-6 py-3 inline-flex items-center gap-2 hover:scale-105 transition-all duration-200"
                 >
                   {t('nav.contacts')}

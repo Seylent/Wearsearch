@@ -2,8 +2,10 @@
  * Breadcrumbs Component - Simple and Clean
  */
 
+'use client';
+
 import React from 'react';
-import { Link } from 'react-router-dom';
+import Link from 'next/link';
 import { Home } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
@@ -30,7 +32,7 @@ export const Breadcrumbs: React.FC<BreadcrumbsProps> = ({
     >
       <div className="flex items-center text-white/50">
         {/* Home */}
-        <Link to="/" className="hover:text-white transition-colors">
+        <Link href="/" className="hover:text-white transition-colors">
           <Home className="w-4 h-4" />
         </Link>
         
@@ -44,7 +46,7 @@ export const Breadcrumbs: React.FC<BreadcrumbsProps> = ({
             <React.Fragment key={index}>
               {item.href && !isLast ? (
                 <Link 
-                  to={item.href} 
+                  href={item.href} 
                   className="hover:text-white transition-colors"
                 >
                   {item.label}

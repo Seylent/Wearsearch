@@ -3,18 +3,19 @@
  * Removes invalid or corrupted data from localStorage
  */
 
-import { getValidGuestFavorites } from '../services/guestFavorites';
+import { getValidGuestFavorites, clearGuestFavorites } from '@/services/guestFavorites';
 
 /**
  * Clean up localStorage from invalid data
  */
 export function cleanupLocalStorage(): void {
   try {
-    // Clean guest favorites (also removes invalid IDs)
+    // Clean guest favorites with force cleanup
+    clearGuestFavorites();
     const validFavorites = getValidGuestFavorites();
     
     // Only log if there are favorites or if in development
-    if (validFavorites.length > 0 || import.meta.env.DEV) {
+    if (validFavorites.length > 0 || process.env.NODE_ENV === 'development') {
       console.log(`✅ Cleaned guest favorites. Valid: ${validFavorites.length}`);
     }
 
@@ -39,7 +40,7 @@ export function cleanupLocalStorage(): void {
         }
       } catch (error) {
         localStorage.removeItem(key);
-        console.warn(`Removed corrupted ${key} data`, error);
+        console.warn(`Removed corrupted ${key} data`);
       }
     });
 

@@ -19,9 +19,9 @@ export const ENDPOINTS = {
     LIST: '/items',
     DETAIL: (id: string | number) => `/items/${id}`,
     STORES: (id: string | number) => `/items/${id}/stores`,
-    CREATE: '/admin/products',
-    UPDATE: (id: string | number) => `/admin/products/${id}`,
-    DELETE: (id: string | number) => `/admin/products/${id}`,
+    CREATE: '/admin/items',
+    UPDATE: (id: string | number) => `/admin/items/${id}`,
+    DELETE: (id: string | number) => `/admin/items/${id}`,
     SEARCH: '/items/search',
     CATEGORIES: '/items/categories',
     BY_CATEGORY: (category: string) => `/items/category/${category}`,
@@ -72,10 +72,10 @@ export const ENDPOINTS = {
       const query = searchParams.toString();
       return query ? `${baseUrl}?${query}` : baseUrl;
     },
-    CREATE: '/admin/stores',
-    UPDATE: (id: string | number) => `/admin/stores/${id}`,
-    DELETE: (id: string | number) => `/admin/stores/${id}`,
-    ADMIN_LIST: '/admin/stores', // With search parameter
+    CREATE: '/stores',
+    UPDATE: (id: string | number) => `/stores/${id}`,
+    DELETE: (id: string | number) => `/stores/${id}`,
+    ADMIN_LIST: '/stores', // With search parameter
   },
 
   // Brand endpoints
