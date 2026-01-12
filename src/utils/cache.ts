@@ -3,10 +3,16 @@
  * Helps reduce API calls for frequently accessed data
  */
 
-class SimpleCache {
-  private cache = new Map<string, { data: any; timestamp: number; ttl: number }>();
+interface CacheEntry<T = unknown> {
+  data: T;
+  timestamp: number;
+  ttl: number;
+}
 
-  set(key: string, data: any, ttlSeconds: number = 300) {
+class SimpleCache {
+  private cache = new Map<string, CacheEntry>();
+
+  set<T>(key: string, data: T, ttlSeconds: number = 300): void {
     this.cache.set(key, {
       data,
       timestamp: Date.now(),
@@ -14,7 +20,7 @@ class SimpleCache {
     });
   }
 
-  get(key: string) {
+  get<T = unknown>(key: string): T | null {
     const entry = this.cache.get(key);
     if (!entry) return null;
 
@@ -23,10 +29,10 @@ class SimpleCache {
       return null;
     }
 
-    return entry.data;
+    return entry.data as T;
   }
 
-  clear(keyPattern?: string) {
+  clear(keyPattern?: string): void {
     if (keyPattern) {
       for (const key of this.cache.keys()) {
         if (key.includes(keyPattern)) {
@@ -47,7 +53,7 @@ class SimpleCache {
 export const apiCache = new SimpleCache();
 
 // Helper function to create cache keys
-export const createCacheKey = (endpoint: string, params?: Record<string, any>) => {
-  const paramString = params ? `?${new URLSearchParams(params).toString()}` : '';
+export const createCacheKey = (endpoint: string, params?: Record<string, unknown>): string => {
+  const paramString = params ? `?${new URLSearchParams(params as Record<string, string>).toString()}` : '';
   return `${endpoint}${paramString}`;
 };

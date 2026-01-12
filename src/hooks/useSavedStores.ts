@@ -3,7 +3,7 @@
  * Manages favorite/saved stores with localStorage + API sync
  */
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useMemo } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { isAuthenticated } from '@/utils/authStorage';
 import { api, apiLegacy } from '@/services/api';
@@ -76,8 +76,10 @@ export const useSavedStores = () => {
     staleTime: 5 * 60 * 1000, // 5 minutes
   });
 
-  // Combine local and API stores
-  const stores = isLoggedIn ? (apiStores || []) : localStores;
+  // Combine local and API stores - memoize to prevent changing on every render
+  const stores = useMemo(() => {
+    return isLoggedIn ? (apiStores || []) : localStores;
+  }, [isLoggedIn, apiStores, localStores]);
 
   // Add store mutation
   const addStoreMutation = useMutation({

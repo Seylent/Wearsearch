@@ -24,8 +24,8 @@ export async function getPopularProductIds(limit = 50): Promise<string[]> {
     const products = data?.data || data?.items || [];
     
     return products
-      .map((p: any) => p?.id?.toString())
-      .filter((id: any) => id && id !== 'undefined');
+      .map((p: { id?: string | number }) => p?.id?.toString())
+      .filter((id: string | undefined): id is string => Boolean(id && id !== 'undefined'));
   } catch (error) {
     console.error('[Static Params] Error fetching popular products:', error);
     return [];
@@ -50,8 +50,8 @@ export async function getPopularStoreIds(limit = 30): Promise<string[]> {
     const stores = data?.data || data?.items || [];
     
     return stores
-      .map((s: any) => s?.id?.toString())
-      .filter((id: any) => id && id !== 'undefined');
+      .map((s: { id?: string | number }) => s?.id?.toString())
+      .filter((id: string | undefined): id is string => Boolean(id && id !== 'undefined'));
   } catch (error) {
     console.error('[Static Params] Error fetching stores:', error);
     return [];

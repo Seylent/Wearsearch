@@ -75,6 +75,7 @@ export const useAuthEvents = () => {
       window.removeEventListener('auth:logout', handleLogout);
       window.removeEventListener('auth:tokenRefreshed', handleTokenRefresh);
     };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [navigate, queryClient, toast, t]);
 };
 

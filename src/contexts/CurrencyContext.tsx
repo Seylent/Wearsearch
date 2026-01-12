@@ -83,7 +83,7 @@ export const CurrencyProvider: React.FC<CurrencyProviderProps> = ({ children }) 
 
   useEffect(() => {
     fetchExchangeRate();
-  }, [currency]);
+  }, [currency, fetchExchangeRate]);
 
   const value = {
     currency,

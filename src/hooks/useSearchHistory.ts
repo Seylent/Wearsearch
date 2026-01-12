@@ -3,7 +3,7 @@
  * Manages search history and popular queries with API integration
  */
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useMemo } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { isAuthenticated } from '@/utils/authStorage';
 import searchService from '@/services/searchService';
@@ -80,10 +80,12 @@ export const useSearchHistory = () => {
       }))
     : localHistory;
 
-  // Popular queries from API or defaults
-  const popularQueries: string[] = apiPopularQueries
-    ? apiPopularQueries.map((p) => p.query)
-    : ['nike', 'adidas', 'sneakers', 'jacket', 'hoodie', 'jeans', 't-shirt', 'shoes'];
+  // Popular queries from API or defaults - memoize to prevent changing on every render
+  const popularQueries: string[] = useMemo(() => {
+    return apiPopularQueries
+      ? apiPopularQueries.map((p) => p.query)
+      : ['nike', 'adidas', 'sneakers', 'jacket', 'hoodie', 'jeans', 't-shirt', 'shoes'];
+  }, [apiPopularQueries]);
 
   // Track search mutation
   const trackMutation = useMutation({
