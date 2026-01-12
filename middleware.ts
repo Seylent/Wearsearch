@@ -2,14 +2,14 @@ import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
 
 export function middleware(request: NextRequest) {
-  const { pathname } = request.nextUrl;
+  const response = NextResponse.next();
   
-  // Debug logging
-  console.log('[Middleware] Request:', pathname);
+  // Set security headers
+  response.headers.set('X-Frame-Options', 'DENY');
+  response.headers.set('X-Content-Type-Options', 'nosniff');
+  response.headers.set('Referrer-Policy', 'strict-origin-when-cross-origin');
   
-  // Middleware disabled - routes work without locale prefixes
-  // Client-side i18n via i18next handles language switching
-  return NextResponse.next();
+  return response;
 }
 
 export const config = {
