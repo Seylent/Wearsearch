@@ -12,6 +12,14 @@ import { Search, ExternalLink, Star, Package, Send, Instagram } from "lucide-rea
 import { useStoresPageData } from "@/hooks/useAggregatedData";
 import { SaveStoreButton } from "@/components/SaveStoreButton";
 
+interface Pagination {
+  page: number;
+  totalPages: number;
+  totalItems: number;
+  hasNext: boolean;
+  hasPrev: boolean;
+}
+
 interface StoresContentProps {
   storeId?: string;
 }
@@ -153,7 +161,7 @@ const StoresContent: React.FC<StoresContentProps> = ({ storeId: _storeId }) => {
           <div className="flex justify-center gap-12 mt-16 animate-fade-in-up" style={{ animationDelay: '0.4s' }}>
             <div className="text-center">
               <p className="font-display text-3xl sm:text-4xl font-bold mb-1">
-                {(pagination as any)?.totalItems ?? stores.length}+
+                {(pagination as Pagination)?.totalItems ?? stores.length}+
               </p>
               <p className="text-xs text-muted-foreground uppercase tracking-wider">Stores</p>
             </div>
@@ -323,22 +331,22 @@ const StoresContent: React.FC<StoresContentProps> = ({ storeId: _storeId }) => {
           )}
 
           {/* Pagination */}
-          {!!pagination && (pagination as any).totalPages > 1 && (
+          {!!pagination && (pagination as Pagination).totalPages > 1 && (
             <div className="flex items-center justify-center gap-4 mt-12">
               <Button
                 variant="outline"
                 onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
-                disabled={!(pagination as any).hasPrev || isFetching}
+                disabled={!(pagination as Pagination).hasPrev || isFetching}
               >
                 Prev
               </Button>
               <span className="text-sm text-muted-foreground">
-                Page {(pagination as any).page} of {(pagination as any).totalPages}
+                Page {(pagination as Pagination).page} of {(pagination as Pagination).totalPages}
               </span>
               <Button
                 variant="outline"
                 onClick={() => setCurrentPage((p) => p + 1)}
-                disabled={!(pagination as any).hasNext || isFetching}
+                disabled={!(pagination as Pagination).hasNext || isFetching}
               >
                 Next
               </Button>
