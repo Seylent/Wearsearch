@@ -1,6 +1,6 @@
 'use client';
 
-import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
+import React, { createContext, useContext, useState, useEffect, useCallback, ReactNode } from 'react';
 import { api } from '@/services/api';
 
 export type CurrencyCode = 'UAH' | 'USD';
@@ -48,7 +48,7 @@ export const CurrencyProvider: React.FC<CurrencyProviderProps> = ({ children }) 
   };
 
   // Отримати курс валют (опціонально)
-  const fetchExchangeRate = async () => {
+  const fetchExchangeRate = useCallback(async () => {
     if (currency === 'UAH') {
       setExchangeRate(null);
       return;
@@ -79,7 +79,7 @@ export const CurrencyProvider: React.FC<CurrencyProviderProps> = ({ children }) 
     } finally {
       setLoading(false);
     }
-  };
+  }, [currency]);
 
   useEffect(() => {
     fetchExchangeRate();

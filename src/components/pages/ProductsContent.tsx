@@ -87,11 +87,11 @@ function selectServerPagination(
   const pageDataObj = pageData as Record<string, unknown> | null | undefined;
   const storeDataObj = storeProductsData as Record<string, unknown> | null | undefined;
 
-  const pagePagination = pageDataObj?.['pagination'] as any;
+  const pagePagination = pageDataObj?.['pagination'] as Pagination;
   if (!storeIdParam && pagePagination) {
     return pagePagination;
   }
-  const storePagination = storeDataObj?.['pagination'] as any;
+  const storePagination = storeDataObj?.['pagination'] as Pagination;
   if (storeIdParam && storePagination) {
     return storePagination;
   }
