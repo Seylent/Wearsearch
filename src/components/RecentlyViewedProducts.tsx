@@ -30,7 +30,7 @@ const RecentlyViewedProducts: React.FC<RecentlyViewedProductsProps> = ({
   excludeProductId,
 }) => {
   const { t } = useTranslation();
-  const { items, removeItem, clearAll, count } = useRecentlyViewed();
+  const { items, removeItem, clearAll, count: _count } = useRecentlyViewed();
 
   // Filter out excluded product
   const filteredItems = excludeProductId 

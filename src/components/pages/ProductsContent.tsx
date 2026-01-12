@@ -126,25 +126,6 @@ function buildApiFilters(args: {
   };
 }
 
-function selectBrands(brandsData: unknown): Array<{ id: string; name: string }> {
-  return Array.isArray(brandsData) ? (brandsData as Array<{ id: string; name: string }>) : [];
-}
-
-function getBrandsFromPageData(pageData: unknown): Array<{ id: string; name: string }> {
-  const page = pageData as Record<string, unknown> | null | undefined;
-  const brands = page?.['brands'];
-  return Array.isArray(brands) ? (brands as Array<{ id: string; name: string }>) : [];
-}
-
-function filterBrandsList(
-  brands: Array<{ id: string; name: string }>,
-  brandSearchQuery: string
-): Array<{ id: string; name: string }> {
-  if (!brandSearchQuery.trim()) return brands;
-  const query = brandSearchQuery.toLowerCase();
-  return brands.filter((brand) => brand.name?.toLowerCase().includes(query));
-}
-
 // Helper to avoid nested ternaries for grid classes
 function computeGridClass(columns: number): string {
   if (columns === 2) return 'grid-cols-1 sm:grid-cols-2';

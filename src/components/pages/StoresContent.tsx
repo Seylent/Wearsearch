@@ -16,7 +16,7 @@ interface StoresContentProps {
   storeId?: string;
 }
 
-const StoresContent: React.FC<StoresContentProps> = ({ storeId }) => {
+const StoresContent: React.FC<StoresContentProps> = ({ storeId: _storeId }) => {
   const router = useRouter();
   const searchParams = useSearchParams();
   const { t } = useTranslation();
@@ -107,7 +107,7 @@ const StoresContent: React.FC<StoresContentProps> = ({ storeId }) => {
 
   const filteredStores = stores;
 
-  const handlePageChange = (newPage: number) => {
+  const _handlePageChange = (newPage: number) => {
     setCurrentPage(newPage);
   };
 

@@ -3,7 +3,7 @@
  * No business logic - only receives props and renders UI
  */
 
-import React, { useMemo, useEffect } from 'react';
+import React, { useMemo } from 'react';
 import { Search, X, Store as StoreIcon, Package, History, TrendingUp, Trash2 } from 'lucide-react';
 import { convertS3UrlToHttps } from '@/lib/utils';
 import { getCategoryTranslation } from '@/utils/translations';
