@@ -146,7 +146,7 @@ function safeScrollToTop(): void {
 }
 
 function renderProductsMainContent(args: {
-  t: any;
+  t: (key: string, defaultValue?: string) => string;
   error: unknown;
   loading: boolean;
   itemsPerPage: number;
@@ -337,7 +337,7 @@ function renderProductsMainContent(args: {
 }
 
 type FiltersDialogProps = Readonly<{
-    t: any;
+    t: (key: string, defaultValue?: string) => string;
     visibleColors: string[];
     colors: string[];
     showAllColors: boolean;
@@ -348,7 +348,7 @@ type FiltersDialogProps = Readonly<{
     setShowAllCategories: (v: boolean) => void;
     COMPACT_LIMIT: number;
     genders: string[];
-    filters: any;
+    filters: Record<string, unknown>;
     brandSearchQuery: string;
     setBrandSearchQuery: (v: string) => void;
     setCurrentPage: (updater: number | ((p: number) => number)) => void;

@@ -60,7 +60,7 @@ export const getTemplates = async (category?: string) => {
 export const createTemplate = async (data: {
   name: string;
   category?: string;
-  template_data: any;
+  template_data: Record<string, unknown>;
 }) => {
   const response = await fetch(`${ADVANCED_BASE}/templates`, {
     method: 'POST',
@@ -220,7 +220,7 @@ export const createManualLogEntry = async (data: {
   entity_type: string;
   entity_id: string;
   action: string;
-  changes: any;
+  changes: Record<string, unknown>;
 }) => {
   const response = await fetch(`${API_BASE}/api/v1/audit-log`, {
     method: 'POST',

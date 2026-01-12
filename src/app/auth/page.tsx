@@ -99,8 +99,9 @@ export default function AuthPage() {
           });
         }
       }
-    } catch (error: any) {
-      const message = error?.response?.data?.message || error?.message;
+    } catch (error: unknown) {
+      const apiError = error as { response?: { data?: { message?: string } }; message?: string };
+      const message = apiError?.response?.data?.message || apiError?.message;
       toast({
         variant: 'destructive',
         title: isLogin ? t('auth.loginError', 'Помилка входу') : t('auth.signupError', 'Помилка реєстрації'),

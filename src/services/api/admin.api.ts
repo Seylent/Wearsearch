@@ -43,23 +43,25 @@ interface Brand {
   website_url?: string;
 }
 
+interface MetaData {
+  page: number;
+  limit: number;
+  totalItems: number;
+  totalPages: number;
+}
+
 interface DashboardResponse {
   products: {
-    items: any[];
-    meta: {
-      page: number;
-      limit: number;
-      totalItems: number;
-      totalPages: number;
-    };
+    items: Product[];
+    meta: MetaData;
   };
   stores: {
-    items: any[];
-    meta: any;
+    items: Store[];
+    meta: MetaData;
   };
   brands: {
-    items: any[];
-    meta: any;
+    items: Brand[];
+    meta: MetaData;
   };
 }
 
