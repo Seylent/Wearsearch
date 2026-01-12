@@ -95,7 +95,7 @@ export const useProducts = (options?: QueryOptions) => {
     staleTime: 5 * 60 * 1000, // 5 minutes
     gcTime: 10 * 60 * 1000, // 10 minutes (renamed from cacheTime)
     refetchOnWindowFocus: false, // Don't refetch on tab focus
-    refetchOnMount: false, // Use cache if available
+    refetchOnMount: true, // Allow refetch on mount for fresh data
     ...options,
   });
 };
@@ -390,12 +390,13 @@ export const useFavorites = () => {
         throw error;
       }
     },
-    staleTime: 5 * 60 * 1000, // 5 minutes - increased from 2
-    gcTime: 30 * 60 * 1000,
+    staleTime: 2 * 60 * 1000, // 2 minutes - more reactive for favorites
+    gcTime: 10 * 60 * 1000, // 10 minutes cache
     retry: false, // Don't retry - rate limit handled in API layer
-    refetchOnMount: false, // Don't refetch on mount to reduce requests
+    refetchOnMount: true, // Allow refetch on mount for latest favorites
     refetchOnWindowFocus: false, // Don't refetch on tab focus
-    refetchOnReconnect: false,
+    refetchOnReconnect: true, // Refetch on reconnect
+    refetchInterval: false, // Disable automatic refetching
     // Only fetch if user is authenticated
     enabled: globalThis.window !== undefined && !!getAuth(),
   });

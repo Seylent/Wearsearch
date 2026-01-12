@@ -32,19 +32,28 @@ interface CurrencyProviderProps {
 }
 
 export const CurrencyProvider: React.FC<CurrencyProviderProps> = ({ children }) => {
-  const [currency, setCurrencyState] = useState<CurrencyCode>(() => {
-    if (typeof window === 'undefined') return 'UAH';
-    const saved = localStorage.getItem('preferredCurrency');
-    return (saved === 'USD' || saved === 'UAH') ? saved : 'UAH';
-  });
-  
+  const [currency, setCurrencyInternal] = useState<CurrencyCode>('UAH');
   const [exchangeRate, setExchangeRate] = useState<ExchangeRate | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [_isHydrated, setIsHydrated] = useState(false);
+
+  // Load currency from localStorage after hydration
+  useEffect(() => {
+    if (globalThis.window !== undefined) {
+      const saved = localStorage.getItem('preferredCurrency');
+      if (saved === 'USD' || saved === 'UAH') {
+        setCurrencyInternal(saved);
+      }
+      setIsHydrated(true);
+    }
+  }, []);
 
   const setCurrency = (newCurrency: CurrencyCode) => {
-    setCurrencyState(newCurrency);
-    localStorage.setItem('preferredCurrency', newCurrency);
+    setCurrencyInternal(newCurrency);
+    if (globalThis.window !== undefined) {
+      localStorage.setItem('preferredCurrency', newCurrency);
+    }
   };
 
   // Отримати курс валют (опціонально)
@@ -69,10 +78,10 @@ export const CurrencyProvider: React.FC<CurrencyProviderProps> = ({ children }) 
       } else {
         throw new Error('Failed to fetch exchange rate');
       }
-    } catch (_err) {
-      console.warn('Exchange rate API not available, using fallback rate of 40.50 UAH/USD');
+    } catch (_error) {
+      console.warn('Exchange rate API not available, using fallback rate of 40.5 UAH/USD');
       setExchangeRate({
-        rate: 40.50, // Updated fallback rate (January 2026)
+        rate: 40.5, // Updated fallback rate (January 2026))
         updatedAt: new Date().toISOString()
       });
       setError('Exchange rate service unavailable');

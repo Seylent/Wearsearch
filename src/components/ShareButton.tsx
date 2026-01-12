@@ -7,7 +7,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { createPortal } from 'react-dom';
 import { useTranslation } from 'react-i18next';
-import { Share2, Copy, Check, X, Link2 } from 'lucide-react';
+import { Share2, Copy, Check, X, Link2, MessageCircle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
 import { cn } from '@/lib/utils';
@@ -25,7 +25,7 @@ const WhatsAppIcon = () => (
   </svg>
 );
 
-const ViberIcon = () => (
+const _ViberIcon = () => (
   <svg viewBox="0 0 24 24" className="w-5 h-5" fill="currentColor">
     <path d="M11.4 0C9.473.028 5.333.344 3.02 2.467 1.302 4.187.696 6.62.6 9.593.524 12.56.34 18.2 5.92 19.73v2.6s-.04.94.58 1.14c.44.14.7-.28 1.12-.74l1.6-1.86c4.4.38 7.8-.48 8.18-.6.88-.28 5.86-.92 6.68-7.52.84-6.84-.42-11.16-2.72-13.14C19.32.4 14.34-.04 11.4 0zM6.74 5.9c.56-.02 1.12.16 1.54.54.36.32.68.68.98 1.06.54.74 1.04 1.54.78 2.54-.14.48-.42.9-.74 1.28-.32.4-.66.76-1.04 1.1-.3.26-.34.66-.14.98.88 1.44 1.94 2.7 3.18 3.8.6.52 1.22 1 1.9 1.4.34.2.74.14 1.02-.14.64-.62 1.18-1.34 1.92-1.86.5-.34 1.16-.42 1.74-.16.42.18.82.42 1.2.68.38.26.74.54 1.1.84.38.32.58.8.52 1.3-.06.5-.38.96-.74 1.34-.36.38-.8.68-1.26.9-.78.38-1.72.4-2.52.08-1.94-.76-3.7-1.94-5.24-3.3-1.08-.96-2.04-2.02-2.9-3.18-.48-.66-.92-1.36-1.28-2.1-.34-.7-.6-1.44-.76-2.2-.08-.38-.1-.78-.04-1.16.12-.8.64-1.5 1.28-1.94.34-.24.7-.42 1.08-.56.16-.06.38-.08.58-.1zm4.74 1.14c.34.02.64.34.6.68-.02.18-.1.34-.22.48-.14.16-.34.24-.54.22-.88-.04-1.72.28-2.38.84-.58.5-.94 1.2-1.06 1.96-.02.08-.02.16-.02.24 0 .38-.26.7-.62.76-.38.08-.76-.14-.84-.5-.1-.52-.1-1.06.02-1.58.24-1.04.84-1.98 1.68-2.64.9-.72 2.04-1.1 3.2-1.04.06 0 .12 0 .18.02v-.44zm.68 1.64c.3.02.56.26.58.56 0 .08 0 .16-.02.24-.06.22-.24.38-.44.44-.14.04-.28 0-.4-.06-.8-.38-1.74.04-2.08.78-.04.08-.06.18-.08.26-.04.14-.08.28-.18.4-.14.18-.38.26-.6.22-.28-.06-.5-.32-.48-.6.02-.12.04-.24.08-.36.38-1.2 1.54-2.04 2.82-2.02.26.02.52.06.78.14h.02z" />
   </svg>
@@ -65,12 +65,12 @@ interface ShareButtonProps {
  * Must be checked at the time of user interaction, not at render time
  */
 const canUseNativeShare = (): boolean => {
-  if (typeof window === 'undefined' || typeof navigator === 'undefined') {
+  if (globalThis.window === undefined || typeof navigator === 'undefined') {
     return false;
   }
   
   // Check for secure context (HTTPS required)
-  const isSecure = window.isSecureContext === true || window.location.protocol === 'https:';
+  const isSecure = globalThis.isSecureContext === true || globalThis.location.protocol === 'https:';
   
   // Check for share function
   const hasShare = typeof navigator.share === 'function';
@@ -82,7 +82,7 @@ const canUseNativeShare = (): boolean => {
  * Check if device is mobile
  */
 const isMobileDevice = (): boolean => {
-  if (typeof window === 'undefined') return false;
+  if (globalThis.window === undefined) return false;
   return window.innerWidth < 768 || /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
 };
 
@@ -132,7 +132,7 @@ const ShareButton: React.FC<ShareButtonProps> = ({
 
   // Get share data at click time, not render time
   const getShareData = () => {
-    const shareUrl = url || window.location.href;
+    const shareUrl = url || globalThis.location.href;
     return {
       title: title,
       text: description || title,
@@ -189,8 +189,17 @@ const ShareButton: React.FC<ShareButtonProps> = ({
       textArea.value = shareData.url;
       document.body.appendChild(textArea);
       textArea.select();
-      document.execCommand('copy');
-      document.body.removeChild(textArea);
+      // Use modern Clipboard API or fallback to deprecated execCommand
+      try {
+        if (navigator.clipboard) {
+          await navigator.clipboard.writeText(textToCopy);
+        } else {
+          document.execCommand('copy');
+        }
+      } catch {
+        document.execCommand('copy');
+      }
+      textArea.remove();
       setCopied(true);
       toast({
         title: t('share.linkCopied', 'Link copied!'),
@@ -202,6 +211,8 @@ const ShareButton: React.FC<ShareButtonProps> = ({
   // Generate social links only when modal is open
   const getSocialLinks = () => {
     const shareData = getShareData();
+    const shareText = `${shareData.title} ${shareData.url}`;
+    
     return [
       {
         name: 'Telegram',
@@ -213,14 +224,14 @@ const ShareButton: React.FC<ShareButtonProps> = ({
       {
         name: 'WhatsApp',
         icon: WhatsAppIcon,
-        url: `https://wa.me/?text=${encodeURIComponent(`${shareData.title} ${shareData.url}`)}`,
+        url: `https://wa.me/?text=${encodeURIComponent(shareText)}`,
         gradient: 'from-[#25D366] to-[#128C7E]',
         bgColor: 'bg-[#25D366]',
       },
       {
         name: 'Viber',
-        icon: ViberIcon,
-        url: `viber://forward?text=${encodeURIComponent(`${shareData.title} ${shareData.url}`)}`,
+        icon: MessageCircle,
+        url: `viber://forward?text=${encodeURIComponent(shareText)}`,
         gradient: 'from-[#665CAC] to-[#7360F2]',
         bgColor: 'bg-[#665CAC]',
       },
@@ -267,6 +278,10 @@ const ShareButton: React.FC<ShareButtonProps> = ({
         <div 
           className="fixed inset-0 z-[9999] flex flex-col items-center pt-3 md:pt-8"
           onClick={handleClose}
+          onKeyDown={(e) => e.key === 'Escape' && handleClose()}
+          role="dialog"
+          aria-modal="true"
+          tabIndex={-1}
           style={{ touchAction: 'none' }}
         >
           {/* Backdrop with blur */}

@@ -60,13 +60,13 @@ class ErrorBoundary extends Component<Props, State> {
 
             <div className="flex gap-4 justify-center">
               <Button
-                onClick={() => window.location.reload()}
+                onClick={() => globalThis.location.reload()}
                 variant="default"
               >
                 Refresh Page
               </Button>
               <Button
-                onClick={() => window.location.href = '/'}
+                onClick={() => globalThis.location.href = '/'}
                 variant="outline"
               >
                 Go Home

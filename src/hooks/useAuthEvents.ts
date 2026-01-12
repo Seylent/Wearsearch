@@ -31,7 +31,7 @@ export const useAuthEvents = () => {
       
       console.log('🔴 Logout event received:', { 
         reason, 
-        currentPath: window.location.pathname 
+        currentPath: globalThis.window.location.pathname 
       });
       
       // Clear all cached data
@@ -47,7 +47,7 @@ export const useAuthEvents = () => {
       }
       
       // Navigate to auth page if not already there
-      if (!window.location.pathname.includes('/auth')) {
+      if (globalThis.window.location.pathname.includes('/auth')) {
         console.log('🔀 Redirecting to /auth page');
         router.replace('/auth');
       } else {
@@ -92,5 +92,5 @@ export const dispatchLogout = (reason?: AuthLogoutEventDetail['reason']) => {
  * Dispatch token refresh event
  */
 export const dispatchTokenRefresh = () => {
-  window.dispatchEvent(new CustomEvent('auth:tokenRefreshed'));
+  globalThis.window.dispatchEvent(new CustomEvent('auth:tokenRefreshed'));
 };

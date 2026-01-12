@@ -1,7 +1,14 @@
-'use client';
+import { Suspense } from 'react';
+import ProfileContent from '@/components/pages/ProfileContent';
 
-import { DynamicProfile } from '@/lib/dynamicImports';
-
-export default function Profile() {
-  return <DynamicProfile />;
+export default function ProfilePage() {
+  return (
+    <Suspense fallback={
+      <div className="min-h-screen bg-black flex items-center justify-center">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-white"></div>
+      </div>
+    }>
+      <ProfileContent />
+    </Suspense>
+  );
 }

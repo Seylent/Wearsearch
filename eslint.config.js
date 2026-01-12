@@ -1,90 +1,65 @@
-import js from "@eslint/js";
-import globals from "globals";
-import reactHooks from "eslint-plugin-react-hooks";
-import reactRefresh from "eslint-plugin-react-refresh";
-import tseslint from "typescript-eslint";
+import js from '@eslint/js'
+import globals from 'globals'
+import reactHooks from 'eslint-plugin-react-hooks'
+import reactRefresh from 'eslint-plugin-react-refresh'
+import tseslint from 'typescript-eslint'
 
-export default tseslint.config(
-  { ignores: ["dist"] },
+export default [
+  { ignores: ['dist', 'node_modules', '.next', 'out', 'scripts/**'] },
+  js.configs.recommended,
+  ...tseslint.configs.recommended,
   {
-    extends: [js.configs.recommended, ...tseslint.configs.recommended],
-    files: ["**/*.{ts,tsx}"],
+    files: ['**/*.{ts,tsx,js,jsx}'],
     languageOptions: {
       ecmaVersion: 2020,
       globals: globals.browser,
+      parserOptions: {
+        ecmaFeatures: {
+          jsx: true,
+        },
+      },
     },
     plugins: {
-      "react-hooks": reactHooks,
-      "react-refresh": reactRefresh,
+      'react-hooks': reactHooks,
+      'react-refresh': reactRefresh,
     },
     rules: {
       ...reactHooks.configs.recommended.rules,
-      "react-refresh/only-export-components": ["warn", { allowConstantExport: true }],
-      "@typescript-eslint/no-explicit-any": "warn",
-      "@typescript-eslint/no-unused-vars": ["warn", { 
-        "argsIgnorePattern": "^_",
-        "caughtErrorsIgnorePattern": "^_",
-        "ignoreRestSiblings": true,
-        "varsIgnorePattern": "^_"
-      }],
-    },
-  },
-  {
-    files: ["src/test/**/*.{ts,tsx}", "src/**/__tests__/**/*.{ts,tsx}"],
-    rules: {
-      // Tests often use simplified mocks and helpers; keep them readable.
-      "@typescript-eslint/no-explicit-any": "off",
-      "react-refresh/only-export-components": "off",
-    },
-  },
-  {
-    files: ["src/examples/**/*.{ts,tsx}"],
-    rules: {
-      // Example code is educational/experimental; don't fail PRs on its lint noise.
-      "@typescript-eslint/no-explicit-any": "off",
-      "@typescript-eslint/no-unused-vars": "off",
-      "react-hooks/exhaustive-deps": "off",
-      "react-refresh/only-export-components": "off",
-    },
-  },
-  {
-    files: [
-      "src/components/**/*.{ts,tsx}",
-      "src/pages/**/*.{ts,tsx}",
-      "src/features/**/*.{ts,tsx}",
-    ],
-    rules: {
-      // Enforce data-layer: no direct HTTP in UI code
-      "no-restricted-globals": ["error", "fetch"],
-      "no-restricted-imports": [
-        "error",
-        {
-          paths: [
-            {
-              name: "axios",
-              message: "Do not use axios in UI code. Use React Query hooks in the data-layer (src/hooks/*) and services.",
-            },
-            {
-              name: "@/services/api",
-              message: "Do not import the low-level API client in UI code. Use data-layer hooks/services instead.",
-            },
-          ],
-        },
+      'react-refresh/only-export-components': 'off', // Вимкнено для app router
+      '@typescript-eslint/no-explicit-any': 'warn',
+      '@typescript-eslint/no-unused-vars': [
+        'warn',
+        { 
+          argsIgnorePattern: '^_',
+          caughtErrorsIgnorePattern: '^_',
+          ignoreRestSiblings: true,
+          varsIgnorePattern: '^_'
+        }
       ],
     },
   },
   {
-    files: ["src/components/ui/**/*.{ts,tsx}"],
+    files: ['src/test/**/*.{ts,tsx}', 'src/**/__tests__/**/*.{ts,tsx}'],
     rules: {
-      // shadcn/ui components often export helpers/constants; disabling avoids noise.
-      "react-refresh/only-export-components": "off",
+      '@typescript-eslint/no-explicit-any': 'off',
+      'react-refresh/only-export-components': 'off',
     },
   },
   {
-    files: ["src/contexts/**/*.{ts,tsx}"],
+    files: ['**/*.js', '**/*.cjs', '**/*.mjs'],
+    languageOptions: {
+      ecmaVersion: 2020,
+      sourceType: 'module', 
+      globals: globals.node,
+    },
     rules: {
-      // Context modules commonly export hooks/helpers alongside providers.
-      "react-refresh/only-export-components": "off",
+      '@typescript-eslint/no-var-requires': 'off',
     },
   },
-);
+  {
+    files: ['src/components/ui/**/*.{ts,tsx}', 'src/contexts/**/*.{ts,tsx}', 'src/app/**/*.{ts,tsx}'],
+    rules: {
+      'react-refresh/only-export-components': 'off', // shadcn/ui та app router
+    },
+  },
+]

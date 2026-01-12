@@ -55,6 +55,11 @@ export interface Product {
   min_price?: number | string;  // Minimum price across all stores
   max_price?: number | string;  // Maximum price across all stores
   store_count?: number;         // Number of stores selling this product
+  // CamelCase aliases for client components  
+  minPrice?: number | string;
+  maxPrice?: number | string;
+  storeCount?: number;
+  isNew?: boolean;             // Flag for new products
   description?: string;
   image?: string;
   image_url?: string;
@@ -180,6 +185,14 @@ export interface PaginationParams {
   limit?: number;
   sort?: string;
   order?: 'asc' | 'desc';
+}
+
+export interface PaginationInfo {
+  page: number;
+  totalPages: number;
+  totalItems: number;
+  hasNext: boolean;
+  hasPrev: boolean;
 }
 
 // Search Types

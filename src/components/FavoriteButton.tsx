@@ -34,9 +34,9 @@ const HeartBurst = ({ show }: { show: boolean }) => {
       </div>
       
       {/* Mini hearts bursting out */}
-      {[...Array(6)].map((_, i) => (
+      {Array.from({ length: 6 }, (_, i) => (
         <div
-          key={i}
+          key={`heart-${i}`}
           className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2"
           style={{
             animation: `heartBurst 0.6s ease-out forwards`,
@@ -75,7 +75,7 @@ export function FavoriteButton({
   size = 'icon',
   variant = 'ghost',
   showText = false
-}: FavoriteButtonProps) {
+}: Readonly<FavoriteButtonProps>) {
   const { toast } = useToast();
   const { t } = useTranslation();
   const isLoggedIn = isAuthenticated();

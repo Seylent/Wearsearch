@@ -1,10 +1,32 @@
-'use client';
+import { Suspense } from 'react';
+import { Metadata } from 'next';
+import ProductDetail from '@/components/ProductDetail';
 
-import ProductDetail from '@/pages/ProductDetail';
+// Types
+interface PageProps {
+  params: {
+    id: string;
+  };
+}
 
-// Note: revalidate and generateStaticParams cannot be used in client components
-// For SSR/ISR features, this page should be converted to Server Component
+// Generate metadata for SEO
+export async function generateMetadata({ params }: PageProps): Promise<Metadata> {
+  // TODO: Fetch product data for metadata
+  return {
+    title: `Product ${params.id} - WearSearch`,
+    description: 'Product details and information',
+  };
+}
 
-export default function ProductDetailPage({ params: _params }: { params: { id: string } }) {
-  return <ProductDetail />;
+// Server Component for product details
+export default function ProductDetailPage() {
+  return (
+    <Suspense fallback={
+      <div className="min-h-screen bg-black flex items-center justify-center">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-white"></div>
+      </div>
+    }>
+      <ProductDetail />
+    </Suspense>
+  );
 }

@@ -18,18 +18,16 @@ export const triggerConfetti = () => {
     const particleCount = 50 * (timeLeft / duration);
 
     // Create confetti from both sides
-    createConfetti(
-      Object.assign({}, defaults, {
-        particleCount,
-        origin: { x: randomInRange(0.1, 0.3), y: Math.random() - 0.2 },
-      })
-    );
-    createConfetti(
-      Object.assign({}, defaults, {
-        particleCount,
-        origin: { x: randomInRange(0.7, 0.9), y: Math.random() - 0.2 },
-      })
-    );
+    createConfetti({
+      ...defaults,
+      particleCount,
+      origin: { x: randomInRange(0.1, 0.3), y: Math.random() - 0.2 },
+    });
+    createConfetti({
+      ...defaults,
+      particleCount,
+      origin: { x: randomInRange(0.7, 0.9), y: Math.random() - 0.2 },
+    });
   }, 250);
 };
 
@@ -115,7 +113,7 @@ function createConfetti(options: {
     if (particles.length > 0) {
       requestAnimationFrame(animate);
     } else {
-      document.body.removeChild(canvas);
+      canvas.remove();
     }
   };
 

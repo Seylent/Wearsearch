@@ -6,13 +6,13 @@
 import { lazy, Suspense, type ComponentType, type ReactNode } from 'react';
 import { Dialog, DialogContent } from '@/components/ui/dialog';
 
-interface LazyDialogProps<P extends Record<string, unknown> = Record<string, unknown>> {
+interface LazyDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   // Dynamic import function
-  importFunc: () => Promise<{ default: ComponentType<P> }>;
+  importFunc: () => Promise<{ default: ComponentType<any> }>;
   // Props to pass to the lazy component
-  componentProps?: P;
+  componentProps?: Record<string, any>;
   // Loading fallback
   fallback?: ReactNode;
 }
@@ -23,13 +23,13 @@ const DefaultFallback = () => (
   </div>
 );
 
-export const LazyDialog = <P extends Record<string, unknown> = Record<string, unknown>>({
+export const LazyDialog = ({
   open,
   onOpenChange,
   importFunc,
-  componentProps,
+  componentProps = {},
   fallback = <DefaultFallback />,
-}: LazyDialogProps<P>) => {
+}: LazyDialogProps) => {
   // Only create lazy component when dialog is opened
   const LazyComponent = open ? lazy(importFunc) : null;
 
@@ -38,7 +38,7 @@ export const LazyDialog = <P extends Record<string, unknown> = Record<string, un
       <DialogContent>
         {LazyComponent && (
           <Suspense fallback={fallback}>
-            <LazyComponent {...(componentProps ?? ({} as P))} />
+            <LazyComponent {...componentProps} />
           </Suspense>
         )}
       </DialogContent>

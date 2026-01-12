@@ -29,6 +29,9 @@ function getErrorStatus(error: unknown): number | undefined {
   return undefined;
 }
 
+// Request deduplication for getCurrentUser
+let currentUserPromise: Promise<User> | null = null;
+
 function getResponseData(error: unknown): Record<string, unknown> | undefined {
   if (!isRecord(error)) return undefined;
   const response = error.response;
@@ -186,23 +189,19 @@ export const authService = {
    * Get current user
    */
   async getCurrentUser(): Promise<User> {
-    try {
-      const response = await api.get(ENDPOINTS.ME);
-      return response.data;
-    } catch (error) {
-      const status = getErrorStatus(error);
-      if (ENABLE_LEGACY_FALLBACK && status === 404) {
-        try {
-          const legacyResponse = await apiLegacy.get(ENDPOINTS.ME);
-          return legacyResponse.data;
-        } catch (legacyError) {
-          const legacyApiError = handleApiError(legacyError);
-          throw new Error(legacyApiError.message);
-        }
-      }
+    // Return existing promise if already fetching
+    if (currentUserPromise) {
+      return currentUserPromise;
+    }
 
-      const apiError = handleApiError(error);
-      throw new Error(apiError.message);
+    currentUserPromise = fetchCurrentUserInternal();
+    
+    try {
+      const result = await currentUserPromise;
+      return result;
+    } finally {
+      // Clear promise after completion (success or failure)
+      currentUserPromise = null;
     }
   },
 
@@ -353,3 +352,27 @@ export const authService = {
    */
   isAuthenticated,
 };
+
+/**
+ * Internal function to fetch current user
+ */
+async function fetchCurrentUserInternal(): Promise<User> {
+  try {
+    const response = await api.get(ENDPOINTS.ME);
+    return response.data;
+  } catch (error) {
+    const status = getErrorStatus(error);
+    if (ENABLE_LEGACY_FALLBACK && status === 404) {
+      try {
+        const legacyResponse = await apiLegacy.get(ENDPOINTS.ME);
+        return legacyResponse.data;
+      } catch (legacyError) {
+        const legacyApiError = handleApiError(legacyError);
+        throw new Error(legacyApiError.message);
+      }
+    }
+
+    const apiError = handleApiError(error);
+    throw new Error(apiError.message);
+  }
+}

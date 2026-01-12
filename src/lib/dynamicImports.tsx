@@ -6,7 +6,7 @@
 import dynamic from 'next/dynamic';
 
 // Loading component
-function PageLoader({ message = 'Loading...' }: { message?: string }) {
+function PageLoader({ message = 'Loading...' }: Readonly<{ message?: string }>) {
   return (
     <div className="min-h-screen flex items-center justify-center bg-black">
       <div className="text-center animate-in fade-in-0 duration-300">
@@ -17,28 +17,30 @@ function PageLoader({ message = 'Loading...' }: { message?: string }) {
   );
 }
 
-// Heavy admin components - load only when needed
-export const DynamicAdmin = dynamic<Record<string, never>>(
-  () => import('@/pages/Admin'),
-  {
-    loading: () => <PageLoader message="Loading Admin Panel..." />,
-    ssr: false, // Admin is client-side only
-  }
-);
-
-// User profile components
-export const DynamicProfile = dynamic<Record<string, never>>(
-  () => import('@/pages/Profile'),
-  {
-    loading: () => <PageLoader />,
-    ssr: false,
-  }
+// Placeholder favorites component
+const FavoritesComponent = () => (
+  <div className="min-h-screen bg-black text-white flex items-center justify-center p-4">
+    <div className="text-center">
+      <h1 className="text-3xl font-bold mb-4">Favorites</h1>
+      <p className="text-gray-400">Your favorite products will appear here.</p>
+      <p className="text-gray-500 text-sm mt-2">This feature will be implemented with user authentication.</p>
+    </div>
+  </div>
 );
 
 export const DynamicFavorites = dynamic<Record<string, never>>(
-  () => import('@/pages/Favorites'),
+  () => Promise.resolve(FavoritesComponent),
   {
     loading: () => <PageLoader message="Loading Favorites..." />,
     ssr: false,
+  }
+);
+
+// Search components - heavy with autocomplete
+export const DynamicEnhancedSearch = dynamic<Record<string, never>>(
+  () => import('@/components/EnhancedSearch'),
+  {
+    loading: () => <PageLoader message="Loading Search..." />,
+    ssr: false, // Search is interactive only
   }
 );

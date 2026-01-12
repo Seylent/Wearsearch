@@ -68,26 +68,19 @@ export const useProductSearch = () => {
   // Reuse the canonical /pages/products hook (single source of truth)
   const { data: pageData, isLoading: isLoadingProducts } = useProductsPageData(apiFilters, {
     enabled: hasQuery,
-    staleTime: 30 * 1000,
-    gcTime: 5 * 60 * 1000,
+    staleTime: 2 * 60 * 1000, // Increased for search results
+    gcTime: 10 * 60 * 1000, // Longer cache
     refetchOnWindowFocus: false,
+    refetchOnMount: false, // Don't refetch on mount
   });
 
-  // Search stores in parallel
+  // Search stores in parallel with better caching
   const { data: storesData, isLoading: isLoadingStores, error: storesError } = useQuery<Store[]>({
     queryKey: ['stores-search', debouncedQuery],
     queryFn: async () => {
-      console.log('[Search] Starting stores fetch...');
-      
       try {
         const allStores = await storeService.getAllStores();
-        console.log('[Search] Stores fetched successfully:', allStores.length);
-        
         const normalizedQuery = debouncedQuery.toLowerCase().trim();
-        
-        // Debug logging
-        console.log('[Search] All stores:', allStores.length, allStores.map(s => s.name));
-        console.log('[Search] Query:', normalizedQuery);
         
         // Filter stores by name (more flexible matching)
         const filtered = allStores.filter(store => {
@@ -105,8 +98,6 @@ export const useProductSearch = () => {
           return match;
         }).slice(0, 3); // Limit to 3 stores
         
-        console.log('[Search] Filtered stores:', filtered.length, filtered.map(s => s.name));
-        
         return filtered;
       } catch (error) {
         console.error('[Search] Error fetching stores:', error);
@@ -114,9 +105,10 @@ export const useProductSearch = () => {
       }
     },
     enabled: hasQuery,
-    staleTime: 30 * 1000,
-    gcTime: 5 * 60 * 1000,
+    staleTime: 5 * 60 * 1000, // 5 minutes for stores
+    gcTime: 15 * 60 * 1000, // 15 minutes cache
     refetchOnWindowFocus: false,
+    refetchOnMount: false,
   });
   
   // Log query errors

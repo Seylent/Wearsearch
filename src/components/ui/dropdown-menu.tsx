@@ -72,10 +72,8 @@ const DropdownMenuContent = React.forwardRef<
       sideOffset={sideOffset}
       collisionPadding={collisionPadding}
       avoidCollisions={avoidCollisions}
-      collisionBoundary={typeof window !== 'undefined' ? document.body : undefined}
+      collisionBoundary={globalThis.window !== undefined ? document.body : undefined}
       sticky="always"
-      strategy="fixed"
-      updatePositionStrategy="always"
       hideWhenDetached
       className={cn(
         "z-[1100] min-w-[8rem] overflow-hidden rounded-2xl border border-white/10 bg-zinc-900/95 backdrop-blur-2xl text-white p-1.5 shadow-[0_8px_32px_rgba(0,0,0,0.4)] data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95 data-[side=bottom]:slide-in-from-top-2 data-[side=left]:slide-in-from-right-2 data-[side=right]:slide-in-from-left-2 data-[side=top]:slide-in-from-bottom-2",

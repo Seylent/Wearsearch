@@ -37,6 +37,10 @@
   },
   "products": {
     "title": "Всі товари",
+    "heading": "Продукти",
+    "subheading": "Досліджуйте нашу колекцію якісних товарів",
+    "searchPlaceholder": "Пошук товарів...",
+    "sortDefault": "За замовчуванням",
     "noProducts": "Товари не знайдено",
     "loading": "Завантаження товарів...",
     "filter": "Фільтр",
@@ -95,7 +99,13 @@
     "saved": "Збережено",
     "zoomImage": "Натисніть для збільшення",
     "scrollToZoom": "Прокрутіть для збільшення",
-    "doubleClickToToggle": "Подвійний клік для перемикання"
+    "doubleClickToToggle": "Подвійний клік для перемикання",
+    "seoTitle": "Товар - Wearsearch",
+    "seoDescription": "Переглянути деталі товару та порівняти ціни в різних магазинах."
+  },
+  "product": {
+    "seoTitle": "Товар - Wearsearch",
+    "seoDescription": "Переглянути деталі товару та порівняти ціни в різних магазинах."
   },
   "productTypes": {
     "outerwear": "Верхній одяг",

@@ -32,8 +32,9 @@ const queryClient = new QueryClient({
   defaultOptions: {
     queries: {
       refetchOnWindowFocus: false,
-      refetchOnMount: false, // Don't refetch on component mount
-      refetchOnReconnect: false, // Don't refetch on reconnect
+      refetchOnMount: true, // Allow refetch on mount for fresh data
+      refetchOnReconnect: true, // Refetch when connection restored
+      refetchInterval: false, // Disable automatic refetching
       retry: (failureCount, error: unknown) => {
         // Don't retry on auth or not found errors
         if (error instanceof ApiError) {
@@ -50,8 +51,8 @@ const queryClient = new QueryClient({
         return failureCount < 1;
       },
       retryDelay: (attemptIndex) => Math.min(1000 * 2 ** attemptIndex, 30000),
-      staleTime: 10 * 60 * 1000, // 10 minutes - data stays fresh longer
-      gcTime: 30 * 60 * 1000, // 30 minutes cache time
+      staleTime: 5 * 60 * 1000, // 5 minutes - more reactive
+      gcTime: 30 * 60 * 1000, // 30 minutes cache time - more reasonable
       // Reduce network waterfall by enabling structural sharing
       structuralSharing: true,
     },

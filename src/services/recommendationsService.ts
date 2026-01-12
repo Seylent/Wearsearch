@@ -81,26 +81,26 @@ function transformRecommendation(raw: Record<string, unknown>): RecommendedProdu
     brand_id: raw.brand_id as number | undefined,
     gender: raw.gender as string | undefined,
     reason: raw.reason as RecommendedProduct['reason'],
-    score: raw.score !== undefined ? Number(raw.score) : undefined,
+    score: raw.score === undefined ? undefined : Number(raw.score),
   };
 }
 
 function transformSimilarProduct(raw: Record<string, unknown>): SimilarProduct {
   return {
     id: Number(raw.id || 0),
-    name: String(raw.name || ''),
-    category: String(raw.category || ''),
-    price: String(raw.price || '0'),
+    name: typeof raw.name === 'string' ? raw.name : '',
+    category: typeof raw.category === 'string' ? raw.category : '',
+    price: typeof raw.price === 'string' ? raw.price : '0',
     image: raw.image as string | undefined,
     image_url: raw.image_url as string | undefined,
     images: raw.images as string[] | undefined,
-    description: String(raw.description || ''),
-    color: String(raw.color || ''),
-    type: String(raw.type || ''),
+    description: typeof raw.description === 'string' ? raw.description : '',
+    color: typeof raw.color === 'string' ? raw.color : '',
+    type: typeof raw.type === 'string' ? raw.type : '',
     brand: raw.brand as string | undefined,
     brand_id: raw.brand_id as number | undefined,
     gender: raw.gender as string | undefined,
-    similarityScore: raw.similarity_score !== undefined ? Number(raw.similarity_score) : undefined,
+    similarityScore: raw.similarity_score === undefined ? undefined : Number(raw.similarity_score),
   };
 }
 

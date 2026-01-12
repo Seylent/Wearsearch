@@ -1,7 +1,5 @@
-'use client';
-
-import { DynamicAdmin } from '@/lib/dynamicImports';
+import AdminContent from '@/components/AdminContent';
 
 export default function AdminPage() {
-  return <DynamicAdmin />;
+  return <AdminContent />;
 }

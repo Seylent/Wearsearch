@@ -55,9 +55,9 @@ export const SearchDropdownView: React.FC<SearchDropdownViewProps> = React.memo(
 
   return (
     <div 
-      className="fixed inset-0 z-[100] bg-black/60 backdrop-blur-sm flex items-start justify-center pt-24"
       role="dialog"
       aria-modal="true"
+      className="fixed inset-0 z-[100] bg-black/60 backdrop-blur-sm flex items-start justify-center pt-24"
       aria-label={t('aria.searchResults')}
     >
       <div 

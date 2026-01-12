@@ -1,6 +1,14 @@
 {
-  "/stores/page": "app/stores/page.js",
+  "/_not-found/page": "app/_not-found/page.js",
   "/page": "app/page.js",
+  "/favorites/page": "app/favorites/page.js",
+  "/products/page": "app/products/page.js",
+  "/profile/page": "app/profile/page.js",
+  "/stores/page": "app/stores/page.js",
+  "/about/page": "app/about/page.js",
+  "/contacts/page": "app/contacts/page.js",
+  "/products/[id]/page": "app/products/[id]/page.js",
+  "/admin/page": "app/admin/page.js",
   "/privacy/page": "app/privacy/page.js",
-  "/products/page": "app/products/page.js"
+  "/terms/page": "app/terms/page.js"
 }

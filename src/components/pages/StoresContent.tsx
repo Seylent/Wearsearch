@@ -8,17 +8,11 @@ import { NoStoresFound, ErrorState } from "@/components/common/EmptyState";
 import { StoreGridSkeleton } from "@/components/common/SkeletonLoader";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { Search, ExternalLink, Star, Package, Send, Instagram } from "lucide-react";
+import { Search, ExternalLink, Star, Package, Send, Camera } from "lucide-react";
 import { useStoresPageData } from "@/hooks/useAggregatedData";
 import { SaveStoreButton } from "@/components/SaveStoreButton";
 
-interface Pagination {
-  page: number;
-  totalPages: number;
-  totalItems: number;
-  hasNext: boolean;
-  hasPrev: boolean;
-}
+import type { PaginationInfo } from "@/types";
 
 interface StoresContentProps {
   storeId?: string;
@@ -38,7 +32,7 @@ const StoresContent: React.FC<StoresContentProps> = ({ storeId: _storeId }) => {
   // Initialize page from URL on mount
   useEffect(() => {
     const rawPage = searchParams.get('page');
-    const parsedPage = rawPage ? Number(rawPage) : NaN;
+    const parsedPage = rawPage ? Number(rawPage) : Number.NaN;
     if (Number.isFinite(parsedPage) && parsedPage >= 1) {
       setCurrentPage(Math.floor(parsedPage));
     }
@@ -161,7 +155,7 @@ const StoresContent: React.FC<StoresContentProps> = ({ storeId: _storeId }) => {
           <div className="flex justify-center gap-12 mt-16 animate-fade-in-up" style={{ animationDelay: '0.4s' }}>
             <div className="text-center">
               <p className="font-display text-3xl sm:text-4xl font-bold mb-1">
-                {(pagination as Pagination)?.totalItems ?? stores.length}+
+                {(pagination as PaginationInfo)?.totalItems ?? stores.length}+
               </p>
               <p className="text-xs text-muted-foreground uppercase tracking-wider">Stores</p>
             </div>
@@ -176,30 +170,41 @@ const StoresContent: React.FC<StoresContentProps> = ({ storeId: _storeId }) => {
       {/* Stores Grid */}
       <section className="py-24 relative">
         <div className="container mx-auto px-4 sm:px-6" id="main-content">
-          {loading ? (
-            <StoreGridSkeleton count={9} />
-          ) : error ? (
-            <ErrorState 
-              title="Failed to load stores"
-              description="We couldn't load the stores. Please check your connection and try again."
-              onRetry={() => window.location.reload()}
-              technicalDetails={error instanceof Error ? error.message : String(error)}
-            />
-          ) : filteredStores.length === 0 ? (
-            searchQuery ? (
-              <NoStoresFound 
-                hasSearch={true}
-                onClearSearch={() => {
-                  setSearchQuery('');
-                  setCurrentPage(1);
-                }}
-              />
-            ) : (
-              <NoStoresFound hasSearch={false} />
-            )
-          ) : (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 md:gap-8">
-              {filteredStores.map((store, index) => (
+          {(() => {
+            if (loading) {
+              return <StoreGridSkeleton count={9} />;
+            }
+            
+            if (error) {
+              return (
+                <ErrorState 
+                  title="Failed to load stores"
+                  description="We couldn't load the stores. Please check your connection and try again."
+                  onRetry={() => globalThis.location.reload()}
+                  technicalDetails={error instanceof Error ? error.message : String(error)}
+                />
+              );
+            }
+            
+            if (filteredStores.length === 0) {
+              if (searchQuery) {
+                return (
+                  <NoStoresFound 
+                    hasSearch={true}
+                    onClearSearch={() => {
+                      setSearchQuery('');
+                      setCurrentPage(1);
+                    }}
+                  />
+                );
+              } else {
+                return <NoStoresFound hasSearch={false} />;
+              }
+            }
+            
+            return (
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 md:gap-8">
+                {filteredStores.map((store, index) => (
                 <div
                   key={store.id}
                   className="group relative animate-fade-in-up"
@@ -299,7 +304,7 @@ const StoresContent: React.FC<StoresContentProps> = ({ storeId: _storeId }) => {
                               className="w-9 h-9 rounded-full bg-card md:hover:bg-foreground md:hover:text-background active:bg-foreground active:text-background flex items-center justify-center transition-all"
                               onClick={(e) => e.stopPropagation()}
                             >
-                              <Instagram className="w-4 h-4" />
+                              <Camera className="w-4 h-4" />
                             </a>
                           )}
                         </div>
@@ -328,25 +333,26 @@ const StoresContent: React.FC<StoresContentProps> = ({ storeId: _storeId }) => {
                 </div>
               ))}
             </div>
-          )}
+            );
+          })()}
 
           {/* Pagination */}
-          {!!pagination && (pagination as Pagination).totalPages > 1 && (
+          {!!pagination && (pagination as PaginationInfo).totalPages > 1 && (
             <div className="flex items-center justify-center gap-4 mt-12">
               <Button
                 variant="outline"
                 onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
-                disabled={!(pagination as Pagination).hasPrev || isFetching}
+                disabled={!(pagination as PaginationInfo).hasPrev || isFetching}
               >
                 Prev
               </Button>
               <span className="text-sm text-muted-foreground">
-                Page {(pagination as Pagination).page} of {(pagination as Pagination).totalPages}
+                Page {(pagination as PaginationInfo).page} of {(pagination as PaginationInfo).totalPages}
               </span>
               <Button
                 variant="outline"
                 onClick={() => setCurrentPage((p) => p + 1)}
-                disabled={!(pagination as Pagination).hasNext || isFetching}
+                disabled={!(pagination as PaginationInfo).hasNext || isFetching}
               >
                 Next
               </Button>

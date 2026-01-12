@@ -1,4 +1,4 @@
-'use client';
+﻿'use client';
 
 import { useState, useEffect, useMemo, type ReactNode } from "react";
 import { useTranslation } from "react-i18next";
@@ -555,28 +555,40 @@ type FiltersDialogProps = Readonly<{
 
 export function ProductsContent() {
   const { t } = useTranslation();
-  const searchParams = useSearchParams();
+  const searchParamsHook = useSearchParams();
   const { currency } = useCurrency();
   const { getCurrencySymbol } = useCurrencyConversion();
   const maxPriceLimit = getMaxPriceLimit(currency);
   
+  // Safe access to search params
+  const searchParams = searchParamsHook || new URLSearchParams();
+  
   // Dynamic SEO based on filters
   const [seoData, setSeoData] = useState<SEOData | null>(null);
-  const typeParam = searchParams?.get('type');
-  const colorParam = searchParams?.get('color');
-  const storeIdParam = searchParams?.get('store_id');
+  const typeParam = searchParams?.get('type') || '';
+  const colorParam = searchParams?.get('color') || '';
+  const storeIdParam = searchParams?.get('store_id') || '';
   
-  // Fetch dynamic SEO data when filters change
+  // Debounce SEO params to reduce API calls
+  const debouncedTypeParam = useDebounce(typeParam, 500);
+  const debouncedColorParam = useDebounce(colorParam, 500);
+  
+  // Fetch dynamic SEO data when filters change (with debounce)
   useEffect(() => {
+    if (!debouncedTypeParam && !debouncedColorParam) {
+      setSeoData(null);
+      return;
+    }
+    
     const fetchSEO = async () => {
       try {
         let data: SEOData | null = null;
         
         // Priority: category > color > default
-        if (typeParam) {
-          data = await seoApi.getCategorySEO(typeParam);
-        } else if (colorParam) {
-          data = await seoApi.getColorSEO(colorParam);
+        if (debouncedTypeParam) {
+          data = await seoApi.getCategorySEO(debouncedTypeParam);
+        } else if (debouncedColorParam) {
+          data = await seoApi.getColorSEO(debouncedColorParam);
         }
         
         setSeoData(data);
@@ -587,7 +599,7 @@ export function ProductsContent() {
     };
     
     fetchSEO();
-  }, [typeParam, colorParam]);
+  }, [debouncedTypeParam, debouncedColorParam]);
 
   useEffect(() => {
     if (seoData) {
@@ -626,8 +638,8 @@ export function ProductsContent() {
   const [shouldFetchData, setShouldFetchData] = useState(false);
   
   useEffect(() => {
-    const timeoutId = setTimeout(() => setShouldFetchData(true), 50);
-    return () => clearTimeout(timeoutId);
+    // Immediate fetch for better UX
+    setShouldFetchData(true);
   }, []);
   
   // Build API filters object (memoized to avoid query-key churn)
@@ -651,9 +663,13 @@ export function ProductsContent() {
     ]
   );
   
-  // Use aggregated hook for better performance
+  // Use aggregated hook for better performance with enhanced caching
   const { data: pageData, isLoading: pageLoading, error: pageError } = useProductsPageData(apiFilters, { 
-    enabled: storeIdParam ? false : shouldFetchData 
+    enabled: !storeIdParam && shouldFetchData,
+    staleTime: 2 * 60 * 1000, // 2 minutes
+    gcTime: 5 * 60 * 1000, // 5 minutes
+    refetchOnWindowFocus: false,
+    refetchOnMount: false
   });
   
   // Use store-specific endpoint if store_id is present
@@ -665,7 +681,12 @@ export function ProductsContent() {
   const { data: storeProductsData, error: storeError } = useStoreProducts(
     storeIdParam || '', 
     storeProductsParams,
-    { enabled: !!storeIdParam && shouldFetchData }
+    { 
+      enabled: !!storeIdParam && shouldFetchData,
+      staleTime: 3 * 60 * 1000, // 3 minutes for store data
+      gcTime: 10 * 60 * 1000, // 10 minutes cache
+      refetchOnWindowFocus: false
+    }
   );
   
   // Extract data

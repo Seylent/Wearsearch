@@ -36,9 +36,14 @@ export const RelatedProducts = memo(({ productId, products, total, className = '
   const isVisible = useLazyLoad(sectionRef, { rootMargin: '400px', freezeOnceVisible: true });
 
   const hasProvidedProducts = Array.isArray(products);
-  const { data, isLoading, error: _error } = useRelatedProducts(productId, { enabled: isVisible || hasProvidedProducts });
+  const { data, isLoading, error: _error } = useRelatedProducts(productId);
 
-  const resolvedProducts: unknown[] = hasProvidedProducts ? (products ?? []) : (Array.isArray(data) ? data : []);
+  let resolvedProducts: unknown[];
+  if (hasProvidedProducts) {
+    resolvedProducts = products ?? [];
+  } else {
+    resolvedProducts = Array.isArray(data) ? data : [];
+  }
   const resolvedTotal = typeof total === 'number' ? total : resolvedProducts.length;
   
   // Don't show section if no products or still loading
@@ -50,8 +55,8 @@ export const RelatedProducts = memo(({ productId, products, total, className = '
           <h2 className="font-display text-2xl font-bold">{t('productDetail.similarProducts')}</h2>
         </div>
         <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
-          {[...Array(6)].map((_, i) => (
-            <div key={i} className="animate-pulse">
+          {[...new Array(6)].map((_, i) => (
+            <div key={`skeleton-${i}`} className="animate-pulse">
               <div className="aspect-square bg-muted rounded-2xl mb-3" />
               <div className="h-4 bg-muted rounded mb-2" />
               <div className="h-3 bg-muted rounded w-2/3" />

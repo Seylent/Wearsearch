@@ -1,11 +1,10 @@
 /**
- * Vitest Test Setup
+ * Jest Test Setup
  * Global test configuration and mocks
  */
 
-import { afterEach, vi } from 'vitest';
 import { cleanup } from '@testing-library/react';
-import '@testing-library/jest-dom/vitest';
+import '@testing-library/jest-dom';
 
 // Cleanup after each test
 afterEach(() => {
@@ -13,17 +12,17 @@ afterEach(() => {
 });
 
 // Mock window.matchMedia
-Object.defineProperty(window, 'matchMedia', {
+Object.defineProperty(globalThis.window, 'matchMedia', {
   writable: true,
-  value: vi.fn().mockImplementation(query => ({
+  value: jest.fn().mockImplementation(query => ({
     matches: false,
     media: query,
     onchange: null,
-    addListener: vi.fn(),
-    removeListener: vi.fn(),
-    addEventListener: vi.fn(),
-    removeEventListener: vi.fn(),
-    dispatchEvent: vi.fn(),
+    addListener: jest.fn(),
+    removeListener: jest.fn(),
+    addEventListener: jest.fn(),
+    removeEventListener: jest.fn(),
+    dispatchEvent: jest.fn(),
   })),
 });
 
@@ -42,14 +41,20 @@ class MockIntersectionObserver implements IntersectionObserver {
     this.rootMargin = options?.rootMargin ?? '0px';
 
     const threshold = options?.threshold;
-    this.thresholds = Array.isArray(threshold)
-      ? threshold
-      : typeof threshold === 'number'
-        ? [threshold]
-        : [0];
+    const _thresholds = (() => {
+      if (Array.isArray(threshold)) {
+        return threshold;
+      }
+      if (typeof threshold === 'number') {
+        return [threshold];
+      }
+      return [0];
+    })();
   }
 
-  disconnect(): void {}
+  disconnect(): void {
+    // Mock implementation
+  }
 
   observe(target: Element): void {
     this.callback(
@@ -62,27 +67,28 @@ class MockIntersectionObserver implements IntersectionObserver {
     return [];
   }
 
-  unobserve(_target: Element): void {}
+  unobserve(_target: Element): void {
+    // Mock implementation
+  }
 }
 
-global.IntersectionObserver = MockIntersectionObserver as unknown as typeof IntersectionObserver;
+globalThis.IntersectionObserver = MockIntersectionObserver as unknown as typeof IntersectionObserver;
 
 // Mock ResizeObserver
-global.ResizeObserver = class ResizeObserver {
-  constructor() {}
-  disconnect() {}
-  observe() {}
-  unobserve() {}
+globalThis.ResizeObserver = class ResizeObserver {
+  observe() { /* Mock implementation */ }
+  disconnect() { /* Mock implementation */ }
+  unobserve() { /* Mock implementation */ }
 } as any;
 
 // Mock scrollTo
-window.scrollTo = vi.fn();
+window.scrollTo = jest.fn();
 
 // Mock localStorage
 const localStorageMock = {
-  getItem: vi.fn(),
-  setItem: vi.fn(),
-  removeItem: vi.fn(),
-  clear: vi.fn(),
+  getItem: jest.fn(),
+  setItem: jest.fn(),
+  removeItem: jest.fn(),
+  clear: jest.fn(),
 };
-global.localStorage = localStorageMock as any;
+globalThis.localStorage = localStorageMock as any;

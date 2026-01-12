@@ -1,3 +1,5 @@
+'use client';
+
 /**
  * Enhanced Search Component
  * Search with autocomplete, history, and popular queries

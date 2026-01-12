@@ -7,7 +7,7 @@
 
 import sharp from 'sharp';
 import { S3Client, ListObjectsV2Command, GetObjectCommand, PutObjectCommand } from '@aws-sdk/client-s3';
-import { Readable } from 'stream';
+import { Readable as _Readable } from 'stream';
 import dotenv from 'dotenv';
 
 dotenv.config();

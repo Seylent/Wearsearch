@@ -15,7 +15,7 @@ interface HomeContentProps {
   isLoading?: boolean;
 }
 
-export function HomeContent({ products, seoData, isLoading }: HomeContentProps) {
+export function HomeContent({ products, seoData, isLoading }: Readonly<HomeContentProps>) {
   const router = useRouter(); 
   const { t } = useTranslation();
   

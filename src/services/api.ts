@@ -15,18 +15,28 @@ import { z } from 'zod';
  * Implements exponential backoff for 429 responses
  */
 const RATE_LIMIT_CONFIG = {
-  maxRetries: 3,
-  baseDelay: 1000, // 1 second
-  maxDelay: 30000, // 30 seconds
+  maxRetries: process.env.NODE_ENV === 'production' ? 3 : 1, // Less retries in dev
+  baseDelay: process.env.NODE_ENV === 'production' ? 1000 : 500, // Shorter delays in dev
+  maxDelay: process.env.NODE_ENV === 'production' ? 30000 : 5000, // Much shorter max delay in dev
 };
 
 const sleep = (ms: number): Promise<void> => 
   new Promise(resolve => setTimeout(resolve, ms));
 
 const getRetryDelay = (retryCount: number, retryAfter?: number): number => {
-  if (retryAfter) {
-    return retryAfter * 1000; // Convert seconds to ms
+  // In development, ignore server retry-after to prevent super long waits
+  if (process.env.NODE_ENV !== 'production') {
+    const delay = RATE_LIMIT_CONFIG.baseDelay * Math.pow(2, retryCount);
+    const jitter = delay * 0.25 * (Math.random() - 0.5);
+    return Math.min(delay + jitter, RATE_LIMIT_CONFIG.maxDelay);
   }
+  
+  // In production, respect server retry-after but cap it
+  if (retryAfter) {
+    const retryMs = retryAfter * 1000;
+    return Math.min(retryMs, RATE_LIMIT_CONFIG.maxDelay);
+  }
+  
   // Exponential backoff: 1s, 2s, 4s, etc.
   const delay = RATE_LIMIT_CONFIG.baseDelay * Math.pow(2, retryCount);
   // Add jitter (±25%) to prevent thundering herd
@@ -41,12 +51,18 @@ const getRetryDelay = (retryCount: number, retryAfter?: number): number => {
 class RequestQueue {
   private queue: Array<() => Promise<void>> = [];
   private running = 0;
-  private readonly maxConcurrent = 6; // Max concurrent requests
-  private readonly minDelay = 50; // Min delay between requests (ms)
+  private readonly maxConcurrent = process.env.NODE_ENV === 'production' ? 6 : 3; // Lower limit in dev
+  private readonly minDelay = process.env.NODE_ENV === 'production' ? 50 : 100; // Higher delay in dev
   private lastRequestTime = 0;
+  private pendingRequests = new Map<string, Promise<any>>(); // Request deduplication
 
-  async add<T>(fn: () => Promise<T>): Promise<T> {
-    return new Promise((resolve, reject) => {
+  async add<T>(fn: () => Promise<T>, dedupKey?: string): Promise<T> {
+    // Request deduplication - if same request is already pending, return the same promise
+    if (dedupKey && this.pendingRequests.has(dedupKey)) {
+      return this.pendingRequests.get(dedupKey);
+    }
+
+    const promise = new Promise<T>((resolve, reject) => {
       const execute = async () => {
         // Enforce minimum delay between requests
         const now = Date.now();
@@ -64,6 +80,9 @@ class RequestQueue {
           reject(error);
         } finally {
           this.running--;
+          if (dedupKey) {
+            this.pendingRequests.delete(dedupKey);
+          }
           this.processNext();
         }
       };
@@ -74,6 +93,13 @@ class RequestQueue {
         this.queue.push(execute);
       }
     });
+
+    // Store promise for deduplication
+    if (dedupKey) {
+      this.pendingRequests.set(dedupKey, promise);
+    }
+
+    return promise;
   }
 
   private processNext(): void {
@@ -185,8 +211,8 @@ const attachInterceptors = (client: AxiosInstance, fallback?: FallbackConfig) =>
 
       if (token && config.headers) {
         config.headers.Authorization = `Bearer ${token}`;
-        // Only log in development and for non-trivial requests
-        if (process.env.NODE_ENV !== 'production' && !url.includes('/items') && !url.includes('/search')) {
+        // Reduce logging noise in development
+        if (process.env.NODE_ENV !== 'production' && !url.includes('/items') && !url.includes('/search') && !url.includes('/pages') && !url.includes('/auth/me')) {
           console.log(`🔑 Auth token attached to ${config.method?.toUpperCase()} ${url}`);
         }
       } else if (!token && url && !isPublicEndpoint(url)) {
@@ -226,7 +252,8 @@ const attachInterceptors = (client: AxiosInstance, fallback?: FallbackConfig) =>
           const retryAfter = retryAfterHeader ? parseInt(retryAfterHeader, 10) : undefined;
           const delay = getRetryDelay(retryCount, retryAfter);
           
-          if (process.env.NODE_ENV !== 'production') {
+          if (process.env.NODE_ENV !== 'production' && retryCount === 0) {
+            // Only log on first retry attempt to reduce noise
             console.log(`⏳ Rate limited. Retrying in ${Math.round(delay / 1000)}s (attempt ${retryCount + 1}/${RATE_LIMIT_CONFIG.maxRetries})...`);
           }
           

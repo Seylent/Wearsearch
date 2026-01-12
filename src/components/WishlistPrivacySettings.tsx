@@ -36,7 +36,7 @@ const WishlistPrivacySettings: React.FC<WishlistPrivacySettingsProps> = ({ class
       if (data.share_url) {
         const fullUrl = data.share_url.startsWith('http') 
           ? data.share_url 
-          : `${window.location.origin}${data.share_url}`;
+          : `${globalThis.location.origin}${data.share_url}`;
         setShareUrl(fullUrl);
       }
     } catch (error) {
@@ -57,7 +57,7 @@ const WishlistPrivacySettings: React.FC<WishlistPrivacySettingsProps> = ({ class
         const { share_url } = await getShareLink();
         const fullUrl = share_url.startsWith('http') 
           ? share_url 
-          : `${window.location.origin}${share_url}`;
+          : `${globalThis.location.origin}${share_url}`;
         setShareUrl(fullUrl);
       }
       
@@ -86,7 +86,7 @@ const WishlistPrivacySettings: React.FC<WishlistPrivacySettingsProps> = ({ class
       // Build full URL from share_url path
       const fullUrl = share_url.startsWith('http') 
         ? share_url 
-        : `${window.location.origin}${share_url}`;
+        : `${globalThis.location.origin}${share_url}`;
       setShareUrl(fullUrl);
       
       // Also make public if not already
