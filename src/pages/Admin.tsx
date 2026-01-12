@@ -1831,7 +1831,7 @@ const Admin = () => {
 
   const parseCsvRow = (row: string): string[] => {
     return row
-      .split(/,(?=(?:[^"]*[\"][^"]*[\"])*[^"]*$)/)
+      .split(/,(?=(?:[^"]*["[^"]*["])*[^"]*$)/)
       .map((value) => {
         const trimmed = value.trim();
         if (trimmed.startsWith('"') && trimmed.endsWith('"')) {
