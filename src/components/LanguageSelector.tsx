@@ -1,6 +1,5 @@
 import React from 'react';
 import { useTranslation } from 'react-i18next';
-import { usePathname, useRouter } from 'next/navigation';
 import { Globe } from 'lucide-react';
 import {
   DropdownMenu,
@@ -10,7 +9,6 @@ import {
 } from '@/components/ui/dropdown-menu';
 import { Button } from '@/components/ui/button';
 import { SUPPORTED_LANGUAGES, languageService, type SupportedLanguage } from '@/i18n';
-import { switchLanguageInPath } from '@/lib/i18nHelpers';
 
 interface Language {
   code: SupportedLanguage;
@@ -20,8 +18,6 @@ interface Language {
 
 export const LanguageSelector: React.FC = () => {
   const { i18n, t } = useTranslation();
-  const pathname = usePathname();
-  const router = useRouter();
 
   const languages: Language[] = [
     { code: SUPPORTED_LANGUAGES.EN, name: 'English', flag: 'ENG' },

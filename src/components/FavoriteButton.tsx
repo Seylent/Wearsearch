@@ -1,5 +1,5 @@
 import { Heart } from 'lucide-react';
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
 import { useAddFavorite, useRemoveFavorite } from '@/hooks/useApi';

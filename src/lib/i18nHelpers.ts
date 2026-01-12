@@ -3,7 +3,7 @@
  * Utilities for language detection and URL management
  */
 
-import { SUPPORTED_LANGUAGES, LANGUAGE_CONFIG, type SupportedLanguage } from '@/i18n';
+import { LANGUAGE_CONFIG, type SupportedLanguage } from '@/i18n';
 
 /**
  * Detect language from URL pathname

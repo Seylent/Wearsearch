@@ -3,7 +3,6 @@
 import { useRouter } from 'next/navigation';
 import { useTranslation } from 'react-i18next';
 import ProductCard from "@/components/ProductCard";
-import { Button } from "@/components/ui/button";
 import { NeonAbstractions } from "@/components/NeonAbstractions";
 import { ProductGridSkeleton } from "@/components/common/SkeletonLoader";
 import RecentlyViewedProducts from "@/components/RecentlyViewedProducts";

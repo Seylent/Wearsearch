@@ -4,7 +4,6 @@
  */
 
 import dynamic from 'next/dynamic';
-import type { ComponentType } from 'react';
 
 // Loading component
 function PageLoader({ message = 'Loading...' }: { message?: string }) {

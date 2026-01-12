@@ -16,12 +16,6 @@ import {
   DialogTitle,
   DialogTrigger,
 } from '@/components/ui/dialog';
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from '@/components/ui/dropdown-menu';
 import { useCollections, type Collection } from '@/hooks/useCollections';
 import { useToast } from '@/hooks/use-toast';
 import { cn } from '@/lib/utils';

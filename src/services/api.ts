@@ -84,7 +84,7 @@ class RequestQueue {
   }
 }
 
-const requestQueue = new RequestQueue();
+const _requestQueue = new RequestQueue();
 
 // Import AUTH_TOKEN_KEY for checking if user was logged in
 const AUTH_TOKEN_KEY = 'wearsearch.auth';

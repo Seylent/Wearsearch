@@ -69,7 +69,7 @@ export const CurrencyProvider: React.FC<CurrencyProviderProps> = ({ children }) 
       } else {
         throw new Error('Failed to fetch exchange rate');
       }
-    } catch (err) {
+    } catch (_err) {
       console.warn('Exchange rate API not available, using fallback rate of 40.50 UAH/USD');
       setExchangeRate({
         rate: 40.50, // Updated fallback rate (January 2026)

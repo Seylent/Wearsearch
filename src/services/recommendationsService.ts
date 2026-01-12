@@ -3,7 +3,7 @@
  * Handles personalized recommendations and similar products
  */
 
-import api, { handleApiError } from './api';
+import api from './api';
 import { Product } from './productService';
 
 // Types

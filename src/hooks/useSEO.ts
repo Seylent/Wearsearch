@@ -101,7 +101,7 @@ export const useSEO = ({
         if (robotsMeta && robotsMeta.parentNode) {
           robotsMeta.parentNode.removeChild(robotsMeta);
         }
-      } catch (error) {
+      } catch (_error) {
         // Silently fail
       }
     }

@@ -89,9 +89,7 @@ function createConfetti(options: {
     });
   }
 
-  let frame = 0;
   const animate = () => {
-    frame++;
     ctx.clearRect(0, 0, canvas.width, canvas.height);
 
     particles.forEach((p, index) => {

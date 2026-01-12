@@ -90,7 +90,7 @@ const ProductReviews: React.FC<ProductReviewsProps> = ({
   const isLoggedIn = isAuthenticated();
 
   // Fetch reviews from API
-  const { data, isLoading, error } = useQuery({
+  const { data, isLoading, error: _error } = useQuery({
     queryKey: ['reviews', productId, sortBy],
     queryFn: () => reviewsService.getProductReviews(productId, { sort: sortBy, limit: 20 }),
     staleTime: 1000 * 60 * 5, // 5 minutes

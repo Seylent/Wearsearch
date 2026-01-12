@@ -8,7 +8,6 @@ import { useRouter } from 'next/navigation';
 import { useTranslation } from 'react-i18next';
 import { Search, X, History, TrendingUp, ArrowRight, Trash2 } from 'lucide-react';
 import { Input } from '@/components/ui/input';
-import { Button } from '@/components/ui/button';
 import { useSearchHistory } from '@/hooks/useSearchHistory';
 import { useDebounce } from '@/hooks/useDebounce';
 import { cn } from '@/lib/utils';
