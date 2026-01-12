@@ -192,7 +192,7 @@ const ShareButton: React.FC<ShareButtonProps> = ({
       // Use modern Clipboard API or fallback to deprecated execCommand
       try {
         if (navigator.clipboard) {
-          await navigator.clipboard.writeText(textToCopy);
+          await navigator.clipboard.writeText(shareData.url);
         } else {
           document.execCommand('copy');
         }
@@ -275,13 +275,13 @@ const ShareButton: React.FC<ShareButtonProps> = ({
 
       {/* Beautiful Share Modal - Top positioned on all devices */}
       {isOpen && createPortal(
-        <div 
-          className="fixed inset-0 z-[9999] flex flex-col items-center pt-3 md:pt-8"
+        <dialog 
+          className="fixed inset-0 z-[9999] flex flex-col items-center pt-3 md:pt-8 bg-transparent"
+          open={isOpen}
           onClick={handleClose}
           onKeyDown={(e) => e.key === 'Escape' && handleClose()}
-          role="dialog"
           aria-modal="true"
-          tabIndex={-1}
+          aria-labelledby="share-dialog-title"
           style={{ touchAction: 'none' }}
         >
           {/* Backdrop with blur */}
@@ -302,6 +302,8 @@ const ShareButton: React.FC<ShareButtonProps> = ({
                 : "-translate-y-8 opacity-0"
             )}
             onClick={(e) => e.stopPropagation()}
+            role="document"
+            tabIndex={-1}
           >
             {/* Glassmorphism container */}
             <div 
@@ -328,7 +330,7 @@ const ShareButton: React.FC<ShareButtonProps> = ({
                   )}
                   
                   <div className="flex-1 min-w-0">
-                    <h3 className="text-base font-semibold text-white truncate">
+                    <h3 id="share-dialog-title" className="text-base font-semibold text-white truncate">
                       {t('share.shareProduct', 'Share Product')}
                     </h3>
                     {productName && (
@@ -418,7 +420,7 @@ const ShareButton: React.FC<ShareButtonProps> = ({
               </div>
             </div>
           </div>
-        </div>,
+        </dialog>,
         document.body
       )}
     </>

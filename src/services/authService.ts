@@ -284,7 +284,7 @@ export const authService = {
       if (user) {
         localStorage.setItem('user', JSON.stringify(user));
         // Notify other components of auth change
-        window.dispatchEvent(new Event('authChange'));
+        globalThis.dispatchEvent(new Event('authChange'));
       }
       
       return user;

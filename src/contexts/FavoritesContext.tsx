@@ -1,8 +1,8 @@
 'use client';
 
-import { createContext, useContext, ReactNode, useState, useEffect } from 'react';
+import { createContext, useContext, ReactNode } from 'react';
 import { useFavorites } from '@/hooks/useApi';
-import { isAuthenticated } from '@/utils/authStorage';
+import { useAuth } from '@/features/auth/hooks/useAuth';
 
 const isRecord = (value: unknown): value is Record<string, unknown> => typeof value === 'object' && value !== null;
 
@@ -30,16 +30,12 @@ interface FavoritesContextType {
 const FavoritesContext = createContext<FavoritesContextType | undefined>(undefined);
 
 export function FavoritesProvider({ children }: { children: ReactNode }) {
-  const [isLoggedIn, setIsLoggedIn] = useState(false);
+  const { isAuthenticated } = useAuth();
   
-  useEffect(() => {
-    setIsLoggedIn(isAuthenticated());
-  }, []);
-  
-  // Only fetch favorites if user is logged in
+  // Only fetch favorites if user is authenticated
   const { data: favoritesData, isLoading } = useFavorites();
   
-  const favorites = isLoggedIn ? favoritesData?.favorites ?? [] : [];
+  const favorites = isAuthenticated ? favoritesData?.favorites ?? [] : [];
   
   const isFavorited = (productId: string) => {
     if (!Array.isArray(favorites)) return false;

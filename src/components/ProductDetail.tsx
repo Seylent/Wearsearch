@@ -152,8 +152,8 @@ const ProductDetail = () => {
         storeRecord["store_price"] ??
         null;
       // Convert to number if it's a string
-      const numericPrice = rawPrice != null ? parseFloat(String(rawPrice)) : null;
-      const finalPrice = numericPrice != null && !isNaN(numericPrice) ? numericPrice : null;
+      const numericPrice = rawPrice != null ? Number.parseFloat(String(rawPrice)) : null;
+      const finalPrice = numericPrice != null && !Number.isNaN(numericPrice) ? numericPrice : null;
 
       const rawSizes = storeRecord["sizes"] ?? storeRecord["available_sizes"];
       let sizes: string[] = [];

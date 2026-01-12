@@ -47,7 +47,7 @@ export default function AuthPage() {
           password: formData.password,
         });
 
-        if (response.data && response.data.success) {
+        if (response.data?.success) {
           // Зберігаємо обидва токени згідно з документацією
           localStorage.setItem('access_token', response.data.access_token);
           localStorage.setItem('refresh_token', response.data.refresh_token);

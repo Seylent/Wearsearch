@@ -312,14 +312,25 @@ const attachInterceptors = (client: AxiosInstance, fallback?: FallbackConfig) =>
         });
 
         // Only clear auth and show message if user was actually logged in
-        if (wasAuthenticated) {
+        // Also check if we haven't already cleared auth recently to prevent cascades
+        const lastAuthClear = sessionStorage.getItem('lastAuthClear');
+        const now = Date.now();
+        const recentlyClearedAuth = lastAuthClear && (now - parseInt(lastAuthClear, 10)) < 5000; // 5 seconds
+
+        if (wasAuthenticated && !recentlyClearedAuth) {
           console.log('🧹 Clearing auth and dispatching logout event');
+          
+          // Mark that we're clearing auth to prevent cascades
+          sessionStorage.setItem('lastAuthClear', now.toString());
+          
           clearAuth();
 
           // Dispatch custom event for auth handling (avoid direct window.location)
           window.dispatchEvent(new CustomEvent('auth:logout', {
             detail: { reason: 'unauthorized' }
           }));
+        } else if (recentlyClearedAuth) {
+          console.log('⏭️ Auth error but recently cleared - skipping to prevent cascade');
         } else {
           console.log('ℹ️ Auth error for non-authenticated user - ignoring');
         }

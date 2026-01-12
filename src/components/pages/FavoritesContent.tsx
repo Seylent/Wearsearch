@@ -63,7 +63,9 @@ function FavoritesWithParams() {
     limit: itemsPerPage,
   });
 
-  const pagination = favoritesPageData?.pagination;
+  const pagination = (favoritesPageData && typeof favoritesPageData === 'object' && 'pagination' in favoritesPageData) 
+    ? favoritesPageData.pagination 
+    : null;
   
   // Check authentication on mount
   useEffect(() => {
@@ -83,8 +85,13 @@ function FavoritesWithParams() {
 
   // v1 BFF returns full product objects (plus optional favorited_at)
   const products = useMemo(() => {
-    const pageItems = favoritesPageData?.items;
-    return Array.isArray(pageItems) ? pageItems : Array.isArray(favorites) ? favorites : [];
+    const pageItems = (favoritesPageData && typeof favoritesPageData === 'object' && 'items' in favoritesPageData) 
+      ? favoritesPageData.items 
+      : null;
+    
+    if (Array.isArray(pageItems)) return pageItems;
+    if (Array.isArray(favorites)) return favorites;
+    return [];
   }, [favoritesPageData, favorites]);
 
   const filteredFavorites = Array.isArray(products) 
@@ -159,38 +166,53 @@ function FavoritesWithParams() {
             <span className="text-sm text-muted-foreground">({filteredFavorites.length})</span>
           </div>
 
-          {loading || favoritesPageLoading ? (
-            <ProductGridSkeleton count={12} columns={4} />
-          ) : filteredFavorites.length === 0 ? (
-            <div className="text-center py-16 border border-dashed border-border/30 rounded-2xl bg-card/5">
-              <div className="w-14 h-14 rounded-full border-2 border-border/30 flex items-center justify-center mx-auto mb-4 select-none">
-                <Heart className="w-7 h-7 text-muted-foreground" />
-              </div>
-              <h3 className="font-display text-lg font-semibold mb-2 select-none">
-                {searchQuery ? "No products match your search" : "No favorite products yet"}
-              </h3>
-              <p className="text-muted-foreground mb-4 max-w-md mx-auto text-sm select-none">
-                {searchQuery
-                  ? "Try adjusting your search terms"
-                  : "Start exploring and save products you love to see them here"}
-              </p>
-              <Button
-                onClick={() => router.push("/products")}
-                className="rounded-full"
-                size="sm"
-              >
-                Browse Products
-              </Button>
-            </div>
-          ) : (
-            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
+          {(() => {
+            if (loading || favoritesPageLoading) {
+              return <ProductGridSkeleton count={12} columns={4} />;
+            }
+            
+            if (filteredFavorites.length === 0) {
+              return (
+                <div className="text-center py-16 border border-dashed border-border/30 rounded-2xl bg-card/5">
+                  <div className="w-14 h-14 rounded-full border-2 border-border/30 flex items-center justify-center mx-auto mb-4 select-none">
+                    <Heart className="w-7 h-7 text-muted-foreground" />
+                  </div>
+                  <h3 className="font-display text-lg font-semibold mb-2 select-none">
+                    {searchQuery ? "No products match your search" : "No favorite products yet"}
+                  </h3>
+                  <p className="text-muted-foreground mb-4 max-w-md mx-auto text-sm select-none">
+                    {searchQuery
+                      ? "Try adjusting your search terms"
+                      : "Start exploring and save products you love to see them here"}
+                  </p>
+                  <Button
+                    onClick={() => router.push("/products")}
+                    className="rounded-full"
+                    size="sm"
+                  >
+                    Browse Products
+                  </Button>
+                </div>
+              );
+            }
+            
+            return (
+              <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
               {filteredFavorites.map((product: unknown, index: number) => {
                 const record = isRecord(product) ? product : {};
                 const productId = getNumberOrString(record["id"], index);
                 const productName = getString(record["name"], "Unknown");
 
                 const productImage = getString(record["image_url"]) || getString(record["image"]);
-                const productPrice = String(record["price"] ?? "0");
+                const priceValue = record["price"];
+                let productPrice: string;
+                if (typeof priceValue === 'number') {
+                  productPrice = priceValue.toString();
+                } else if (typeof priceValue === 'string') {
+                  productPrice = priceValue;
+                } else {
+                  productPrice = "0";
+                }
                 const productCategory = getString(record["type"]);
 
                 const brandsValue = record["brands"];
@@ -210,25 +232,29 @@ function FavoritesWithParams() {
                 );
               })}
             </div>
-          )}
+            );
+          })()}
         </div>
 
-        {!!pagination && pagination.totalPages > 1 && (
+        {!!pagination && 
+          typeof pagination === 'object' && 
+          'totalPages' in pagination && 
+          (pagination as any).totalPages > 1 && (
           <div className="flex items-center justify-center gap-4 mt-12">
             <Button
               variant="outline"
               onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
-              disabled={!pagination.hasPrev || favoritesPageFetching}
+              disabled={!(pagination as any).hasPrev || favoritesPageFetching}
             >
               Prev
             </Button>
             <span className="text-sm text-muted-foreground">
-              Page {pagination.page} of {pagination.totalPages}
+              Page {(pagination as any).page} of {(pagination as any).totalPages}
             </span>
             <Button
               variant="outline"
               onClick={() => setCurrentPage((p) => p + 1)}
-              disabled={!pagination.hasNext || favoritesPageFetching}
+              disabled={!(pagination as any).hasNext || favoritesPageFetching}
             >
               Next
             </Button>

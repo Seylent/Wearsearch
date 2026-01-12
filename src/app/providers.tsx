@@ -13,6 +13,8 @@ import { Toaster as Sonner } from '@/components/ui/sonner';
 import { ApiError } from '@/services/api/errorHandler';
 import { FavoritesProvider } from '@/contexts/FavoritesContext';
 import { CurrencyProvider } from '@/contexts/CurrencyContext';
+import { CurrencyCode } from '@/utils/currencyStorage';
+import { AuthErrorBoundary } from '@/components/auth/AuthErrorBoundary';
 
 /**
  * Rate limit error check
@@ -64,17 +66,20 @@ const queryClient = new QueryClient({
 
 interface AppProvidersProps {
   children: ReactNode;
+  initialCurrency?: CurrencyCode;
 }
 
-export const AppProviders = ({ children }: AppProvidersProps) => {
+export const AppProviders = ({ children, initialCurrency }: AppProvidersProps) => {
   // Resource hints будуть додані через окремий компонент в layout
   
   return (
     <QueryClientProvider client={queryClient}>
-      <CurrencyProvider>
+      <CurrencyProvider initialCurrency={initialCurrency}>
         <FavoritesProvider>
           <TooltipProvider>
-            {children}
+            <AuthErrorBoundary>
+              {children}
+            </AuthErrorBoundary>
             <Toaster />
             <Sonner />
           </TooltipProvider>

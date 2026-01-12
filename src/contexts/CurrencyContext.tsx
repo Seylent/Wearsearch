@@ -1,16 +1,18 @@
+/**
+ * Optimized Currency Context with Cookie Storage
+ * Reduced localStorage usage, better SSR support
+ */
+
 'use client';
 
 import React, { createContext, useContext, useState, useEffect, useCallback, ReactNode } from 'react';
 import { api } from '@/services/api';
-
-export type CurrencyCode = 'UAH' | 'USD';
-
-export interface CurrencyInfo {
-  code: CurrencyCode;
-  symbol: string;
-  convertedFrom?: string;
-  convertedAt?: string;
-}
+import { 
+  CurrencyCode, 
+  currencyStorage, 
+  getCurrencySymbol as getSymbol, 
+  getCurrencyName as getName 
+} from '@/utils/currencyStorage';
 
 export interface ExchangeRate {
   rate: number;
@@ -29,38 +31,53 @@ const CurrencyContext = createContext<CurrencyContextType | undefined>(undefined
 
 interface CurrencyProviderProps {
   children: ReactNode;
+  initialCurrency?: CurrencyCode;
 }
 
-export const CurrencyProvider: React.FC<CurrencyProviderProps> = ({ children }) => {
-  const [currency, setCurrencyInternal] = useState<CurrencyCode>('UAH');
+export const CurrencyProvider: React.FC<CurrencyProviderProps> = ({ 
+  children, 
+  initialCurrency 
+}) => {
+  const [currency, setCurrencyInternal] = useState<CurrencyCode>(
+    initialCurrency || 'UAH'
+  );
   const [exchangeRate, setExchangeRate] = useState<ExchangeRate | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [_isHydrated, setIsHydrated] = useState(false);
+  const [isHydrated, setIsHydrated] = useState(false);
 
-  // Load currency from localStorage after hydration
+  // Hydrate from cookies after component mount
   useEffect(() => {
-    if (globalThis.window !== undefined) {
-      const saved = localStorage.getItem('preferredCurrency');
-      if (saved === 'USD' || saved === 'UAH') {
-        setCurrencyInternal(saved);
-      }
-      setIsHydrated(true);
+    if (!initialCurrency) {
+      const savedCurrency = currencyStorage.getCurrency();
+      setCurrencyInternal(savedCurrency);
     }
-  }, []);
+    setIsHydrated(true);
+  }, [initialCurrency]);
 
-  const setCurrency = (newCurrency: CurrencyCode) => {
+  const setCurrency = useCallback((newCurrency: CurrencyCode) => {
     setCurrencyInternal(newCurrency);
-    if (globalThis.window !== undefined) {
-      localStorage.setItem('preferredCurrency', newCurrency);
+    if (isHydrated) {
+      currencyStorage.setCurrency(newCurrency);
     }
-  };
+  }, [isHydrated]);
 
-  // Отримати курс валют (опціонально)
+  // Optimized exchange rate fetching with caching
   const fetchExchangeRate = useCallback(async () => {
     if (currency === 'UAH') {
       setExchangeRate(null);
       return;
+    }
+
+    // Check if we have fresh rate (less than 30 minutes old)
+    if (exchangeRate && exchangeRate.updatedAt) {
+      const lastUpdate = new Date(exchangeRate.updatedAt);
+      const now = new Date();
+      const thirtyMinutes = 30 * 60 * 1000;
+      
+      if (now.getTime() - lastUpdate.getTime() < thirtyMinutes) {
+        return; // Use cached rate
+      }
     }
 
     setLoading(true);
@@ -72,27 +89,33 @@ export const CurrencyProvider: React.FC<CurrencyProviderProps> = ({ children }) 
       if (response.status === 200) {
         const data = response.data;
         setExchangeRate({
-          rate: data.USD_UAH || 40.50, // Updated fallback rate
+          rate: data.USD_UAH || 40.50,
           updatedAt: data.updatedAt || new Date().toISOString()
         });
       } else {
         throw new Error('Failed to fetch exchange rate');
       }
     } catch (_error) {
-      console.warn('Exchange rate API not available, using fallback rate of 40.5 UAH/USD');
+      console.warn('Exchange rate API not available, using fallback rate');
       setExchangeRate({
-        rate: 40.5, // Updated fallback rate (January 2026))
+        rate: 40.5,
         updatedAt: new Date().toISOString()
       });
       setError('Exchange rate service unavailable');
     } finally {
       setLoading(false);
     }
-  }, [currency]);
+  }, [currency, exchangeRate]);
 
+  // Only fetch exchange rate when currency changes to USD
   useEffect(() => {
-    fetchExchangeRate();
-  }, [currency, fetchExchangeRate]);
+    if (isHydrated && currency === 'USD') {
+      fetchExchangeRate();
+    } else if (currency === 'UAH') {
+      setExchangeRate(null);
+      setError(null);
+    }
+  }, [currency, isHydrated, fetchExchangeRate]);
 
   const value = {
     currency,
@@ -117,7 +140,7 @@ export const useCurrency = () => {
   return context;
 };
 
-// Хук для додавання currency параметру до API запитів
+// Hook for adding currency parameter to API requests
 export const useAPIWithCurrency = () => {
   const { currency } = useCurrency();
   
@@ -129,26 +152,6 @@ export const useAPIWithCurrency = () => {
   return { addCurrencyParam, currency };
 };
 
-// Утіліта для форматування символів валют
-export const getCurrencySymbol = (code: CurrencyCode): string => {
-  switch (code) {
-    case 'UAH':
-      return '₴';
-    case 'USD':
-      return '$';
-    default:
-      return code;
-  }
-};
-
-// Утіліта для отримання назви валюти
-export const getCurrencyName = (code: CurrencyCode): string => {
-  switch (code) {
-    case 'UAH':
-      return 'UAH';
-    case 'USD':
-      return 'USD';
-    default:
-      return code;
-  }
-};
+// Re-export utility functions for backward compatibility
+export const getCurrencySymbol = getSymbol;
+export const getCurrencyName = getName;

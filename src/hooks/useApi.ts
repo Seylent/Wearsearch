@@ -367,6 +367,11 @@ export const useFavorites = () => {
     queryKey: queryKeys.favorites,
     queryFn: async () => {
       try {
+        // Check auth before making request
+        if (!getAuth()) {
+          return { favorites: [], total: 0 };
+        }
+        
         // Canonical v1: favorites come from an aggregated page endpoint.
         // This endpoint requires auth; keep it lightweight (first page, larger limit).
         const response = await api.get('/pages/favorites', { params: { page: 1, limit: 100 } });
@@ -381,21 +386,28 @@ export const useFavorites = () => {
         // Return empty array for auth errors, not found, or rate limit
         const status = getErrorStatus(error);
         if (status === 401 || status === 404 || status === 429) {
-          if (process.env.NODE_ENV !== 'production' && status === 429) {
-            console.log('⏳ Favorites: Rate limited, will retry later');
+          if (process.env.NODE_ENV !== 'production') {
+            if (status === 429) {
+              console.log('⏳ Favorites: Rate limited. Backing off for 30s');
+            } else if (status === 401) {
+              console.log('🔐 Favorites: Not authenticated');
+            }
           }
           return { favorites: [], total: 0 };
         }
-        console.error('Favorites fetch error:', error);
-        throw error;
+        if (process.env.NODE_ENV !== 'production') {
+          console.warn('Favorites fetch error:', error);
+        }
+        // Don't throw, return empty to prevent cascades
+        return { favorites: [], total: 0 };
       }
     },
-    staleTime: 2 * 60 * 1000, // 2 minutes - more reactive for favorites
-    gcTime: 10 * 60 * 1000, // 10 minutes cache
+    staleTime: 5 * 60 * 1000, // 5 minutes - менше запросів
+    gcTime: 15 * 60 * 1000, // 15 minutes cache
     retry: false, // Don't retry - rate limit handled in API layer
-    refetchOnMount: true, // Allow refetch on mount for latest favorites
+    refetchOnMount: false, // Don't refetch on mount to reduce requests
     refetchOnWindowFocus: false, // Don't refetch on tab focus
-    refetchOnReconnect: true, // Refetch on reconnect
+    refetchOnReconnect: false, // Don't refetch on reconnect to avoid bursts
     refetchInterval: false, // Disable automatic refetching
     // Only fetch if user is authenticated
     enabled: globalThis.window !== undefined && !!getAuth(),

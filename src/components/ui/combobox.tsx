@@ -7,7 +7,7 @@ interface ComboboxProps {
   onValueChange?: (value: string) => void;
   placeholder?: string;
   searchPlaceholder?: string;
-  items: Array<{ value: string; label: string }>;
+  items?: Array<{ value: string; label: string }>; // Make optional
   className?: string;
   searchValue?: string;
   onSearchChange?: (value: string) => void;
@@ -19,7 +19,7 @@ export function Combobox({
   onValueChange,
   placeholder = "Select...",
   searchPlaceholder = "Search...",
-  items,
+  items = [], // Default to empty array
   className,
   searchValue,
   onSearchChange,
@@ -33,9 +33,9 @@ export function Combobox({
   const search = searchValue !== undefined ? searchValue : internalSearch;
   const setSearch = onSearchChange || setInternalSearch;
 
-  const selectedItem = items.find((item) => item.value === value);
+  const selectedItem = (items || []).find((item) => item.value === value);
 
-  const filteredItems = items.filter((item) =>
+  const filteredItems = (items || []).filter((item) =>
     item.label.toLowerCase().includes(search.toLowerCase())
   );
 
