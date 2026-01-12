@@ -53,6 +53,10 @@ const nextConfig = {
     serverActions: {
       bodySizeLimit: '2mb',
     },
+    // Optimize CSS
+    optimizeCss: true,
+    // Enable better tree-shaking
+    optimizeServerReact: true,
   },
   
   // Compression
