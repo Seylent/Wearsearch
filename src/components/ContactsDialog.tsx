@@ -5,6 +5,7 @@ import { useTranslation } from "react-i18next";
 import {
   Dialog,
   DialogContent,
+  DialogDescription,
   DialogHeader,
   DialogTitle,
   DialogTrigger,
@@ -66,6 +67,9 @@ export const ContactsDialog: React.FC<ContactsDialogProps> = ({ contacts, asFoot
       <DialogContent className="w-[95vw] max-w-md bg-black/95 border-white/20 backdrop-blur-2xl shadow-[0_0_50px_rgba(255,255,255,0.1)] max-h-[90vh] overflow-y-auto p-4 sm:p-6">
         <DialogHeader>
           <DialogTitle className="text-xl sm:text-2xl font-display text-white drop-shadow-[0_0_15px_rgba(255,255,255,0.5)]">{t('footer.contactUs')}</DialogTitle>
+          <DialogDescription className="text-white/60">
+            {t('footer.contactDescription', 'Зв\'яжіться з нами будь-яким зручним способом')}
+          </DialogDescription>
         </DialogHeader>
         <div className="space-y-3 sm:space-y-4 py-2 sm:py-4">
           {activeContacts.telegram && (

@@ -4,7 +4,7 @@
  */
 
 import { useQuery } from '@tanstack/react-query';
-import { isAuthenticated } from '@/utils/authStorage';
+import { authService } from '@/services/authService';
 import recommendationsService, {
   RecommendedProduct,
   SimilarProduct,
@@ -15,13 +15,18 @@ import recommendationsService, {
  * Hook for getting personalized recommendations
  */
 export const useRecommendations = (limit: number = 10) => {
-  const isLoggedIn = isAuthenticated();
+  const isLoggedIn = typeof window !== 'undefined' && authService.isAuthenticated();
 
   const { data, isLoading, error, refetch } = useQuery({
     queryKey: ['recommendations', limit],
     queryFn: () => recommendationsService.getRecommendations(limit),
     enabled: isLoggedIn,
     staleTime: 1000 * 60 * 10, // 10 minutes
+    retry: (failureCount, error: any) => {
+      const status = error?.status ?? error?.response?.status;
+      if (status === 401 || status === 429) return false;
+      return failureCount < 1;
+    },
   });
 
   return {
@@ -59,7 +64,7 @@ export const trackInteraction = async (
   type: InteractionType
 ): Promise<void> => {
   // Only track if authenticated (recommendations work for logged-in users)
-  if (!isAuthenticated()) return;
+  if (!authService.isAuthenticated()) return;
   
   await recommendationsService.trackInteraction(productId, type);
 };

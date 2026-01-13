@@ -1,12 +1,12 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useTranslation } from 'react-i18next';
 import { NeonAbstractions } from '@/components/NeonAbstractions';
 import ProductCard from '@/components/ProductCard';
 import { Button } from '@/components/ui/button';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Filter, Search, Grid3x3, LayoutGrid, Columns3 } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
@@ -20,6 +20,7 @@ import {
   PaginationEllipsis,
 } from '@/components/ui/pagination';
 import FilterPanel from '@/components/FilterPanel';
+import { ProductCardSkeleton } from '@/components/ProductCard';
 import type { Product } from '@/types';
 import type { Brand } from '@/services/brandService';
 import type { Category } from '@/services/categoryService';
@@ -153,31 +154,37 @@ export default function ProductsPageContent({
 
       {/* Controls Bar */}
       <div className="sticky top-20 z-30 bg-black/90 backdrop-blur-xl border-y border-white/5">
-        <div className="container mx-auto px-4 py-3">
-          <div className="flex items-center justify-between gap-3">
+        <div className="container mx-auto px-3 sm:px-4 py-3 sm:py-3">
+          <div className="flex items-center justify-between gap-2 sm:gap-3 flex-wrap sm:flex-nowrap">
             {/* Filters Button */}
-            <Dialog open={mobileFiltersOpen} onOpenChange={setMobileFiltersOpen}>
+            <Dialog open={mobileFiltersOpen} onOpenChange={setMobileFiltersOpen} modal={false}>
               <DialogTrigger asChild>
                 <Button
                   variant="ghost"
                   size="sm"
                   className="text-white hover:bg-zinc-800 gap-2 h-9"
+                  aria-label={t('products.openFilters', 'Відкрити фільтри')}
                 >
                   <Filter className="w-4 h-4" />
                   <span className="hidden sm:inline text-sm">{t('products.filters', 'Фільтри')}</span>
                   {hasFilters && <div className="w-2 h-2 rounded-full bg-white animate-pulse" />}
                 </Button>
               </DialogTrigger>
-              <DialogContent className="bg-zinc-900 text-white border-zinc-800 max-w-md max-h-[80vh] overflow-y-auto">
-                <DialogHeader>
+              <DialogContent className="bg-zinc-900 text-white border-zinc-800 max-w-md h-[90vh] p-0 overflow-hidden flex flex-col">
+                <DialogHeader className="px-6 pt-6 pb-4 border-b border-zinc-800 flex-shrink-0">
                   <DialogTitle className="text-white">{t('products.filters', 'Фільтри')}</DialogTitle>
+                  <DialogDescription className="text-white/60 text-sm">
+                    {t('products.filtersDescription', 'Оберіть параметри для фільтрації товарів')}
+                  </DialogDescription>
                 </DialogHeader>
-                <FilterPanel
-                  categories={categories}
-                  brands={brands}
-                  currentFilters={currentFilters}
-                  onFilterChange={handleFilterChange}
-                />
+                <div className="overflow-y-auto flex-1 px-6 py-4">
+                  <FilterPanel
+                    categories={categories}
+                    brands={brands}
+                    currentFilters={currentFilters}
+                    onFilterChange={handleFilterChange}
+                  />
+                </div>
               </DialogContent>
             </Dialog>
 
@@ -187,25 +194,31 @@ export default function ProductsPageContent({
                 variant="ghost"
                 size="icon"
                 onClick={() => setGridColumns(6)}
-                className={`${gridColumns === 6 ? 'bg-white text-black' : 'text-gray-400'} hover:bg-zinc-800 rounded-md h-8 w-8`}
+                className={`${gridColumns === 6 ? 'bg-white text-black' : 'text-gray-400'} hover:bg-zinc-800 rounded-md h-8 w-8 sm:h-9 sm:w-9 focus-visible:ring-2 focus-visible:ring-white focus-visible:ring-offset-2 focus-visible:ring-offset-black`}
+                title="6 columns"
+                aria-label="Switch to 6 column grid"
               >
-                <Columns3 className="w-3.5 h-3.5" />
+                <Columns3 className="w-4 h-4" />
               </Button>
               <Button
                 variant="ghost"
                 size="icon"
                 onClick={() => setGridColumns(4)}
-                className={`${gridColumns === 4 ? 'bg-white text-black' : 'text-gray-400'} hover:bg-zinc-800 rounded-md h-8 w-8`}
+                className={`${gridColumns === 4 ? 'bg-white text-black' : 'text-gray-400'} hover:bg-zinc-800 rounded-md h-8 w-8 sm:h-9 sm:w-9 focus-visible:ring-2 focus-visible:ring-white focus-visible:ring-offset-2 focus-visible:ring-offset-black`}
+                title="4 columns"
+                aria-label="Switch to 4 column grid"
               >
-                <Grid3x3 className="w-3.5 h-3.5" />
+                <Grid3x3 className="w-4 h-4" />
               </Button>
               <Button
                 variant="ghost"
                 size="icon"
                 onClick={() => setGridColumns(2)}
-                className={`${gridColumns === 2 ? 'bg-white text-black' : 'text-gray-400'} hover:bg-zinc-800 rounded-md h-8 w-8`}
+                className={`${gridColumns === 2 ? 'bg-white text-black' : 'text-gray-400'} hover:bg-zinc-800 rounded-md h-8 w-8 sm:h-9 sm:w-9 focus-visible:ring-2 focus-visible:ring-white focus-visible:ring-offset-2 focus-visible:ring-offset-black`}
+                title="2 columns"
+                aria-label="Switch to 2 column grid"
               >
-                <LayoutGrid className="w-3.5 h-3.5" />
+                <LayoutGrid className="w-4 h-4" />
               </Button>
             </div>
 
@@ -214,7 +227,10 @@ export default function ProductsPageContent({
               value={sort || 'newest'}
               onValueChange={(value) => handleFilterChange({ sort: value })}
             >
-              <SelectTrigger className="w-[160px] h-9 bg-zinc-900 border-zinc-800 text-white text-sm">
+              <SelectTrigger 
+                className="w-[120px] sm:w-[160px] h-9 bg-zinc-900 border-zinc-800 text-white text-xs sm:text-sm"
+                aria-label={t('products.sortBy', 'Сортування')}
+              >
                 <SelectValue placeholder={t('products.sortBy', 'За замовчуванням')} />
               </SelectTrigger>
               <SelectContent className="bg-zinc-900 border-zinc-800 text-white">
@@ -229,16 +245,16 @@ export default function ProductsPageContent({
       </div>
 
       {/* Main Content */}
-      <main className="container mx-auto px-4 py-8 relative z-10">
+      <main className="container mx-auto px-3 sm:px-4 py-6 sm:py-8 relative z-10">
         {/* Product Count */}
-        <div className="mb-6 text-gray-400 text-sm">
+        <div className="mb-6 text-gray-300 text-sm">
           {t('products.priceRange', `Ціни в долл. (курс NEW) [09.01, 10:00]`)}
         </div>
 
         {/* Products Grid */}
-        {products.length > 0 ? (
+        {products && products.length > 0 ? (
           <>
-            <div className={`grid ${gridClass} gap-3 sm:gap-4`}>
+            <div className={`grid ${gridClass} gap-4 sm:gap-4 md:gap-5`}>
               {products.map((product) => (
                 <ProductCard
                   key={product.id}
@@ -328,7 +344,7 @@ export default function ProductsPageContent({
             <h3 className="text-2xl font-bold text-white mb-2">
               {t('products.noProducts', 'Товари не знайдені')}
             </h3>
-            <p className="text-gray-400 mb-8">
+            <p className="text-gray-300 mb-8">
               {hasFilters
                 ? t('products.tryAdjustingFilters', 'Спробуйте змінити фільтри або пошуковий запит')
                 : t('products.checkBackLater', 'Повертайтесь пізніше')}

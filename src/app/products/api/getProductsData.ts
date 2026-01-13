@@ -42,13 +42,39 @@ export async function getProductsData(params?: {
 
   try {
     const baseUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000';
-    const url = `${baseUrl}/api/v1/products?${searchParams.toString()}`;
     
-    const response = await fetch(url, {
-      next: { revalidate: 0 }, // Always fresh for product listings
-      headers: {
-        'Content-Type': 'application/json',
-      },
+    // Try BFF endpoint first
+    try {
+      const bffUrl = `${baseUrl}/api/pages/products?${searchParams.toString()}`;
+      const response = await fetch(bffUrl, {
+        next: { revalidate: 60 }, // 1 min cache
+        headers: { 'Content-Type': 'application/json' },
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        // BFF returns: { items: Product[], meta: { page, totalPages, totalItems, hasNext, hasPrev } }
+        return {
+          products: data.items || [],
+          total: data.meta?.totalItems || 0,
+          pagination: {
+            page: data.meta?.page || 1,
+            totalPages: data.meta?.totalPages || 1,
+            hasNext: data.meta?.hasNext || false,
+            hasPrev: data.meta?.hasPrev || false,
+            totalItems: data.meta?.totalItems || 0,
+          },
+        };
+      }
+    } catch (_bffError) {
+      console.log('BFF endpoint not available, trying fallback');
+    }
+    
+    // Fallback to direct products endpoint
+    const fallbackUrl = `${baseUrl}/api/products?${searchParams.toString()}`;
+    const response = await fetch(fallbackUrl, {
+      next: { revalidate: 60 },
+      headers: { 'Content-Type': 'application/json' },
     });
 
     if (!response.ok) {
@@ -56,28 +82,21 @@ export async function getProductsData(params?: {
       return {
         products: [],
         total: 0,
-        pagination: {
-          page: 1,
-          totalPages: 1,
-          hasNext: false,
-          hasPrev: false,
-          totalItems: 0,
-        },
+        pagination: { page: 1, totalPages: 1, hasNext: false, hasPrev: false, totalItems: 0 },
       };
     }
 
     const data = await response.json();
     
-    // Map API response to our interface
     return {
-      products: data?.data?.items || data?.items || [],
-      total: data?.data?.meta?.totalItems || data?.meta?.totalItems || 0,
+      products: data.items || data.products || data || [],
+      total: data.meta?.totalItems || data.total || 0,
       pagination: {
-        page: data?.data?.meta?.page || data?.meta?.page || 1,
-        totalPages: data?.data?.meta?.totalPages || data?.meta?.totalPages || 1,
-        hasNext: data?.data?.meta?.hasNext || data?.meta?.hasNext || false,
-        hasPrev: data?.data?.meta?.hasPrev || data?.meta?.hasPrev || false,
-        totalItems: data?.data?.meta?.totalItems || data?.meta?.totalItems || 0,
+        page: data.meta?.page || 1,
+        totalPages: data.meta?.totalPages || 1,
+        hasNext: data.meta?.hasNext || false,
+        hasPrev: data.meta?.hasPrev || false,
+        totalItems: data.meta?.totalItems || 0,
       },
     };
   } catch (error) {

@@ -12,14 +12,18 @@ import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { 
   Globe,
-  Save
+  Save,
+  Send,
+  Instagram,
+  Video,
+  Mail
 } from "lucide-react";
 
 interface ContactInfo {
   telegram?: string;
   instagram?: string;
-  facebook?: string;
-  twitter?: string;
+  tiktok?: string;
+  email?: string;
 }
 
 export const ContactManagement: React.FC = () => {
@@ -27,40 +31,40 @@ export const ContactManagement: React.FC = () => {
   const [contactInfo, setContactInfo] = useState<ContactInfo>({
     telegram: '@wearsearch',
     instagram: '@wearsearch',
-    facebook: 'wearsearch',
-    twitter: '@wearsearch'
+    tiktok: '@wearsearch',
+    email: 'support@wearsearch.com'
   });
   const [loading, setLoading] = useState(false);
   const [isSaved, setIsSaved] = useState(false);
 
-  // Load contact info from API
+  // Load contact info from localStorage
   useEffect(() => {
-    const loadContactInfo = async () => {
+    const savedContacts = localStorage.getItem('site_contacts');
+    if (savedContacts) {
       try {
-        // API call will be implemented when backend is ready
-        // const response = await fetch('/api/v1/contacts');
-        // const data = await response.json();
-        // setContactInfo(data);
+        const parsedContacts = JSON.parse(savedContacts);
+        setContactInfo(parsedContacts);
       } catch (error) {
         console.error('Error loading contact info:', error);
       }
-    };
-
-    void loadContactInfo();
+    }
   }, []);
 
   const handleSave = async () => {
     setLoading(true);
     try {
-      // API call will be implemented when backend is ready
+      // Save to localStorage for immediate use
+      localStorage.setItem('site_contacts', JSON.stringify(contactInfo));
+      
+      // In future, this will make API call to backend
       // await fetch('/api/v1/contacts', {
-      //   method: 'PUT',
+      //   method: 'PUT', 
       //   headers: { 'Content-Type': 'application/json' },
       //   body: JSON.stringify(contactInfo)
       // });
 
       setIsSaved(true);
-      setTimeout(() => setIsSaved(false), 2000);
+      setTimeout(() => setIsSaved(false), 3000);
     } catch (error) {
       console.error('Error saving contact info:', error);
     } finally {
@@ -81,7 +85,7 @@ export const ContactManagement: React.FC = () => {
       <div className="flex items-center justify-between">
         <h2 className="text-2xl font-bold flex items-center gap-2">
           <Globe className="w-6 h-6" />
-          Соціальні мережі
+          {t('contacts.title', 'Контактна інформація')}
         </h2>
         
         <Button 
@@ -94,7 +98,7 @@ export const ContactManagement: React.FC = () => {
               return (
                 <>
                   <div className="w-4 h-4 mr-2 animate-spin border-2 border-white border-t-transparent rounded-full" />
-                  {t('common.saving')}
+                  {t('common.saving', 'Збереження...')}
                 </>
               );
             }
@@ -102,14 +106,14 @@ export const ContactManagement: React.FC = () => {
               return (
                 <>
                   <Save className="w-4 h-4 mr-2" />
-                  {t('common.saved')}
+                  {t('common.saved', 'Збережено')}
                 </>
               );
             }
             return (
               <>
                 <Save className="w-4 h-4 mr-2" />
-                {t('common.save')}
+                {t('common.save', 'Зберегти')}
               </>
             );
           })()}
@@ -121,14 +125,15 @@ export const ContactManagement: React.FC = () => {
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <Globe className="w-5 h-5" />
-            Соціальні мережі
+            {t('contacts.title', 'Соціальні мережі та контакти')}
           </CardTitle>
         </CardHeader>
         <CardContent>
           <div className="grid gap-4 md:grid-cols-2">
             <div>
-              <label htmlFor="telegram" className="block text-sm font-medium mb-2">
-                Telegram
+              <label htmlFor="telegram" className="block text-sm font-medium mb-2 flex items-center gap-2">
+                <Send className="w-4 h-4" />
+                {t('contacts.telegram', 'Telegram')}
               </label>
               <Input
                 id="telegram"
@@ -140,8 +145,9 @@ export const ContactManagement: React.FC = () => {
             </div>
 
             <div>
-              <label htmlFor="instagram" className="block text-sm font-medium mb-2">
-                Instagram
+              <label htmlFor="instagram" className="block text-sm font-medium mb-2 flex items-center gap-2">
+                <Instagram className="w-4 h-4" />
+                {t('contacts.instagram', 'Instagram')}
               </label>
               <Input
                 id="instagram"
@@ -153,8 +159,37 @@ export const ContactManagement: React.FC = () => {
             </div>
 
             <div>
-              <label htmlFor="facebook" className="block text-sm font-medium mb-2">
-                Facebook
+              <label htmlFor="tiktok" className="block text-sm font-medium mb-2 flex items-center gap-2">
+                <Video className="w-4 h-4" />
+                {t('contacts.tiktok', 'TikTok')}
+              </label>
+              <Input
+                id="tiktok"
+                type="text"
+                value={contactInfo.tiktok || ''}
+                onChange={(e) => handleChange('tiktok', e.target.value)}
+                placeholder="@wearsearch"
+              />
+            </div>
+
+            <div>
+              <label htmlFor="email" className="block text-sm font-medium mb-2 flex items-center gap-2">
+                <Mail className="w-4 h-4" />
+                {t('contacts.email', 'Електронна пошта')}
+              </label>
+              <Input
+                id="email"
+                type="email"
+                value={contactInfo.email || ''}
+                onChange={(e) => handleChange('email', e.target.value)}
+                placeholder="support@wearsearch.com"
+              />
+            </div>
+
+            <div>
+              <label htmlFor="facebook" className="block text-sm font-medium mb-2 flex items-center gap-2">
+                <MessageCircle className="w-4 h-4" />
+                {t('contacts.facebook', 'Facebook')}
               </label>
               <Input
                 id="facebook"
@@ -166,8 +201,9 @@ export const ContactManagement: React.FC = () => {
             </div>
 
             <div>
-              <label htmlFor="twitter" className="block text-sm font-medium mb-2">
-                Twitter / X
+              <label htmlFor="twitter" className="block text-sm font-medium mb-2 flex items-center gap-2">
+                <MessageCircle className="w-4 h-4" />
+                {t('contacts.twitter', 'Twitter / X')}
               </label>
               <Input
                 id="twitter"
@@ -177,6 +213,13 @@ export const ContactManagement: React.FC = () => {
                 placeholder="@wearsearch"
               />
             </div>
+          </div>
+
+          <div className="mt-6 p-4 bg-blue-50 rounded-lg border border-blue-200">
+            <p className="text-sm text-blue-800">
+              💡 <strong>Підказка:</strong> Ці контакти будуть відображатися на сторінці "Контакти" для користувачів. 
+              Переконайтеся, що всі посилання працюють правильно.
+            </p>
           </div>
         </CardContent>
       </Card>

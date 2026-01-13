@@ -5,6 +5,7 @@ import Navigation from '@/components/layout/Navigation';
 import Footer from '@/components/layout/Footer';
 import NavigationProgress from '@/components/NavigationProgress';
 import { ResourceHintsInitializer } from '@/components/ResourceHintsInitializer';
+import { OfflineBanner } from '@/components/OfflineBanner';
 import "./globals.css";
 
 const inter = Inter({ 
@@ -65,6 +66,7 @@ export default function RootLayout({
          <NextProviders>
              <ResourceHintsInitializer />
              <NavigationProgress />
+             <OfflineBanner />
              <Navigation />
              <main id="main-content" className="flex-1 w-full min-h-screen">
                 {children}

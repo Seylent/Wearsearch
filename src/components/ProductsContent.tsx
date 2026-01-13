@@ -14,7 +14,7 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Filter, Search, Grid3x3, LayoutGrid, Columns3, ChevronDown } from "lucide-react";
 import {
   Pagination,
@@ -349,6 +349,7 @@ type FiltersDialogProps = Readonly<{
     COMPACT_LIMIT: number;
     genders: string[];
     filters: Record<string, unknown>;
+    brands: unknown[];
     brandSearchQuery: string;
     setBrandSearchQuery: (v: string) => void;
     setCurrentPage: (updater: number | ((p: number) => number)) => void;
@@ -371,6 +372,7 @@ type FiltersDialogProps = Readonly<{
       COMPACT_LIMIT,
       genders,
       filters,
+      brands,
       brandSearchQuery,
       setBrandSearchQuery,
       setCurrentPage,
@@ -379,8 +381,10 @@ type FiltersDialogProps = Readonly<{
       setFilterOpen,
     } = props;
   
-    const brandsList = Array.isArray(filters.brands) ? (filters.brands as Array<{ id: string; name: string }>) : [];
-    const filteredBrandList = Array.isArray(filters.filteredBrands) ? (filters.filteredBrands as Array<{ id: string; name: string }>) : [];
+    const brandsList = Array.isArray(brands) ? (brands as Array<{ id: string; name: string; slug?: string }>) : [];
+    const filteredBrandList = brandsList.filter((brand) =>
+      brand.name.toLowerCase().includes(brandSearchQuery.toLowerCase())
+    );
     const maxPriceLimit = getMaxPriceLimit(currency);
   
     return (
@@ -694,6 +698,10 @@ export function ProductsContent() {
   const error = storeIdParam ? storeError : pageError;
   const products = selectProductsFromData(storeIdParam, storeProductsData, pageData);
   
+  // Extract brands from pageData
+  const brandsFromData = ((pageData as Record<string, unknown> | null)?.['brands'] as unknown[]) || [];
+  const brands = Array.isArray(brandsFromData) ? brandsFromData : [];
+  
   // Extract pagination from API response
   const pagination = selectServerPagination(storeIdParam, pageData, storeProductsData, currentPage, products);
   const totalPages = pagination.totalPages;
@@ -780,7 +788,7 @@ export function ProductsContent() {
   
                 <div className="flex flex-wrap items-center gap-3">
                     {/* Filter Dialog */}
-                    <Dialog open={filterOpen} onOpenChange={setFilterOpen}>
+                    <Dialog open={filterOpen} onOpenChange={setFilterOpen} modal={false}>
                         <DialogTrigger asChild>
                         <Button 
                             variant={isFilterActive ? "default" : "outline"} 
@@ -794,6 +802,9 @@ export function ProductsContent() {
                         <DialogContent className="sm:max-w-[425px] overflow-hidden flex flex-col max-h-[90vh]">
                         <DialogHeader>
                             <DialogTitle>{t('products.filters')}</DialogTitle>
+                            <DialogDescription className="text-white/60">
+                              {t('products.filtersDescription', 'Оберіть параметри для фільтрації товарів')}
+                            </DialogDescription>
                         </DialogHeader>
                         <div className="flex-1 overflow-y-auto pr-2">
                             <FiltersDialogContent
@@ -809,6 +820,7 @@ export function ProductsContent() {
                                 COMPACT_LIMIT={COMPACT_LIMIT}
                                 genders={genders}
                                 filters={filters}
+                                brands={brands}
                                 brandSearchQuery={brandSearchQuery}
                                 setBrandSearchQuery={setBrandSearchQuery}
                                 setCurrentPage={setCurrentPage}

@@ -9,6 +9,7 @@ import React from 'react';
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Checkbox } from "@/components/ui/checkbox";
+import { useTranslation } from 'react-i18next';
 import { 
   Package, 
   Edit, 
@@ -60,8 +61,6 @@ interface ProductListProps {
 
 export const ProductList: React.FC<ProductListProps> = ({
   products,
-  stores,
-  brands,
   searchProducts,
   onSearchProductsChange,
   viewMode,
@@ -77,9 +76,10 @@ export const ProductList: React.FC<ProductListProps> = ({
   onExportToCSV,
   onExportToJSON,
   onDownloadTemplate,
-  loadingExport,
-  resetFilters,
+  loadingExport
 }) => {
+  const { t } = useTranslation();
+  
   const filteredProducts = products.filter(product =>
     product.name?.toLowerCase().includes(searchProducts.toLowerCase()) ||
     product.brand?.toLowerCase().includes(searchProducts.toLowerCase()) ||
@@ -106,7 +106,7 @@ export const ProductList: React.FC<ProductListProps> = ({
             size="sm"
             className="border-border/50"
           >
-            {isSelectMode ? "Exit Select" : "Select Mode"}
+            {isSelectMode ? t('admin.exitSelect') : t('admin.selectMode')}
           </Button>
           
           <div className="flex items-center border border-border/50 rounded-lg">
@@ -157,7 +157,7 @@ export const ProductList: React.FC<ProductListProps> = ({
               <Input
                 value={searchProducts}
                 onChange={(e) => onSearchProductsChange(e.target.value)}
-                placeholder="Search products, brands, categories..."
+                placeholder={t('admin.searchProducts', 'Search products, brands, categories...')}
                 className="pl-10 bg-card/50 border-border/50"
               />
             </div>
@@ -216,7 +216,7 @@ export const ProductList: React.FC<ProductListProps> = ({
           if (filteredProducts.length === 0) {
             return (
               <div className="text-center py-12 text-muted-foreground">
-                <p>No products found</p>
+                <p>{t('products.noResults', 'No products found')}</p>
               </div>
             );
           }

@@ -1,6 +1,7 @@
 import { Suspense } from 'react';
 import { Metadata } from 'next';
 import ProductDetail from '@/components/ProductDetail';
+import { generateProductMetadata } from '@/lib/seo/metadata-utils';
 
 // Types
 interface PageProps {
@@ -20,34 +21,45 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
     
     if (!response.ok) {
       return {
-        title: 'Product Not Found - WearSearch',
-        description: 'This product could not be found',
+        title: 'Товар не знайдено | Wearsearch',
+        description: 'Цей товар не знайдено. Спробуйте інший пошук.',
+        robots: {
+          index: false,
+          follow: true,
+        },
       };
     }
 
     const product = await response.json();
     
-    return {
-      title: `${product.name} - ${product.brand || 'WearSearch'}`,
-      description: product.description || `Shop ${product.name} from ${product.brand}. Available now at WearSearch.`,
-      openGraph: {
-        title: `${product.name} - ${product.brand || 'WearSearch'}`,
-        description: product.description || `Shop ${product.name} from ${product.brand}`,
-        images: product.image_url ? [product.image_url] : [],
-        type: 'website',
-      },
-      twitter: {
-        card: 'summary_large_image',
-        title: `${product.name} - ${product.brand || 'WearSearch'}`,
-        description: product.description || `Shop ${product.name}`,
-        images: product.image_url ? [product.image_url] : [],
-      },
-    };
+    // Використовуємо нову SEO-функцію
+    return generateProductMetadata(
+      product.name,
+      product.brand,
+      {
+        description: product.description,
+        imageUrl: product.image_url,
+        price: product.price,
+        currency: product.currency || 'UAH',
+        keywords: [
+          product.brand,
+          product.name,
+          product.category,
+          'ціна',
+          'порівняння',
+          'купити онлайн',
+        ].filter(Boolean),
+      }
+    );
   } catch (error) {
     console.error('Error generating metadata:', error);
     return {
-      title: 'Product - WearSearch',
-      description: 'Product details and information',
+      title: 'Товар | Wearsearch',
+      description: 'Інформація про товар',
+      robots: {
+        index: false,
+        follow: true,
+      },
     };
   }
 }

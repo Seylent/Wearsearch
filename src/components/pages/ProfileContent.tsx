@@ -1,8 +1,9 @@
-﻿'use client';
+'use client';
 
-import { useState, useEffect, useCallback, useRef } from "react";
+import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { useTranslation } from "react-i18next";
+import { useAuth } from "@/features/auth/hooks/useAuth";
 import { authService } from "@/services/authService";
 import { userService } from "@/services/userService";
 import { Button } from "@/components/ui/button";
@@ -24,13 +25,14 @@ import { useToast } from "@/hooks/use-toast";
 import { NeonAbstractions } from "@/components/NeonAbstractions";
 import { User, Lock, LogOut, Sparkles, Trash2 } from "lucide-react";
 import { useSEO } from "@/hooks/useSEO";
-import { getErrorMessage, isCanceledError } from "@/utils/errorUtils";
-import type { User as UserType } from "@/types";
+import { getErrorMessage } from "@/utils/errorUtils";
+
 
 const Profile = () => {
   const router = useRouter();
   const { toast } = useToast();
   const { t } = useTranslation();
+  const { user: authUser, isLoading: authLoading } = useAuth();
 
   useSEO({
     title: t('profile.seoTitle', 'Profile'),
@@ -38,9 +40,8 @@ const Profile = () => {
     keywords: 'profile, account, settings',
     type: 'website',
   });
+  
   const [loading, setLoading] = useState(false);
-  const [isInitialLoading, setIsInitialLoading] = useState(true);
-  const [user, setUser] = useState<UserType | null>(null);
   
   // Profile fields
   const [displayName, setDisplayName] = useState("");
@@ -56,75 +57,28 @@ const Profile = () => {
   const [deletePassword, setDeletePassword] = useState("");
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
 
-  // Track mounted state and abort controller
-  const isMounted = useRef(true);
-  const abortControllerRef = useRef<AbortController | null>(null);
-
+  // Redirect to auth if not authenticated
   useEffect(() => {
-    isMounted.current = true;
-    return () => {
-      isMounted.current = false;
-      if (abortControllerRef.current) {
-        abortControllerRef.current.abort();
-      }
-    };
-  }, []);
-
-  const checkUser = useCallback(async () => {
-    if (!authService.isAuthenticated()) {
+    if (!authLoading && !authUser) {
       router.push("/auth");
-      return;
     }
-    
-    setIsInitialLoading(true);
+  }, [authUser, authLoading, router]);
 
-    // Cancel previous request if exists
-    if (abortControllerRef.current) {
-      abortControllerRef.current.abort();
-    }
-
-    abortControllerRef.current = new AbortController();
-
-    try {
-      const userData = await authService.getCurrentUser();
-      if (isMounted.current) {
-        setUser(userData);
-        setEmail(userData.email || "");
-        setDisplayName(userData.display_name || userData.displayName || "");
-        setUsername(userData.username || "");
-      }
-    } catch (error: unknown) {
-      // Don't show error if request was aborted
-      if (isCanceledError(error)) {
-        return;
-      }
-      
-      // Don't redirect here - let the axios interceptor handle auth errors
-      // Only redirect if it's a network error or other non-auth error
-      if (isMounted.current && !error.isAuthError?.()) {
-        toast({
-          title: 'Error',
-          description: 'Failed to load user data. Please try again.',
-          variant: 'destructive',
-        });
-      }
-    } finally {
-      if (isMounted.current) {
-        setIsInitialLoading(false);
-      }
-    }
-  }, [router, toast]);
-
+  // Update form fields when user data loads
   useEffect(() => {
-    checkUser();
-  }, [checkUser]);
+    if (authUser) {
+      setEmail(authUser.email || "");
+      setDisplayName(authUser.display_name || authUser.displayName || "");
+      setUsername(authUser.username || "");
+    }
+  }, [authUser]);
 
   const handleUpdateProfile = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
 
     try {
-      if (!user) throw new Error("No user logged in");
+      if (!authUser) throw new Error("No user logged in");
 
       if (displayName.length > 50) {
         throw new Error("Display name must be 50 characters or less");
@@ -146,9 +100,6 @@ const Profile = () => {
         }
         throw e;
       }
-
-      // Refresh user state so UI reflects persisted value
-      await checkUser();
 
       toast({
         title: "Success",
@@ -250,7 +201,7 @@ const Profile = () => {
     }
   };
 
-  if (isInitialLoading) {
+  if (authLoading) {
     return (
       <div className="min-h-screen bg-black text-white flex items-center justify-center">
         <div className="flex flex-col items-center gap-4">
@@ -261,7 +212,7 @@ const Profile = () => {
     );
   }
 
-  if (!user) {
+  if (!authUser) {
     return null;
   }
 
@@ -331,10 +282,10 @@ const Profile = () => {
 
             <TabsContent value="profile">
               <div className="p-8 rounded-2xl glass-card">
-                <h2 className="font-display text-xl font-semibold mb-6">Profile Information</h2>
+                <h2 className="font-display text-xl font-semibold mb-6">{t('profile.profileInfo')}</h2>
                 <form onSubmit={handleUpdateProfile} className="space-y-6">
                   <div className="space-y-2">
-                    <Label htmlFor="email" className="text-sm font-medium">Email</Label>
+                    <Label htmlFor="email" className="text-sm font-medium">{t('auth.email')}</Label>
                     <Input
                       id="email"
                       type="email"
@@ -343,39 +294,39 @@ const Profile = () => {
                       className="h-12 bg-card/30 border-border/30 rounded-xl text-muted-foreground"
                     />
                     <p className="text-xs text-muted-foreground">
-                      Email cannot be changed
+                      {t('profile.emailCannotBeChanged')}
                     </p>
                   </div>
 
                   <div className="space-y-2">
-                    <Label htmlFor="displayName" className="text-sm font-medium">Display Name</Label>
+                    <Label htmlFor="displayName" className="text-sm font-medium">{t('auth.displayName')}</Label>
                     <Input
                       id="displayName"
                       type="text"
                       value={displayName}
                       onChange={(e) => setDisplayName(e.target.value)}
-                      placeholder="Enter your nickname"
+                      placeholder={t('profile.displayNamePlaceholder')}
                       maxLength={50}
                       className="h-12 bg-card/50 border-border/50 rounded-xl focus-visible:ring-1 focus-visible:ring-foreground/30"
                     />
                     <p className="text-xs text-muted-foreground">
-                      This name will be displayed on your profile
+                      {t('profile.displayNameHint')}
                     </p>
                   </div>
 
                   <div className="space-y-2">
-                    <Label htmlFor="username" className="text-sm font-medium">Username</Label>
+                    <Label htmlFor="username" className="text-sm font-medium">{t('auth.username')}</Label>
                     <Input
                       id="username"
                       type="text"
                       value={username}
                       onChange={(e) => setUsername(e.target.value)}
-                      placeholder="Enter your username"
+                      placeholder={t('profile.usernamePlaceholder')}
                       maxLength={30}
                       className="h-12 bg-card/50 border-border/50 rounded-xl focus-visible:ring-1 focus-visible:ring-foreground/30"
                     />
                     <p className="text-xs text-muted-foreground">
-                      Unique username for your account
+                      {t('profile.usernameHint')}
                     </p>
                   </div>
 
@@ -384,7 +335,7 @@ const Profile = () => {
                     disabled={loading}
                     className="h-12 px-8 rounded-full bg-white text-black hover:bg-zinc-100"
                   >
-                    {loading ? "Saving..." : "Save Changes"}
+                    {loading ? t('profile.saving') : t('profile.saveChanges')}
                   </Button>
                 </form>
               </div>
@@ -392,29 +343,29 @@ const Profile = () => {
 
             <TabsContent value="password">
               <div className="p-8 rounded-2xl glass-card">
-                <h2 className="font-display text-xl font-semibold mb-6">Change Password</h2>
+                <h2 className="font-display text-xl font-semibold mb-6">{t('profile.changePassword')}</h2>
                 <form onSubmit={handleChangePassword} className="space-y-6">
                   <div className="space-y-2">
-                    <Label htmlFor="currentPassword" className="text-sm font-medium">Current Password</Label>
+                    <Label htmlFor="currentPassword" className="text-sm font-medium">{t('profile.currentPassword')}</Label>
                     <Input
                       id="currentPassword"
                       type="password"
                       value={currentPassword}
                       onChange={(e) => setCurrentPassword(e.target.value)}
-                      placeholder="Enter current password"
+                      placeholder={t('auth.enterPassword')}
                       required
                       className="h-12 bg-card/50 border-border/50 rounded-xl focus-visible:ring-1 focus-visible:ring-foreground/30"
                     />
                   </div>
 
                   <div className="space-y-2">
-                    <Label htmlFor="newPassword" className="text-sm font-medium">New Password</Label>
+                    <Label htmlFor="newPassword" className="text-sm font-medium">{t('profile.newPassword')}</Label>
                     <Input
                       id="newPassword"
                       type="password"
                       value={newPassword}
                       onChange={(e) => setNewPassword(e.target.value)}
-                      placeholder="Enter new password"
+                      placeholder={t('auth.enterPassword')}
                       required
                       minLength={6}
                       className="h-12 bg-card/50 border-border/50 rounded-xl focus-visible:ring-1 focus-visible:ring-foreground/30"
@@ -422,13 +373,13 @@ const Profile = () => {
                   </div>
 
                   <div className="space-y-2">
-                    <Label htmlFor="confirmPassword" className="text-sm font-medium">Confirm New Password</Label>
+                    <Label htmlFor="confirmPassword" className="text-sm font-medium">{t('profile.confirmNewPassword')}</Label>
                     <Input
                       id="confirmPassword"
                       type="password"
                       value={confirmPassword}
                       onChange={(e) => setConfirmPassword(e.target.value)}
-                      placeholder="Confirm new password"
+                      placeholder={t('auth.confirmPassword')}
                       required
                       minLength={6}
                       className="h-12 bg-card/50 border-border/50 rounded-xl focus-visible:ring-1 focus-visible:ring-foreground/30"
@@ -440,7 +391,7 @@ const Profile = () => {
                     disabled={loading}
                     className="h-12 px-8 rounded-full bg-white text-black hover:bg-zinc-100"
                   >
-                    {loading ? "Changing..." : "Change Password"}
+                    {loading ? t('profile.changing') : t('profile.changePasswordBtn')}
                   </Button>
                 </form>
               </div>

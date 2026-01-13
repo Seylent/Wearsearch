@@ -61,7 +61,7 @@ const AboutContent = () => {
           <div className="max-w-3xl mx-auto text-center">
             <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full border border-border/50 bg-card/30 backdrop-blur-sm mb-8">
               <Sparkles className="w-4 h-4" />
-              <span className="text-xs tracking-wider uppercase">Our Story</span>
+              <span className="text-xs tracking-wider uppercase">{t('about.ourStory', 'Our Story')}</span>
             </div>
             
             <h1 className="font-display text-5xl sm:text-6xl md:text-7xl font-bold mb-6 tracking-tight">

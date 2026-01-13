@@ -61,6 +61,8 @@ export interface Product {
   storeCount?: number;
   isNew?: boolean;             // Flag for new products
   description?: string;
+  description_ua?: string;     // Ukrainian translation
+  description_en?: string;     // English original
   image?: string;
   image_url?: string;
   images?: string[] | null;

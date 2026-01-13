@@ -52,12 +52,12 @@ export const SearchDropdownView: React.FC<Readonly<SearchDropdownViewProps>> = R
     <dialog 
       open
       aria-modal="true"
-      className="fixed inset-0 z-[100] bg-black/60 backdrop-blur-sm flex items-start justify-center pt-24 border-0"
+      className="fixed inset-0 z-[100] bg-black/60 backdrop-blur-sm flex items-start justify-center pt-2 sm:pt-4 border-0 p-4"
       aria-label={t('aria.searchResults')}
     >
       <div 
         ref={dropdownRef}
-        className="w-full max-w-2xl mx-4 bg-black/95 border border-white/20 backdrop-blur-xl rounded-2xl shadow-[0_0_50px_rgba(255,255,255,0.2)] overflow-hidden"
+        className="w-full max-w-2xl bg-black/95 border border-white/20 backdrop-blur-xl rounded-2xl shadow-[0_0_50px_rgba(255,255,255,0.2)] overflow-hidden"
         role="search"
       >
         <SearchInput

@@ -7,16 +7,11 @@ import { getHomepageData } from './api/getHomepageData';
 // Components
 import HomeContent from '@/components/home/HomeContentServer';
 
+// SEO utilities
+import { generateHomeMetadata } from '@/lib/seo/metadata-utils';
+
 // Metadata
-export const metadata: Metadata = {
-  title: 'WearSearch - Find Your Perfect Style',
-  description: 'Discover the latest fashion trends and products from top brands. Shop clothing, shoes, and accessories with fast shipping.',
-  openGraph: {
-    title: 'WearSearch - Find Your Perfect Style',
-    description: 'Discover the latest fashion trends and products from top brands.',
-    type: 'website',
-  },
-};
+export const metadata: Metadata = generateHomeMetadata();
 
 // Server Component with proper data fetching
 export default async function HomePage() {

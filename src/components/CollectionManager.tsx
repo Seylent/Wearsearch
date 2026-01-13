@@ -12,6 +12,7 @@ import { Label } from '@/components/ui/label';
 import {
   Dialog,
   DialogContent,
+  DialogDescription,
   DialogHeader,
   DialogTitle,
   DialogTrigger,
@@ -102,7 +103,7 @@ const CollectionManager: React.FC<CollectionManagerProps> = ({ className }) => {
           <span className="text-sm text-white/40">({collections.length})</span>
         </div>
 
-        <Dialog open={isCreateOpen} onOpenChange={setIsCreateOpen}>
+        <Dialog open={isCreateOpen} onOpenChange={setIsCreateOpen} modal={false}>
           <DialogTrigger asChild>
             <Button
               variant="ghost"
@@ -119,6 +120,9 @@ const CollectionManager: React.FC<CollectionManagerProps> = ({ className }) => {
               <DialogTitle className="text-white">
                 {t('collections.createNew', 'Create New Collection')}
               </DialogTitle>
+              <DialogDescription className="text-white/60">
+                {t('collections.collectionDescription', 'Create a collection to organize your products')}
+              </DialogDescription>
             </DialogHeader>
 
             <div className="space-y-4 py-4">

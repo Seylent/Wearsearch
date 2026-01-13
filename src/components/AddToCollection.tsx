@@ -11,6 +11,7 @@ import { Input } from '@/components/ui/input';
 import {
   Dialog,
   DialogContent,
+  DialogDescription,
   DialogHeader,
   DialogTitle,
   DialogTrigger,
@@ -84,7 +85,7 @@ const AddToCollection: React.FC<AddToCollectionProps> = ({
   ).length;
 
   return (
-    <Dialog open={isOpen} onOpenChange={setIsOpen}>
+    <Dialog open={isOpen} onOpenChange={setIsOpen} modal={false}>
       <DialogTrigger asChild>
         <Button
           variant={variant}
@@ -114,6 +115,9 @@ const AddToCollection: React.FC<AddToCollectionProps> = ({
             <FolderHeart className="w-5 h-5" />
             {t('collections.saveToCollection', 'Save to Collection')}
           </DialogTitle>
+          <DialogDescription className="text-white/60">
+            {t('collections.selectCollection', 'Select a collection to add this product')}
+          </DialogDescription>
         </DialogHeader>
 
         <div className="space-y-3 py-4">

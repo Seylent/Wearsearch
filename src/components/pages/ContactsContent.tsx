@@ -16,22 +16,38 @@ const ContactsContent = () => {
   const { t } = useTranslation();
   const [contacts, setContacts] = useState<ContactInfo>({
     telegram: "@wearsearch",
-    instagram: "@wearsearch",
+    instagram: "@wearsearch", 
     tiktok: "@wearsearch",
     email: "support@wearsearch.com"
   });
 
   useEffect(() => {
-    // Load contacts from localStorage
+    // Load contacts from localStorage (updated by admin panel)
     const savedContacts = localStorage.getItem('site_contacts');
     if (savedContacts) {
       try {
         const parsedContacts = JSON.parse(savedContacts);
-        setContacts(parsedContacts);
+        setContacts(prev => ({ ...prev, ...parsedContacts }));
       } catch {
         // Silently fail - not critical
       }
     }
+
+    // Listen for localStorage changes from admin panel
+    const handleStorageChange = () => {
+      const updatedContacts = localStorage.getItem('site_contacts');
+      if (updatedContacts) {
+        try {
+          const parsedContacts = JSON.parse(updatedContacts);
+          setContacts(prev => ({ ...prev, ...parsedContacts }));
+        } catch {
+          // Silently fail
+        }
+      }
+    };
+
+    window.addEventListener('storage', handleStorageChange);
+    return () => window.removeEventListener('storage', handleStorageChange);
   }, []);
 
   return (
@@ -77,7 +93,7 @@ const ContactsContent = () => {
                       <Send className="w-7 h-7 text-white drop-shadow-[0_0_10px_rgba(255,255,255,0.6)]" />
                     </div>
                     <div className="flex-1">
-                      <h3 className="font-semibold text-white mb-1 text-lg drop-shadow-[0_0_10px_rgba(255,255,255,0.3)]">{t('contacts.telegram')}</h3>
+                      <h3 className="font-semibold text-white mb-1 text-lg drop-shadow-[0_0_10px_rgba(255,255,255,0.3)]">{t('contacts.telegram', 'Telegram')}</h3>
                       <p className="text-sm text-white/70">{contacts.telegram}</p>
                     </div>
                   </a>
@@ -94,7 +110,7 @@ const ContactsContent = () => {
                       <Instagram className="w-7 h-7 text-white drop-shadow-[0_0_10px_rgba(255,255,255,0.6)]" />
                     </div>
                     <div className="flex-1">
-                      <h3 className="font-semibold text-white mb-1 text-lg drop-shadow-[0_0_10px_rgba(255,255,255,0.3)]">{t('contacts.instagram')}</h3>
+                      <h3 className="font-semibold text-white mb-1 text-lg drop-shadow-[0_0_10px_rgba(255,255,255,0.3)]">{t('contacts.instagram', 'Instagram')}</h3>
                       <p className="text-sm text-white/70">{contacts.instagram}</p>
                     </div>
                   </a>
@@ -111,7 +127,7 @@ const ContactsContent = () => {
                       <Video className="w-7 h-7 text-white drop-shadow-[0_0_10px_rgba(255,255,255,0.6)]" />
                     </div>
                     <div className="flex-1">
-                      <h3 className="font-semibold text-white mb-1 text-lg drop-shadow-[0_0_10px_rgba(255,255,255,0.3)]">{t('contacts.tiktok')}</h3>
+                      <h3 className="font-semibold text-white mb-1 text-lg drop-shadow-[0_0_10px_rgba(255,255,255,0.3)]">{t('contacts.tiktok', 'TikTok')}</h3>
                       <p className="text-sm text-white/70">{contacts.tiktok}</p>
                     </div>
                   </a>
@@ -126,7 +142,7 @@ const ContactsContent = () => {
                       <Mail className="w-7 h-7 text-white drop-shadow-[0_0_10px_rgba(255,255,255,0.6)]" />
                     </div>
                     <div className="flex-1">
-                      <h3 className="font-semibold text-white mb-1 text-lg drop-shadow-[0_0_10px_rgba(255,255,255,0.3)]">{t('contacts.email')}</h3>
+                      <h3 className="font-semibold text-white mb-1 text-lg drop-shadow-[0_0_10px_rgba(255,255,255,0.3)]">{t('contacts.email', 'Електронна пошта')}</h3>
                       <p className="text-sm text-white/70 break-all">{contacts.email}</p>
                     </div>
                   </a>

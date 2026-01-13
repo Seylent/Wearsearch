@@ -63,12 +63,18 @@ export const useSearchHistory = () => {
     queryFn: () => searchService.getSearchHistory(MAX_HISTORY_ITEMS),
     enabled: isLoggedIn,
     staleTime: 1000 * 60 * 5, // 5 minutes
+    retry: (failureCount, error: any) => {
+      const status = error?.status ?? error?.response?.status;
+      if (status === 401 || status === 429) return false;
+      return failureCount < 1;
+    },
   });
 
-  // Fetch popular queries from API
+  // Fetch popular queries from API (disabled - can use static list instead)
   const { data: apiPopularQueries } = useQuery({
     queryKey: ['popularQueries'],
     queryFn: () => searchService.getPopularQueries(8),
+    enabled: false, // Disabled to prevent unauthorized requests
     staleTime: 1000 * 60 * 30, // 30 minutes
   });
 

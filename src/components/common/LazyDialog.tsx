@@ -4,7 +4,7 @@
  */
 
 import { lazy, Suspense, type ComponentType, type ReactNode } from 'react';
-import { Dialog, DialogContent } from '@/components/ui/dialog';
+import { Dialog, DialogContent, DialogDescription } from '@/components/ui/dialog';
 
 interface LazyDialogProps {
   open: boolean;
@@ -34,8 +34,11 @@ export const LazyDialog = ({
   const LazyComponent = open ? lazy(importFunc) : null;
 
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
+    <Dialog open={open} onOpenChange={onOpenChange} modal={false}>
       <DialogContent>
+        <DialogDescription className="sr-only">
+          Loading content
+        </DialogDescription>
         {LazyComponent && (
           <Suspense fallback={fallback}>
             <LazyComponent {...componentProps} />

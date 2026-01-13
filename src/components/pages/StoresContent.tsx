@@ -157,7 +157,7 @@ const StoresContent: React.FC<StoresContentProps> = ({ storeId: _storeId }) => {
               <p className="font-display text-3xl sm:text-4xl font-bold mb-1">
                 {(pagination as PaginationInfo)?.totalItems ?? stores.length}+
               </p>
-              <p className="text-xs text-muted-foreground uppercase tracking-wider">Stores</p>
+              <p className="text-xs text-muted-foreground uppercase tracking-wider">{t('stores.storesLabel', 'Stores')}</p>
             </div>
             <div className="text-center">
               <p className="font-display text-3xl sm:text-4xl font-bold mb-1">{stores.filter(s => s.is_recommended).length}</p>

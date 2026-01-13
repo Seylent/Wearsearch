@@ -103,6 +103,10 @@ export default {
           "0%": { transform: "translateX(100%)" },
           "100%": { transform: "translateX(0)" },
         },
+        "slide-down": {
+          "0%": { transform: "translateY(-100%)" },
+          "100%": { transform: "translateY(0)" },
+        },
         shimmer: {
           "0%": { transform: "translateX(-100%)" },
           "100%": { transform: "translateX(100%)" },
@@ -123,6 +127,7 @@ export default {
         "fade-in-up": "fade-in-up 0.6s ease-out forwards",
         "scale-in": "scale-in 0.3s ease-out forwards",
         "slide-in-right": "slide-in-right 0.3s ease-out",
+        "slide-down": "slide-down 0.3s ease-out",
         shimmer: "shimmer 2s infinite linear",
         float: "float 6s ease-in-out infinite",
         glow: "glow 3s ease-in-out infinite",

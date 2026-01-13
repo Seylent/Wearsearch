@@ -43,7 +43,8 @@ export default function HomeContent({
   newProducts,
   seoData,
 }: Readonly<HomeContentProps>) {
-  const allProducts = [...featuredProducts, ...newProducts];
+  // Use only featured products to avoid duplicates
+  const allProducts = featuredProducts;
   const hasProducts = allProducts.length > 0;
 
   return (

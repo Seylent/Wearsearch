@@ -62,7 +62,7 @@ export const StoreManagement = ({
   onStoreCreate, 
   onStoreUpdate, 
   onStoreDelete,
-  loading = false 
+  loading: _loading = false 
 }: StoreManagementProps) => {
   const { t } = useTranslation();
   
@@ -199,7 +199,7 @@ export const StoreManagement = ({
         <Dialog open={isAddDialogOpen} onOpenChange={(open) => {
           setIsAddDialogOpen(open);
           if (!open) resetForm();
-        }}>
+        }} modal={false}>
           <DialogTrigger asChild>
             <Button>
               <Plus className="w-4 h-4 mr-2" />

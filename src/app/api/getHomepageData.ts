@@ -45,73 +45,109 @@ export async function getHomepageData(): Promise<HomepageAPIResponse> {
     
     console.log('📡 Fetching homepage data from:', baseUrl);
     
-    // Parallel requests for better performance
-    const [featuredRes, newRes, popularRes, categoriesRes, seoRes, statsRes] = await Promise.allSettled([
-      fetch(`${baseUrl}/api/v1/products?featured=true&limit=8`, {
-        next: { revalidate: 3600 }, // 1 hour cache
-      }),
-      fetch(`${baseUrl}/api/v1/products?sort=newest&limit=8`, {
+    // Try BFF endpoint first (single request for all data)
+    try {
+      const bffRes = await fetch(`${baseUrl}/api/pages/home`, {
         next: { revalidate: 1800 }, // 30 min cache
-      }),
-      fetch(`${baseUrl}/api/v1/products?sort=popular&limit=8`, {
+      });
+      
+      if (bffRes.ok) {
+        const response = await bffRes.json();
+        console.log('✅ BFF homepage data received');
+        
+        // BFF returns: { success: true, data: { products, brands, statistics } }
+        const data = response.data || response;
+        const products = data.products || [];
+        const categories = data.categories || [];
+        const stats = data.statistics || data.stats || {};
+        
+        if (process.env.NODE_ENV === 'development') {
+          console.log('📦 Products loaded:', products.length);
+        }
+        
+        // Fetch SEO data separately
+        let seoData = null;
+        try {
+          const seoRes = await fetch(`${baseUrl}/api/v1/seo/home/home`, {
+            next: { revalidate: 86400 }, // 24 hour cache
+          });
+          if (seoRes.ok) {
+            const seoResponse = await seoRes.json();
+            seoData = seoResponse.item || seoResponse;
+            console.log('📝 SEO data loaded:', seoData?.h1_title || 'No title');
+          }
+        } catch (_seoError) {
+          console.log('⚠️ SEO data not available');
+        }
+        
+        return {
+          featuredProducts: products.slice(0, 8),
+          newProducts: products.slice(0, 8),
+          popularProducts: products.slice(0, 8),
+          categories,
+          seoData,
+          stats: {
+            totalProducts: stats.total_products || 0,
+            totalBrands: stats.total_brands || 0,
+            totalCategories: stats.total_categories || 0,
+          },
+        };
+      }
+    } catch (_bffError) {
+      if (process.env.NODE_ENV === 'development') {
+        console.log('⚠️ BFF endpoint not available, falling back to individual calls');
+      }
+    }
+    
+    // Fallback: Parallel requests for better performance
+    const [productsRes, categoriesRes, statsRes] = await Promise.allSettled([
+      fetch(`${baseUrl}/api/products/popular?limit=12`, {
         next: { revalidate: 3600 }, // 1 hour cache
       }),
-      fetch(`${baseUrl}/api/v1/categories?limit=12`, {
+      fetch(`${baseUrl}/api/categories?limit=12`, {
         next: { revalidate: 7200 }, // 2 hour cache
       }),
-      fetch(`${baseUrl}/api/v1/seo/homepage`, {
-        next: { revalidate: 86400 }, // 24 hour cache
-      }),
-      fetch(`${baseUrl}/api/v1/stats`, {
+      fetch(`${baseUrl}/api/statistics`, {
         next: { revalidate: 3600 }, // 1 hour cache
       }),
     ]);
 
     // Process results with fallbacks
-    const featuredProducts = featuredRes.status === 'fulfilled' && featuredRes.value.ok
-      ? (await featuredRes.value.json())?.data?.items || []
-      : [];
+    let products: Product[] = [];
+    if (productsRes.status === 'fulfilled' && productsRes.value.ok) {
+      const data = await productsRes.value.json();
+      // Backend може віддавати: { success: true, products: [...] } або { products: [...] }
+      products = data.products || data || [];
+    }
     
-    console.log('✅ Featured products:', featuredProducts.length);
+    console.log('✅ Products loaded:', products.length);
       
-    const newProducts = newRes.status === 'fulfilled' && newRes.value.ok
-      ? (await newRes.value.json())?.data?.items || []
-      : [];
-    
-    console.log('✅ New products:', newProducts.length);
+    let categories: any[] = [];
+    if (categoriesRes.status === 'fulfilled' && categoriesRes.value.ok) {
+      const data = await categoriesRes.value.json();
+      // Backend може віддавати: { success: true, categories: [...] } або просто масив
+      categories = data.categories || data || [];
+    }
       
-    const popularProducts = popularRes.status === 'fulfilled' && popularRes.value.ok
-      ? (await popularRes.value.json())?.data?.items || []
-      : [];
-    
-    console.log('✅ Popular products:', popularProducts.length);
-      
-    const categories = categoriesRes.status === 'fulfilled' && categoriesRes.value.ok
-      ? (await categoriesRes.value.json())?.data?.items || []
-      : [];
-      
-    const seoData = seoRes.status === 'fulfilled' && seoRes.value.ok
-      ? (await seoRes.value.json())?.data || null
-      : null;
-      
-    const stats = statsRes.status === 'fulfilled' && statsRes.value.ok
-      ? (await statsRes.value.json())?.data || { totalProducts: 0, totalBrands: 0, totalCategories: 0 }
-      : { totalProducts: 0, totalBrands: 0, totalCategories: 0 };
+    let stats = { totalProducts: 0, totalBrands: 0, totalCategories: 0 };
+    if (statsRes.status === 'fulfilled' && statsRes.value.ok) {
+      const data = await statsRes.value.json();
+      stats = data.stats || data || stats;
+    }
 
     // If no products loaded, log warning
-    const totalProductsCount = featuredProducts.length + newProducts.length + popularProducts.length;
-    if (totalProductsCount === 0) {
+    if (products.length === 0) {
       console.warn('⚠️ No products loaded from API. Check backend connection.');
       console.warn('   Backend URL:', baseUrl);
-      console.warn('   Consider starting backend with: npm run dev (backend)');
+      console.warn('   Try: http://localhost:3001/api/pages/home');
     }
 
     return {
-      featuredProducts,
-      newProducts,
-      popularProducts,
+      featuredProducts: products.slice(0, 8),
+      newProducts: products.slice(0, 8),
+      popularProducts: products.slice(0, 8),
       categories,
-      seoData,
+      seoData: null,
       stats,
     };
   } catch (error) {

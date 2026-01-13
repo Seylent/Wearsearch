@@ -42,25 +42,41 @@ const getErrorMessage = (error: unknown): string => {
  * Combines: products, brands, statistics
  * Reduces 2-3 requests → 1 request
  * 
- * Backend endpoint: GET /api/pages/home (with fallback)
- * Response: { success: true, data: { products: [...], brands: [...], statistics: {...} } }
+ * Backend endpoint: GET /api/pages/home
+ * Response: { products: Product[], brands: Brand[], stats: Stats }
  */
 export const useHomepageData = (currency: string = 'UAH', options?: QueryOptions) => {
   return useQuery({
     queryKey: ['homepage-data', currency],
     queryFn: async () => {
-      console.log('[API] Fetching homepage data...');
+      if (process.env.NODE_ENV === 'development') {
+        console.log('[API] Fetching homepage data...');
+      }
       try {
         const response = await api.get('/pages/home', { params: { currency } });
-        console.log('[API] Homepage data received');
-        // Canonical v1: { item: { products, brands, statistics } }
-        // Older/legacy: { success: true, data: {...} }
-        return response.data?.item || response.data?.data || response.data;
+        if (process.env.NODE_ENV === 'development') {
+          console.log('[API] Homepage data received');
+        }
+        
+        // BFF returns: { success: true, data: { products, brands, statistics } }
+        const apiData = response.data?.data || response.data;
+        
+        return {
+          products: apiData.products || [],
+          brands: apiData.brands || [],
+          statistics: apiData.statistics || apiData.stats || { 
+            total_products: 0, 
+            total_stores: 0, 
+            total_brands: 0 
+          },
+        };
       } catch (error) {
         // Check for rate limit error
-        const status = (error as { status?: number })?.status;
+        const status = (error as { response?: { status?: number } })?.response?.status;
         if (status === 429) {
-          console.log('[Homepage] Rate limited, returning cached/empty data');
+          if (process.env.NODE_ENV === 'development') {
+            console.log('[Homepage] Rate limited, returning empty data');
+          }
           return {
             products: [],
             brands: [],
@@ -68,26 +84,26 @@ export const useHomepageData = (currency: string = 'UAH', options?: QueryOptions
           };
         }
         
-        // Fallback to individual calls (backend BFF not ready yet)
-        if (process.env.NODE_ENV !== 'production') {
+        // Fallback to individual calls
+        if (process.env.NODE_ENV === 'development') {
           console.log('[Homepage] Using fallback endpoints');
         }
 
-        // Prefer v1 endpoints via `api` (base: /api/v1). If v1 route is missing,
-        // the axios interceptor can transparently retry via legacy /api.
         try {
           const [productsRes, statsRes] = await Promise.all([
-            api.get('/items', { params: { page: 1, limit: 6, mode: 'card', currency } }),
-            api.get('/statistics').catch(() => ({ data: { data: { total_products: 0, total_stores: 0, total_brands: 0 } } })),
+            api.get('/products/popular', { params: { limit: 12, currency } }),
+            api.get('/statistics').catch(() => ({ data: { total_products: 0, total_stores: 0, total_brands: 0 } })),
           ]);
           
+          const productsData = productsRes.data;
+          const statsData = statsRes.data;
+          
           return {
-            products: productsRes.data?.items || productsRes.data?.products || productsRes.data || [],
-            brands: [], // Not critical for homepage
-            statistics: statsRes.data?.data || statsRes.data || { total_products: 0, total_stores: 0, total_brands: 0 },
+            products: productsData.products || productsData || [],
+            brands: [],
+            statistics: statsData.stats || statsData || { total_products: 0, total_stores: 0, total_brands: 0 },
           };
         } catch {
-          // If fallback also fails (rate limited), return empty data
           return {
             products: [],
             brands: [],
@@ -100,7 +116,7 @@ export const useHomepageData = (currency: string = 'UAH', options?: QueryOptions
     gcTime: 10 * 60 * 1000,
     refetchOnWindowFocus: false,
     refetchOnMount: false,
-    retry: false, // Rate limit handled in API layer
+    retry: false,
     ...options,
   });
 };
@@ -134,6 +150,7 @@ type PaginationInfo = {
   hasNext: boolean;
   hasPrev: boolean;
   limit?: number;
+  itemsPerPage?: number;
 };
 
 const asNumber = (value: unknown, fallback: number): number => {
@@ -177,12 +194,11 @@ export const useProductsPageData = (filters: ProductFilters = {}, options?: Quer
     queryKey: ['products-page-data', filters],
     queryFn: async () => {
       try {
-        // v1 canonical: GET /api/v1/pages/products -> { items, meta, facets }
+        // BFF: GET /api/pages/products -> { success, data: { items, meta, facets } }
         const params = buildV1ProductsParams(filters);
-        // Backend returns prices in requested currency
         const response = await api.get('/pages/products', { params });
 
-        const body: unknown = response.data;
+        const body: unknown = response.data?.data || response.data;
         const items = (getArray(body, 'items') ?? []);
         const meta = getRecord(body, 'meta') ?? {};
         const facets = getRecord(body, 'facets') ?? {};
@@ -200,7 +216,7 @@ export const useProductsPageData = (filters: ProductFilters = {}, options?: Quer
         const brands = Array.isArray(facetsBrands) ? facetsBrands : [];
 
         return { products: items, brands, pagination, facets, currency };
-      } catch {
+      } catch (error) {
         // Fallback to individual calls
         if (process.env.NODE_ENV !== 'production') {
           console.log('[Products Page] Using fallback endpoints');
@@ -232,7 +248,13 @@ export const useProductsPageData = (filters: ProductFilters = {}, options?: Quer
     staleTime: 2 * 60 * 1000, // 2 minutes
     gcTime: 10 * 60 * 1000,
     refetchOnWindowFocus: false,
-    retry: 1,
+    retry: (failureCount, error) => {
+      // Retry on network errors, not on 4xx
+      const status = (error as any)?.response?.status;
+      if (status && status >= 400 && status < 500) return false;
+      return failureCount < 2;
+    },
+    retryDelay: (attemptIndex) => Math.min(1000 * 2 ** attemptIndex, 10000),
     ...options,
   });
 };

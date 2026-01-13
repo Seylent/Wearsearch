@@ -40,12 +40,6 @@ export const useAuth = () => {
     queryKey: AUTH_QUERY_KEY,
     queryFn: async () => {
       try {
-        // Only fetch user if authenticated
-        if (!authService.isAuthenticated()) {
-          console.log('ℹ️ Skipping getCurrentUser - not authenticated');
-          return null;
-        }
-        
         console.log('🔍 Fetching current user data...');
         return await authService.getCurrentUser();
       } catch (error) {
@@ -65,10 +59,13 @@ export const useAuth = () => {
         return null;
       }
     },
-    staleTime: 15 * 60 * 1000, // Consider data fresh for 15 minutes (збільшено)
-    gcTime: 45 * 60 * 1000, // Cache for 45 minutes (збільшено)
-    refetchOnWindowFocus: false, // Don't refetch when window gains focus
-    refetchOnMount: false, // Don't refetch on component mount if data exists
+    // 🚀 Не запускати під час SSR щоб уникнути hydration mismatch
+    enabled: typeof window !== 'undefined' && authService.isAuthenticated(),
+    staleTime: 30 * 60 * 1000, // 30 хвилин - збільшено для меншої к-сті запитів
+    gcTime: 60 * 60 * 1000, // 1 година кешу
+    refetchOnWindowFocus: false, // 🙅‍♂️ Не refetch при focus
+    refetchOnMount: false, // 🙅‍♂️ Не refetch при mount якщо є дані
+    refetchOnReconnect: false, // 🙅‍♂️ Не refetch при reconnect
     retry: (failureCount, error) => {
       // Don't retry on 401 (unauthorized) or 429 (rate limit)
       const status = getErrorStatus(error);
@@ -79,8 +76,6 @@ export const useAuth = () => {
       return failureCount < 1;
     },
     retryDelay: (attemptIndex) => Math.min(2000 * 2 ** attemptIndex, 60000), // Збільшено затримку
-    // Only enable query if user might be authenticated (check on client-side only)
-    enabled: globalThis.window !== undefined && authService.isAuthenticated(),
   });
 
   const isAdmin = user?.role === 'admin';

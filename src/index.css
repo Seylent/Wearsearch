@@ -43,35 +43,18 @@ body {
   min-width: 100vw;
 }
 
-/* Prevent body from shifting when scrollbar disappears */
+/* Override Radix UI scroll lock for all states */
+body[data-scroll-locked] {
+  overflow: auto !important;
+  padding-right: 0 !important;
+}
+
 body[style*="overflow: hidden"] {
-  width: calc(100vw - var(--scrollbar-width, 0)) !important;
-  overflow: hidden !important;
-}
-
-/* Allow scrolling even when dialogs are open */
-body[style*="pointer-events"] {
-  pointer-events: auto !important;
   overflow: auto !important;
 }
 
-/* NEVER lock body scroll for dropdown menus */
-body:has([data-radix-dropdown-menu-content]) {
-  overflow: auto !important;
-  pointer-events: auto !important;
-}
-
-/* NEVER lock body scroll for select menus */
-body:has([data-radix-select-content]) {
-  overflow: auto !important;
-  pointer-events: auto !important;
-}
-
-/* Only lock body scroll for actual modal dialogs, not dropdowns/selects */
-body:has([data-state="open"][role="dialog"]:not([data-radix-dropdown-menu-content]):not([data-radix-select-content]):not([data-radix-popper-content-wrapper])) {
-  overflow: hidden !important;
-  /* Prevent layout shift when scrollbar is hidden */
-  padding-right: var(--scrollbar-width, 0) !important;
+body[style*="padding-right"] {
+  padding-right: 0 !important;
 }
 
 /* Comprehensive dropdown menu positioning fixes */

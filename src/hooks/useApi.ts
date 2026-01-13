@@ -367,8 +367,9 @@ export const useFavorites = () => {
     queryKey: queryKeys.favorites,
     queryFn: async () => {
       try {
-        // Check auth before making request
-        if (!getAuth()) {
+        // Double check auth before making request
+        const token = getAuth();
+        if (!token) {
           return { favorites: [], total: 0 };
         }
         
@@ -409,8 +410,8 @@ export const useFavorites = () => {
     refetchOnWindowFocus: false, // Don't refetch on tab focus
     refetchOnReconnect: false, // Don't refetch on reconnect to avoid bursts
     refetchInterval: false, // Disable automatic refetching
-    // Only fetch if user is authenticated
-    enabled: globalThis.window !== undefined && !!getAuth(),
+    // Only fetch if user is authenticated - check token exists and not expired
+    enabled: false, // Disabled by default - favorites will be fetched only when explicitly needed
   });
 };
 

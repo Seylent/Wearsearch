@@ -11,13 +11,21 @@ import { CurrencySwitch } from "@/components/common/CurrencySwitch";
 import { useAuth } from "@/features/auth/hooks/useAuth";
 import { useNavigationState } from "@/features/auth/hooks/useNavigationState";
 import { Search, User as UserIcon, Menu, X } from "lucide-react";
+import { useEffect, useState } from "react";
 
 const Navigation: React.FC = () => {
   const router = useRouter();
   const pathname = usePathname();
   const { t } = useTranslation();
   
-  // Use centralized auth hook
+  // 🔥 Попередження hydration error - тільки на клієнті
+  const [isMounted, setIsMounted] = useState(false);
+  
+  useEffect(() => {
+    setIsMounted(true);
+  }, []);
+  
+  // Use centralized auth hook — лише після mount
   const { user, isAdmin } = useAuth();
   
   // Use navigation state hook
@@ -85,7 +93,7 @@ const Navigation: React.FC = () => {
           >
             {t('nav.contacts')}
           </Link>
-          {isAdmin && (
+          {isMounted && isAdmin && (
             <Link
               href="/admin"
               className={`px-3 py-1 text-sm font-medium transition-all duration-300 rounded-full ${
@@ -132,17 +140,32 @@ const Navigation: React.FC = () => {
             <CurrencySwitch variant="ghost" size="sm" className="h-11 w-auto px-2 text-zinc-400 hover:text-white hover:bg-zinc-800/70" />
           </div>
           
-          {user ? (
-            <UserProfileMenu />
-          ) : (
-            <button 
-              className="min-w-[44px] min-h-[44px] w-11 h-11 md:w-9 md:h-9 md:min-w-0 md:min-h-0 rounded-full flex items-center justify-center md:hover:bg-zinc-800/70 active:bg-zinc-800/70 active:scale-95 transition-all duration-150 touch-manipulation group"
-              onClick={() => router.push("/auth")}
-              aria-label={t('aria.signIn')}
-            >
-              <UserIcon className="w-5 h-5 text-zinc-400 md:group-hover:text-white transition-colors" />
-            </button>
-          )}
+          {/* Auth state with hydration safety */}
+          <div suppressHydrationWarning>
+            {!isMounted ? (
+              // 🚀 SSR-safe placeholder - однаковий на сервері і клієнті
+              <button 
+                className="min-w-[44px] min-h-[44px] w-11 h-11 md:w-9 md:h-9 md:min-w-0 md:min-h-0 rounded-full flex items-center justify-center md:hover:bg-zinc-800/70 active:bg-zinc-800/70 active:scale-95 transition-all duration-150 touch-manipulation group"
+                onClick={() => router.push("/auth")}
+                aria-label={t('aria.signIn')}
+              >
+                <UserIcon className="w-5 h-5 text-zinc-400 md:group-hover:text-white transition-colors" />
+              </button>
+            ) : (
+              // ✨ Client-only auth content
+              user ? (
+                <UserProfileMenu />
+              ) : (
+                <button 
+                  className="min-w-[44px] min-h-[44px] w-11 h-11 md:w-9 md:h-9 md:min-w-0 md:min-h-0 rounded-full flex items-center justify-center md:hover:bg-zinc-800/70 active:bg-zinc-800/70 active:scale-95 transition-all duration-150 touch-manipulation group"
+                  onClick={() => router.push("/auth")}
+                  aria-label={t('aria.signIn')}
+                >
+                  <UserIcon className="w-5 h-5 text-zinc-400 md:group-hover:text-white transition-colors" />
+                </button>
+              )
+            )}
+          </div>
         </div>
       </nav>
 
@@ -184,7 +207,7 @@ const Navigation: React.FC = () => {
             >
               {t('nav.contacts')}
             </button>
-            {isAdmin && (
+            {isMounted && isAdmin && (
               <Link
                 href="/admin"
                 onClick={nav.closeMobileMenu}

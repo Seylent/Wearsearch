@@ -5,7 +5,7 @@
 
 import { useState, useEffect, useCallback, useMemo } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { isAuthenticated } from '@/utils/authStorage';
+import { authService } from '@/services/authService';
 import { api, apiLegacy } from '@/services/api';
 
 const STORAGE_KEY = 'wearsearch_saved_stores';
@@ -46,7 +46,7 @@ const saveToStorage = (stores: SavedStore[]): void => {
  */
 export const useSavedStores = () => {
   const queryClient = useQueryClient();
-  const isLoggedIn = isAuthenticated();
+  const isLoggedIn = typeof window !== 'undefined' && authService.isAuthenticated();
   const [localStores, setLocalStores] = useState<SavedStore[]>([]);
 
   // Load from localStorage on mount
@@ -74,6 +74,11 @@ export const useSavedStores = () => {
     },
     enabled: isLoggedIn,
     staleTime: 5 * 60 * 1000, // 5 minutes
+    retry: (failureCount, error: any) => {
+      const status = error?.status ?? error?.response?.status;
+      if (status === 401 || status === 429) return false;
+      return failureCount < 1;
+    },
   });
 
   // Combine local and API stores - memoize to prevent changing on every render

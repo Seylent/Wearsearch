@@ -149,7 +149,7 @@ function FavoritesWithParams() {
               <Search className="absolute left-4 w-5 h-5 text-muted-foreground group-focus-within:text-foreground transition-colors" />
               <Input
                 type="text"
-                placeholder="Search your favorites..."
+                placeholder={t('products.searchPlaceholder', 'Search your favorites...')}
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 className="w-full pl-12 pr-4 h-12 bg-card/50 border-border/50 rounded-full text-foreground placeholder:text-muted-foreground focus-visible:ring-1 focus-visible:ring-foreground/30 transition-all backdrop-blur-sm"
@@ -178,7 +178,7 @@ function FavoritesWithParams() {
                     <Heart className="w-7 h-7 text-muted-foreground" />
                   </div>
                   <h3 className="font-display text-lg font-semibold mb-2 select-none">
-                    {searchQuery ? "No products match your search" : "No favorite products yet"}
+                    {searchQuery ? t('favorites.noSearchResults', 'No products match your search') : t('favorites.noFavorites', 'No favorite products yet')}
                   </h3>
                   <p className="text-muted-foreground mb-4 max-w-md mx-auto text-sm select-none">
                     {searchQuery

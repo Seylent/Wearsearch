@@ -111,7 +111,9 @@ export const getAuthData = (): AuthData | null => {
  * Clear authentication data
  */
 export const clearAuth = (): void => {
-  console.log('🧹 Clearing authentication data');
+  if (process.env.NODE_ENV === 'development') {
+    console.log('🧹 Clearing authentication data');
+  }
   
   // Log what's being cleared for debugging
   const hadAuth = !!localStorage.getItem(AUTH_TOKEN_KEY);

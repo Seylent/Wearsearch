@@ -13,7 +13,7 @@ import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Plus, Search, Edit3, Trash2, Tag } from "lucide-react";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Textarea } from "@/components/ui/textarea";
 
 interface Brand {
@@ -135,7 +135,7 @@ export const BrandManagement: React.FC<BrandManagementProps> = ({
           {t('admin.brandManagement')}
         </h2>
         
-        <Dialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen}>
+        <Dialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen} modal={false}>
           <DialogTrigger asChild>
             <Button onClick={resetForm} className="flex items-center gap-2">
               <Plus className="w-4 h-4" />
@@ -147,6 +147,9 @@ export const BrandManagement: React.FC<BrandManagementProps> = ({
               <DialogTitle>
                 {editingBrand ? t('admin.editBrand') : t('admin.addBrand')}
               </DialogTitle>
+              <DialogDescription>
+                {editingBrand ? t('admin.editBrandDescription', 'Edit brand information') : t('admin.addBrandDescription', 'Add a new brand to the system')}
+              </DialogDescription>
             </DialogHeader>
             <form onSubmit={handleSubmit} className="space-y-4">
               <div className="space-y-2">

@@ -6,6 +6,7 @@
 'use client';
 
 import React from 'react';
+import { useTranslation } from 'react-i18next';
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -75,9 +76,9 @@ interface AddProductFormProps {
   onAddStore: () => void;
   onRemoveStore: (index: number) => void;
   
-  // Template handlers
-  onSaveAsTemplate: () => void;
-  onLoadTemplate: (template: any) => void;
+  // Auto-translate checkbox
+  autoTranslateDescription?: boolean;
+  onAutoTranslateDescriptionChange?: (checked: boolean) => void;
   onDeleteTemplate: (id: string) => void;
   onToggleTemplates: () => void;
   
@@ -95,7 +96,7 @@ export const AddProductForm: React.FC<AddProductFormProps> = ({
   productGender,
   productBrandId,
   productDescription,
-  productImageUrl,
+  productImageUrl: _productImageUrl,
   productImages,
   primaryImageIndex,
   publishAt,
@@ -116,6 +117,9 @@ export const AddProductForm: React.FC<AddProductFormProps> = ({
   // Data
   stores,
   brands,
+  
+  // Auto-translate
+  autoTranslateDescription = false,
   
   // Handlers
   onProductNameChange,
@@ -146,54 +150,58 @@ export const AddProductForm: React.FC<AddProductFormProps> = ({
   onDeleteTemplate,
   onToggleTemplates,
   
+  // Auto-translate handler
+  onAutoTranslateDescriptionChange,
+  
   // Submit
   onSubmit,
   submitting,
 }) => {
+  const { t } = useTranslation();
   const isUpdating = !!editingProductId;
   let submitText: string;
   if (submitting) {
-    submitText = isUpdating ? "Updating..." : "Creating...";
+    submitText = isUpdating ? t('admin.submitting') : t('admin.submitting');
   } else {
-    submitText = isUpdating ? "Update Product" : "Create Product";
+    submitText = isUpdating ? t('admin.updateProduct') : t('admin.createProduct');
   }
   const productSubmitText = submitText;
 
   const CATEGORIES = [
-    { value: "clothing", label: "Clothing" },
-    { value: "shoes", label: "Shoes" },
-    { value: "accessories", label: "Accessories" },
-    { value: "electronics", label: "Electronics" },
-    { value: "home", label: "Home & Living" },
-    { value: "beauty", label: "Beauty & Personal Care" },
-    { value: "sports", label: "Sports & Outdoors" },
-    { value: "books", label: "Books" },
-    { value: "toys", label: "Toys & Games" },
-    { value: "health", label: "Health & Wellness" },
+    { value: "clothing", label: t('categories.clothing') },
+    { value: "shoes", label: t('categories.shoes') },
+    { value: "accessories", label: t('categories.accessories') },
+    { value: "electronics", label: t('categories.electronics') },
+    { value: "home", label: t('categories.home') },
+    { value: "beauty", label: t('categories.beauty') },
+    { value: "sports", label: t('categories.sports') },
+    { value: "books", label: t('categories.books') },
+    { value: "toys", label: t('categories.toys') },
+    { value: "health", label: t('categories.health') },
   ];
 
   const COLORS = [
-    { value: "red", label: "Red" },
-    { value: "blue", label: "Blue" },
-    { value: "green", label: "Green" },
-    { value: "yellow", label: "Yellow" },
-    { value: "black", label: "Black" },
-    { value: "white", label: "White" },
-    { value: "gray", label: "Gray" },
-    { value: "brown", label: "Brown" },
-    { value: "pink", label: "Pink" },
-    { value: "purple", label: "Purple" },
-    { value: "orange", label: "Orange" },
-    { value: "navy", label: "Navy" },
-    { value: "beige", label: "Beige" },
-    { value: "multicolor", label: "Multicolor" },
+    { value: "red", label: t('colors.red') },
+    { value: "blue", label: t('colors.blue') },
+    { value: "green", label: t('colors.green') },
+    { value: "yellow", label: t('colors.yellow') },
+    { value: "black", label: t('colors.black') },
+    { value: "white", label: t('colors.white') },
+    { value: "gray", label: t('colors.gray') },
+    { value: "brown", label: t('colors.brown') },
+    { value: "pink", label: t('colors.pink') },
+    { value: "purple", label: t('colors.purple') },
+    { value: "orange", label: t('colors.orange') },
+    { value: "navy", label: t('colors.navy') },
+    { value: "beige", label: t('colors.beige') },
+    { value: "multicolor", label: t('colors.multicolor') },
   ];
 
   const GENDERS = [
-    { value: "unisex", label: "Unisex" },
-    { value: "men", label: "Men" },
-    { value: "women", label: "Women" },
-    { value: "kids", label: "Kids" },
+    { value: "unisex", label: t('genders.unisex') },
+    { value: "men", label: t('genders.men') },
+    { value: "women", label: t('genders.women') },
+    { value: "kids", label: t('genders.kids') },
   ];
 
   const storeOptions = (stores || []).map(store => ({
@@ -211,7 +219,7 @@ export const AddProductForm: React.FC<AddProductFormProps> = ({
       <div className="flex items-center justify-between mb-2">
         <h2 className="font-display text-lg md:text-2xl font-bold flex items-center gap-2">
           {editingProductId ? <Edit className="w-4 h-4 md:w-6 md:h-6" /> : <Plus className="w-4 h-4 md:w-6 md:h-6" />}
-          {editingProductId ? 'Edit Product' : 'Add New Product'}
+          {editingProductId ? t('admin.editProduct') : t('admin.addNewProduct')}
         </h2>
         
         {editingProductId && (
@@ -229,7 +237,7 @@ export const AddProductForm: React.FC<AddProductFormProps> = ({
       </div>
       
       <p className="text-sm text-muted-foreground mb-6 md:mb-8">
-        {editingProductId ? 'Update product details and store assignments' : 'Add a new product to the marketplace with store details'}
+        {editingProductId ? t('admin.updateProductDesc') : t('admin.addProductDesc')}
       </p>
 
       <form onSubmit={onSubmit} className="space-y-6 md:space-y-8 overflow-visible">
@@ -238,12 +246,12 @@ export const AddProductForm: React.FC<AddProductFormProps> = ({
           <div className="space-y-4 md:space-y-6 overflow-visible">
             {/* Product Name */}
             <div className="space-y-2">
-              <Label htmlFor="productName">Product Name</Label>
+              <Label htmlFor="productName">{t('admin.productName')}</Label>
               <Input
                 id="productName"
                 value={productName}
                 onChange={(e) => onProductNameChange(e.target.value)}
-                placeholder="Enter product name"
+                placeholder={t('admin.productNamePlaceholder')}
                 required
                 className="h-12 bg-card/50 border-border/50 rounded-lg"
               />
@@ -256,7 +264,7 @@ export const AddProductForm: React.FC<AddProductFormProps> = ({
                 value={productCategory}
                 onValueChange={onProductCategoryChange}
                 items={CATEGORIES}
-                placeholder="Select category"
+                placeholder={t('admin.selectCategory')}
                 className="bg-card/50 border-border/50"
               />
             </div>
@@ -268,7 +276,7 @@ export const AddProductForm: React.FC<AddProductFormProps> = ({
                 value={productBrandId}
                 onValueChange={onProductBrandIdChange}
                 items={brandOptions}
-                placeholder="Select brand"
+                placeholder={t('admin.selectBrand')}
                 className="bg-card/50 border-border/50"
               />
             </div>
@@ -280,7 +288,7 @@ export const AddProductForm: React.FC<AddProductFormProps> = ({
                 value={productColor}
                 onValueChange={onProductColorChange}
                 items={COLORS}
-                placeholder="Select color"
+                placeholder={t('admin.selectColor')}
                 className="bg-card/50 border-border/50"
               />
             </div>
@@ -292,7 +300,7 @@ export const AddProductForm: React.FC<AddProductFormProps> = ({
                 value={productGender}
                 onValueChange={onProductGenderChange}
                 items={GENDERS}
-                placeholder="Select gender"
+                placeholder={t('admin.selectGender')}
                 className="bg-card/50 border-border/50"
               />
             </div>
@@ -302,14 +310,35 @@ export const AddProductForm: React.FC<AddProductFormProps> = ({
           <div className="space-y-4 md:space-y-6">
             {/* Description */}
             <div className="space-y-2">
-              <Label htmlFor="productDescription">Description</Label>
+              <Label htmlFor="productDescription">{t('admin.description')}</Label>
               <Textarea
                 id="productDescription"
                 value={productDescription}
                 onChange={(e) => onProductDescriptionChange(e.target.value)}
-                placeholder="Product description..."
+                placeholder={t('admin.descriptionPlaceholder')}
                 className="min-h-[120px] bg-card/50 border-border/50 rounded-lg resize-none"
               />
+              
+              {/* Auto-translate checkbox */}
+              <div className="flex items-center space-x-2 pt-2">
+                <Checkbox
+                  id="autoTranslateDescription"
+                  checked={autoTranslateDescription}
+                  onCheckedChange={(checked) => onAutoTranslateDescriptionChange?.(!!checked)}
+                />
+                <Label 
+                  htmlFor="autoTranslateDescription" 
+                  className="text-sm font-normal cursor-pointer"
+                >
+                  {t('translation.autoTranslate')}
+                </Label>
+              </div>              
+              {/* Translation info */}
+              {autoTranslateDescription && (
+                <div className="text-xs text-yellow-600 bg-yellow-50 dark:bg-yellow-900/20 dark:text-yellow-400 p-2 rounded border">
+                  ℹ️ {t('translation.willTranslate')}
+                </div>
+              )}
             </div>
 
             {/* Image Management */}
@@ -371,7 +400,7 @@ export const AddProductForm: React.FC<AddProductFormProps> = ({
 
             {/* Publishing Schedule */}
             <div className="space-y-4 p-4 rounded-lg border border-border/50 bg-card/20">
-              <Label className="text-sm font-medium">Publishing Options</Label>
+              <Label className="text-sm font-medium">{t('admin.publishingOptions')}</Label>
               
               <div className="space-y-3">
                 <div className="flex items-center space-x-2">
@@ -412,41 +441,41 @@ export const AddProductForm: React.FC<AddProductFormProps> = ({
 
         {/* Store Management Section */}
         <div className="space-y-6 p-6 rounded-xl border border-border/30 bg-card/20">
-          <h3 className="font-semibold text-lg">Store Assignments</h3>
+          <h3 className="font-semibold text-lg">{t('admin.storeAssignments')}</h3>
           
           {/* Add Store Form */}
           <div className="grid grid-cols-1 md:grid-cols-4 gap-4 p-4 rounded-lg bg-card/30 border border-border/40">
             <div className="overflow-visible">
-              <Label className="text-sm">Store</Label>
+              <Label className="text-sm">{t('admin.store')}</Label>
               <Combobox
                 value={currentStore}
                 onValueChange={onCurrentStoreChange}
                 items={storeOptions}
-                placeholder="Select store"
+                placeholder={t('admin.selectStore')}
                 className="bg-card/50 border-border/50"
               />
             </div>
             
             <div>
-              <Label className="text-sm">Price</Label>
+              <Label className="text-sm">{t('admin.price')}</Label>
               <Input
                 type="number"
                 step="0.01"
                 min="0"
                 value={currentStorePrice}
                 onChange={(e) => onCurrentStorePriceChange(e.target.value)}
-                placeholder="0.00"
+                placeholder={t('admin.pricePlaceholder')}
                 className="h-10 bg-card/50 border-border/50"
               />
             </div>
             
             <div>
-              <Label className="text-sm">Add Size</Label>
+              <Label className="text-sm">{t('admin.addSize')}</Label>
               <div className="flex gap-2">
                 <Input
                   value={currentSizeInput}
                   onChange={(e) => onCurrentSizeInputChange(e.target.value)}
-                  placeholder="Size (XS, S, M, L, XL)"
+                  placeholder={t('admin.sizePlaceholder')}
                   className="h-10 bg-card/50 border-border/50"
                   onKeyDown={(e) => {
                     if (e.key === "Enter") {
@@ -507,7 +536,7 @@ export const AddProductForm: React.FC<AddProductFormProps> = ({
                     <div className="flex-1">
                       <p className="font-medium">{store.store_name}</p>
                       <p className="text-sm text-muted-foreground">
-                        ${store.price} • {store.sizes.length > 0 ? store.sizes.join(", ") : "No sizes"}
+                        ${store.price} • {store.sizes.length > 0 ? store.sizes.join(", ") : t('admin.noSizes')}
                       </p>
                     </div>
                     <Button
@@ -574,7 +603,7 @@ export const AddProductForm: React.FC<AddProductFormProps> = ({
               className="w-full"
             >
               <BookTemplate className="w-4 h-4 mr-2" />
-              {showTemplates ? 'Hide' : 'Show'} Templates ({savedTemplates.length})
+              {showTemplates ? t('admin.hide') : t('admin.show')} {t('admin.templates')} ({savedTemplates.length})
             </Button>
             
             {showTemplates && (

@@ -90,6 +90,9 @@ const FilterPanel: React.FC<FilterPanelProps> = ({
     store: false,
   });
 
+  // Brand search state
+  const [brandSearch, setBrandSearch] = useState('');
+
   // Toggle section expansion
   const toggleSection = useCallback((section: keyof typeof expandedSections) => {
     setExpandedSections(prev => ({
@@ -136,8 +139,10 @@ const FilterPanel: React.FC<FilterPanelProps> = ({
 
   // Predefined options
   const colors = [
-    'Black', 'White', 'Gray', 'Brown', 'Beige', 'Navy', 'Blue', 
-    'Green', 'Red', 'Pink', 'Purple', 'Yellow', 'Orange'
+    t('colors.black'), t('colors.white'), t('colors.gray'), t('colors.brown'), 
+    t('colors.beige'), t('colors.navy'), t('colors.blue'), t('colors.green'), 
+    t('colors.red'), t('colors.pink'), t('colors.purple'), t('colors.yellow'), 
+    t('colors.orange')
   ];
 
   const genders = [
@@ -270,7 +275,29 @@ const FilterPanel: React.FC<FilterPanelProps> = ({
         onToggle={() => toggleSection('brand')}
       >
         <div className="space-y-2">
-          {brands.slice(0, 10).map((brand) => (
+          {/* Debug info */}
+          {brands.length === 0 && (
+            <div className="text-sm text-red-300 p-2 bg-red-900/20 rounded">
+              {t('filters.noBrands', 'No brands available')}
+            </div>
+          )}
+          
+          {/* Brand Search */}
+          {brands.length > 0 && (
+            <Input
+              type="text"
+              placeholder={t('filters.searchBrand', 'Search brand...')}
+              value={brandSearch}
+              onChange={(e) => setBrandSearch(e.target.value)}
+              className="bg-zinc-800 border-zinc-700 text-white placeholder:text-gray-500"
+            />
+          )}
+          
+          {/* Brand List */}
+          {brands.length > 0 && brands
+            .filter(brand => brand.name?.toLowerCase().includes(brandSearch.toLowerCase()))
+            .slice(0, 10)
+            .map((brand) => (
             <div key={brand.id} className="flex items-center space-x-2">
               <Checkbox
                 id={`brand-${brand.id}`}
@@ -291,10 +318,10 @@ const FilterPanel: React.FC<FilterPanelProps> = ({
             </div>
           ))}
           
-          {brands.length > 10 && (
-            <Button variant="ghost" size="sm" className="text-xs">
-              {t('filters.showMore', 'Show More')}
-            </Button>
+          {brands.filter(brand => brand.name?.toLowerCase().includes(brandSearch.toLowerCase())).length > 10 && (
+            <div className="text-sm text-gray-300 text-center pt-2">
+              {t('filters.showingResults', 'Showing top 10 results')}
+            </div>
           )}
         </div>
       </FilterSection>

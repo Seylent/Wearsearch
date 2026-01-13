@@ -74,6 +74,9 @@ export const useAdmin = () => {
   const [unpublishAt, setUnpublishAt] = useState<string>("");
   const [productStatus, setProductStatus] = useState<"draft" | "published">("published");
 
+  // Translation
+  const [autoTranslateDescription, setAutoTranslateDescription] = useState<boolean>(false);
+
   // Product management
   const [searchProducts, setSearchProducts] = useState("");
   const [viewMode, setViewMode] = useState<'grid' | 'table'>('table');
@@ -251,6 +254,7 @@ export const useAdmin = () => {
     setPublishAt("");
     setUnpublishAt("");
     setProductStatus("published");
+    setAutoTranslateDescription(false);
     router.replace("/admin");
   }, [router]);
 
@@ -277,6 +281,7 @@ export const useAdmin = () => {
         publish_at: publishAt || null,
         unpublish_at: unpublishAt || null,
         stores: selectedStores,
+        autoTranslateDescription: autoTranslateDescription,
       };
 
       let result;
@@ -307,7 +312,7 @@ export const useAdmin = () => {
     productName, productCategory, productColor, productGender, productBrandId,
     productDescription, productImageUrl, productImages, primaryImageIndex,
     productStatus, publishAt, unpublishAt, selectedStores, editingProductId,
-    resetForm, loadDashboard, toast
+    autoTranslateDescription, resetForm, loadDashboard, toast
   ]);
 
   // Selection management
@@ -484,6 +489,10 @@ export const useAdmin = () => {
     setUnpublishAt,
     productStatus,
     setProductStatus,
+    
+    // Translation
+    autoTranslateDescription,
+    setAutoTranslateDescription,
     
     // Edit state
     editingProductId,

@@ -15,9 +15,9 @@ import { z } from 'zod';
  * Implements exponential backoff for 429 responses
  */
 const RATE_LIMIT_CONFIG = {
-  maxRetries: process.env.NODE_ENV === 'production' ? 3 : 1, // Less retries in dev
-  baseDelay: process.env.NODE_ENV === 'production' ? 1000 : 500, // Shorter delays in dev
-  maxDelay: process.env.NODE_ENV === 'production' ? 30000 : 5000, // Much shorter max delay in dev
+  maxRetries: process.env.NODE_ENV === 'production' ? 5 : 5, // Increased retries for aggressive rate limiting
+  baseDelay: process.env.NODE_ENV === 'production' ? 1000 : 1000, // 1s base delay
+  maxDelay: process.env.NODE_ENV === 'production' ? 30000 : 10000, // 10s max in dev, 30s in prod
 };
 
 const sleep = (ms: number): Promise<void> => 
@@ -51,8 +51,8 @@ const getRetryDelay = (retryCount: number, retryAfter?: number): number => {
 class RequestQueue {
   private readonly queue: Array<() => Promise<void>> = [];
   private running = 0;
-  private readonly maxConcurrent = process.env.NODE_ENV === 'production' ? 6 : 3; // Lower limit in dev
-  private readonly minDelay = process.env.NODE_ENV === 'production' ? 50 : 100; // Higher delay in dev
+  private readonly maxConcurrent = process.env.NODE_ENV === 'production' ? 3 : 2; // Very low limit to avoid rate limiting
+  private readonly minDelay = process.env.NODE_ENV === 'production' ? 100 : 200; // Higher delay in dev to space out requests
   private lastRequestTime = 0;
   private readonly pendingRequests = new Map<string, Promise<any>>(); // Request deduplication
 
@@ -114,6 +114,100 @@ const _requestQueue = new RequestQueue();
 
 // Import AUTH_TOKEN_KEY for checking if user was logged in
 const AUTH_TOKEN_KEY = 'wearsearch.auth';
+
+/**
+ * Handle rate limit errors (429) with retry logic
+ */
+async function handleRateLimitError(
+  error: AxiosError,
+  config: InternalAxiosRequestConfig & { __rateLimitRetryCount?: number },
+  client: AxiosInstance
+): Promise<AxiosResponse | null> {
+  if (error.response?.status !== 429) return null;
+
+  // Skip retry if requested (e.g., for auth endpoints)
+  if (config.headers?.['X-Skip-Retry'] === 'true') {
+    if (process.env.NODE_ENV !== 'production') {
+      console.log(`⛔ Skipping retry for ${config.url} (X-Skip-Retry header set)`);
+    }
+    return null;
+  }
+
+  const retryCount = config.__rateLimitRetryCount || 0;
+  if (retryCount >= RATE_LIMIT_CONFIG.maxRetries) {
+    console.warn(`⚠️ Max retry attempts (${RATE_LIMIT_CONFIG.maxRetries}) reached for ${config.url}`);
+    return null;
+  }
+
+  const retryAfter = error.response?.headers?.['retry-after'];
+  const retryAfterSeconds = retryAfter ? parseInt(retryAfter, 10) : undefined;
+  const delay = getRetryDelay(retryCount, retryAfterSeconds);
+
+  if (process.env.NODE_ENV !== 'production') {
+    console.log(`⏳ Rate limited (429). Retrying in ${Math.round(delay / 1000)}s (attempt ${retryCount + 1}/${RATE_LIMIT_CONFIG.maxRetries})`);
+  }
+
+  await sleep(delay);
+
+  config.__rateLimitRetryCount = retryCount + 1;
+  return client.request(config);
+}
+
+/**
+ * Handle legacy API fallback for 404 errors
+ */
+async function handleLegacyFallback(
+  error: AxiosError,
+  config: InternalAxiosRequestConfig & { __wearsearchTriedLegacy?: boolean },
+  fallback?: FallbackConfig
+): Promise<AxiosResponse | null> {
+  if (!fallback?.fallbackClient || config.__wearsearchTriedLegacy) return null;
+
+  const shouldFallback = fallback.shouldFallbackToLegacy || defaultShouldFallbackToLegacy;
+  if (!shouldFallback(config, error)) return null;
+
+  if (process.env.NODE_ENV !== 'production') {
+    console.log(`🔄 Falling back to legacy API for ${config.url}`);
+  }
+
+  config.__wearsearchTriedLegacy = true;
+  return fallback.fallbackClient.request(config);
+}
+
+/**
+ * Handle authentication errors
+ */
+function handleAuthError(apiError: ApiError, originalError: unknown): void {
+  const isAuthError = apiError.status === 401;
+  if (!isAuthError) return;
+
+  // Check if user was previously authenticated
+  const wasAuthenticated = typeof window !== 'undefined' && localStorage.getItem(AUTH_TOKEN_KEY);
+  
+  if (wasAuthenticated && process.env.NODE_ENV !== 'production') {
+    console.warn('🔒 Authentication error - token may be expired');
+  }
+}
+
+/**
+ * Log API errors in development
+ */
+function logApiError(apiError: ApiError): void {
+  if (process.env.NODE_ENV === 'production') return;
+
+  // Don't log auth errors (too noisy)
+  if (apiError.status === 401) return;
+  
+  // Don't log rate limit errors (handled separately)
+  if (apiError.status === 429) return;
+
+  console.error('❌ API Error:', {
+    message: apiError.message,
+    status: apiError.status,
+    code: apiError.code,
+    url: apiError.config?.url,
+  });
+}
 
 const createClient = (baseURL: string): AxiosInstance => {
   return axios.create({
@@ -412,5 +506,29 @@ export const apiDelete = async <T>(
 
 // Re-export error handling utilities for convenience
 export { ApiError, isApiError, getErrorMessage } from './api/errorHandler';
+
+// Wrapper for GET requests with retry
+api.getWithRetry = async (url: string, config?: any) => {
+  return retryWithBackoff(
+    () => api.get(url, config),
+    { maxAttempts: 3, initialDelay: 1000 }
+  );
+};
+
+// Wrapper for POST requests with retry (only for idempotent operations)
+api.postWithRetry = async (url: string, data?: any, config?: any) => {
+  return retryWithBackoff(
+    () => api.post(url, data, config),
+    { 
+      maxAttempts: 2, 
+      initialDelay: 1000,
+      shouldRetry: (error) => {
+        const status = (error as any)?.response?.status;
+        // Only retry on network errors or 5xx
+        return !status || status >= 500;
+      }
+    }
+  );
+};
 
 export default api;

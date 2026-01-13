@@ -52,6 +52,10 @@ export const recommendationsService = {
    * Track user interaction with a product
    */
   async trackInteraction(productId: string | number, type: InteractionType): Promise<void> {
+    // Only track for authenticated users
+    const token = typeof window !== 'undefined' ? localStorage.getItem('wearsearch.auth') : null;
+    if (!token) return;
+    
     // Silent fail - tracking is not critical and should not show errors to user
     try {
       await api.post('/interactions', {

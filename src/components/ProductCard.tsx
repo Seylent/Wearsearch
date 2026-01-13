@@ -2,10 +2,28 @@
 
 import React, { memo, useRef } from 'react';
 import Link from 'next/link';
+import Image from 'next/image';
 import { useTranslation } from 'react-i18next';
-import { LazyImage } from './common/LazyImage';
 import FavoriteButton from './FavoriteButton';
+import { ProductDescription } from './ProductDescription';
 import { useCurrencyConversion } from '@/hooks/useCurrencyConversion';
+
+// Skeleton loader component
+export const ProductCardSkeleton: React.FC = () => (
+  <div className="relative h-full flex flex-col rounded-lg sm:rounded-xl overflow-hidden border border-white/10 bg-white/5 backdrop-blur-[25px] animate-pulse">
+    <div className="relative aspect-[3/4] sm:aspect-[4/5] bg-gray-800" />
+    <div className="flex-1 flex flex-col justify-between p-3 sm:p-4">
+      <div className="space-y-2">
+        <div className="h-3 bg-gray-700 rounded w-1/2" />
+        <div className="h-4 bg-gray-700 rounded w-3/4" />
+      </div>
+      <div className="space-y-2 mt-3">
+        <div className="h-5 bg-gray-700 rounded w-1/3" />
+        <div className="h-3 bg-gray-700 rounded w-1/2" />
+      </div>
+    </div>
+  </div>
+);
 
 interface ProductCardProps {
   id: number | string;
@@ -18,12 +36,34 @@ interface ProductCardProps {
   category?: string;
   brand?: string;
   isNew?: boolean;
+  description?: string;
+  description_en?: string;
+  description_ua?: string;
 }
 
-const ProductCard: React.FC<ProductCardProps> = memo(({ id, name, image, price, minPrice, maxPrice, storeCount, category: _category, brand, isNew }) => {
+const ProductCard: React.FC<ProductCardProps> = memo(({ 
+  id, 
+  name, 
+  image, 
+  price, 
+  minPrice, 
+  maxPrice, 
+  storeCount, 
+  category: _category, 
+  brand, 
+  isNew,
+  description,
+  description_en,
+  description_ua,
+}) => {
   const { t } = useTranslation();
   const { formatPrice } = useCurrencyConversion();
   const cardRef = useRef<HTMLDivElement>(null);
+  
+  // Safety checks
+  if (!id || !name) {
+    return null;
+  }
   
   // Backend sends prices in correct currency via ?currency=UAH/USD
   // Just use the values as-is, no conversion needed
@@ -32,7 +72,7 @@ const ProductCard: React.FC<ProductCardProps> = memo(({ id, name, image, price, 
   const showPriceRange = displayMinPrice && displayMaxPrice && displayMinPrice !== displayMaxPrice;
   
   // Handle both 'image' and 'image_url' from different API responses
-  const imgSrc = image || '';
+  const imgSrc = image || '/placeholder-product.jpg';
 
   // 3D tilt effect on mouse move (desktop only)
   const handleMouseMove = (e: React.MouseEvent<HTMLDivElement>) => {
@@ -46,15 +86,23 @@ const ProductCard: React.FC<ProductCardProps> = memo(({ id, name, image, price, 
     const centerX = rect.width / 2;
     const centerY = rect.height / 2;
     
-    const rotateX = (y - centerY) / 20;
-    const rotateY = (centerX - x) / 20;
+    const rotateX = ((y - centerY) / 20);
+    const rotateY = ((centerX - x) / 20);
     
-    card.style.transform = `perspective(1000px) rotateX(${rotateX}deg) rotateY(${rotateY}deg) scale(1.02)`;
+    requestAnimationFrame(() => {
+      if (card) {
+        card.style.transform = `perspective(1000px) rotateX(${rotateX}deg) rotateY(${rotateY}deg) scale(1.02)`;
+      }
+    });
   };
 
   const handleMouseLeave = () => {
     if (!cardRef.current) return;
-    cardRef.current.style.transform = 'perspective(1000px) rotateX(0deg) rotateY(0deg) scale(1)';
+    requestAnimationFrame(() => {
+      if (cardRef.current) {
+        cardRef.current.style.transform = 'perspective(1000px) rotateX(0deg) rotateY(0deg) scale(1)';
+      }
+    });
   };
 
   return (
@@ -80,14 +128,17 @@ const ProductCard: React.FC<ProductCardProps> = memo(({ id, name, image, price, 
         <div className="relative aspect-[3/4] sm:aspect-[4/5] overflow-hidden" style={{
           background: 'radial-gradient(circle at 20% 30%, rgba(255,255,255,0.05) 0%, transparent 50%), radial-gradient(circle at 80% 70%, rgba(255,255,255,0.03) 0%, transparent 50%), linear-gradient(135deg, rgba(0,0,0,0.9) 0%, rgba(20,20,20,0.95) 100%)'
         }}>
-          <LazyImage 
+          <Image 
             src={imgSrc} 
-            alt={name} 
-            rootMargin="200px"
-            className="w-full h-full object-cover transition-transform duration-500 md:group-hover:scale-105 filter grayscale md:group-hover:grayscale-0" 
+            alt={name}
+            fill
+            sizes="(max-width: 640px) 50vw, (max-width: 768px) 33vw, (max-width: 1024px) 25vw, 20vw"
+            className="object-cover transition-transform duration-500 md:group-hover:scale-105 filter grayscale md:group-hover:grayscale-0" 
             style={{
               filter: 'grayscale(100%) contrast(1.2) brightness(1.1)',
             }}
+            loading="lazy"
+            quality={75}
           />
           
           {/* Subtle gradient on hover - NO WHITE GLOW */}
@@ -128,6 +179,20 @@ const ProductCard: React.FC<ProductCardProps> = memo(({ id, name, image, price, 
             >
               {name}
             </h3>
+            
+            {/* Description */}
+            {(description || description_en || description_ua) && (
+              <ProductDescription 
+                product={{ 
+                  description, 
+                  description_en, 
+                  description_ua 
+                }}
+                maxLength={80}
+                showReadMore={false}
+                className="mb-2 text-xs text-white/70"
+              />
+            )}
           </div>
           
           {/* Price */}

@@ -3,7 +3,7 @@
  * Refactored to use unified API and auth storage
  */
 
-import { api, apiLegacy } from './api';
+import { api, apiLegacy, handleApiError } from './api';
 import { setAuth, clearAuth, isAuthenticated } from '@/utils/authStorage';
 import { getValidGuestFavorites, clearGuestFavorites } from './guestFavorites';
 import { logAuthError } from './logger';
@@ -357,10 +357,20 @@ export const authService = {
  */
 async function fetchCurrentUserInternal(): Promise<User> {
   try {
-    const response = await api.get(ENDPOINTS.ME);
+    // Skip retry on rate limit for auth endpoint to prevent spam
+    const response = await api.get(ENDPOINTS.ME, {
+      headers: { 'X-Skip-Retry': 'true' }
+    });
     return response.data;
   } catch (error) {
     const status = getErrorStatus(error);
+    
+    // Don't throw on 429, just return error to let React Query handle it
+    if (status === 429) {
+      console.log('⌛ Auth check rate limited, backing off');
+      throw new Error('Unauthorized');
+    }
+    
     if (ENABLE_LEGACY_FALLBACK && status === 404) {
       try {
         const legacyResponse = await apiLegacy.get(ENDPOINTS.ME);

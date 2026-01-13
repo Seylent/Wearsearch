@@ -197,6 +197,10 @@ const AdminContent = () => {
                 // Submit
                 onSubmit={admin.handleProductSubmit}
                 submitting={admin.submitting}
+                
+                // Translation
+                autoTranslateDescription={admin.autoTranslateDescription}
+                onAutoTranslateDescriptionChange={admin.setAutoTranslateDescription}
               />
               </Suspense>
             </TabsContent>
