@@ -15,7 +15,7 @@ import recommendationsService, {
  * Hook for getting personalized recommendations
  */
 export const useRecommendations = (limit: number = 10) => {
-  const isLoggedIn = typeof window !== 'undefined' && authService.isAuthenticated();
+  const isLoggedIn = typeof globalThis.window !== 'undefined' && authService.isAuthenticated();
 
   const { data, isLoading, error, refetch } = useQuery({
     queryKey: ['recommendations', limit],

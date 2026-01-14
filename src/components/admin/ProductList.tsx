@@ -26,8 +26,6 @@ import { getCategoryTranslation, getColorTranslation } from "@/utils/translation
 interface ProductListProps {
   // Data
   products: Array<Record<string, unknown>>;
-  stores: Array<Record<string, unknown>>;
-  brands: Array<Record<string, unknown>>;
   
   // Search and filters
   searchProducts: string;
@@ -54,9 +52,6 @@ interface ProductListProps {
   onExportToJSON: () => void;
   onDownloadTemplate: () => void;
   loadingExport: boolean;
-  
-  // Filters
-  resetFilters: () => void;
 }
 
 export const ProductList: React.FC<ProductListProps> = ({

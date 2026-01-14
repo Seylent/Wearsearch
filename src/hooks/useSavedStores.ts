@@ -46,7 +46,7 @@ const saveToStorage = (stores: SavedStore[]): void => {
  */
 export const useSavedStores = () => {
   const queryClient = useQueryClient();
-  const isLoggedIn = typeof window !== 'undefined' && authService.isAuthenticated();
+  const isLoggedIn = typeof globalThis.window !== 'undefined' && authService.isAuthenticated();
   const [localStores, setLocalStores] = useState<SavedStore[]>([]);
 
   // Load from localStorage on mount

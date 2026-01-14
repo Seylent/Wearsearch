@@ -73,7 +73,7 @@ export async function generateMetadata({ params }: BrandPageProps): Promise<Meta
 }
 
 // Основний компонент сторінки
-export default async function BrandPage({ params }: BrandPageProps) {
+export default async function BrandPage({ params }: Readonly<BrandPageProps>) {
   const { slug } = params;
   
   try {

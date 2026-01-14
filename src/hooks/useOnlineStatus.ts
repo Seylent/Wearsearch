@@ -15,12 +15,12 @@ export const useOnlineStatus = () => {
     const handleOnline = () => setIsOnline(true);
     const handleOffline = () => setIsOnline(false);
 
-    window.addEventListener('online', handleOnline);
-    window.addEventListener('offline', handleOffline);
+    globalThis.window.addEventListener('online', handleOnline);
+    globalThis.window.addEventListener('offline', handleOffline);
 
     return () => {
-      window.removeEventListener('online', handleOnline);
-      window.removeEventListener('offline', handleOffline);
+      globalThis.window.removeEventListener('online', handleOnline);
+      globalThis.window.removeEventListener('offline', handleOffline);
     };
   }, []);
 

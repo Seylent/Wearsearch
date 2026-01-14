@@ -12,7 +12,7 @@
  */
 
 // 🔥 CLIENT-ONLY MODULE - DO NOT IMPORT ON SERVER
-if (typeof window === 'undefined' && typeof global !== 'undefined') {
+if (typeof globalThis.window === 'undefined' && typeof globalThis.global !== 'undefined') {
   console.warn('cache.ts is client-only module, avoid server imports');
 }
 

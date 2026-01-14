@@ -36,7 +36,7 @@ export const setAuth = (token: string, userId?: string, expiresAt?: number): voi
  * Get authentication token
  */
 export const getAuth = (): string | null => {
-  if (typeof globalThis.window === 'undefined') return null;
+  if (globalThis.window === undefined) return null;
   try {
     const authDataStr = localStorage.getItem(AUTH_TOKEN_KEY);
     if (authDataStr) {
@@ -125,7 +125,7 @@ export const clearAuth = (): void => {
     console.log('Clearing auth tokens:', { hadAuth, hadLegacy });
   }
   
-  if (typeof globalThis.window === 'undefined') return;
+  if (globalThis.window === undefined) return;
   
   localStorage.removeItem(AUTH_TOKEN_KEY);
   

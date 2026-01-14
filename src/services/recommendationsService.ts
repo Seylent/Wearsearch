@@ -53,7 +53,7 @@ export const recommendationsService = {
    */
   async trackInteraction(productId: string | number, type: InteractionType): Promise<void> {
     // Only track for authenticated users
-    const token = typeof window !== 'undefined' ? localStorage.getItem('wearsearch.auth') : null;
+    const token = typeof globalThis.window !== 'undefined' ? localStorage.getItem('wearsearch.auth') : null;
     if (!token) return;
     
     // Silent fail - tracking is not critical and should not show errors to user
