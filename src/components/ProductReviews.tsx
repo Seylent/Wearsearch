@@ -411,6 +411,7 @@ const ReviewCard: React.FC<ReviewCardProps> = ({ review }) => {
   };
 
   const formattedDate = useMemo(() => {
+    if (globalThis.window === undefined) return '';
     return new Date(review.createdAt).toLocaleDateString('uk-UA', {
       year: 'numeric',
       month: 'short',

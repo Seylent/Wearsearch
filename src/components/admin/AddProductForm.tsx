@@ -578,7 +578,7 @@ export const AddProductForm: React.FC<AddProductFormProps> = ({
           </span>
           {publishAt && productStatus === "draft" && (
             <p className="text-xs text-muted-foreground">
-              🕒 Will publish on {new Date(publishAt).toLocaleString()}
+              🕒 Will publish on {globalThis.window !== undefined && new Date(publishAt).toLocaleString()}
             </p>
           )}
         </div>

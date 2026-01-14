@@ -233,7 +233,7 @@ export const AnalyticsDashboard: React.FC<AnalyticsDashboardProps> = ({
                         <div>
                           <p className="font-medium">{entry.store_name}</p>
                           <p className="text-sm text-muted-foreground">
-                            {new Date(entry.changed_at).toLocaleDateString()}
+                            {globalThis.window !== undefined && new Date(entry.changed_at).toLocaleDateString()}
                           </p>
                         </div>
                         <div className="text-right">
@@ -288,7 +288,7 @@ export const AnalyticsDashboard: React.FC<AnalyticsDashboardProps> = ({
                           {log.action.toUpperCase()}
                         </span>
                         <span className="text-xs text-muted-foreground">
-                          {new Date(log.created_at).toLocaleTimeString()}
+                          {globalThis.window !== undefined && new Date(log.created_at).toLocaleTimeString()}
                         </span>
                       </div>
                       <p className="text-sm font-medium">{log.entity_type} #{log.entity_id}</p>

@@ -1,34 +1,4 @@
 {
-  "components\\AdminContent.tsx -> @/components/admin/AddProductForm": {
-    "id": "components\\AdminContent.tsx -> @/components/admin/AddProductForm",
-    "files": [
-      "static/chunks/_app-pages-browser_src_components_admin_AddProductForm_tsx.js"
-    ]
-  },
-  "components\\AdminContent.tsx -> @/components/admin/BrandManagement": {
-    "id": "components\\AdminContent.tsx -> @/components/admin/BrandManagement",
-    "files": [
-      "static/chunks/_app-pages-browser_src_components_admin_BrandManagement_tsx.js"
-    ]
-  },
-  "components\\AdminContent.tsx -> @/components/admin/ContactManagement": {
-    "id": "components\\AdminContent.tsx -> @/components/admin/ContactManagement",
-    "files": [
-      "static/chunks/_app-pages-browser_src_components_admin_ContactManagement_tsx.js"
-    ]
-  },
-  "components\\AdminContent.tsx -> @/components/admin/ProductList": {
-    "id": "components\\AdminContent.tsx -> @/components/admin/ProductList",
-    "files": [
-      "static/chunks/_app-pages-browser_src_components_admin_ProductList_tsx.js"
-    ]
-  },
-  "components\\AdminContent.tsx -> @/components/admin/StoreManagement": {
-    "id": "components\\AdminContent.tsx -> @/components/admin/StoreManagement",
-    "files": [
-      "static/chunks/_app-pages-browser_src_components_admin_StoreManagement_tsx.js"
-    ]
-  },
   "utils\\currencyStorage.ts -> next/headers": {
     "id": "utils\\currencyStorage.ts -> next/headers",
     "files": [

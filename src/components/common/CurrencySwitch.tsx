@@ -47,7 +47,7 @@ export const CurrencySwitch: React.FC<CurrencySwitchProps> = ({
           1 USD = {exchangeRate.rate.toFixed(2)} UAH
           <br />
           <span className="text-xs opacity-75">
-            {t('currency.updated', 'Updated')}: {new Date(exchangeRate.updatedAt).toLocaleTimeString('uk-UA', { hour: '2-digit', minute: '2-digit' })}
+            {t('currency.updated', 'Updated')}: {globalThis.window !== undefined && new Date(exchangeRate.updatedAt).toLocaleTimeString('uk-UA', { hour: '2-digit', minute: '2-digit' })}
           </span>
         </div>
       )}
@@ -76,7 +76,7 @@ export const CurrencyInfo: React.FC<CurrencyInfoProps> = ({
     return null;
   }
 
-  const convertedDate = currencyInfo.convertedAt 
+  const convertedDate = globalThis.window !== undefined && currencyInfo.convertedAt 
     ? new Date(currencyInfo.convertedAt).toLocaleString('uk-UA', { 
         hour: '2-digit', 
         minute: '2-digit',
