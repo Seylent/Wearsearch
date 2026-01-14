@@ -25,7 +25,8 @@ export const useClientLanguage = () => {
       console.log(`🌍 Syncing language: ${i18n.language} -> ${savedLanguage}`);
       i18n.changeLanguage(savedLanguage);
     }
-  }, []); // Run once on mount
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []); // Run once on mount - i18n is stable
 
   return { language: i18n.language };
 };
