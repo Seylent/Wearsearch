@@ -379,5 +379,107 @@
     "feedback3": "UI/UX improvements",
     "feedback4": "General feedback",
     "responseTime": "We typically respond within 24 hours"
+  },
+  "privacy": {
+    "title": "Privacy Policy",
+    "subtitle": "Your privacy is important to us. Learn how we collect, use, and protect your information.",
+    "lastUpdated": "Last updated: January 10, 2026",
+    "section1": {
+      "title": "General Provisions",
+      "p1": "This website is an information platform (aggregator) that provides users with access to product information and links to third-party online stores and services.",
+      "p2": "The website only collects and processes minimal technical data necessary to ensure functionality and security of the platform."
+    },
+    "section2": {
+      "title": "Data We Collect",
+      "intro": "We may collect the following types of information:",
+      "li1": "Basic account data (email, username) — only if you register;",
+      "li2": "Technical data: IP address, browser type, device information;",
+      "li3": "Cookies and similar technologies to improve user experience;",
+      "li4": "Interaction data: pages visited, links clicked, search history within the platform."
+    },
+    "section3": {
+      "title": "How We Use Your Data",
+      "intro": "We use collected data for the following purposes:",
+      "subsection1": {
+        "title": "Platform Functionality",
+        "li1": "Account creation and authentication;",
+        "li2": "Saving favorites, search preferences, and other settings."
+      },
+      "subsection2": {
+        "title": "Improving User Experience",
+        "li1": "Analyzing site usage to improve interface and features;",
+        "li2": "Personalizing displayed products and recommendations;",
+        "li3": "Providing relevant content;",
+        "li4": "Fraud and abuse prevention;",
+        "li5": "Security and technical support."
+      },
+      "note": "We do not sell or share your personal data with third parties for marketing purposes."
+    },
+    "section4": {
+      "title": "Links to Third-Party Sites",
+      "intro": "The website contains links to external online stores and services. When you follow these links:",
+      "li1": "You are redirected to third-party resources;",
+      "li2": "Their privacy policies and terms of use apply;",
+      "li3": "We are not responsible for their data processing practices;",
+      "li4": "We recommend reviewing the privacy policies of each store before making a purchase."
+    },
+    "section5": {
+      "title": "Advertising and Analytics",
+      "intro": "We may use third-party services for advertising and analytics, including but not limited to:",
+      "li1": "Adsterra and other advertising networks;",
+      "li2": "Google Analytics or similar analytics services;",
+      "li3": "Pixel tags and cookies for ad personalization;",
+      "li4": "Retargeting technologies;",
+      "li5": "Heat maps and behavioral analytics tools."
+    },
+    "section6": {
+      "title": "Cookies and Similar Technologies",
+      "p1": "Cookies are small text files stored on your device for improved performance and personalization.",
+      "p2": "We use cookies for:",
+      "li1": "Authentication and account security;",
+      "li2": "Saving user preferences;",
+      "li3": "Analytics and advertising optimization.",
+      "p3": "You can manage or disable cookies through your browser settings, but this may limit platform functionality.",
+      "browserSettings": "Learn more about cookie settings in your browser's documentation."
+    },
+    "section7": {
+      "title": "Data Storage and Security",
+      "p1": "We take reasonable measures to protect your data from unauthorized access, alteration, or destruction.",
+      "intro": "Security measures include:",
+      "li1": "Secure HTTPS connections (SSL/TLS);",
+      "li2": "Restricted access to databases and servers."
+    },
+    "section8": {
+      "title": "Data Retention",
+      "p1": "We retain your data only as long as necessary to provide services and comply with legal requirements.",
+      "p2": "If you delete your account, your personal data will be removed within 30 days.",
+      "p3": "Some technical data (e.g., logs) may be retained longer for security and legal reasons."
+    },
+    "section9": {
+      "title": "Your Rights",
+      "intro": "You have the following rights regarding your personal data:",
+      "li1": "Access and correction: You can view and update your account information;",
+      "li2": "Deletion: You can request account deletion at any time;",
+      "li3": "Opt-out: You can disable cookies or unsubscribe from notifications.",
+      "p2": "To exercise these rights, contact us through the contact page."
+    },
+    "section10": {
+      "title": "Children's Privacy",
+      "intro": "Our website is not intended for children under 16. We do not knowingly collect data from children. If you believe we have accidentally collected data from a child:",
+      "li1": "Contact us immediately;",
+      "li2": "We will delete such data;",
+      "li3": "Parents/guardians are responsible for monitoring children's online activities.",
+      "note": "If you are under 16, do not use this website without parental permission."
+    },
+    "section11": {
+      "title": "Changes to Privacy Policy",
+      "p1": "We may update this Privacy Policy at any time.",
+      "p2": "The current version is always available on this page.",
+      "p3": "Continued use of the website after changes indicates acceptance of the updated policy."
+    },
+    "section12": {
+      "title": "Contact Us",
+      "p1": "If you have questions or concerns about this Privacy Policy, please contact us through the contact page."
+    }
   }
 }

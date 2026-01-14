@@ -1,46 +1,8 @@
 {
-  "components\\AdminContent.tsx -> @/components/admin/AddProductForm": {
-    "id": 5135,
-    "files": [
-      "static/chunks/363.8fb1efb7b07d9503.js",
-      "static/chunks/7295-e5a84012ebe9361b.js",
-      "static/chunks/5135.d4a32fa5a3ff82c0.js"
-    ]
-  },
-  "components\\AdminContent.tsx -> @/components/admin/BrandManagement": {
-    "id": 39,
-    "files": [
-      "static/chunks/7676-089dc91755922cc4.js",
-      "static/chunks/39.a1115d401103a543.js"
-    ]
-  },
-  "components\\AdminContent.tsx -> @/components/admin/ContactManagement": {
-    "id": 1722,
-    "files": [
-      "static/chunks/1722.42db2afe11399f9a.js"
-    ]
-  },
-  "components\\AdminContent.tsx -> @/components/admin/ProductList": {
-    "id": 1611,
-    "files": [
-      "static/chunks/7781.a18bb53ae0a48d0c.js",
-      "static/chunks/7295-e5a84012ebe9361b.js",
-      "static/chunks/1611.0ede4cde7d15193a.js"
-    ]
-  },
-  "components\\AdminContent.tsx -> @/components/admin/StoreManagement": {
-    "id": 7064,
-    "files": [
-      "static/chunks/7676-089dc91755922cc4.js",
-      "static/chunks/3293-613bd62e7ae5cec8.js",
-      "static/chunks/1417-50f7ba071f33db22.js",
-      "static/chunks/4343.eabe1ea98c65d06a.js"
-    ]
-  },
   "utils\\currencyStorage.ts -> next/headers": {
-    "id": 5854,
+    "id": "utils\\currencyStorage.ts -> next/headers",
     "files": [
-      "static/chunks/5854.e3ac8487162c16bc.js"
+      "static/chunks/_app-pages-browser_node_modules_next_dist_api_headers_js.js"
     ]
   }
 }
