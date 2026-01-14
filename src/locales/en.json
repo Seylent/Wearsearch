@@ -506,5 +506,75 @@
       "title": "Contact Us",
       "p1": "If you have questions or concerns about this Privacy Policy, please contact us through the contact page."
     }
+  },
+  "terms": {
+    "title": "Terms of Use",
+    "subtitle": "Please read carefully the terms of use of our service",
+    "section1": {
+      "title": "General Provisions",
+      "p1": "The website is an information online platform (aggregator) that provides users with access to information about products and links to third-party online stores and services.",
+      "p2": "The website is not a seller, manufacturer, intermediary, payment agent or party to a purchase and sale agreement between the user and the seller.",
+      "p3": "All legal relations regarding the purchase of goods arise directly between the user and the third-party seller.",
+      "p4": "By using the website, the user confirms that they have read and agree to these Terms. If the user disagrees, they must stop using the website."
+    },
+    "section2": {
+      "title": "Platform Purpose",
+      "p1": "The website provides the ability to view information about products (names, descriptions, prices, characteristics) and follow external links to seller websites.",
+      "p2": "The website does not store or sell goods, does not process payments and does not organize delivery.",
+      "p3": "All information about products comes from open sources or from third parties and may change without notice."
+    },
+    "section3": {
+      "title": "Registration and Account",
+      "p1": "During registration, the user undertakes to provide accurate and up-to-date information.",
+      "introResponsibility": "The user is fully responsible for:",
+      "li1": "keeping login and password secure;",
+      "li2": "all actions performed under their account.",
+      "admin": "The administration has the right to temporarily restrict or completely block access to the account in case of violation of these Terms or suspicious activity."
+    },
+    "section4": {
+      "title": "Stores and Third-Party Services",
+      "p1": "Information about prices, availability, payment terms, delivery, returns and warranties is provided exclusively by third-party sellers.",
+      "adminIntro": "The website administration:",
+      "li1": "does not verify stores for reliability or legality;",
+      "li2": "does not guarantee the relevance or accuracy of information;",
+      "li3": "is not responsible for the fulfillment of obligations by sellers.",
+      "userResponsibility": "The user is obliged to independently verify information about the seller before making a purchase."
+    },
+    "section5": {
+      "title": "Advertising",
+      "p1": "The website may display third-party advertising, including through advertising networks (including Adsterra).",
+      "adminIntro": "The administration is not responsible for:",
+      "li1": "the content of advertising materials;",
+      "li2": "actions of advertisers;",
+      "li3": "advertised products or services."
+    },
+    "section6": {
+      "title": "Limitation of Liability",
+      "p1": "The website is provided on an \"as is\" basis, without any warranties.",
+      "adminIntro": "The website administration is not responsible for:",
+      "li1": "financial losses or any damages;",
+      "li2": "quality, safety or compliance of goods;",
+      "li3": "payment, delivery, returns or warranty obligations;",
+      "li4": "disputes between the user and the seller;",
+      "li5": "temporary unavailability of the website or third-party links.",
+      "userRisk": "All purchases and interactions with third-party websites are made by the user at their own risk."
+    },
+    "section7": {
+      "title": "Data Processing and Privacy",
+      "p1": "The website processes only the minimum necessary technical data to ensure the platform's operation and security.",
+      "p2": "The website is not responsible for the privacy policies of third-party websites to which it links.",
+      "p3": "Personal data is not transferred to third parties, except in cases provided by law."
+    },
+    "section8": {
+      "title": "Changes to Terms",
+      "p1": "The administration has the right to change these Terms at any time without prior notice.",
+      "p2": "The current version is always available on the website.",
+      "p3": "Continued use of the website after changes means acceptance of the updated Terms."
+    },
+    "section9": {
+      "title": "Contact Information",
+      "p1": "For questions related to these Terms, the user can contact us through the contact details specified on the website."
+    },
+    "lastUpdated": "Last updated: January 10, 2026"
   }
 }
