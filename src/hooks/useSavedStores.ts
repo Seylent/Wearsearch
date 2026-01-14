@@ -6,6 +6,7 @@
 import { useState, useEffect, useCallback, useMemo } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { authService } from '@/services/authService';
+import { getAuth } from '@/utils/authStorage';
 import { api, apiLegacy } from '@/services/api';
 
 const STORAGE_KEY = 'wearsearch_saved_stores';
@@ -46,7 +47,7 @@ const saveToStorage = (stores: SavedStore[]): void => {
  */
 export const useSavedStores = () => {
   const queryClient = useQueryClient();
-  const isLoggedIn = typeof globalThis.window !== 'undefined' && authService.isAuthenticated();
+  const isLoggedIn = globalThis.window !== undefined && authService.isAuthenticated();
   const [localStores, setLocalStores] = useState<SavedStore[]>([]);
 
   // Load from localStorage on mount
@@ -72,7 +73,7 @@ export const useSavedStores = () => {
         }
       }
     },
-    enabled: isLoggedIn,
+    enabled: globalThis.window !== undefined && isLoggedIn && !!getAuth(),
     staleTime: 5 * 60 * 1000, // 5 minutes
     retry: (failureCount, error: { status?: number; response?: { status?: number } }) => {
       const status = error?.status ?? error?.response?.status;

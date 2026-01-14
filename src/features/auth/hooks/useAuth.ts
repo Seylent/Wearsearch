@@ -6,7 +6,7 @@
 import { useCallback, useEffect } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { authService } from '@/services/authService';
-import { clearAuth } from '@/utils/authStorage';
+import { clearAuth, getAuth } from '@/utils/authStorage';
 import { logAuthError } from '@/services/logger';
 import type { User } from '@/types';
 
@@ -59,8 +59,8 @@ export const useAuth = () => {
         return null;
       }
     },
-    // 🚀 Не запускати під час SSR щоб уникнути hydration mismatch
-    enabled: typeof window !== 'undefined' && authService.isAuthenticated(),
+    // 🚀 Не запускати під час SSR і якщо немає токена
+    enabled: typeof window !== 'undefined' && !!getAuth(),
     staleTime: 30 * 60 * 1000, // 30 хвилин - збільшено для меншої к-сті запитів
     gcTime: 60 * 60 * 1000, // 1 година кешу
     refetchOnWindowFocus: false, // 🙅‍♂️ Не refetch при focus

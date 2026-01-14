@@ -97,8 +97,8 @@ export const SavedStoresList: React.FC<SavedStoresListProps> = ({
               
               <div className="flex-1 min-w-0">
                 <h3 className="font-medium text-white truncate">{store.name}</h3>
-                <p className="text-xs text-white/40" suppressHydrationWarning>
-                  {typeof window !== 'undefined' && new Date(store.savedAt).toLocaleDateString()}
+                <p className="text-xs text-white/40">
+                  {new Date(store.savedAt).toLocaleDateString()}
                 </p>
               </div>
               
