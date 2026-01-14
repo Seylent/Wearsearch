@@ -10,9 +10,9 @@ interface LazyDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   // Dynamic import function
-  importFunc: () => Promise<{ default: ComponentType<any> }>;
+  importFunc: () => Promise<{ default: ComponentType<Record<string, unknown>> }>;
   // Props to pass to the lazy component
-  componentProps?: Record<string, any>;
+  componentProps?: Record<string, unknown>;
   // Loading fallback
   fallback?: ReactNode;
 }

@@ -63,7 +63,7 @@ export const useSearchHistory = () => {
     queryFn: () => searchService.getSearchHistory(MAX_HISTORY_ITEMS),
     enabled: isLoggedIn,
     staleTime: 1000 * 60 * 5, // 5 minutes
-    retry: (failureCount, error: any) => {
+    retry: (failureCount, error: { status?: number; response?: { status?: number } }) => {
       const status = error?.status ?? error?.response?.status;
       if (status === 401 || status === 429) return false;
       return failureCount < 1;

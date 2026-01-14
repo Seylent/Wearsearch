@@ -239,22 +239,22 @@ function FavoritesWithParams() {
         {!!pagination && 
           typeof pagination === 'object' && 
           'totalPages' in pagination && 
-          (pagination as any).totalPages > 1 && (
+          (pagination as { totalPages: number; page: number; hasPrev: boolean; hasNext: boolean }).totalPages > 1 && (
           <div className="flex items-center justify-center gap-4 mt-12">
             <Button
               variant="outline"
               onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
-              disabled={!(pagination as any).hasPrev || favoritesPageFetching}
+              disabled={!(pagination as { hasPrev: boolean }).hasPrev || favoritesPageFetching}
             >
               Prev
             </Button>
             <span className="text-sm text-muted-foreground">
-              Page {(pagination as any).page} of {(pagination as any).totalPages}
+              Page {(pagination as { page: number }).page} of {(pagination as { totalPages: number }).totalPages}
             </span>
             <Button
               variant="outline"
               onClick={() => setCurrentPage((p) => p + 1)}
-              disabled={!(pagination as any).hasNext || favoritesPageFetching}
+              disabled={!(pagination as { hasNext: boolean }).hasNext || favoritesPageFetching}
             >
               Next
             </Button>

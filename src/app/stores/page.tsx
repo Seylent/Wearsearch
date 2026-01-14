@@ -1,5 +1,60 @@
 ﻿import { Suspense } from 'react';
+import { Metadata } from 'next';
 import StoresContent from '@/components/pages/StoresContent';
+
+// SEO метадані для сторінки магазинів
+export const metadata: Metadata = {
+  title: 'Магазини та бренди - Wearsearch | Знайдіть кращі ціни',
+  description: 'Перегляньте всі магазини та бренди на Wearsearch. Порівнюйте ціни, знаходьте найкращі пропозиції від популярних українських та міжнародних брендів.',
+  keywords: [
+    'магазини України',
+    'бренди одягу',
+    'порівняння магазинів',
+    'інтернет магазини',
+    'модні бренди',
+    'магазини взуття',
+    'аксесуари',
+    'найкращі ціни'
+  ],
+  openGraph: {
+    title: 'Магазини та бренди - Wearsearch',
+    description: 'Знайдіть найкращі магазини та бренди. Порівнюйте ціни та економте на покупках.',
+    type: 'website',
+    url: '/stores',
+    images: [
+      {
+        url: '/images/stores-og.jpg',
+        width: 1200,
+        height: 630,
+        alt: 'Магазини та бренди на Wearsearch',
+      },
+    ],
+  },
+  twitter: {
+    card: 'summary_large_image',
+    title: 'Магазини та бренди - Wearsearch',
+    description: 'Найкращі магазини та бренди в одному місці. Порівнюйте ціни!',
+    images: ['/images/stores-og.jpg'],
+  },
+  robots: {
+    index: true,
+    follow: true,
+    googleBot: {
+      index: true,
+      follow: true,
+      'max-video-preview': -1,
+      'max-image-preview': 'large',
+      'max-snippet': -1,
+    },
+  },
+  alternates: {
+    canonical: '/stores',
+    languages: {
+      'uk': '/stores',
+      'en': '/en/stores',
+    },
+  },
+};
 
 export default function StoresPage() {
   return (

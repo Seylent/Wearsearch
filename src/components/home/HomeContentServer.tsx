@@ -40,7 +40,7 @@ interface HomeContentProps {
 // SERVER COMPONENT - No 'use client'
 export default function HomeContent({
   featuredProducts,
-  newProducts,
+  _newProducts,
   seoData,
 }: Readonly<HomeContentProps>) {
   // Use only featured products to avoid duplicates

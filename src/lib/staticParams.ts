@@ -37,7 +37,7 @@ export async function getPopularProductIds(limit = 50): Promise<string[]> {
  */
 export async function getPopularStoreIds(limit = 30): Promise<string[]> {
   try {
-    const response = await fetch(`${API_URL}/api/v1/stores?limit=${limit}`, {
+    const response = await fetch(`${API_URL}/api/stores?limit=${limit}`, {
       next: { revalidate: 86400 }
     });
     

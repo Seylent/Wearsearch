@@ -73,7 +73,7 @@ class BrandService {
       if (filters?.sortBy) searchParams.set('sortBy', filters.sortBy);
       if (filters?.sortOrder) searchParams.set('sortOrder', filters.sortOrder);
 
-      const url = `${this.baseUrl}/api/v1/brands?${searchParams.toString()}`;
+      const url = `${this.baseUrl}/api/brands?${searchParams.toString()}`;
       
       const response = await fetch(url, {
         next: { revalidate: 3600 }, // 1 hour cache
@@ -100,7 +100,7 @@ class BrandService {
    */
   async getBrandById(id: string): Promise<Brand | null> {
     try {
-      const response = await fetch(`${this.baseUrl}/api/v1/brands/${id}`, {
+      const response = await fetch(`${this.baseUrl}/api/brands/${id}`, {
         next: { revalidate: 1800 }, // 30 min cache
       });
 
@@ -121,7 +121,7 @@ class BrandService {
    */
   async getBrandBySlug(slug: string): Promise<Brand | null> {
     try {
-      const response = await fetch(`${this.baseUrl}/api/v1/brands/slug/${slug}`, {
+      const response = await fetch(`${this.baseUrl}/api/brands/slug/${slug}`, {
         next: { revalidate: 1800 }, // 30 min cache
       });
 
@@ -266,7 +266,7 @@ class BrandService {
     countsByCountry: Record<string, number>;
   }> {
     try {
-      const response = await fetch(`${this.baseUrl}/api/v1/brands/stats`, {
+      const response = await fetch(`${this.baseUrl}/api/brands/stats`, {
         next: { revalidate: 3600 }, // 1 hour cache
       });
 

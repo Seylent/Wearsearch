@@ -1,7 +1,20 @@
 /**
  * Simple in-memory cache for static data
- * Helps reduce API calls for frequently accessed data
+ * 
+ * 📝 WHY CUSTOM CACHE INSTEAD OF NEXT.JS BUILT-IN?
+ * Next.js fetch cache works for API routes, but this cache is for:
+ * - Client-side data that doesn't come from fetch()
+ * - Complex objects that need in-memory storage
+ * - Data that needs different TTL logic than Next.js revalidate
+ * - Legacy compatibility during migration from SPA to SSR
+ * 
+ * 👀 TODO: Consider migrating to React Query cache or Next.js 15 cache APIs
  */
+
+// 🔥 CLIENT-ONLY MODULE - DO NOT IMPORT ON SERVER
+if (typeof window === 'undefined' && typeof global !== 'undefined') {
+  console.warn('cache.ts is client-only module, avoid server imports');
+}
 
 interface CacheEntry<T = unknown> {
   data: T;

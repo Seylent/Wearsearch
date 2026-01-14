@@ -5,12 +5,6 @@
 
 import { NextRequest, NextResponse } from 'next/server';
 
-interface TranslationRequest {
-  text: string;
-  sourceLanguage?: string;
-  targetLanguage: string;
-}
-
 interface TranslationResponse {
   translatedText?: string;
   sourceLanguage?: string;
@@ -20,7 +14,8 @@ interface TranslationResponse {
 
 export async function POST(request: NextRequest): Promise<NextResponse<TranslationResponse>> {
   try {
-    const { text, sourceLanguage = 'auto', targetLanguage }: TranslationRequest = await request.json();
+    const body = await request.json();
+    const { text, from, to } = body;
 
     if (!text?.trim()) {
       return NextResponse.json({
@@ -28,13 +23,13 @@ export async function POST(request: NextRequest): Promise<NextResponse<Translati
       }, { status: 400 });
     }
 
-    if (!targetLanguage) {
+    if (!to) {
       return NextResponse.json({
-        error: 'Target language is required',
+        error: 'Target language (to) is required',
       }, { status: 400 });
     }
 
-    // Forward to backend translation API
+    // Forward to backend translation API with same format
     const backendUrl = process.env.BACKEND_URL || 'http://localhost:3000';
     const response = await fetch(`${backendUrl}/api/translate`, {
       method: 'POST',
@@ -43,8 +38,8 @@ export async function POST(request: NextRequest): Promise<NextResponse<Translati
       },
       body: JSON.stringify({
         text: text.trim(),
-        sourceLanguage,
-        targetLanguage,
+        from: from || 'auto',
+        to,
       }),
     });
 
@@ -57,11 +52,8 @@ export async function POST(request: NextRequest): Promise<NextResponse<Translati
 
     const data = await response.json();
     
-    return NextResponse.json({
-      translatedText: data.translatedText,
-      sourceLanguage: data.sourceLanguage,
-      targetLanguage: data.targetLanguage,
-    });
+    // Return backend response as-is
+    return NextResponse.json(data);
 
   } catch (error) {
     console.error('Translation proxy error:', error);

@@ -55,11 +55,11 @@ interface AnalyticsDashboardProps {
     entity_id: string;
     user_name: string;
     created_at: string;
-    changes?: any;
+    changes?: Record<string, unknown>;
   }>;
   
   // Products data for price history selection
-  products: any[];
+  products: Array<Record<string, unknown>>;
 }
 
 export const AnalyticsDashboard: React.FC<AnalyticsDashboardProps> = ({

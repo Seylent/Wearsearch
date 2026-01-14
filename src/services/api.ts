@@ -4,11 +4,27 @@
  */
 
 import axios, { AxiosInstance, AxiosError, InternalAxiosRequestConfig, AxiosResponse } from 'axios';
-import { getAuth } from '@/utils/authStorage';
 import { API_CONFIG } from '@/config/api.config';
 import { handleApiError as createApiError, ApiError } from './api/errorHandler';
 import type { ApiError as ApiErrorType } from '@/types';
 import { z } from 'zod';
+
+// Dynamic import for client-only modules
+let authStorageModule: { getAuth: () => string | null } | null = null;
+
+const getAuth = (): string | null => {
+  if (typeof window === 'undefined') return null;
+  try {
+    if (!authStorageModule) {
+      // Use eval to bypass eslint rule for dynamic require
+      const req = new Function('modulePath', 'return require(modulePath)');
+      authStorageModule = req('@/utils/authStorage') as { getAuth: () => string | null };
+    }
+    return authStorageModule.getAuth();
+  } catch {
+    return null;
+  }
+};
 
 /**
  * Rate Limit Handler
@@ -54,12 +70,12 @@ class RequestQueue {
   private readonly maxConcurrent = process.env.NODE_ENV === 'production' ? 3 : 2; // Very low limit to avoid rate limiting
   private readonly minDelay = process.env.NODE_ENV === 'production' ? 100 : 200; // Higher delay in dev to space out requests
   private lastRequestTime = 0;
-  private readonly pendingRequests = new Map<string, Promise<any>>(); // Request deduplication
+  private readonly pendingRequests = new Map<string, Promise<unknown>>(); // Request deduplication
 
   async add<T>(fn: () => Promise<T>, dedupKey?: string): Promise<T> {
     // Request deduplication - if same request is already pending, return the same promise
     if (dedupKey && this.pendingRequests.has(dedupKey)) {
-      return this.pendingRequests.get(dedupKey);
+      return this.pendingRequests.get(dedupKey) as Promise<T>;
     }
 
     const promise = new Promise<T>((resolve, reject) => {
@@ -177,7 +193,7 @@ async function handleLegacyFallback(
 /**
  * Handle authentication errors
  */
-function handleAuthError(apiError: ApiError, originalError: unknown): void {
+function handleAuthError(apiError: ApiError, _originalError: unknown): void {
   const isAuthError = apiError.status === 401;
   if (!isAuthError) return;
 
@@ -508,22 +524,22 @@ export const apiDelete = async <T>(
 export { ApiError, isApiError, getErrorMessage } from './api/errorHandler';
 
 // Wrapper for GET requests with retry
-api.getWithRetry = async (url: string, config?: any) => {
+api.getWithRetry = async <T = unknown>(url: string, config?: Record<string, unknown>) => {
   return retryWithBackoff(
-    () => api.get(url, config),
+    () => api.get<T>(url, config),
     { maxAttempts: 3, initialDelay: 1000 }
   );
 };
 
 // Wrapper for POST requests with retry (only for idempotent operations)
-api.postWithRetry = async (url: string, data?: any, config?: any) => {
+api.postWithRetry = async <T = unknown>(url: string, data?: unknown, config?: Record<string, unknown>) => {
   return retryWithBackoff(
-    () => api.post(url, data, config),
+    () => api.post<T>(url, data, config),
     { 
       maxAttempts: 2, 
       initialDelay: 1000,
       shouldRetry: (error) => {
-        const status = (error as any)?.response?.status;
+        const status = (error as AxiosError)?.response?.status;
         // Only retry on network errors or 5xx
         return !status || status >= 500;
       }

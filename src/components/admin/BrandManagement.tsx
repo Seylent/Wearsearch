@@ -14,7 +14,6 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Plus, Search, Edit3, Trash2, Tag } from "lucide-react";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
-import { Textarea } from "@/components/ui/textarea";
 
 interface Brand {
   id: string;
@@ -160,28 +159,6 @@ export const BrandManagement: React.FC<BrandManagementProps> = ({
                   onChange={(e) => setFormData(prev => ({ ...prev, name: e.target.value }))}
                   placeholder={t('admin.enterBrandName')}
                   required
-                />
-              </div>
-              
-              <div className="space-y-2">
-                <Label htmlFor="description">{t('admin.description')}</Label>
-                <Textarea
-                  id="description"
-                  value={formData.description}
-                  onChange={(e) => setFormData(prev => ({ ...prev, description: e.target.value }))}
-                  placeholder={t('admin.enterDescription')}
-                  rows={3}
-                />
-              </div>
-              
-              <div className="space-y-2">
-                <Label htmlFor="website">{t('admin.website')}</Label>
-                <Input
-                  id="website"
-                  value={formData.website}
-                  onChange={(e) => setFormData(prev => ({ ...prev, website: e.target.value }))}
-                  placeholder="https://example.com"
-                  type="url"
                 />
               </div>
               

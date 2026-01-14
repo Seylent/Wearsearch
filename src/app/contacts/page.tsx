@@ -1,5 +1,59 @@
 ﻿import { Suspense } from 'react';
+import { Metadata } from 'next';
 import ContactsContent from '@/components/pages/ContactsContent';
+
+// SEO метадані для сторінки контактів
+export const metadata: Metadata = {
+  title: 'Контакти - Wearsearch | Зв\'яжіться з нами',
+  description: 'Зв\'яжіться з командою Wearsearch. Ми готові допомогти вам з будь-якими питаннями щодо пошуку товарів, порівняння цін та покупок.',
+  keywords: [
+    'контакти Wearsearch',
+    'підтримка клієнтів',
+    'зв\'язатися з нами',
+    'допомога покупцям',
+    'служба підтримки',
+    'питання про товари',
+    'технічна підтримка'
+  ],
+  openGraph: {
+    title: 'Контакти - Wearsearch',
+    description: 'Маєте питання? Зв\'яжіться з нашою командою підтримки. Ми завжди готові допомогти!',
+    type: 'website',
+    url: '/contacts',
+    images: [
+      {
+        url: '/images/contacts-og.jpg',
+        width: 1200,
+        height: 630,
+        alt: 'Контакти Wearsearch - зв\'яжіться з нами',
+      },
+    ],
+  },
+  twitter: {
+    card: 'summary_large_image',
+    title: 'Контакти - Wearsearch',
+    description: 'Потрібна допомога? Наша команда готова відповісти на всі ваші питання.',
+    images: ['/images/contacts-og.jpg'],
+  },
+  robots: {
+    index: true,
+    follow: true,
+    googleBot: {
+      index: true,
+      follow: true,
+      'max-video-preview': -1,
+      'max-image-preview': 'large',
+      'max-snippet': -1,
+    },
+  },
+  alternates: {
+    canonical: '/contacts',
+    languages: {
+      'uk': '/contacts',
+      'en': '/en/contacts',
+    },
+  },
+};
 
 export default function ContactsPage() {
   return (

@@ -1,6 +1,6 @@
 'use client';
 
-import { createContext, useContext, ReactNode, useMemo } from 'react';
+import { createContext, useContext, ReactNode, useMemo, useCallback } from 'react';
 import { useFavorites } from '@/hooks/useApi';
 import { useAuth } from '@/features/auth/hooks/useAuth';
 
@@ -35,16 +35,20 @@ export function FavoritesProvider({ children }: Readonly<{ children: ReactNode }
   // Only fetch favorites if user is authenticated
   const { data: favoritesData, isLoading } = useFavorites();
   
-  const favorites = isAuthenticated ? favoritesData?.favorites ?? [] : [];
+  // Memoize favorites array to prevent unnecessary changes
+  const favorites = useMemo(() => {
+    return isAuthenticated ? favoritesData?.favorites ?? [] : [];
+  }, [isAuthenticated, favoritesData?.favorites]);
   
-  const isFavorited = (productId: string) => {
+  // Wrap isFavorited in useCallback to keep it stable
+  const isFavorited = useCallback((productId: string) => {
     if (!Array.isArray(favorites)) return false;
     const target = String(productId);
     return favorites.some((fav) => {
       const favProductId = getFavoriteProductId(fav);
       return favProductId !== undefined && String(favProductId) === target;
     });
-  };
+  }, [favorites]);
   
   const value = useMemo(() => ({
     favorites,

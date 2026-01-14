@@ -28,7 +28,7 @@ fetch('/api/translate', {
 
 // Test 2: Component Integration
 console.log('✅ Testing component props...');
-const mockProps = {
+const _mockProps = {
   autoTranslateDescription: true,
   onAutoTranslateDescriptionChange: (checked) => {
     console.log('Callback works:', checked);
@@ -38,7 +38,7 @@ console.log('✅ Component props structure verified');
 
 // Test 3: Product Creation Data
 console.log('✅ Testing product data structure...');
-const mockProduct = {
+const _mockProduct = {
   name: 'Test Product',
   description: 'Test description',
   autoTranslateDescription: true

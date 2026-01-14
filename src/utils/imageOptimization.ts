@@ -1,6 +1,15 @@
 /**
  * Image Optimization Utilities
  * Handles CloudFront URLs and responsive images
+ * 
+ * 📝 WHY CUSTOM IMAGE UTILS ALONGSIDE NEXT.JS <Image/>?
+ * Next.js Image component is great, but this utility handles:
+ * - Legacy S3 URLs transformation to CloudFront
+ * - Custom responsive breakpoints for our design
+ * - Fallback URLs when CDN is unavailable
+ * - Server-side URL transformation (used in generateMetadata)
+ * 
+ * 🚨 KEEP: This complements Next.js Image, doesn't replace it
  */
 
 /**

@@ -197,6 +197,16 @@
     "toys": "Toys & Games",
     "health": "Health & Wellness"
   },
+  "productTypes": {
+    "jackets": "Jackets",
+    "hoodies": "Hoodies",
+    "t-shirts": "T-Shirts",
+    "pants": "Pants",
+    "jeans": "Jeans",
+    "shorts": "Shorts",
+    "shoes": "Shoes",
+    "accessories": "Accessories"
+  },
   "colors": {
     "black": "Black",
     "white": "White",
@@ -220,6 +230,16 @@
     "men": "Men",
     "women": "Women",
     "kids": "Kids"
+  },
+  "gender": {
+    "male": "Male",
+    "female": "Female",
+    "unisex": "Unisex",
+    "men": "Men",
+    "women": "Women",
+    "Male": "Male",
+    "Female": "Female",
+    "Unisex": "Unisex"
   },
   "home": {
     "newArrivals": "New Arrivals",
@@ -318,6 +338,24 @@
     "description": "Explore our curated collection of online fashion stores. Find the best shops for your style.",
     "searchPlaceholder": "Search stores...",
     "storesLabel": "Stores"
+  },
+  "productDetail": {
+    "description": "Description",
+    "priceRangeAcrossStores": "Price range across stores",
+    "availableAt": "Available at",
+    "stores": "stores",
+    "searchStores": "Search stores...",
+    "sortBy": "Sort by",
+    "name": "Name",
+    "priceAsc": "Price: Low to High",
+    "priceDesc": "Price: High to Low",
+    "recommendedOnly": "Recommended only",
+    "recommended": "Recommended",
+    "sizes": "Sizes",
+    "noStoresMatch": "No stores match your filters",
+    "clearFilters": "Clear filters",
+    "noStoresAvailable": "No stores available for this product yet",
+    "addStores": "Add stores"
   },
   "contacts": {
     "title": "Contact Us",

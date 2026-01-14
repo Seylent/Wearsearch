@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useTranslation } from 'react-i18next';
 import { NeonAbstractions } from '@/components/NeonAbstractions';
@@ -20,7 +20,6 @@ import {
   PaginationEllipsis,
 } from '@/components/ui/pagination';
 import FilterPanel from '@/components/FilterPanel';
-import { ProductCardSkeleton } from '@/components/ProductCard';
 import type { Product } from '@/types';
 import type { Brand } from '@/services/brandService';
 import type { Category } from '@/services/categoryService';

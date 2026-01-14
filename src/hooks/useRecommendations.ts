@@ -22,7 +22,7 @@ export const useRecommendations = (limit: number = 10) => {
     queryFn: () => recommendationsService.getRecommendations(limit),
     enabled: isLoggedIn,
     staleTime: 1000 * 60 * 10, // 10 minutes
-    retry: (failureCount, error: any) => {
+    retry: (failureCount, error: { status?: number; response?: { status?: number } }) => {
       const status = error?.status ?? error?.response?.status;
       if (status === 401 || status === 429) return false;
       return failureCount < 1;

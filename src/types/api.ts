@@ -127,7 +127,7 @@ export interface ActivityLogEntry extends BaseEntity {
   entity_id: string | number;
   user_id?: string;
   details?: string;
-  metadata?: Record<string, any>;
+  metadata?: Record<string, unknown>;
   timestamp: string;
 }
 

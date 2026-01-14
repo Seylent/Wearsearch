@@ -5,7 +5,7 @@
 
 'use client';
 
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -46,12 +46,12 @@ interface AddProductFormProps {
   currentSizeInput: string;
   
   // Templates
-  savedTemplates: Array<{id: string, name: string, data: any}>;
+  savedTemplates: Array<{id: string; name: string; data: Record<string, unknown>}>;
   showTemplates: boolean;
   
   // Data
-  stores: any[];
-  brands: any[];
+  stores: Array<{ id: string; name: string }>;
+  brands: Array<{ id: string; name: string }>;
   
   // Handlers
   onProductNameChange: (value: string) => void;
@@ -81,6 +81,10 @@ interface AddProductFormProps {
   onAutoTranslateDescriptionChange?: (checked: boolean) => void;
   onDeleteTemplate: (id: string) => void;
   onToggleTemplates: () => void;
+  
+  // Template handlers
+  onSaveAsTemplate?: (templateName: string) => void;
+  onLoadTemplate?: (templateData: Record<string, unknown>) => void;
   
   // Submit
   onSubmit: (e: React.FormEvent) => void;
@@ -167,18 +171,29 @@ export const AddProductForm: React.FC<AddProductFormProps> = ({
   }
   const productSubmitText = submitText;
 
-  const CATEGORIES = [
-    { value: "clothing", label: t('categories.clothing') },
-    { value: "shoes", label: t('categories.shoes') },
-    { value: "accessories", label: t('categories.accessories') },
-    { value: "electronics", label: t('categories.electronics') },
-    { value: "home", label: t('categories.home') },
-    { value: "beauty", label: t('categories.beauty') },
-    { value: "sports", label: t('categories.sports') },
-    { value: "books", label: t('categories.books') },
-    { value: "toys", label: t('categories.toys') },
-    { value: "health", label: t('categories.health') },
-  ];
+  // Завантаження категорій з backend
+  const [backendCategories, setBackendCategories] = useState<Array<{ id?: string; slug?: string; name: string }>>([]);
+  
+  useEffect(() => {
+    const fetchCategories = async () => {
+      try {
+        const response = await fetch('/api/categories?lang=uk');
+        const data = await response.json();
+        // Backend повертає {success: true, categories: [...]}
+        if (data.success && Array.isArray(data.categories)) {
+          setBackendCategories(data.categories);
+        }
+      } catch (error) {
+        console.error('Failed to load categories:', error);
+      }
+    };
+    fetchCategories();
+  }, []);
+
+  const CATEGORIES = backendCategories.map(cat => ({
+    value: cat.slug || cat.id || cat.name.toLowerCase(),
+    label: cat.name
+  }));
 
   const COLORS = [
     { value: "red", label: t('colors.red') },
@@ -197,11 +212,11 @@ export const AddProductForm: React.FC<AddProductFormProps> = ({
     { value: "multicolor", label: t('colors.multicolor') },
   ];
 
+  // Стандартні значення gender з backend (men, women, unisex)
   const GENDERS = [
     { value: "unisex", label: t('genders.unisex') },
     { value: "men", label: t('genders.men') },
     { value: "women", label: t('genders.women') },
-    { value: "kids", label: t('genders.kids') },
   ];
 
   const storeOptions = (stores || []).map(store => ({
@@ -578,10 +593,10 @@ export const AddProductForm: React.FC<AddProductFormProps> = ({
             {productSubmitText}
           </Button>
           
-          {!editingProductId && (
+          {!editingProductId && onSaveAsTemplate && (
             <Button
               type="button"
-              onClick={onSaveAsTemplate}
+              onClick={() => onSaveAsTemplate?.('Product Template')}
               variant="outline"
               className="h-12 px-6"
               disabled={!productCategory && !productBrandId}

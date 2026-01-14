@@ -25,9 +25,9 @@ import { getCategoryTranslation, getColorTranslation } from "@/utils/translation
 
 interface ProductListProps {
   // Data
-  products: any[];
-  stores: any[];
-  brands: any[];
+  products: Array<Record<string, unknown>>;
+  stores: Array<Record<string, unknown>>;
+  brands: Array<Record<string, unknown>>;
   
   // Search and filters
   searchProducts: string;
@@ -45,8 +45,8 @@ interface ProductListProps {
   onSelectAllProducts: () => void;
   
   // Actions
-  onEditProduct: (product: any) => void;
-  onDeleteProduct: (product: any) => void;
+  onEditProduct: (product: Record<string, unknown>) => void;
+  onDeleteProduct: (product: Record<string, unknown>) => void;
   onBulkDelete: () => void;
   
   // Export/Import

@@ -59,7 +59,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
         const categoriesData = await categoriesResponse.json();
         // Бекенд віддає { success: true, categories: [...] }
         const categoriesArray = categoriesData.categories || categoriesData;
-        categories = (Array.isArray(categoriesArray) ? categoriesArray : []).map((category: any) => ({
+        categories = (Array.isArray(categoriesArray) ? categoriesArray : []).map((category: { canonical_url?: string; slug: string; updated_at?: string }) => ({
           url: category.canonical_url || `${SITE_URL}/products?type=${category.slug}`,
           lastModified: category.updated_at ? new Date(category.updated_at) : currentDate,
           changeFrequency: 'daily' as const,
@@ -81,7 +81,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
         const brandsData = await brandsResponse.json();
         // Бекенд віддає { success: true, count: 10, data: [...] }
         const brandsArray = brandsData.data || brandsData;
-        brands = (Array.isArray(brandsArray) ? brandsArray : []).map((brand: any) => ({
+        brands = (Array.isArray(brandsArray) ? brandsArray : []).map((brand: { canonical_url?: string; slug?: string; id: string; updated_at?: string }) => ({
           url: brand.canonical_url || `${SITE_URL}/brands/${brand.slug || brand.id}`,
           lastModified: brand.updated_at ? new Date(brand.updated_at) : currentDate,
           changeFrequency: 'weekly' as const,
@@ -103,7 +103,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
         const productsData = await productsResponse.json();
         // Бекенд віддає { success: true, products: [...] }
         const productsArray = productsData.products || productsData;
-        products = (Array.isArray(productsArray) ? productsArray : []).map((product: any) => ({
+        products = (Array.isArray(productsArray) ? productsArray : []).map((product: { canonical_url?: string; slug?: string; id: string; updated_at?: string }) => ({
           url: product.canonical_url || `${SITE_URL}/products/${product.slug || product.id}`,
           lastModified: product.updated_at ? new Date(product.updated_at) : currentDate,
           changeFrequency: 'weekly' as const,

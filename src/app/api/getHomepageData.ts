@@ -76,7 +76,7 @@ export async function getHomepageData(): Promise<HomepageAPIResponse> {
             seoData = seoResponse.item || seoResponse;
             console.log('📝 SEO data loaded:', seoData?.h1_title || 'No title');
           }
-        } catch (_seoError) {
+        } catch (_seoError: unknown) {
           console.log('⚠️ SEO data not available');
         }
         
@@ -122,7 +122,7 @@ export async function getHomepageData(): Promise<HomepageAPIResponse> {
     
     console.log('✅ Products loaded:', products.length);
       
-    let categories: any[] = [];
+    let categories: Array<{ id: string; name: string; slug: string; imageUrl?: string; productCount: number }> = [];
     if (categoriesRes.status === 'fulfilled' && categoriesRes.value.ok) {
       const data = await categoriesRes.value.json();
       // Backend може віддавати: { success: true, categories: [...] } або просто масив

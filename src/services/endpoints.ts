@@ -61,7 +61,7 @@ export const ENDPOINTS = {
 
   // Store endpoints
   STORES: {
-    LIST: '/stores',
+    LIST: '/admin/stores',
     DETAIL: (id: string | number) => `/stores/${id}`,
     PRODUCTS: (id: string | number, params?: { category?: string; page?: number; limit?: number }) => {
       const baseUrl = `/stores/${id}/products`;
@@ -72,9 +72,9 @@ export const ENDPOINTS = {
       const query = searchParams.toString();
       return query ? `${baseUrl}?${query}` : baseUrl;
     },
-    CREATE: '/stores',
-    UPDATE: (id: string | number) => `/stores/${id}`,
-    DELETE: (id: string | number) => `/stores/${id}`,
+    CREATE: '/admin/stores',
+    UPDATE: (id: string | number) => `/admin/stores/${id}`,
+    DELETE: (id: string | number) => `/admin/stores/${id}`,
     ADMIN_LIST: '/stores', // With search parameter
   },
 

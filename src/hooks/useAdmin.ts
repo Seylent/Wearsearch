@@ -6,7 +6,7 @@
 'use client';
 
 import { useState, useEffect, useCallback, useMemo } from "react";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { useToast } from "@/hooks/use-toast";
 import { adminApi } from "@/services/api/admin.api";
 import { advancedApi } from "@/services/api/advanced.api";
@@ -24,11 +24,16 @@ const getErrorMessage = (error: unknown): string => {
 
 export const useAdmin = () => {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const { toast } = useToast();
   const { isAuthenticated, isAdmin } = useAuth();
 
   // Dashboard data
-  const [dashboardData, setDashboardData] = useState<any>(null);
+  const [dashboardData, setDashboardData] = useState<{
+    products?: { items: unknown[] };
+    stores?: { items: unknown[] };
+    brands?: { items: unknown[] };
+  } | null>(null);
   const [isLoadingDashboard, setIsLoadingDashboard] = useState(true);
 
   // Active tab
@@ -65,7 +70,7 @@ export const useAdmin = () => {
   const [savedTemplates, setSavedTemplates] = useState<Array<{
     id: string;
     name: string;
-    data: any;
+    data: Record<string, unknown>;
   }>>([]);
   const [showTemplates, setShowTemplates] = useState(false);
 
@@ -105,7 +110,7 @@ export const useAdmin = () => {
     entity_id: string;
     user_name: string;
     created_at: string;
-    changes?: any;
+    changes?: Record<string, unknown>;
   }> = []; // Activity log placeholder
 
   // Load dashboard data
@@ -150,6 +155,64 @@ export const useAdmin = () => {
     return dashboardData?.brands?.items || [];
   }, [dashboardData]);
 
+  // Load product data when editing
+  useEffect(() => {
+    if (editingProductId && products.length > 0) {
+      const product = products.find((p: { id: string }) => p.id === editingProductId) as Record<string, unknown> | undefined;
+      if (product) {
+        console.log('Loading product for edit:', product);
+        setProductName((product.name as string) || "");
+        setProductCategory((product.type as string) || "");
+        setProductColor((product.color as string) || "");
+        setProductGender((product.gender as string) || "unisex");
+        setProductBrandId((product.brand_id as string) || "");
+        setProductDescription((product.description as string) || (product.description_en as string) || "");
+        setProductImageUrl((product.image_url as string) || "");
+        
+        // Handle images - backend може повертати або масив або одиночне фото
+        if (product.images && Array.isArray(product.images)) {
+          setProductImages(product.images as string[]);
+        } else if (product.image_url) {
+          setProductImages([product.image_url as string]);
+        } else {
+          setProductImages([]);
+        }
+        
+        setPrimaryImageIndex(0);
+        setProductStatus((product.status as "draft" | "published") || "published");
+        setPublishAt((product.publish_at as string) || "");
+        setUnpublishAt((product.unpublish_at as string) || "");
+        
+        // Load stores - backend повертає product_stores масив
+        if (product.product_stores && Array.isArray(product.product_stores)) {
+          const storesData = (product.product_stores as Array<Record<string, unknown>>).map((ps) => {
+            // ps може мати вкладений об'єкт stores або просто store_id
+            const storeId = (ps.store_id as string) || ((ps.stores as Record<string, unknown>)?.id as string) || "";
+            const storeName = (ps.store_name as string) || ((ps.stores as Record<string, unknown>)?.name as string) || (stores.find((s: { id: string }) => s.id === storeId) as { name?: string })?.name || "Unknown Store";
+            return {
+              store_id: storeId,
+              store_name: storeName,
+              price: (ps.price as number) || 0,
+              sizes: (ps.sizes as string[]) || []
+            };
+          });
+          setSelectedStores(storesData);
+        } else {
+          setSelectedStores([]);
+        }
+      }
+    }
+  }, [editingProductId, products, stores]);
+
+  // Handle URL parameter for editing product
+  useEffect(() => {
+    const editProductId = searchParams.get('editProduct');
+    if (editProductId && products.length > 0) {
+      setEditingProductId(editProductId);
+      setActiveTab('add-product');
+    }
+  }, [searchParams, products]);
+
   // Analytics calculations
   const analytics = useMemo(() => {
     if (products.length === 0) {
@@ -165,19 +228,19 @@ export const useAdmin = () => {
       };
     }
 
-    const prices = products.map((p: any) => p.price);
+    const prices = products.map((p: { price: number }) => p.price);
     const avgPrice = prices.reduce((a: number, b: number) => a + b, 0) / prices.length;
     const minPrice = Math.min(...prices);
     const maxPrice = Math.max(...prices);
 
     const categoriesCount: Record<string, number> = {};
-    products.forEach((p: any) => {
+    products.forEach((p: { type?: string; category?: string }) => {
       const cat = p.type || p.category || 'uncategorized';
       categoriesCount[cat] = (categoriesCount[cat] || 0) + 1;
     });
 
     const brandCount: Record<string, { name: string; count: number }> = {};
-    products.forEach((p: any) => {
+    products.forEach((p: { brand?: string }) => {
       if (p.brand) {
         brandCount[p.brand] = brandCount[p.brand] || { name: p.brand, count: 0 };
         brandCount[p.brand].count++;
@@ -265,30 +328,75 @@ export const useAdmin = () => {
 
     setSubmitting(true);
     try {
-      const productData = {
+      // Handle auto-translation if enabled
+      const finalDescriptionUk = productDescription;
+      let finalDescriptionEn = '';
+      
+      if (autoTranslateDescription && productDescription) {
+        try {
+          const response = await fetch('/api/translate', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              text: productDescription,
+              from: 'uk',
+              to: 'en'
+            })
+          });
+          
+          if (response.ok) {
+            const data = await response.json();
+            if (data.success && data.translated) {
+              finalDescriptionEn = data.translated;
+            }
+          } else {
+            console.warn('Translation API failed, description will be saved only in Ukrainian');
+          }
+        } catch (error) {
+          console.error('Translation failed:', error);
+          console.warn('Continuing without translation - description will be saved only in Ukrainian');
+        }
+      }
+
+      const productData: Record<string, unknown> = {
         name: productName,
-        type: 'clothing' as const,
-        category: productCategory,
+        type: productCategory,
         color: productColor,
         gender: productGender,
-        brand_id: productBrandId,
-        description: productDescription,
+        brand_id: productBrandId || null,
         price: selectedStores.length > 0 ? selectedStores[0].price : 0,
-        image: productImageUrl,
-        images: productImages,
-        primary_image_index: primaryImageIndex,
+        image_url: productImageUrl || null,
         status: productStatus,
         publish_at: publishAt || null,
         unpublish_at: unpublishAt || null,
-        stores: selectedStores,
-        autoTranslateDescription: autoTranslateDescription,
+        stores: selectedStores.map(s => ({
+          store_id: s.store_id,
+          price: Number(s.price),
+          sizes: s.sizes || []
+        }))
       };
+      
+      // Add description - backend expects description_uk and optionally description_en
+      if (finalDescriptionUk) {
+        productData.description_uk = finalDescriptionUk;
+      }
+      if (autoTranslateDescription && finalDescriptionEn) {
+        productData.description_en = finalDescriptionEn;
+      }
+      // Також можна використати autoTranslateDescription для backend
+      if (autoTranslateDescription && !finalDescriptionEn) {
+        productData.autoTranslateDescription = true;
+      }
+      
+      console.log('Sending product data to backend:', productData);
 
       let result;
       if (editingProductId) {
         result = await adminApi.updateProduct(editingProductId, productData);
+        console.log('Product updated, response:', result);
       } else {
         result = await adminApi.createProduct(productData);
+        console.log('Product created, response:', result);
       }
 
       toast({
@@ -298,8 +406,9 @@ export const useAdmin = () => {
 
       localStorage.removeItem('admin_product_draft');
       resetForm();
-      loadDashboard();
+      await loadDashboard(); // Додав await для синхронізації
     } catch (error: unknown) {
+      console.error('Failed to save product:', error);
       toast({
         variant: "destructive",
         title: "Error",
@@ -310,7 +419,7 @@ export const useAdmin = () => {
     }
   }, [
     productName, productCategory, productColor, productGender, productBrandId,
-    productDescription, productImageUrl, productImages, primaryImageIndex,
+    productDescription, productImageUrl,
     productStatus, publishAt, unpublishAt, selectedStores, editingProductId,
     autoTranslateDescription, resetForm, loadDashboard, toast
   ]);
@@ -337,7 +446,7 @@ export const useAdmin = () => {
     if (selectedProductIds.size === products.length) {
       setSelectedProductIds(new Set());
     } else {
-      setSelectedProductIds(new Set(products.map((p: any) => p.id)));
+      setSelectedProductIds(new Set(products.map((p: { id: string }) => p.id)));
     }
   }, [selectedProductIds.size, products]);
 
@@ -401,13 +510,13 @@ export const useAdmin = () => {
     }
   }, [productCategory, productColor, productGender, productBrandId, productDescription, savedTemplates, loadTemplates, toast]);
 
-  const loadTemplate = useCallback((template: any) => {
+  const loadTemplate = useCallback((template: { data?: Record<string, unknown> }) => {
     if (template.data) {
-      setProductCategory(template.data.category || "");
-      setProductColor(template.data.color || "");
-      setProductGender(template.data.gender || "");
-      setProductBrandId(template.data.brand_id || "");
-      setProductDescription(template.data.description || "");
+      setProductCategory((template.data.category as string) || "");
+      setProductColor((template.data.color as string) || "");
+      setProductGender((template.data.gender as string) || "");
+      setProductBrandId((template.data.brand_id as string) || "");
+      setProductDescription((template.data.description as string) || "");
     }
   }, []);
 

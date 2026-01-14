@@ -16,7 +16,9 @@ import {
   Send,
   Instagram,
   Video,
-  Mail
+  Mail,
+  Facebook,
+  Twitter
 } from "lucide-react";
 
 interface ContactInfo {
@@ -24,6 +26,8 @@ interface ContactInfo {
   instagram?: string;
   tiktok?: string;
   email?: string;
+  facebook?: string;
+  twitter?: string;
 }
 
 export const ContactManagement: React.FC = () => {
@@ -188,7 +192,7 @@ export const ContactManagement: React.FC = () => {
 
             <div>
               <label htmlFor="facebook" className="block text-sm font-medium mb-2 flex items-center gap-2">
-                <MessageCircle className="w-4 h-4" />
+                <Facebook className="w-4 h-4" />
                 {t('contacts.facebook', 'Facebook')}
               </label>
               <Input
@@ -202,7 +206,7 @@ export const ContactManagement: React.FC = () => {
 
             <div>
               <label htmlFor="twitter" className="block text-sm font-medium mb-2 flex items-center gap-2">
-                <MessageCircle className="w-4 h-4" />
+                <Twitter className="w-4 h-4" />
                 {t('contacts.twitter', 'Twitter / X')}
               </label>
               <Input

@@ -1,6 +1,9 @@
 /**
  * Unified Authentication Storage Module
  * Centralized token management for the entire application
+ * 
+ * 🔥 CLIENT-ONLY MODULE - DO NOT IMPORT ON SERVER
+ * This module accesses localStorage and should only run in browser
  */
 
 import { logError } from '@/services/logger';
@@ -22,7 +25,6 @@ export const setAuth = (token: string, userId?: string, expiresAt?: number): voi
     userId,
     expiresAt,
   };
-  if (typeof window === 'undefined') return;
   
   localStorage.setItem(AUTH_TOKEN_KEY, JSON.stringify(authData));
   

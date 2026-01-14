@@ -62,7 +62,7 @@ class CategoryService {
       if (filters?.sortBy) searchParams.set('sortBy', filters.sortBy);
       if (filters?.sortOrder) searchParams.set('sortOrder', filters.sortOrder);
 
-      const url = `${this.baseUrl}/api/v1/categories?${searchParams.toString()}`;
+      const url = `${this.baseUrl}/api/categories?${searchParams.toString()}`;
       
       const response = await fetch(url, {
         next: { revalidate: 3600 }, // 1 hour cache
@@ -89,7 +89,7 @@ class CategoryService {
    */
   async getCategoryById(id: string): Promise<Category | null> {
     try {
-      const response = await fetch(`${this.baseUrl}/api/v1/categories/${id}`, {
+      const response = await fetch(`${this.baseUrl}/api/categories/${id}`, {
         next: { revalidate: 1800 }, // 30 min cache
       });
 
@@ -110,7 +110,7 @@ class CategoryService {
    */
   async getCategoryBySlug(slug: string): Promise<Category | null> {
     try {
-      const response = await fetch(`${this.baseUrl}/api/v1/categories/slug/${slug}`, {
+      const response = await fetch(`${this.baseUrl}/api/categories/slug/${slug}`, {
         next: { revalidate: 1800 }, // 30 min cache
       });
 

@@ -153,7 +153,7 @@ export default async function CategoryPage({ params }: CategoryPageProps) {
                 </div>
               }>
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-                  {products.map((product: any) => (
+                  {products.map((product: { id: string; image_url?: string; name: string; brand?: string; price: number }) => (
                     <div key={product.id} className="bg-zinc-900 rounded-lg p-4">
                       {/* Карточка товару */}
                       <a href={`/products/${product.id}`} className="block">
@@ -232,7 +232,7 @@ export async function generateStaticParams() {
 
     const categories = await response.json();
     
-    return categories.map((category: any) => ({
+    return categories.map((category: { slug: string }) => ({
       slug: category.slug,
     }));
   } catch (error) {

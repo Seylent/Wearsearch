@@ -1,7 +1,23 @@
 /**
  * Performance Monitoring Utility
  * Tracks and logs performance metrics for optimization
+ * 
+ * 📝 WHY CUSTOM PERFORMANCE MONITORING?
+ * While Next.js has built-in Web Vitals reporting, this utility provides:
+ * - Custom thresholds specific to our app
+ * - Detailed breakdown of resource sizes
+ * - Integration with our logging system
+ * - Real-time monitoring in development
+ * 
+ * 👀 TODO: Consider migrating to Next.js 15 built-in monitoring or Vercel Analytics
+ * 
+ * 🔥 CLIENT-ONLY MODULE - DO NOT IMPORT ON SERVER
  */
+
+// Runtime guard
+if (typeof window === 'undefined') {
+  console.warn('performanceMonitor.ts is client-only, avoid server imports');
+}
 
 // Performance thresholds
 const THRESHOLDS = {

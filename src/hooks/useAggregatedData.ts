@@ -103,7 +103,7 @@ export const useHomepageData = (currency: string = 'UAH', options?: QueryOptions
             brands: [],
             statistics: statsData.stats || statsData || { total_products: 0, total_stores: 0, total_brands: 0 },
           };
-        } catch {
+        } catch (_error: unknown) {
           return {
             products: [],
             brands: [],
@@ -216,7 +216,7 @@ export const useProductsPageData = (filters: ProductFilters = {}, options?: Quer
         const brands = Array.isArray(facetsBrands) ? facetsBrands : [];
 
         return { products: items, brands, pagination, facets, currency };
-      } catch (error) {
+      } catch (_error: unknown) {
         // Fallback to individual calls
         if (process.env.NODE_ENV !== 'production') {
           console.log('[Products Page] Using fallback endpoints');
@@ -250,7 +250,7 @@ export const useProductsPageData = (filters: ProductFilters = {}, options?: Quer
     refetchOnWindowFocus: false,
     retry: (failureCount, error) => {
       // Retry on network errors, not on 4xx
-      const status = (error as any)?.response?.status;
+      const status = (error as { response?: { status?: number } })?.response?.status;
       if (status && status >= 400 && status < 500) return false;
       return failureCount < 2;
     },

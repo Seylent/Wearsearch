@@ -159,7 +159,7 @@ export default async function BrandPage({ params }: BrandPageProps) {
                 </div>
               }>
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-                  {products.map((product: any) => (
+                  {products.map((product: { id: string; image_url?: string; name: string; category?: string; price: number }) => (
                     <div key={product.id} className="bg-zinc-900 rounded-lg p-4">
                       <a href={`/products/${product.id}`} className="block">
                         <img
@@ -239,7 +239,7 @@ export async function generateStaticParams() {
     const brands = await response.json();
     
     // Використовуємо id бренду як slug (згідно структури API)
-    return brands.map((brand: any) => ({
+    return brands.map((brand: { id: number | string }) => ({
       slug: brand.id.toString(),
     }));
   } catch (error) {
