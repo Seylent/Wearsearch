@@ -165,7 +165,7 @@ export const AddProductForm: React.FC<AddProductFormProps> = ({
   const isUpdating = !!editingProductId;
   let submitText: string;
   if (submitting) {
-    submitText = isUpdating ? t('admin.submitting') : t('admin.submitting');
+    submitText = t('admin.submitting');
   } else {
     submitText = isUpdating ? t('admin.updateProduct') : t('admin.createProduct');
   }
