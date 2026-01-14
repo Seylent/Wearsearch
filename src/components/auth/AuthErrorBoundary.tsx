@@ -35,7 +35,7 @@ export const AuthErrorBoundary = ({ children }: AuthErrorBoundaryProps) => {
     return () => {
       globalThis.window.removeEventListener('auth:logout', handleAuthLogout as EventListener);
     };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+     
   }, [queryClient]);
 
   return <>{children}</>;

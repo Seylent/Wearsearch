@@ -60,11 +60,11 @@ export const useAuth = () => {
       }
     },
     // 🚀 Не запускати під час SSR і якщо немає токена
-    enabled: typeof window !== 'undefined' && !!getAuth(),
+    enabled: globalThis.window !== undefined && !!getAuth(),
     staleTime: 30 * 60 * 1000, // 30 хвилин - збільшено для меншої к-сті запитів
     gcTime: 60 * 60 * 1000, // 1 година кешу
     refetchOnWindowFocus: false, // 🙅‍♂️ Не refetch при focus
-    refetchOnMount: false, // 🙅‍♂️ Не refetch при mount якщо є дані
+    refetchOnMount: 'always', // ✅ Завжди refetch при mount для свіжих даних після логіну
     refetchOnReconnect: false, // 🙅‍♂️ Не refetch при reconnect
     retry: (failureCount, error) => {
       // Don't retry on 401 (unauthorized) or 429 (rate limit)
@@ -99,22 +99,30 @@ export const useAuth = () => {
 
   // Listen for auth events (login/logout) to refetch
   useEffect(() => {
-    const handleAuthLogin = () => {
-      checkAuth();
+    const handleAuthLogin = async () => {
+      console.log('🔄 Auth login event received, refetching user...');
+      // Force immediate refetch instead of just invalidating
+      await queryClient.refetchQueries({ 
+        queryKey: AUTH_QUERY_KEY,
+        type: 'active'
+      });
     };
 
     const handleAuthLogout = () => {
+      console.log('🚪 Auth logout event received, clearing user data');
       queryClient.setQueryData(AUTH_QUERY_KEY, null);
     };
 
-    globalThis.window.addEventListener('auth:login', handleAuthLogin);
-    globalThis.window.addEventListener('auth:logout', handleAuthLogout);
+    if (globalThis.window !== undefined) {
+      globalThis.window.addEventListener('auth:login', handleAuthLogin);
+      globalThis.window.addEventListener('auth:logout', handleAuthLogout);
 
-    return () => {
-      globalThis.window.removeEventListener('auth:login', handleAuthLogin);
-      globalThis.window.removeEventListener('auth:logout', handleAuthLogout);
-    };
-  }, [checkAuth, queryClient]);
+      return () => {
+        globalThis.window.removeEventListener('auth:login', handleAuthLogin);
+        globalThis.window.removeEventListener('auth:logout', handleAuthLogout);
+      };
+    }
+  }, [queryClient]);
 
   return {
     user: user || null,

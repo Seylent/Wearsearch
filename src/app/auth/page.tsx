@@ -49,11 +49,20 @@ export default function AuthPage() {
         localStorage.setItem('user', JSON.stringify(response.data.user));
       }
       
+      // 🚨 Dispatch login event to update auth state across app
+      if (globalThis.window !== undefined) {
+        globalThis.window.dispatchEvent(new Event('auth:login'));
+      }
+      
       toast({
         title: t('auth.loginSuccess', 'Успішний вхід'),
         description: t('auth.welcomeBack', 'Ласкаво просимо назад!'),
       });
-      router.push('/');
+      
+      // Small delay to allow state to update before navigation
+      setTimeout(() => {
+        router.push('/');
+      }, 100);
     }
   };
 
