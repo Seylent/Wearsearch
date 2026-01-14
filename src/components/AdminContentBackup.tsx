@@ -657,7 +657,8 @@ const Admin = () => {
       });
       router.push('/');
     }
-  }, [authLoading, isAuthenticated, isAdmin, router, toast]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [authLoading, isAuthenticated, isAdmin, toast]);
 
   // One-time admin-only initialization
   useEffect(() => {

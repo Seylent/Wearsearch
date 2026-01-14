@@ -77,7 +77,8 @@ function FavoritesWithParams() {
       });
       router.push("/auth");
     }
-  }, [router, toast]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [toast]);
 
   useEffect(() => {
     setCurrentPage(1);

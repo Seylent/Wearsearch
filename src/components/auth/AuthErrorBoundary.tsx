@@ -6,7 +6,6 @@
 'use client';
 
 import { useEffect } from 'react';
-import { useRouter } from 'next/navigation';
 import { useQueryClient } from '@tanstack/react-query';
 
 interface AuthErrorBoundaryProps {
@@ -14,7 +13,6 @@ interface AuthErrorBoundaryProps {
 }
 
 export const AuthErrorBoundary = ({ children }: AuthErrorBoundaryProps) => {
-  const router = useRouter();
   const queryClient = useQueryClient();
 
   useEffect(() => {
@@ -37,7 +35,8 @@ export const AuthErrorBoundary = ({ children }: AuthErrorBoundaryProps) => {
     return () => {
       globalThis.window.removeEventListener('auth:logout', handleAuthLogout as EventListener);
     };
-  }, [router, queryClient]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [queryClient]);
 
   return <>{children}</>;
 };

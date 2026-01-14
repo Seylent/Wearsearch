@@ -62,7 +62,8 @@ const Profile = () => {
     if (!authLoading && !authUser) {
       router.push("/auth");
     }
-  }, [authUser, authLoading, router]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [authUser, authLoading]);
 
   // Update form fields when user data loads
   useEffect(() => {

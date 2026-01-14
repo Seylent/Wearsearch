@@ -320,7 +320,8 @@ export const useAdmin = () => {
     setProductStatus("published");
     setAutoTranslateDescription(false);
     router.replace("/admin");
-  }, [router]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   // Product submission
   const handleProductSubmit = useCallback(async (e: React.FormEvent) => {

@@ -56,17 +56,15 @@ const StoresContent: React.FC<StoresContentProps> = ({ storeId: _storeId }) => {
       params.delete('search');
     }
 
-    const queryString = params.toString();
+    const newQueryString = params.toString();
     const currentQueryString = searchParams.toString();
     
-    // Only push if changed
-    // Note: searchParams.toString() might reorder keys differently than URLSearchParams, 
-    // but typically it's fine. 
-    // To be precise we can compare params.
-    if (queryString !== currentQueryString) {
-      router.push(`/stores?${queryString}`);
+    // Only push if URL actually changed to prevent infinite loop
+    if (newQueryString !== currentQueryString) {
+      router.push(`/stores?${newQueryString}`);
     }
-  }, [currentPage, searchQuery, router, searchParams]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [currentPage, searchQuery, searchParams]);
 
   // Reset page when search changes
   useEffect(() => {
