@@ -45,19 +45,15 @@ export function convertS3UrlToHttps(url: string): string {
 }
 
 /**
- * Format price to currency string with optional conversion
- * @param price - Price in UAH
+ * Format price with currency symbol
+ * 
+ * ⚠️ ВАЖЛИВО: Конвертацію робить BACKEND!
+ * Цей utility тільки форматує вже сконвертовані ціни
+ * 
+ * @param price - Price (already converted by backend if needed)
  * @param currency - Target currency code
- * @param exchangeRate - Optional exchange rate for USD conversion
  */
-export function formatPrice(price: number, currency: string = 'UAH', exchangeRate?: number): string {
-  let finalPrice = price;
-  
-  // Convert to USD if needed
-  if (currency === 'USD' && exchangeRate) {
-    finalPrice = price / exchangeRate;
-  }
-  
+export function formatPrice(price: number, currency: string = 'UAH'): string {
   // Format with appropriate currency
   if (currency === 'UAH') {
     return new Intl.NumberFormat('uk-UA', {
@@ -65,7 +61,7 @@ export function formatPrice(price: number, currency: string = 'UAH', exchangeRat
       currency: 'UAH',
       minimumFractionDigits: 0,
       maximumFractionDigits: 0,
-    }).format(finalPrice);
+    }).format(price);
   }
   
   return new Intl.NumberFormat('en-US', {
@@ -73,7 +69,7 @@ export function formatPrice(price: number, currency: string = 'UAH', exchangeRat
     currency: 'USD',
     minimumFractionDigits: 2,
     maximumFractionDigits: 2,
-  }).format(finalPrice);
+  }).format(price);
 }
 
 /**

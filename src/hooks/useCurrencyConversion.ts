@@ -1,53 +1,45 @@
 import { useCurrency } from '@/contexts/CurrencyContext';
 
 /**
- * Hook для конвертації та форматування цін
- * Конвертує UAH → USD якщо потрібно, використовуючи курс з CurrencyContext
+ * Hook для форматування цін
+ * 
+ * ⚠️ ВАЖЛИВО: Конвертацію робить BACKEND!
+ * - Frontend додає параметр ?currency=USD до API запитів
+ * - Backend повертає вже сконвертовані ціни
+ * - Цей hook тільки форматує отримані ціни з правильним символом валюти
+ * 
+ * @see docs/FRONTEND_CURRENCY_GUIDE.md
  */
 export const useCurrencyConversion = () => {
-  const { currency, exchangeRate } = useCurrency();
+  const { currency } = useCurrency();
 
   /**
-   * Конвертує та форматує ціну
-   * @param priceInUAH - Ціна в гривнях (базова валюта)
-   * @returns Відформатована ціна в поточній валюті
+   * Форматує ціну з правильним символом валюти
+   * @param price - Ціна (вже сконвертована backend'ом якщо currency=USD)
+   * @returns Відформатована ціна з символом валюти
    */
-  const formatPrice = (priceInUAH: number): string => {
-    let displayPrice = priceInUAH;
-    
-    // Конвертуємо UAH → USD якщо потрібно
-    if (currency === 'USD' && exchangeRate) {
-      displayPrice = priceInUAH / exchangeRate.rate;
-    }
-    
+  const formatPrice = (price: number): string => {
     const symbol = currency === 'USD' ? '$' : '₴';
     
     if (currency === 'USD') {
-      return `${symbol}${displayPrice.toFixed(2)}`;
+      return `${symbol}${price.toFixed(2)}`;
     } else {
-      return `${displayPrice.toFixed(0)} ${symbol}`;
+      return `${price.toFixed(0)} ${symbol}`;
     }
   };
 
   /**
-   * Конвертує та форматує діапазон цін
+   * Форматує діапазон цін
+   * @param minPrice - Мінімальна ціна (вже сконвертована)
+   * @param maxPrice - Максимальна ціна (вже сконвертована)
    */
-  const formatPriceRange = (minPriceInUAH: number, maxPriceInUAH: number): string => {
-    let minDisplay = minPriceInUAH;
-    let maxDisplay = maxPriceInUAH;
-    
-    // Конвертуємо UAH → USD якщо потрібно
-    if (currency === 'USD' && exchangeRate) {
-      minDisplay = minPriceInUAH / exchangeRate.rate;
-      maxDisplay = maxPriceInUAH / exchangeRate.rate;
-    }
-    
+  const formatPriceRange = (minPrice: number, maxPrice: number): string => {
     const symbol = currency === 'USD' ? '$' : '₴';
     
     if (currency === 'USD') {
-      return `${symbol}${minDisplay.toFixed(2)} - ${symbol}${maxDisplay.toFixed(2)}`;
+      return `${symbol}${minPrice.toFixed(2)} - ${symbol}${maxPrice.toFixed(2)}`;
     } else {
-      return `${minDisplay.toFixed(0)} ${symbol} - ${maxDisplay.toFixed(0)} ${symbol}`;
+      return `${minPrice.toFixed(0)} ${symbol} - ${maxPrice.toFixed(0)} ${symbol}`;
     }
   };
 
