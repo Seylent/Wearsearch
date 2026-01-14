@@ -104,8 +104,13 @@ export const useProductFilters = () => {
     
     // Update URL without navigation (replace instead of push to avoid history spam)
     const newUrl = `${pathname}?${newParams.toString()}`;
-    router.replace(newUrl);
-  }, [searchQuery, selectedColors, selectedTypes, selectedGenders, selectedBrand, priceMin, priceMax, storeIdParam, router, pathname]);
+    const currentUrl = `${pathname}?${searchParams?.toString() || ''}`;
+    
+    // Only update if URL actually changed to prevent infinite loop
+    if (newUrl !== currentUrl) {
+      router.replace(newUrl);
+    }
+  }, [searchQuery, selectedColors, selectedTypes, selectedGenders, selectedBrand, priceMin, priceMax, storeIdParam, pathname, searchParams, router]);
 
   // Toggle filters
   const toggleColor = useCallback((color: string) => {

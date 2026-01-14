@@ -47,7 +47,7 @@ export const useAuthEvents = () => {
       }
       
       // Navigate to auth page if not already there
-      if (globalThis.window.location.pathname.includes('/auth')) {
+      if (!globalThis.window.location.pathname.includes('/auth')) {
         console.log('🔀 Redirecting to /auth page');
         router.replace('/auth');
       } else {
@@ -75,8 +75,7 @@ export const useAuthEvents = () => {
       globalThis.window.removeEventListener('auth:logout', handleLogout);
       globalThis.window.removeEventListener('auth:tokenRefreshed', handleTokenRefresh);
     };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [navigate, queryClient, toast, t]);
+  }, [router, queryClient, toast, t]);
 };
 
 /**

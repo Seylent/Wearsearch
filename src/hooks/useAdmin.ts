@@ -140,7 +140,8 @@ export const useAdmin = () => {
     if (isAuthenticated && isAdmin) {
       loadDashboard();
     }
-  }, [isAuthenticated, isAdmin, loadDashboard]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isAuthenticated, isAdmin]);
 
   // Derived data
   const products = useMemo(() => {

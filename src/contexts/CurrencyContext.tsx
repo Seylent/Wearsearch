@@ -115,7 +115,8 @@ export const CurrencyProvider: React.FC<CurrencyProviderProps> = ({
       setExchangeRate(null);
       setError(null);
     }
-  }, [currency, isHydrated, fetchExchangeRate]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [currency, isHydrated]);
 
   const value = useMemo(() => ({
     currency,
