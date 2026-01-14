@@ -1,30 +1,53 @@
 import { useCurrency } from '@/contexts/CurrencyContext';
 
 /**
- * Hook для форматування цін (БЕЗ конвертації)
- * Бекенд відправляє ціни в потрібній валюті через параметр ?currency=UAH/USD
+ * Hook для конвертації та форматування цін
+ * Конвертує UAH → USD якщо потрібно, використовуючи курс з CurrencyContext
  */
 export const useCurrencyConversion = () => {
-  const { currency } = useCurrency();
+  const { currency, exchangeRate } = useCurrency();
 
-  // Просто форматує ціну з символом валюти
-  const formatPrice = (price: number): string => {
+  /**
+   * Конвертує та форматує ціну
+   * @param priceInUAH - Ціна в гривнях (базова валюта)
+   * @returns Відформатована ціна в поточній валюті
+   */
+  const formatPrice = (priceInUAH: number): string => {
+    let displayPrice = priceInUAH;
+    
+    // Конвертуємо UAH → USD якщо потрібно
+    if (currency === 'USD' && exchangeRate) {
+      displayPrice = priceInUAH / exchangeRate.rate;
+    }
+    
     const symbol = currency === 'USD' ? '$' : '₴';
     
     if (currency === 'USD') {
-      return `${symbol}${price.toFixed(2)}`;
+      return `${symbol}${displayPrice.toFixed(2)}`;
     } else {
-      return `${price.toFixed(0)} ${symbol}`;
+      return `${displayPrice.toFixed(0)} ${symbol}`;
     }
   };
 
-  const formatPriceRange = (minPrice: number, maxPrice: number): string => {
+  /**
+   * Конвертує та форматує діапазон цін
+   */
+  const formatPriceRange = (minPriceInUAH: number, maxPriceInUAH: number): string => {
+    let minDisplay = minPriceInUAH;
+    let maxDisplay = maxPriceInUAH;
+    
+    // Конвертуємо UAH → USD якщо потрібно
+    if (currency === 'USD' && exchangeRate) {
+      minDisplay = minPriceInUAH / exchangeRate.rate;
+      maxDisplay = maxPriceInUAH / exchangeRate.rate;
+    }
+    
     const symbol = currency === 'USD' ? '$' : '₴';
     
     if (currency === 'USD') {
-      return `${symbol}${minPrice.toFixed(2)} - ${symbol}${maxPrice.toFixed(2)}`;
+      return `${symbol}${minDisplay.toFixed(2)} - ${symbol}${maxDisplay.toFixed(2)}`;
     } else {
-      return `${minPrice.toFixed(0)} ${symbol} - ${maxPrice.toFixed(0)} ${symbol}`;
+      return `${minDisplay.toFixed(0)} ${symbol} - ${maxDisplay.toFixed(0)} ${symbol}`;
     }
   };
 
@@ -38,6 +61,7 @@ export const useCurrencyConversion = () => {
 
   return {
     currency,
+    exchangeRate: exchangeRate?.rate,
     formatPrice,
     formatPriceRange,
     getCurrencySymbol,

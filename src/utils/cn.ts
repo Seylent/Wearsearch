@@ -45,13 +45,35 @@ export function convertS3UrlToHttps(url: string): string {
 }
 
 /**
- * Format price to currency string
+ * Format price to currency string with optional conversion
+ * @param price - Price in UAH
+ * @param currency - Target currency code
+ * @param exchangeRate - Optional exchange rate for USD conversion
  */
-export function formatPrice(price: number, currency: string = 'USD'): string {
+export function formatPrice(price: number, currency: string = 'UAH', exchangeRate?: number): string {
+  let finalPrice = price;
+  
+  // Convert to USD if needed
+  if (currency === 'USD' && exchangeRate) {
+    finalPrice = price / exchangeRate;
+  }
+  
+  // Format with appropriate currency
+  if (currency === 'UAH') {
+    return new Intl.NumberFormat('uk-UA', {
+      style: 'currency',
+      currency: 'UAH',
+      minimumFractionDigits: 0,
+      maximumFractionDigits: 0,
+    }).format(finalPrice);
+  }
+  
   return new Intl.NumberFormat('en-US', {
     style: 'currency',
-    currency,
-  }).format(price);
+    currency: 'USD',
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
+  }).format(finalPrice);
 }
 
 /**
