@@ -17,7 +17,20 @@
     "register": "Register",
     "submit": "Submit",
     "reset": "Reset",
-    "from": "from"
+    "from": "from",
+    "recommended": "Recommended"
+  },
+  "aria": {
+    "mainNavigation": "Main navigation",
+    "navigateToHomepage": "Navigate to homepage",
+    "openMenu": "Open menu",
+    "closeMenu": "Close menu",
+    "openSearch": "Open search",
+    "signIn": "Sign in",
+    "changeLanguage": "Change language",
+    "viewProduct": "View product details",
+    "loadingProducts": "Loading products",
+    "loadingStores": "Loading stores"
   },
   "auth": {
     "signIn": "Sign In",
@@ -175,7 +188,19 @@
     "subheading": "Find your perfect style among thousands of fashion items",
     "storeTitle": "Store Products",
     "filters": "Filters",
-    "sortDefault": "Default"
+    "sortDefault": "Default",
+    "filtersDescription": "Select parameters to filter products",
+    "priceAsc": "Price: Low to High",
+    "priceDesc": "Price: High to Low",
+    "newest": "Newest First"
+  },
+  "emptyStates": {
+    "noProductsAvailable": "No products available",
+    "checkBackSoon": "We don't have any products available at the moment. Please check back soon for new arrivals!"
+  },
+  "product": {
+    "seoTitle": "Product",
+    "seoDescription": "View product details and compare prices across stores."
   },
   "collections": {
     "created": "Collection created",
