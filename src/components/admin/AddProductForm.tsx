@@ -7,6 +7,7 @@
 
 import React, { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
+import { useClientOnly } from '@/hooks/useClientOnly';
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -162,6 +163,7 @@ export const AddProductForm: React.FC<AddProductFormProps> = ({
   submitting,
 }) => {
   const { t } = useTranslation();
+  const isMounted = useClientOnly();
   const isUpdating = !!editingProductId;
   let submitText: string;
   if (submitting) {
@@ -578,7 +580,7 @@ export const AddProductForm: React.FC<AddProductFormProps> = ({
           </span>
           {publishAt && productStatus === "draft" && (
             <p className="text-xs text-muted-foreground">
-              🕒 Will publish on {globalThis.window !== undefined && new Date(publishAt).toLocaleString()}
+              🕒 Will publish on {isMounted ? new Date(publishAt).toLocaleString() : '-'}
             </p>
           )}
         </div>

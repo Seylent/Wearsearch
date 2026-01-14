@@ -5,7 +5,7 @@
 
 'use client';
 
-import { ReactNode } from 'react';
+import { ReactNode, Suspense } from 'react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { TooltipProvider } from '@/components/ui/tooltip';
 import { Toaster } from '@/components/ui/toaster';
@@ -15,6 +15,7 @@ import { FavoritesProvider } from '@/contexts/FavoritesContext';
 import { CurrencyProvider } from '@/contexts/CurrencyContext';
 import { CurrencyCode } from '@/utils/currencyStorage';
 import { AuthErrorBoundary } from '@/components/auth/AuthErrorBoundary';
+import { ClientInitializer } from '@/components/ClientInitializer';
 
 /**
  * Rate limit error check
@@ -74,17 +75,20 @@ export const AppProviders = ({ children, initialCurrency }: AppProvidersProps) =
   
   return (
     <QueryClientProvider client={queryClient}>
-      <CurrencyProvider initialCurrency={initialCurrency}>
-        <FavoritesProvider>
-          <TooltipProvider>
-            <AuthErrorBoundary>
-              {children}
-            </AuthErrorBoundary>
-            <Toaster />
-            <Sonner />
-          </TooltipProvider>
-        </FavoritesProvider>
-      </CurrencyProvider>
+      <Suspense fallback={null}>
+        <CurrencyProvider initialCurrency={initialCurrency}>
+          <FavoritesProvider>
+            <TooltipProvider>
+              <AuthErrorBoundary>
+                <ClientInitializer />
+                {children}
+              </AuthErrorBoundary>
+              <Toaster />
+              <Sonner />
+            </TooltipProvider>
+          </FavoritesProvider>
+        </CurrencyProvider>
+      </Suspense>
     </QueryClientProvider>
   );
 };

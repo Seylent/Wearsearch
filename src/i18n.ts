@@ -82,10 +82,9 @@ const resources = {
   }
 };
 
-// Initialize with centralized language detection - ONLY on client side
-const initialLanguage = typeof window !== 'undefined' 
-  ? languageService.getInitialLanguage() 
-  : LANGUAGE_CONFIG.DEFAULT;
+// 🔒 ALWAYS use default language on initial load to prevent hydration mismatch
+// Client-side language switch will happen after mount via useEffect
+const initialLanguage = LANGUAGE_CONFIG.DEFAULT;
 
 if (!i18n.isInitialized) {
   i18n

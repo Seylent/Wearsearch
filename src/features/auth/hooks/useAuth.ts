@@ -3,7 +3,7 @@
  * Centralized auth state management with React Query caching
  */
 
-import { useCallback, useEffect } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { authService } from '@/services/authService';
 import { clearAuth, getAuth } from '@/utils/authStorage';
@@ -34,6 +34,15 @@ const asError = (error: unknown): Error => {
 
 export const useAuth = () => {
   const queryClient = useQueryClient();
+  const [isMounted, setIsMounted] = useState(false);
+
+  // 🔒 Wait for client-side mount to prevent SSR mismatches
+  useEffect(() => {
+    setIsMounted(true);
+  }, []);
+
+  // Check if we have a token client-side
+  const hasToken = isMounted ? !!getAuth() : false;
 
   // Use React Query for caching and preventing duplicate requests
   const { data: user, isLoading, error: _error } = useQuery<User | null, unknown>({
@@ -59,8 +68,8 @@ export const useAuth = () => {
         return null;
       }
     },
-    // 🚀 Не запускати під час SSR і якщо немає токена
-    enabled: globalThis.window !== undefined && !!getAuth(),
+    // 🚀 CRITICAL: Only enable when mounted AND token exists
+    enabled: isMounted && hasToken,
     staleTime: 30 * 60 * 1000, // 30 хвилин - збільшено для меншої к-сті запитів
     gcTime: 60 * 60 * 1000, // 1 година кешу
     refetchOnWindowFocus: false, // 🙅‍♂️ Не refetch при focus

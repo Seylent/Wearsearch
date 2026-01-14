@@ -6,6 +6,7 @@
 'use client';
 
 import React from 'react';
+import { useClientOnly } from '@/hooks/useClientOnly';
 import { Button } from "@/components/ui/button";
 import { 
   Package, 
@@ -76,6 +77,8 @@ export const AnalyticsDashboard: React.FC<AnalyticsDashboardProps> = ({
   activityLog,
   products,
 }) => {
+  const isMounted = useClientOnly();
+  
   return (
     <div className="space-y-6">
       {/* Stats Cards */}
@@ -233,7 +236,7 @@ export const AnalyticsDashboard: React.FC<AnalyticsDashboardProps> = ({
                         <div>
                           <p className="font-medium">{entry.store_name}</p>
                           <p className="text-sm text-muted-foreground">
-                            {globalThis.window !== undefined && new Date(entry.changed_at).toLocaleDateString()}
+                            {isMounted ? new Date(entry.changed_at).toLocaleDateString() : '-'}
                           </p>
                         </div>
                         <div className="text-right">

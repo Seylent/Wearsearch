@@ -107,8 +107,11 @@ export const CurrencyProvider: React.FC<CurrencyProviderProps> = ({
     }
   }, [currency, exchangeRate]);
 
-  // Only fetch exchange rate when currency changes to USD
+  // Only fetch exchange rate when currency changes to USD (client-side only)
   useEffect(() => {
+    // 🔒 Extra safety: ensure we're truly client-side before API calls
+    if (typeof window === 'undefined') return;
+    
     if (isHydrated && currency === 'USD') {
       fetchExchangeRate();
     } else if (currency === 'UAH') {
