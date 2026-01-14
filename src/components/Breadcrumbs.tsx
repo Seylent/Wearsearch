@@ -2,8 +2,6 @@
  * Breadcrumbs Component - Simple and Clean
  */
 
-'use client';
-
 import React from 'react';
 import Link from 'next/link';
 import { Home } from 'lucide-react';
