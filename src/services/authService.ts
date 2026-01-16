@@ -83,12 +83,21 @@ export const authService = {
 
         console.log('💾 Storing auth data:', { 
           tokenLength: token.length,
+          tokenPreview: token.substring(0, 30) + '...',
           userId,
           expiresIn,
           expiresAt: expiresAt ? new Date(expiresAt).toISOString() : 'no expiration'
         });
 
         setAuth(token, userId, expiresAt);
+        
+        // Verify token was stored
+        const storedToken = getAuth();
+        console.log('✅ Token verification:', {
+          stored: !!storedToken,
+          matches: storedToken === token,
+          storedPreview: storedToken ? storedToken.substring(0, 30) + '...' : 'none'
+        });
         
         // Store user data for profile display
         if (data.user) {

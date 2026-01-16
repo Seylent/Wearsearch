@@ -299,6 +299,8 @@ const PUBLIC_ENDPOINT_PATTERNS: Array<string | RegExp> = [
   /^\/items\/[^/]+\/similar$/,  // GET /items/:id/similar
   /^\/items\/[^/]+\/stores$/,   // GET /items/:id/stores
   /^\/wishlist\/public\//,      // GET /wishlist/public/:shareId
+  /^\/banners\/[^/]+\/impression$/,  // POST /banners/:id/impression (analytics)
+  /^\/banners\/[^/]+\/click$/,       // POST /banners/:id/click (analytics)
 ];
 
 const isPublicEndpoint = (url: string): boolean => {

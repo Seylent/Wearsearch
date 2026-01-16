@@ -49,11 +49,6 @@ export default function RootLayout({
 
   return (
     <html lang={htmlLang} className="dark" suppressHydrationWarning> 
-      <head>
-        {/* Preconnect to external domains for faster loading */}
-        <link rel="dns-prefetch" href="//images.unsplash.com" />
-        <link rel="dns-prefetch" href="//api.wearsearch.com" />
-      </head>
       <body className={`min-h-screen bg-black text-white font-sans antialiased overflow-x-hidden selection:bg-white/20 ${inter.variable}`} suppressHydrationWarning>
          {/* Skip to main content link for accessibility */}
          <a 

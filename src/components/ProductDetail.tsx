@@ -104,6 +104,7 @@ const ProductDetail = () => {
     fetchSEO();
   }, [id]);
 
+  /*
   useSEO({
     title: seoData?.meta_title || (product?.name ? String(product.name) : t('product.seoTitle', 'Product')),
     description: seoData?.meta_description || (product?.description
@@ -114,6 +115,7 @@ const ProductDetail = () => {
     image: product?.image_url || product?.image,
     canonical: seoData?.canonical_url,
   });
+  */
   
   // Extract brand from aggregated response
   const brand = useMemo(() => {

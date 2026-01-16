@@ -5,7 +5,7 @@
 
 'use client';
 
-import React, { createContext, useContext, useState, useEffect, useCallback, useMemo, ReactNode } from 'react';
+import React, { createContext, useContext, useState, useEffect, useCallback, useMemo, useRef, ReactNode } from 'react';
 import { api } from '@/services/api';
 import { 
   CurrencyCode, 
@@ -45,6 +45,16 @@ export const CurrencyProvider: React.FC<CurrencyProviderProps> = ({
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [isHydrated, setIsHydrated] = useState(false);
+
+  // Track mounted state to prevent state updates on unmounted component
+  const isMountedRef = useRef(true);
+
+  useEffect(() => {
+    isMountedRef.current = true;
+    return () => {
+      isMountedRef.current = false;
+    };
+  }, []);
 
   // Hydrate from cookies after component mount
   useEffect(() => {
@@ -86,6 +96,8 @@ export const CurrencyProvider: React.FC<CurrencyProviderProps> = ({
     try {
       const response = await api.get('/currency/rates');
       
+      if (!isMountedRef.current) return;
+
       if (response.status === 200) {
         const data = response.data;
         setExchangeRate({
@@ -96,6 +108,7 @@ export const CurrencyProvider: React.FC<CurrencyProviderProps> = ({
         throw new Error('Failed to fetch exchange rate');
       }
     } catch (error) {
+      if (!isMountedRef.current) return;
       console.warn('Exchange rate API not available, using fallback rate', error);
       setExchangeRate({
         rate: 40.5,
@@ -103,7 +116,9 @@ export const CurrencyProvider: React.FC<CurrencyProviderProps> = ({
       });
       setError('Exchange rate service unavailable');
     } finally {
-      setLoading(false);
+      if (isMountedRef.current) {
+        setLoading(false);
+      }
     }
   }, [currency, exchangeRate]);
 

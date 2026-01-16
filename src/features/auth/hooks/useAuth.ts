@@ -49,7 +49,11 @@ export const useAuth = () => {
     queryKey: AUTH_QUERY_KEY,
     queryFn: async () => {
       try {
-        console.log('🔍 Fetching current user data...');
+        const token = getAuth();
+        console.log('🔍 Fetching current user data...', { 
+          hasToken: !!token,
+          tokenPreview: token ? `${token.substring(0, 20)}...` : 'none'
+        });
         return await authService.getCurrentUser();
       } catch (error) {
         // If 401 or 429, return null instead of throwing
@@ -58,22 +62,25 @@ export const useAuth = () => {
           console.log('⚠️ Auth token invalid or expired, clearing session');
           // Clear any stale auth tokens on 401
           clearAuth();
+          // Also clear React Query cache
+          queryClient.setQueryData(AUTH_QUERY_KEY, null);
           return null;
         }
         if (status === 429) {
           console.log('⏳ Auth check rate limited, will retry later');
           return null;
         }
+        console.error('❌ Auth check failed:', error);
         logAuthError(asError(error), 'CHECK_AUTH');
         return null;
       }
     },
     // 🚀 CRITICAL: Only enable when mounted AND token exists
     enabled: isMounted && hasToken,
-    staleTime: 30 * 60 * 1000, // 30 хвилин - збільшено для меншої к-сті запитів
-    gcTime: 60 * 60 * 1000, // 1 година кешу
+    staleTime: 5 * 60 * 1000, // 5 хвилин - зменшено для більш свіжих даних
+    gcTime: 10 * 60 * 1000, // 10 хвилин кешу
     refetchOnWindowFocus: false, // 🙅‍♂️ Не refetch при focus
-    refetchOnMount: 'always', // ✅ Завжди refetch при mount для свіжих даних після логіну
+    refetchOnMount: true, // ✅ Refetch при mount для свіжих даних після логіну
     refetchOnReconnect: false, // 🙅‍♂️ Не refetch при reconnect
     retry: (failureCount, error) => {
       // Don't retry on 401 (unauthorized) or 429 (rate limit)
@@ -81,10 +88,10 @@ export const useAuth = () => {
       if (status === 401 || status === 429) {
         return false;
       }
-      // Retry other errors up to 1 time only (зменшено з 2)
+      // Retry other errors up to 1 time only
       return failureCount < 1;
     },
-    retryDelay: (attemptIndex) => Math.min(2000 * 2 ** attemptIndex, 60000), // Збільшено затримку
+    retryDelay: (attemptIndex) => Math.min(2000 * 2 ** attemptIndex, 60000),
   });
 
   const isAdmin = user?.role === 'admin';

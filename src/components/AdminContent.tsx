@@ -8,7 +8,7 @@
 import { lazy, Suspense } from "react";
 import { useTranslation } from "react-i18next";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { ShieldCheck, Plus, Package, Store, Tag, Mail } from "lucide-react";
+import { ShieldCheck, Plus, Package, Store, Tag, Mail, ImageIcon } from "lucide-react";
 import { useAuth } from "@/features/auth/hooks/useAuth";
 import { useSEO } from "@/hooks/useSEO";
 import { useAdmin } from "@/hooks/useAdmin";
@@ -18,6 +18,7 @@ const ProductList = lazy(() => import("@/components/admin/ProductList").then(m =
 const StoreManagement = lazy(() => import("@/components/admin/StoreManagement").then(m => ({ default: m.StoreManagement })));
 const BrandManagement = lazy(() => import("@/components/admin/BrandManagement").then(m => ({ default: m.BrandManagement })));
 const ContactManagement = lazy(() => import("@/components/admin/ContactManagement").then(m => ({ default: m.ContactManagement })));
+const BannerManager = lazy(() => import("@/components/admin/BannerManager").then(m => ({ default: m.BannerManager })));
 
 const AdminTabSkeleton = () => (
   <div className="space-y-6 animate-pulse">
@@ -88,7 +89,7 @@ const AdminContent = () => {
             value={admin.activeTab} 
             onValueChange={admin.setActiveTab}
           >
-            <TabsList className="flex w-full overflow-x-auto md:grid md:grid-cols-5 bg-card/40 border border-border/50 backdrop-blur-sm mb-4 md:mb-8 p-1 rounded-xl gap-1">
+            <TabsList className="flex w-full overflow-x-auto md:grid md:grid-cols-6 bg-card/40 border border-border/50 backdrop-blur-sm mb-4 md:mb-8 p-1 rounded-xl gap-1">
               <TabsTrigger 
                 value="add-product"
                 className="flex-shrink-0 data-[state=active]:bg-foreground data-[state=active]:text-background rounded-lg transition-all text-xs md:text-sm px-3 py-2.5 min-h-[44px]"
@@ -120,6 +121,14 @@ const AdminContent = () => {
                 <Tag className="w-4 h-4 md:mr-2" />
                 <span className="hidden md:inline ml-1">{t('admin.brands')}</span>
                 <span className="md:hidden ml-1">Brands</span>
+              </TabsTrigger>
+              <TabsTrigger 
+                value="banners"
+                className="flex-shrink-0 data-[state=active]:bg-foreground data-[state=active]:text-background rounded-lg transition-all text-xs md:text-sm px-3 py-2.5 min-h-[44px]"
+              >
+                <ImageIcon className="w-4 h-4 md:mr-2" />
+                <span className="hidden md:inline ml-1">Банери</span>
+                <span className="md:hidden ml-1">Банери</span>
               </TabsTrigger>
               <TabsTrigger 
                 value="contacts"
@@ -293,6 +302,13 @@ const AdminContent = () => {
                 }}
                 loading={admin.loading}
               />
+              </Suspense>
+            </TabsContent>
+
+            {/* BANNERS TAB */}
+            <TabsContent value="banners" className="space-y-6">
+              <Suspense fallback={<AdminTabSkeleton />}>
+                <BannerManager />
               </Suspense>
             </TabsContent>
 

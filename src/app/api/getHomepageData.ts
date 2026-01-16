@@ -2,6 +2,7 @@
  * Server-side data fetching for Homepage
  */
 import type { Product } from '@/types';
+import type { Banner } from '@/types/banner';
 
 // Extended SEO interface for homepage
 interface ExtendedSEOData {
@@ -30,6 +31,7 @@ export interface HomepageAPIResponse {
     imageUrl?: string;
     productCount: number;
   }>;
+  banners: Banner[];
   seoData: ExtendedSEOData | null;
   stats: {
     totalProducts: number;
@@ -55,14 +57,16 @@ export async function getHomepageData(): Promise<HomepageAPIResponse> {
         const response = await bffRes.json();
         console.log('✅ BFF homepage data received');
         
-        // BFF returns: { success: true, data: { products, brands, statistics } }
+        // BFF returns: { success: true, data: { products, brands, statistics, banners } }
         const data = response.data || response;
         const products = data.products || [];
         const categories = data.categories || [];
+        const banners = data.banners || [];
         const stats = data.statistics || data.stats || {};
         
         if (process.env.NODE_ENV === 'development') {
           console.log('📦 Products loaded:', products.length);
+          console.log('🎨 Banners loaded:', banners.length);
         }
         
         // Fetch SEO data separately
@@ -85,6 +89,7 @@ export async function getHomepageData(): Promise<HomepageAPIResponse> {
           newProducts: products.slice(0, 8),
           popularProducts: products.slice(0, 8),
           categories,
+          banners,
           seoData,
           stats: {
             totalProducts: stats.total_products || 0,
@@ -147,6 +152,7 @@ export async function getHomepageData(): Promise<HomepageAPIResponse> {
       newProducts: products.slice(0, 8),
       popularProducts: products.slice(0, 8),
       categories,
+      banners: [],
       seoData: null,
       stats,
     };
@@ -159,6 +165,7 @@ export async function getHomepageData(): Promise<HomepageAPIResponse> {
       newProducts: [],
       popularProducts: [],
       categories: [],
+      banners: [],
       seoData: null,
       stats: {
         totalProducts: 0,
@@ -182,6 +189,7 @@ export function getMockHomepageData(): HomepageAPIResponse {
       { id: '2', name: 'Shoes', slug: 'shoes', productCount: 89 },
       { id: '3', name: 'Accessories', slug: 'accessories', productCount: 45 },
     ],
+    banners: [],
     seoData: {
       title: 'WearSearch - Find Your Perfect Style',
       description: 'Discover the latest fashion trends and products from top brands. ' + 

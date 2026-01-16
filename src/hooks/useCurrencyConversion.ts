@@ -53,7 +53,6 @@ export const useCurrencyConversion = () => {
 
   return {
     currency,
-    exchangeRate: exchangeRate?.rate,
     formatPrice,
     formatPriceRange,
     getCurrencySymbol,
