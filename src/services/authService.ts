@@ -4,7 +4,7 @@
  */
 
 import { api, apiLegacy, handleApiError } from './api';
-import { setAuth, clearAuth, isAuthenticated } from '@/utils/authStorage';
+import { setAuth, clearAuth, isAuthenticated, getAuth } from '@/utils/authStorage';
 import { getValidGuestFavorites, clearGuestFavorites } from './guestFavorites';
 import { logAuthError } from './logger';
 import type { User, LoginCredentials, RegisterData, AuthResponse } from '@/types';
@@ -68,10 +68,10 @@ export const authService = {
       console.log('🔐 Attempting login...');
       const response = await api.post(ENDPOINTS.LOGIN, credentials);
       const data = response.data;
-      console.log('✅ Login response received:', { 
+      console.log('✅ Login response received:', {
         hasToken: !!(data.access_token || data.token),
         hasUser: !!data.user,
-        userId: data.user?.id 
+        userId: data.user?.id,
       });
 
       // Store auth token
@@ -81,24 +81,24 @@ export const authService = {
         const expiresIn = data.expires_in;
         const expiresAt = expiresIn ? Date.now() + expiresIn * 1000 : undefined;
 
-        console.log('💾 Storing auth data:', { 
+        console.log('💾 Storing auth data:', {
           tokenLength: token.length,
           tokenPreview: token.substring(0, 30) + '...',
           userId,
           expiresIn,
-          expiresAt: expiresAt ? new Date(expiresAt).toISOString() : 'no expiration'
+          expiresAt: expiresAt ? new Date(expiresAt).toISOString() : 'no expiration',
         });
 
         setAuth(token, userId, expiresAt);
-        
+
         // Verify token was stored
         const storedToken = getAuth();
         console.log('✅ Token verification:', {
           stored: !!storedToken,
           matches: storedToken === token,
-          storedPreview: storedToken ? storedToken.substring(0, 30) + '...' : 'none'
+          storedPreview: storedToken ? storedToken.substring(0, 30) + '...' : 'none',
         });
-        
+
         // Store user data for profile display
         if (data.user) {
           localStorage.setItem('user', JSON.stringify(data.user));
@@ -106,7 +106,7 @@ export const authService = {
 
         // Sync guest favorites after successful login
         await this.syncGuestFavorites(token);
-        
+
         console.log('✅ Login completed successfully');
       } else {
         console.error('❌ No token received from login response');
@@ -146,7 +146,7 @@ export const authService = {
         const expiresAt = expiresIn ? Date.now() + expiresIn * 1000 : undefined;
 
         setAuth(token, userId, expiresAt);
-        
+
         // Store user data for profile display
 
         // Sync guest favorites after successful registration
@@ -203,7 +203,7 @@ export const authService = {
     }
 
     currentUserPromise = fetchCurrentUserInternal();
-    
+
     try {
       const result = await currentUserPromise;
       return result;
@@ -256,7 +256,10 @@ export const authService = {
   /**
    * Change password for authenticated user
    */
-  async changePassword(data: { current_password: string; new_password: string }): Promise<{ success: boolean; message: string }> {
+  async changePassword(data: {
+    current_password: string;
+    new_password: string;
+  }): Promise<{ success: boolean; message: string }> {
     try {
       const response = await api.put(ENDPOINTS.CHANGE_PASSWORD, data);
       return response.data;
@@ -287,14 +290,14 @@ export const authService = {
       // Canonical v1 endpoint: PUT /auth/me (not /auth/profile)
       const response = await api.put(ENDPOINTS.ME, data);
       const user = response.data.user || response.data;
-      
+
       // Update cached user data
       if (user) {
         localStorage.setItem('user', JSON.stringify(user));
         // Notify other components of auth change
         globalThis.dispatchEvent(new Event('authChange'));
       }
-      
+
       return user;
     } catch (error) {
       const apiError = handleApiError(error);
@@ -323,7 +326,7 @@ export const authService = {
     try {
       // Get only valid UUID favorites
       const guestFavorites = getValidGuestFavorites();
-      
+
       // Skip if no guest favorites
       if (guestFavorites.length === 0) {
         console.log('ℹ️ No guest favorites to sync');
@@ -337,20 +340,20 @@ export const authService = {
 
       if (result.success !== false) {
         console.log(`✅ Synced ${result.added || 0} favorites. Total: ${result.total || 0}`);
-        
+
         // Clear guest favorites after successful sync
         clearGuestFavorites();
       }
     } catch (error: unknown) {
       logAuthError(asError(error), 'SYNC_GUEST_FAVORITES');
-      
+
       // Show detailed error message
       const responseData = getResponseData(error);
       const details = responseData?.error;
       if (typeof details === 'string' && details.length > 0) {
         console.error('Error details:', details);
       }
-      
+
       // Keep guest favorites in localStorage for retry - don't clear on error
     }
   },
@@ -368,18 +371,18 @@ async function fetchCurrentUserInternal(): Promise<User> {
   try {
     // Skip retry on rate limit for auth endpoint to prevent spam
     const response = await api.get(ENDPOINTS.ME, {
-      headers: { 'X-Skip-Retry': 'true' }
+      headers: { 'X-Skip-Retry': 'true' },
     });
     return response.data;
   } catch (error) {
     const status = getErrorStatus(error);
-    
+
     // Don't throw on 429, just return error to let React Query handle it
     if (status === 429) {
       console.log('⌛ Auth check rate limited, backing off');
       throw new Error('Unauthorized');
     }
-    
+
     if (ENABLE_LEGACY_FALLBACK && status === 404) {
       try {
         const legacyResponse = await apiLegacy.get(ENDPOINTS.ME);

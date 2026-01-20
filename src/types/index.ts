@@ -160,7 +160,7 @@ export interface FavoritesResponse {
   created_at?: string;
 }
 
-export interface FavoritesResponse {
+export interface FavoriteIdsResponse {
   favorites: Favorite[];
 }
 

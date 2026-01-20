@@ -3,13 +3,13 @@
  * Handles all banner-related API operations
  */
 
-import { api } from './api';
-import type { 
-  Banner, 
-  CreateBannerRequest, 
-  BannerListResponse, 
+import { apiBanners } from './api';
+import type {
+  Banner,
+  CreateBannerRequest,
+  BannerListResponse,
   BannerResponse,
-  BannerAnalyticsResponse 
+  BannerAnalyticsResponse,
 } from '@/types/banner';
 
 export const bannerService = {
@@ -28,39 +28,66 @@ export const bannerService = {
 
     const queryString = queryParams.toString();
     const endpoint = queryString ? `/banners?${queryString}` : '/banners';
-    const response = await api.get<BannerListResponse>(endpoint);
-    return response.data.data.banners;
+
+    try {
+      const response = await apiBanners.get(endpoint);
+      const payload = response.data as any;
+
+      // Supported response formats:
+      // - { success, data: { banners: [...] } }
+      // - { banners: [...] }
+      // - [ ... ]
+      const banners =
+        (payload?.data?.banners && Array.isArray(payload.data.banners)
+          ? payload.data.banners
+          : payload?.banners && Array.isArray(payload.banners)
+            ? payload.banners
+            : Array.isArray(payload)
+              ? payload
+              : []) as Banner[];
+
+      return banners;
+    } catch (error) {
+      console.error('❌ Error fetching banners:', error);
+      return [];
+    }
   },
 
   /**
    * Get a specific banner by ID
    */
   async getBanner(id: string): Promise<Banner> {
-    const response = await api.get<BannerResponse>(`/banners/${id}`);
-    return response.data.data.banner;
+    const response = await apiBanners.get(`/banners/${id}`);
+    const payload = response.data as any;
+    const banner = (payload?.data?.banner ?? payload?.banner ?? payload?.data ?? payload) as Banner;
+    return banner;
   },
 
   /**
    * Create a new banner (admin only)
    */
   async createBanner(data: CreateBannerRequest): Promise<Banner> {
-    const response = await api.post<BannerResponse>('/banners', data);
-    return response.data.data.banner;
+    const response = await apiBanners.post('/banners', data);
+    const payload = response.data as any;
+    const banner = (payload?.data?.banner ?? payload?.banner ?? payload?.data ?? payload) as Banner;
+    return banner;
   },
 
   /**
    * Update an existing banner (admin only)
    */
   async updateBanner(id: string, data: Partial<CreateBannerRequest>): Promise<Banner> {
-    const response = await api.put<BannerResponse>(`/banners/${id}`, data);
-    return response.data.data.banner;
+    const response = await apiBanners.put(`/banners/${id}`, data);
+    const payload = response.data as any;
+    const banner = (payload?.data?.banner ?? payload?.banner ?? payload?.data ?? payload) as Banner;
+    return banner;
   },
 
   /**
    * Delete a banner (admin only)
    */
   async deleteBanner(id: string): Promise<void> {
-    await api.delete(`/banners/${id}`);
+    await apiBanners.delete(`/banners/${id}`);
   },
 
   /**
@@ -68,7 +95,7 @@ export const bannerService = {
    */
   async trackImpression(bannerId: string): Promise<void> {
     try {
-      await api.post(`/banners/${bannerId}/impression`, {
+      await apiBanners.post(`/banners/${bannerId}/impression`, {
         page_url: globalThis.window === undefined ? '' : globalThis.window.location.href,
         user_agent: globalThis.navigator === undefined ? '' : globalThis.navigator.userAgent,
       });
@@ -89,7 +116,7 @@ export const bannerService = {
    */
   async trackClick(bannerId: string): Promise<void> {
     try {
-      await api.post(`/banners/${bannerId}/click`, {
+      await apiBanners.post(`/banners/${bannerId}/click`, {
         page_url: globalThis.window === undefined ? '' : globalThis.window.location.href,
         user_agent: globalThis.navigator === undefined ? '' : globalThis.navigator.userAgent,
       });
@@ -120,10 +147,10 @@ export const bannerService = {
     if (params?.end_date) queryParams.set('end_date', params.end_date);
 
     const queryString = queryParams.toString();
-    const endpoint = queryString 
-      ? `/banners/${bannerId}/analytics?${queryString}` 
+    const endpoint = queryString
+      ? `/banners/${bannerId}/analytics?${queryString}`
       : `/banners/${bannerId}/analytics`;
-    const response = await api.get<BannerAnalyticsResponse>(endpoint);
+    const response = await apiBanners.get<BannerAnalyticsResponse>(endpoint);
     return response.data.data;
   },
 };

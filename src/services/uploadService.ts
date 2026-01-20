@@ -1,5 +1,4 @@
-import api, { handleApiError } from './api';
-import ENDPOINTS from './endpoints';
+import { apiUpload, handleApiError } from './api';
 import { AxiosResponse } from 'axios';
 
 // Type definitions for file uploads
@@ -22,19 +21,18 @@ export const uploadService = {
   async uploadImage(file: File): Promise<UploadResponse> {
     try {
       const formData = new FormData();
-      // Try 'image' field name (matches endpoint name)
       formData.append('image', file);
 
       console.log('📤 Uploading image:', {
         name: file.name,
         size: file.size,
         type: file.type,
-        endpoint: ENDPOINTS.UPLOAD.IMAGE,
-        fieldName: 'image'
+        endpoint: '/upload/image',
+        fieldName: 'image',
       });
 
-      const response: AxiosResponse<UploadResponse> = await api.post(
-        ENDPOINTS.UPLOAD.IMAGE,
+      const response: AxiosResponse<UploadResponse> = await apiUpload.post(
+        '/upload/image',
         formData,
         {
           headers: {
@@ -42,18 +40,19 @@ export const uploadService = {
           },
         }
       );
-      
+
       console.log('✅ Upload successful:', response.data);
       return response.data;
     } catch (error: unknown) {
       console.error('❌ Upload failed:', error);
-      
+
       // Extract proper error message
       const apiError = handleApiError(error);
-      const errorMessage = typeof apiError === 'string' 
-        ? apiError 
-        : (apiError as { message?: string } | null)?.message || 'Upload failed';
-      
+      const errorMessage =
+        typeof apiError === 'string'
+          ? apiError
+          : (apiError as { message?: string } | null)?.message || 'Upload failed';
+
       throw new Error(errorMessage);
     }
   },
@@ -64,18 +63,17 @@ export const uploadService = {
   async uploadImages(files: File[]): Promise<MultipleUploadResponse> {
     try {
       const formData = new FormData();
-      files.forEach((file) => {
-        // Backend expects 'filePaths' field name for multiple files
-        formData.append('filePaths', file);
+      files.forEach(file => {
+        formData.append('images', file);
       });
 
       console.log('📤 Uploading multiple images:', {
         count: files.length,
-        endpoint: ENDPOINTS.UPLOAD.IMAGES
+        endpoint: '/upload/images',
       });
 
-      const response: AxiosResponse<MultipleUploadResponse> = await api.post(
-        ENDPOINTS.UPLOAD.IMAGES,
+      const response: AxiosResponse<MultipleUploadResponse> = await apiUpload.post(
+        '/upload/images',
         formData,
         {
           headers: {
@@ -83,18 +81,19 @@ export const uploadService = {
           },
         }
       );
-      
+
       console.log('✅ Multiple upload successful:', response.data);
       return response.data;
     } catch (error: unknown) {
       console.error('❌ Multiple upload failed:', error);
-      
+
       // Extract proper error message
       const apiError = handleApiError(error);
-      const errorMessage = typeof apiError === 'string' 
-        ? apiError 
-        : (apiError as { message?: string } | null)?.message || 'Upload failed';
-      
+      const errorMessage =
+        typeof apiError === 'string'
+          ? apiError
+          : (apiError as { message?: string } | null)?.message || 'Upload failed';
+
       throw new Error(errorMessage);
     }
   },

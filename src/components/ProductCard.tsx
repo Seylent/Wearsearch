@@ -7,6 +7,7 @@ import { useTranslation } from 'react-i18next';
 import FavoriteButton from './FavoriteButton';
 import { ProductDescription } from './ProductDescription';
 import { useCurrencyConversion } from '@/hooks/useCurrencyConversion';
+import type { CurrencyCode } from '@/utils/currencyStorage';
 
 // Skeleton loader component
 export const ProductCardSkeleton: React.FC = () => (
@@ -39,6 +40,7 @@ interface ProductCardProps {
   description?: string;
   description_en?: string;
   description_ua?: string;
+  priceCurrency?: CurrencyCode;
 }
 
 const ProductCard: React.FC<ProductCardProps> = memo(({ 
@@ -55,9 +57,18 @@ const ProductCard: React.FC<ProductCardProps> = memo(({
   description,
   description_en,
   description_ua,
+  priceCurrency,
 }) => {
   const { t } = useTranslation();
-  const { formatPrice } = useCurrencyConversion();
+  const { currency: ctxCurrency } = useCurrencyConversion();
+  const currency = priceCurrency ?? ctxCurrency;
+
+  // Backend does conversion; frontend only formats.
+  const formatPrice = (value: number): string => {
+    const symbol = currency === 'USD' ? '$' : '₴';
+    if (currency === 'USD') return `${symbol}${value.toFixed(2)}`;
+    return `${value.toFixed(0)} ${symbol}`;
+  };
   const cardRef = useRef<HTMLDivElement>(null);
   
   // Safety checks

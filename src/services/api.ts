@@ -6,24 +6,36 @@
 import axios, { AxiosInstance, AxiosError, InternalAxiosRequestConfig, AxiosResponse } from 'axios';
 import { API_CONFIG } from '@/config/api.config';
 import { handleApiError as createApiError, ApiError } from './api/errorHandler';
+import { retryWithBackoff } from '@/utils/retryWithBackoff';
 import type { ApiError as ApiErrorType } from '@/types';
 import { z } from 'zod';
 
-// Dynamic import for client-only modules
-let authStorageModule: { getAuth: () => string | null } | null = null;
-
-const getAuth = (): string | null => {
+// Lightweight, SSR-friendly token retrieval
+const readAuthTokenFromStorage = (): string | null => {
   if (typeof window === 'undefined') return null;
   try {
-    if (!authStorageModule) {
-      // Use eval to bypass eslint rule for dynamic require
-      const req = new Function('modulePath', 'return require(modulePath)');
-      authStorageModule = req('@/utils/authStorage') as { getAuth: () => string | null };
+    const raw = localStorage.getItem('wearsearch.auth');
+    if (raw) {
+      const data = JSON.parse(raw) as { token?: string; expiresAt?: number };
+      if (data?.token) {
+        if (data.expiresAt && Date.now() > data.expiresAt) {
+          localStorage.removeItem('wearsearch.auth');
+          return null;
+        }
+        return data.token;
+      }
     }
-    return authStorageModule.getAuth();
+    const legacy = localStorage.getItem('access_token');
+    return legacy;
   } catch {
     return null;
   }
+};
+
+// Get token (client-side, SSR-safe)
+const getAuth = (): string | null => {
+  if (typeof window === 'undefined') return null;
+  return readAuthTokenFromStorage();
 };
 
 /**
@@ -36,8 +48,7 @@ const RATE_LIMIT_CONFIG = {
   maxDelay: process.env.NODE_ENV === 'production' ? 30000 : 10000, // 10s max in dev, 30s in prod
 };
 
-const sleep = (ms: number): Promise<void> => 
-  new Promise(resolve => setTimeout(resolve, ms));
+const sleep = (ms: number): Promise<void> => new Promise(resolve => setTimeout(resolve, ms));
 
 const getRetryDelay = (retryCount: number, retryAfter?: number): number => {
   // In development, ignore server retry-after to prevent super long waits
@@ -46,13 +57,13 @@ const getRetryDelay = (retryCount: number, retryAfter?: number): number => {
     const jitter = delay * 0.25 * (Math.random() - 0.5);
     return Math.min(delay + jitter, RATE_LIMIT_CONFIG.maxDelay);
   }
-  
+
   // In production, respect server retry-after but cap it
   if (retryAfter) {
     const retryMs = retryAfter * 1000;
     return Math.min(retryMs, RATE_LIMIT_CONFIG.maxDelay);
   }
-  
+
   // Exponential backoff: 1s, 2s, 4s, etc.
   const delay = RATE_LIMIT_CONFIG.baseDelay * Math.pow(2, retryCount);
   // Add jitter (±25%) to prevent thundering herd
@@ -88,7 +99,7 @@ class RequestQueue {
         }
         this.lastRequestTime = Date.now();
         this.running++;
-        
+
         try {
           const result = await fn();
           resolve(result);
@@ -151,7 +162,9 @@ async function handleRateLimitError(
 
   const retryCount = config.__rateLimitRetryCount || 0;
   if (retryCount >= RATE_LIMIT_CONFIG.maxRetries) {
-    console.warn(`⚠️ Max retry attempts (${RATE_LIMIT_CONFIG.maxRetries}) reached for ${config.url}`);
+    console.warn(
+      `⚠️ Max retry attempts (${RATE_LIMIT_CONFIG.maxRetries}) reached for ${config.url}`
+    );
     return null;
   }
 
@@ -160,7 +173,9 @@ async function handleRateLimitError(
   const delay = getRetryDelay(retryCount, retryAfterSeconds);
 
   if (process.env.NODE_ENV !== 'production') {
-    console.log(`⏳ Rate limited (429). Retrying in ${Math.round(delay / 1000)}s (attempt ${retryCount + 1}/${RATE_LIMIT_CONFIG.maxRetries})`);
+    console.log(
+      `⏳ Rate limited (429). Retrying in ${Math.round(delay / 1000)}s (attempt ${retryCount + 1}/${RATE_LIMIT_CONFIG.maxRetries})`
+    );
   }
 
   await sleep(delay);
@@ -199,7 +214,7 @@ function handleAuthError(apiError: ApiError, _originalError: unknown): void {
 
   // Check if user was previously authenticated
   const wasAuthenticated = typeof window !== 'undefined' && localStorage.getItem(AUTH_TOKEN_KEY);
-  
+
   if (wasAuthenticated && process.env.NODE_ENV !== 'production') {
     console.warn('🔒 Authentication error - token may be expired');
   }
@@ -213,7 +228,7 @@ function logApiError(apiError: ApiError): void {
 
   // Don't log auth errors (too noisy)
   if (apiError.status === 401) return;
-  
+
   // Don't log rate limit errors (handled separately)
   if (apiError.status === 429) return;
 
@@ -243,7 +258,8 @@ type FallbackConfig = {
 
 const ENABLE_LEGACY_FALLBACK = process.env.NEXT_PUBLIC_ENABLE_LEGACY_FALLBACK === 'true';
 
-const isRecord = (value: unknown): value is Record<string, unknown> => typeof value === 'object' && value !== null;
+const isRecord = (value: unknown): value is Record<string, unknown> =>
+  typeof value === 'object' && value !== null;
 
 const isSuccessDataEnvelope = (data: unknown): data is { success: true; data: unknown } =>
   isRecord(data) && data.success === true && 'data' in data;
@@ -256,7 +272,8 @@ const isRouteNotFoundPayload = (data: unknown): boolean => {
   const errorObj = isRecord(anyData.error) ? anyData.error : undefined;
   const v1Message = errorObj?.message;
   const v1Code = errorObj?.code;
-  if (typeof v1Message === 'string' && v1Message.toLowerCase().includes('route not found')) return true;
+  if (typeof v1Message === 'string' && v1Message.toLowerCase().includes('route not found'))
+    return true;
   if (typeof v1Code === 'string' && v1Code.toLowerCase().includes('route')) return true;
 
   // legacy shapes sometimes: { message }, { error }, { error_code }
@@ -268,7 +285,10 @@ const isRouteNotFoundPayload = (data: unknown): boolean => {
   return false;
 };
 
-const defaultShouldFallbackToLegacy = (config: InternalAxiosRequestConfig, error: AxiosError): boolean => {
+const defaultShouldFallbackToLegacy = (
+  config: InternalAxiosRequestConfig,
+  error: AxiosError
+): boolean => {
   const url = String(config.url || '');
   // Don't spam fallback for v1-only BFF endpoints.
   if (url.startsWith('/pages/')) return false;
@@ -288,6 +308,7 @@ const PUBLIC_ENDPOINT_PATTERNS: Array<string | RegExp> = [
   '/auth/register',
   '/auth/forgot-password',
   '/auth/reset-password',
+  '/auth/me',
   '/items',
   '/brands',
   '/categories',
@@ -295,12 +316,12 @@ const PUBLIC_ENDPOINT_PATTERNS: Array<string | RegExp> = [
   '/search',
   '/seo/',
   '/pages/',
-  /^\/items\/[^/]+$/,           // GET /items/:id
-  /^\/items\/[^/]+\/similar$/,  // GET /items/:id/similar
-  /^\/items\/[^/]+\/stores$/,   // GET /items/:id/stores
-  /^\/wishlist\/public\//,      // GET /wishlist/public/:shareId
-  /^\/banners\/[^/]+\/impression$/,  // POST /banners/:id/impression (analytics)
-  /^\/banners\/[^/]+\/click$/,       // POST /banners/:id/click (analytics)
+  /^\/items\/[^/]+$/, // GET /items/:id
+  /^\/items\/[^/]+\/similar$/, // GET /items/:id/similar
+  /^\/items\/[^/]+\/stores$/, // GET /items/:id/stores
+  /^\/wishlist\/public\//, // GET /wishlist/public/:shareId
+  /^\/banners\/[^/]+\/impression$/, // POST /banners/:id/impression (analytics)
+  /^\/banners\/[^/]+\/click$/, // POST /banners/:id/click (analytics)
 ];
 
 const isPublicEndpoint = (url: string): boolean => {
@@ -324,10 +345,16 @@ const attachInterceptors = (client: AxiosInstance, fallback?: FallbackConfig) =>
       if (token && config.headers) {
         config.headers.Authorization = `Bearer ${token}`;
         // Reduce logging noise in development
-        if (process.env.NODE_ENV !== 'production' && !url.includes('/items') && !url.includes('/search') && !url.includes('/pages') && !url.includes('/auth/me')) {
+        if (
+          process.env.NODE_ENV !== 'production' &&
+          !url.includes('/items') &&
+          !url.includes('/search') &&
+          !url.includes('/pages') &&
+          !url.includes('/auth/me')
+        ) {
           console.log(`🔑 Auth token attached to ${config.method?.toUpperCase()} ${url}`);
         }
-      } else if (!token && url && !isPublicEndpoint(url)) {
+      } else if (!token && url && !isPublicEndpoint(url) && !url.includes('/auth/me')) {
         // Only warn for endpoints that likely require authentication
         console.warn(`⚠️ No token available for ${config.method?.toUpperCase()} ${url}`);
       }
@@ -349,10 +376,12 @@ const attachInterceptors = (client: AxiosInstance, fallback?: FallbackConfig) =>
       return response;
     },
     async (error: AxiosError) => {
-      const config = error.config as (InternalAxiosRequestConfig & { 
-        __wearsearchTriedLegacy?: boolean;
-        __rateLimitRetryCount?: number;
-      }) | undefined;
+      const config = error.config as
+        | (InternalAxiosRequestConfig & {
+            __wearsearchTriedLegacy?: boolean;
+            __rateLimitRetryCount?: number;
+          })
+        | undefined;
 
       // Handle 429 Rate Limit with automatic retry
       if (config) {
@@ -385,9 +414,16 @@ const attachInterceptors = (client: AxiosInstance, fallback?: FallbackConfig) =>
 export const api: AxiosInstance = createClient(API_CONFIG.BASE_URL);
 export const apiLegacy: AxiosInstance = createClient(API_CONFIG.LEGACY_BASE_URL);
 
+// API client for banner endpoints (without /v1 suffix)
+export const apiBanners: AxiosInstance = createClient('/api');
+
+// API client for image upload endpoints
+export const apiUpload: AxiosInstance = createClient('/api');
+
 attachInterceptors(api, ENABLE_LEGACY_FALLBACK ? { fallbackClient: apiLegacy } : undefined);
 attachInterceptors(apiLegacy);
-
+attachInterceptors(apiBanners);
+attachInterceptors(apiUpload);
 
 /**
  * Centralized error handler (deprecated - use ApiError class directly)
@@ -395,7 +431,7 @@ attachInterceptors(apiLegacy);
  */
 export const handleApiError = (error: unknown): ApiErrorType => {
   const apiError = createApiError(error);
-  
+
   return {
     message: apiError.message,
     status: apiError.status,
@@ -413,7 +449,7 @@ export const apiGet = async <T>(
 ): Promise<T> => {
   const { schema, ...axiosConfig } = config || {};
   const response = await api.get<T>(url, axiosConfig);
-  
+
   if (schema) {
     try {
       return schema.parse(response.data);
@@ -428,7 +464,7 @@ export const apiGet = async <T>(
       throw new ApiError('Invalid API response format', undefined, undefined, 'VALIDATION_ERROR');
     }
   }
-  
+
   return response.data;
 };
 
@@ -439,7 +475,7 @@ export const apiPost = async <T>(
 ): Promise<T> => {
   const { schema, ...axiosConfig } = config || {};
   const response = await api.post<T>(url, data, axiosConfig);
-  
+
   if (schema) {
     try {
       return schema.parse(response.data);
@@ -453,7 +489,7 @@ export const apiPost = async <T>(
       throw new ApiError('Invalid API response format', undefined, undefined, 'VALIDATION_ERROR');
     }
   }
-  
+
   return response.data;
 };
 
@@ -464,7 +500,7 @@ export const apiPut = async <T>(
 ): Promise<T> => {
   const { schema, ...axiosConfig } = config || {};
   const response = await api.put<T>(url, data, axiosConfig);
-  
+
   if (schema) {
     try {
       return schema.parse(response.data);
@@ -475,7 +511,7 @@ export const apiPut = async <T>(
       throw new ApiError('Invalid API response format', undefined, undefined, 'VALIDATION_ERROR');
     }
   }
-  
+
   return response.data;
 };
 
@@ -486,7 +522,7 @@ export const apiPatch = async <T>(
 ): Promise<T> => {
   const { schema, ...axiosConfig } = config || {};
   const response = await api.patch<T>(url, data, axiosConfig);
-  
+
   if (schema) {
     try {
       return schema.parse(response.data);
@@ -497,7 +533,7 @@ export const apiPatch = async <T>(
       throw new ApiError('Invalid API response format', undefined, undefined, 'VALIDATION_ERROR');
     }
   }
-  
+
   return response.data;
 };
 
@@ -507,7 +543,7 @@ export const apiDelete = async <T>(
 ): Promise<T> => {
   const { schema, ...axiosConfig } = config || {};
   const response = await api.delete<T>(url, axiosConfig);
-  
+
   if (schema) {
     try {
       return schema.parse(response.data);
@@ -518,7 +554,7 @@ export const apiDelete = async <T>(
       throw new ApiError('Invalid API response format', undefined, undefined, 'VALIDATION_ERROR');
     }
   }
-  
+
   return response.data;
 };
 
@@ -526,27 +562,25 @@ export const apiDelete = async <T>(
 export { ApiError, isApiError, getErrorMessage } from './api/errorHandler';
 
 // Wrapper for GET requests with retry
-api.getWithRetry = async <T = unknown>(url: string, config?: Record<string, unknown>) => {
-  return retryWithBackoff(
-    () => api.get<T>(url, config),
-    { maxAttempts: 3, initialDelay: 1000 }
-  );
+(api as any).getWithRetry = async <T = unknown>(url: string, config?: Record<string, unknown>) => {
+  return retryWithBackoff(() => api.get<T>(url, config), { maxAttempts: 3, initialDelay: 1000 });
 };
 
 // Wrapper for POST requests with retry (only for idempotent operations)
-api.postWithRetry = async <T = unknown>(url: string, data?: unknown, config?: Record<string, unknown>) => {
-  return retryWithBackoff(
-    () => api.post<T>(url, data, config),
-    { 
-      maxAttempts: 2, 
-      initialDelay: 1000,
-      shouldRetry: (error) => {
-        const status = (error as AxiosError)?.response?.status;
-        // Only retry on network errors or 5xx
-        return !status || status >= 500;
-      }
-    }
-  );
+(api as any).postWithRetry = async <T = unknown>(
+  url: string,
+  data?: unknown,
+  config?: Record<string, unknown>
+) => {
+  return retryWithBackoff(() => api.post<T>(url, data, config), {
+    maxAttempts: 2,
+    initialDelay: 1000,
+    shouldRetry: error => {
+      const status = (error as AxiosError)?.response?.status;
+      // Only retry on network errors or 5xx
+      return !status || status >= 500;
+    },
+  });
 };
 
 export default api;

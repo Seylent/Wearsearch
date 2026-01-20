@@ -6,7 +6,8 @@
 import axios, { AxiosError } from 'axios';
 import type { ApiResponse } from '@/types';
 
-const isRecord = (value: unknown): value is Record<string, unknown> => typeof value === 'object' && value !== null;
+const isRecord = (value: unknown): value is Record<string, unknown> =>
+  typeof value === 'object' && value !== null;
 
 const getString = (value: unknown, key: string): string | undefined => {
   if (!isRecord(value)) return undefined;
@@ -24,6 +25,7 @@ const getRecord = (value: unknown, key: string): Record<string, unknown> | undef
  * Custom API Error class with enhanced type safety
  */
 export class ApiError extends Error {
+  public config?: import('axios').AxiosRequestConfig;
   constructor(
     message: string,
     public status?: number,
@@ -32,48 +34,48 @@ export class ApiError extends Error {
   ) {
     super(message);
     this.name = 'ApiError';
-    
+
     // Maintains proper stack trace for where our error was thrown (only available on V8)
     if (Error.captureStackTrace) {
       Error.captureStackTrace(this, ApiError);
     }
   }
-  
+
   /**
    * Check if error is an authentication error (401 or 403)
    */
   isAuthError(): boolean {
     return this.status === 401 || this.status === 403;
   }
-  
+
   /**
    * Check if error is a not found error (404)
    */
   isNotFound(): boolean {
     return this.status === 404;
   }
-  
+
   /**
    * Check if error is a server error (5xx)
    */
   isServerError(): boolean {
     return this.status !== undefined && this.status >= 500;
   }
-  
+
   /**
    * Check if error is a client error (4xx)
    */
   isClientError(): boolean {
     return this.status !== undefined && this.status >= 400 && this.status < 500;
   }
-  
+
   /**
    * Check if error is a network error (no response)
    */
   isNetworkError(): boolean {
     return this.status === undefined && this.code === 'ERR_NETWORK';
   }
-  
+
   /**
    * Get user-friendly error message
    */
@@ -81,11 +83,11 @@ export class ApiError extends Error {
     if (this.isNetworkError()) {
       return 'Network error. Please check your internet connection.';
     }
-    
+
     if (this.isServerError()) {
       return 'Server error. Please try again later.';
     }
-    
+
     return this.message || 'An unexpected error occurred';
   }
 }
@@ -102,14 +104,14 @@ export const handleApiError = (error: unknown): ApiError => {
 
     // v1 error envelope support: { error: { code, message, details?, i18n_key? } }
     const v1Error = getRecord(responseData, 'error');
-    
+
     // Extract error_code (for i18n)
     const errorCode =
       getString(v1Error, 'i18n_key') ??
       getString(v1Error, 'code') ??
       getString(responseData, 'error_code') ??
       getString(responseData, 'code');
-    
+
     // Extract error message
     const message =
       getString(v1Error, 'message') ??
@@ -117,20 +119,15 @@ export const handleApiError = (error: unknown): ApiError => {
       getString(responseData, 'error') ??
       axiosError.message ??
       'An unexpected error occurred';
-    
-    return new ApiError(
-      message,
-      status,
-      axiosError.code,
-      errorCode
-    );
+
+    return new ApiError(message, status, axiosError.code, errorCode);
   }
-  
+
   // Handle standard Error objects
   if (error instanceof Error) {
     return new ApiError(error.message);
   }
-  
+
   // Handle unknown errors
   return new ApiError('An unexpected error occurred');
 };
@@ -149,14 +146,14 @@ export const getErrorMessage = (error: unknown): string => {
   if (isApiError(error)) {
     return error.getUserMessage();
   }
-  
+
   if (error instanceof Error) {
     return error.message;
   }
-  
+
   if (typeof error === 'string') {
     return error;
   }
-  
+
   return 'An unexpected error occurred';
 };

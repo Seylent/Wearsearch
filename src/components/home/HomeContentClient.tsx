@@ -36,6 +36,7 @@ export default function HomeContentClient({
 }: Readonly<HomeContentClientProps>) {
   const { currency } = useCurrencyConversion();
   const [products, setProducts] = useState<Product[]>(initialProducts);
+  const [productsCurrency, setProductsCurrency] = useState<'UAH' | 'USD'>('UAH');
   const [isLoading, setIsLoading] = useState(false);
 
   useEffect(() => {
@@ -47,27 +48,53 @@ export default function HomeContentClient({
       // If UAH, use initial products from SSR
       if (currentCurrency === 'UAH') {
         setProducts(initialProducts);
+        setProductsCurrency('UAH');
         return;
       }
 
       setIsLoading(true);
       try {
-        const baseUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000';
-        const response = await fetch(`${baseUrl}/api/pages/home?currency=${currentCurrency}`);
-        
+        // Use the same v1 endpoint shape as the rest of the app.
+        // Next rewrites proxy this to backend: http://localhost:3000
+        const response = await fetch(`/api/v1/pages/home?currency=${currentCurrency}`);
+         
         if (!response.ok) {
           console.error('Failed to fetch products with currency');
           setProducts(initialProducts);
+          setProductsCurrency('UAH');
           return;
         }
 
         const data = await response.json();
-        if (data.success && data.data?.featured_products) {
-          setProducts(data.data.featured_products);
+
+        // v1 homepage endpoint can return different shapes, e.g.
+        // - { success, data: { featured_products: [...] } }
+        // - { item: { featured_products / products / items: [...] }, currency: { code: 'USD' } }
+        const topCurrency = (data?.currency?.code === 'USD' || data?.currency?.code === 'UAH')
+          ? data.currency.code
+          : currentCurrency;
+
+        const item = data?.item ?? data?.data ?? data;
+        const inner = item?.data ?? item;
+
+        const featured =
+          inner?.featured_products ??
+          inner?.featuredProducts ??
+          inner?.products ??
+          inner?.items;
+
+        if (Array.isArray(featured)) {
+          setProducts(featured);
+          setProductsCurrency(topCurrency);
+        } else {
+          console.warn('Unexpected home currency response shape:', data);
+          setProducts(initialProducts);
+          setProductsCurrency('UAH');
         }
       } catch (error) {
         console.error('Error fetching products with currency:', error);
         setProducts(initialProducts);
+        setProductsCurrency('UAH');
       } finally {
         setIsLoading(false);
       }
@@ -131,6 +158,7 @@ export default function HomeContentClient({
                     image={product.image_url || product.image || ''}
                     price={product.price}
                     brand={product.brand}
+                    priceCurrency={productsCurrency}
                   />
                 ))
               ) : (
