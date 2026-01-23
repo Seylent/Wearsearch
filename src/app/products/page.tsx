@@ -2,18 +2,20 @@ import { Suspense } from 'react';
 import { Metadata } from 'next';
 import { generateSearchMetadata } from '@/lib/seo/metadata-utils';
 import { shouldIndexPage } from '@/lib/seo/helpers';
+import { fetchBackendJson } from '@/lib/backendFetch';
+import { JsonLd, generateBreadcrumbSchema } from '@/lib/seo/structured-data';
 
 // Components
 import { ProductsContent } from '@/components/ProductsContent';
 
 // Динамічний metadata залежно від фільтрів
-export async function generateMetadata({ 
-  searchParams 
-}: { 
-  searchParams: { [key: string]: string | string[] | undefined } 
+export async function generateMetadata({
+  searchParams,
+}: {
+  searchParams: { [key: string]: string | string[] | undefined };
 }): Promise<Metadata> {
   const params = new URLSearchParams();
-  
+
   // Конвертуємо searchParams в URLSearchParams
   Object.entries(searchParams).forEach(([key, value]) => {
     if (value) {
@@ -31,15 +33,14 @@ export async function generateMetadata({
   // Якщо це SEO сторінка категорії - отримуємо дані з API
   if (shouldIndex && categoryType) {
     try {
-      const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000';
-      const response = await fetch(`${API_URL}/api/categories/${categoryType}?lang=uk`, {
-        next: { revalidate: 3600 }
+      const res = await fetchBackendJson<any>(`/categories/${categoryType}?lang=uk`, {
+        next: { revalidate: 3600 },
       });
 
-      if (response.ok) {
-        const data = await response.json();
-        const category = data.category || data;
-        
+      if (res) {
+        const data = res.data;
+        const category = data.category || data.data?.category || data;
+
         return {
           title: category.seo_title || `${category.name} | Wearsearch`,
           description: category.seo_description || category.description,
@@ -69,19 +70,23 @@ export async function generateMetadata({
 // Server Component
 export default function ProductsPage() {
   return (
-    <Suspense fallback={
-      <div className="min-h-screen bg-black flex items-center justify-center">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-white"></div>
-      </div>
-    }>
+    <Suspense
+      fallback={
+        <div className="min-h-screen bg-black flex items-center justify-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-white"></div>
+        </div>
+      }
+    >
+      <JsonLd
+        data={generateBreadcrumbSchema([
+          { name: 'Головна', url: process.env.NEXT_PUBLIC_SITE_URL || 'https://wearsearch.com' },
+          {
+            name: 'Товари',
+            url: `${process.env.NEXT_PUBLIC_SITE_URL || 'https://wearsearch.com'}/products`,
+          },
+        ])}
+      />
       <ProductsContent />
     </Suspense>
   );
-}
-
-// Generate static params if needed
-export function generateStaticParams() {
-  return [
-    { searchParams: {} }, // Default page
-  ];
 }

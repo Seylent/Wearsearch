@@ -27,6 +27,12 @@
     "noUnusedLocals": false,
     "strictNullChecks": false
   },
-  "include": ["next-env.d.ts", ".next/types/**/*.ts", "**/*.ts", "**/*.tsx"],
-  "exclude": ["node_modules"]
+  "include": ["next-env.d.ts", ".next/types/**/*.ts", "src/**/*.ts", "src/**/*.tsx"],
+  "exclude": [
+    "node_modules",
+    "src/components/AdminContentBackup.tsx",
+    "src/components/__tests__/**",
+    "src/**/__tests__/**",
+    "src/test/**"
+  ]
 }

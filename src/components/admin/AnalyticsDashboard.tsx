@@ -17,6 +17,13 @@ import {
   Loader2 
 } from "lucide-react";
 
+const normalizeProductOption = (product: Record<string, unknown>) => {
+  const id = String(product.id ?? product.product_id ?? '');
+  const name = typeof product.name === 'string' ? product.name : 'Untitled';
+  const price = typeof product.price === 'number' ? product.price : Number(product.price) || 0;
+  return { id, name, price };
+};
+
 interface AnalyticsData {
   totalProducts: number;
   totalStores: number;
@@ -78,6 +85,7 @@ export const AnalyticsDashboard: React.FC<AnalyticsDashboardProps> = ({
   products,
 }) => {
   const isMounted = useClientOnly();
+  const productOptions = products.map(normalizeProductOption).filter((p) => p.id);
   
   return (
     <div className="space-y-6">
@@ -215,7 +223,7 @@ export const AnalyticsDashboard: React.FC<AnalyticsDashboardProps> = ({
                     className="w-full p-3 rounded-lg bg-card/50 border border-border/50"
                   >
                     <option value="">Choose a product...</option>
-                    {products.map((product) => (
+                    {productOptions.map((product) => (
                       <option key={product.id} value={product.id}>
                         {product.name} (${product.price})
                       </option>

@@ -3,7 +3,7 @@
  * Uses Next.js native caching and revalidation
  */
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000';
+const API_URL = process.env.NEXT_PUBLIC_API_URL || process.env.BACKEND_URL || 'http://localhost:3000';
 
 export interface FetchOptions {
   revalidate?: number | false; // seconds or false for no caching
@@ -18,13 +18,31 @@ async function fetchWithCache<T>(
   options: FetchOptions = {}
 ): Promise<T> {
   const { revalidate = 60, tags = [] } = options;
-  
-  const response = await fetch(`${API_URL}${endpoint}`, {
+
+  const url = `${API_URL}${endpoint}`;
+  const response = await fetch(url, {
     next: { 
       revalidate,
       tags 
     }
   });
+
+  // If v1 is not available in this environment, fall back to /api.
+  if (!response.ok && endpoint.startsWith('/api/v1/')) {
+    const legacyEndpoint = endpoint.replace('/api/v1/', '/api/');
+    const legacyResponse = await fetch(`${API_URL}${legacyEndpoint}`, {
+      next: {
+        revalidate,
+        tags,
+      },
+    });
+
+    if (!legacyResponse.ok) {
+      throw new Error(`API Error: ${legacyResponse.status} ${legacyResponse.statusText}`);
+    }
+
+    return legacyResponse.json();
+  }
 
   if (!response.ok) {
     throw new Error(`API Error: ${response.status} ${response.statusText}`);
@@ -39,7 +57,8 @@ async function fetchWithCache<T>(
 export const productApi = {
   // Get single product - cache for 1 hour
   async getProduct(id: string) {
-    return fetchWithCache(`/api/products/${id}`, {
+    // Prefer v1, but keep /api as fallback in other modules.
+    return fetchWithCache(`/api/v1/products/${id}`, {
       revalidate: 3600,
       tags: [`product-${id}`]
     });
@@ -51,7 +70,7 @@ export const productApi = {
       ? '?' + new URLSearchParams(params).toString() 
       : '';
     
-    return fetchWithCache(`/api/products${queryString}`, {
+    return fetchWithCache(`/api/v1/products${queryString}`, {
       revalidate: 300,
       tags: ['products']
     });
@@ -59,7 +78,7 @@ export const productApi = {
 
   // Get featured products - cache for 30 minutes
   async getFeaturedProducts() {
-    return fetchWithCache('/api/products/featured', {
+    return fetchWithCache('/api/v1/products/featured', {
       revalidate: 1800,
       tags: ['featured-products']
     });

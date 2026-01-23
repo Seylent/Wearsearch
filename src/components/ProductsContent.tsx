@@ -1,21 +1,40 @@
 ﻿'use client';
 
-import { useState, useEffect, useMemo, type ReactNode } from "react";
-import { useTranslation } from "react-i18next";
-import { useSearchParams } from "next/navigation";
-import { NeonAbstractions } from "@/components/NeonAbstractions";
-import ProductCard from "@/components/ProductCard";
-import { ProductGridSkeleton } from "@/components/common/SkeletonLoader";
-import { NoProductsFound, NoStoreProducts, ErrorState, NoSearchResults } from "@/components/common/EmptyState";
-import { useCurrency } from "@/contexts/CurrencyContext";
-import { useCurrencyConversion } from "@/hooks/useCurrencyConversion";
-import { Checkbox } from "@/components/ui/checkbox";
-import { Label } from "@/components/ui/label";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
-import { Filter, Search, Grid3x3, LayoutGrid, Columns3, ChevronDown } from "lucide-react";
+import { useState, useEffect, useMemo, type ReactNode } from 'react';
+import { useTranslation } from 'react-i18next';
+import type { TFunction } from 'i18next';
+import { useSearchParams } from 'next/navigation';
+import { NeonAbstractions } from '@/components/NeonAbstractions';
+import ProductCard from '@/components/ProductCard';
+import { ProductGridSkeleton } from '@/components/common/SkeletonLoader';
+import {
+  NoProductsFound,
+  NoStoreProducts,
+  ErrorState,
+  NoSearchResults,
+} from '@/components/common/EmptyState';
+import { useCurrency } from '@/contexts/CurrencyContext';
+import { useCurrencyConversion } from '@/hooks/useCurrencyConversion';
+import { Checkbox } from '@/components/ui/checkbox';
+import { Label } from '@/components/ui/label';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from '@/components/ui/dialog';
+import { Filter, Search, Grid3x3, LayoutGrid, Columns3, ChevronDown } from 'lucide-react';
 import {
   Pagination,
   PaginationContent,
@@ -24,36 +43,50 @@ import {
   PaginationNext,
   PaginationPrevious,
   PaginationEllipsis,
-} from "@/components/ui/pagination";
-import { useStoreProducts } from "@/hooks/useApi";
-import { useProductsPageData } from "@/hooks/useAggregatedData";
-import { useDebounce } from "@/hooks/useDebounce";
-import { useProductFilters, useProductSort, useGridLayout, type SortOption } from "@/features/products";
-import { PRODUCT_CATEGORIES } from "@/constants/categories";
-import type { Product } from "@/types";
-import { translateGender } from "@/utils/errorTranslation";
-import { getColorTranslation, getCategoryTranslation } from "@/utils/translations";
-import { seoApi, type SEOData } from "@/services/api/seo.api";
-import PriceRangeFilter from "@/components/PriceRangeFilter";
-import RecentlyViewedProducts from "@/components/RecentlyViewedProducts";
-import PersonalizedRecommendations from "@/components/PersonalizedRecommendations";
+} from '@/components/ui/pagination';
+import { useStoreProducts } from '@/hooks/useApi';
+import { useProductsPageData } from '@/hooks/useAggregatedData';
+import { useDebounce } from '@/hooks/useDebounce';
+import {
+  useProductFilters,
+  useProductSort,
+  useGridLayout,
+  type SortOption,
+} from '@/features/products';
+import { PRODUCT_CATEGORIES } from '@/constants/categories';
+import type { Product } from '@/types';
+import { translateGender } from '@/utils/errorTranslation';
+import { getColorTranslation, getCategoryTranslation } from '@/utils/translations';
+import { seoApi, type SEOData } from '@/services/api/seo.api';
+import PriceRangeFilter from '@/components/PriceRangeFilter';
+import dynamic from 'next/dynamic';
+
+const RecentlyViewedProducts = dynamic(() => import('@/components/RecentlyViewedProducts'), {
+  ssr: false,
+  loading: () => null,
+});
+
+const PersonalizedRecommendations = dynamic(
+  () => import('@/components/PersonalizedRecommendations'),
+  { ssr: false, loading: () => null }
+);
 
 // Format error details safely to avoid default object stringification
 function formatErrorDetails(err: unknown): string {
-    if (err instanceof Error) {
-      return err.message || 'Unknown error';
+  if (err instanceof Error) {
+    return err.message || 'Unknown error';
+  }
+  if (typeof err === 'string') {
+    return err;
+  }
+  if (err && typeof err === 'object') {
+    try {
+      return JSON.stringify(err);
+    } catch {
+      return 'Unknown error';
     }
-    if (typeof err === 'string') {
-      return err;
-    }
-    if (err && typeof err === 'object') {
-      try {
-        return JSON.stringify(err);
-      } catch {
-        return 'Unknown error';
-      }
-    }
-    return 'Unknown error';
+  }
+  return 'Unknown error';
 }
 
 function selectProductsFromData(
@@ -71,27 +104,29 @@ function selectProductsFromData(
   return [];
 }
 
+type PaginationMeta = {
+  page: number;
+  totalPages: number;
+  totalItems: number;
+  hasNext: boolean;
+  hasPrev: boolean;
+};
+
 function selectServerPagination(
   storeIdParam: string | null,
   pageData: unknown,
   storeProductsData: unknown,
   currentPage: number,
   products: Product[]
-): {
-  page: number;
-  totalPages: number;
-  totalItems: number;
-  hasNext: boolean;
-  hasPrev: boolean;
-} {
+): PaginationMeta {
   const pageDataObj = pageData as Record<string, unknown> | null | undefined;
   const storeDataObj = storeProductsData as Record<string, unknown> | null | undefined;
 
-  const pagePagination = pageDataObj?.['pagination'] as Pagination;
+  const pagePagination = pageDataObj?.['pagination'] as PaginationMeta | undefined;
   if (!storeIdParam && pagePagination) {
     return pagePagination;
   }
-  const storePagination = storeDataObj?.['pagination'] as Pagination;
+  const storePagination = storeDataObj?.['pagination'] as PaginationMeta | undefined;
   if (storeIdParam && storePagination) {
     return storePagination;
   }
@@ -146,7 +181,7 @@ function safeScrollToTop(): void {
 }
 
 function renderProductsMainContent(args: {
-  t: (key: string, defaultValue?: string) => string;
+  t: TFunction;
   error: unknown;
   loading: boolean;
   itemsPerPage: number;
@@ -154,7 +189,7 @@ function renderProductsMainContent(args: {
   products: Product[];
   totalPages: number;
   currentPage: number;
-  pagination: { hasPrev: boolean; hasNext: boolean; totalPages: number };
+  pagination: PaginationMeta;
   onPageChange: (page: number) => void;
   storeIdParam: string | null;
   searchQuery: string;
@@ -199,12 +234,12 @@ function renderProductsMainContent(args: {
     return (
       <>
         <div className={`grid ${computeGridClass(layoutColumns)} gap-3 sm:gap-6`}>
-          {products.map((product) => (
+          {products.map(product => (
             <ProductCard
               key={product.id}
               id={product.id}
               name={product.name}
-              image={product.image_url || product.image || ""}
+              image={product.image_url || product.image || ''}
               price={product.price}
               brand={product.brand}
             />
@@ -223,7 +258,7 @@ function renderProductsMainContent(args: {
                         e.preventDefault();
                         onPageChange(currentPage - 1);
                       }}
-                      className={hasPrev ? "cursor-pointer" : "pointer-events-none opacity-50"}
+                      className={hasPrev ? 'cursor-pointer' : 'pointer-events-none opacity-50'}
                     />
                   </PaginationItem>
 
@@ -312,7 +347,7 @@ function renderProductsMainContent(args: {
                         e.preventDefault();
                         onPageChange(currentPage + 1);
                       }}
-                      className={hasNext ? "cursor-pointer" : "pointer-events-none opacity-50"}
+                      className={hasNext ? 'cursor-pointer' : 'pointer-events-none opacity-50'}
                     />
                   </PaginationItem>
                 </PaginationContent>
@@ -337,225 +372,259 @@ function renderProductsMainContent(args: {
 }
 
 type FiltersDialogProps = Readonly<{
-    t: (key: string, defaultValue?: string) => string;
-    visibleColors: string[];
-    colors: string[];
-    showAllColors: boolean;
-    setShowAllColors: (v: boolean) => void;
-    visibleCategories: string[];
-    categories: string[];
-    showAllCategories: boolean;
-    setShowAllCategories: (v: boolean) => void;
-    COMPACT_LIMIT: number;
-    genders: string[];
-    filters: Record<string, unknown>;
-    brands: unknown[];
-    brandSearchQuery: string;
-    setBrandSearchQuery: (v: string) => void;
-    setCurrentPage: (updater: number | ((p: number) => number)) => void;
-    getCurrencySymbol: () => string;
-    currency: string;
-    setFilterOpen: (v: boolean) => void;
-  }>;
-  
-  function FiltersDialogContent(props: FiltersDialogProps) {
-    const {
-      t,
-      visibleColors,
-      colors,
-      showAllColors,
-      setShowAllColors,
-      visibleCategories,
-      categories,
-      showAllCategories,
-      setShowAllCategories,
-      COMPACT_LIMIT,
-      genders,
-      filters,
-      brands,
-      brandSearchQuery,
-      setBrandSearchQuery,
-      setCurrentPage,
-      getCurrencySymbol,
-      currency,
-      setFilterOpen,
-    } = props;
-  
-    const brandsList = Array.isArray(brands) ? (brands as Array<{ id: string; name: string; slug?: string }>) : [];
-    const filteredBrandList = brandsList.filter((brand) =>
-      brand.name.toLowerCase().includes(brandSearchQuery.toLowerCase())
-    );
-    const maxPriceLimit = getMaxPriceLimit(currency);
-  
-    return (
-        <div className="space-y-6 py-4">
-          <div>
-            <h3 className="font-semibold mb-2 text-sm uppercase tracking-widest text-muted-foreground">{t('products.color')}</h3>
-            <div className="grid grid-cols-3 gap-1">
-              {visibleColors.map((color) => (
-                <div key={color} className="flex items-center gap-2 py-1.5 min-h-[36px] touch-manipulation">
-                  <Checkbox 
-                    id={`filter-color-${color}`}
-                    checked={filters.selectedColors.includes(color)}
-                    onCheckedChange={() => filters.toggleColor(color)}
-                    className="min-w-[18px] min-h-[18px] h-[18px] w-[18px]"
-                  />
-                  <Label 
-                    htmlFor={`filter-color-${color}`}
-                    className="text-xs cursor-pointer active:text-foreground/80 transition-colors capitalize flex-1"
-                  >
-                    {getColorTranslation(color)}
-                  </Label>
-                </div>
-              ))}
-            </div>
-            {colors.length > COMPACT_LIMIT && (
-              <button
-                onClick={() => setShowAllColors(!showAllColors)}
-                className="mt-2 text-xs text-primary hover:text-primary/80 transition-colors flex items-center gap-1"
-              >
-                <ChevronDown className={`w-3 h-3 transition-transform ${showAllColors ? 'rotate-180' : ''}`} />
-                {showAllColors 
-                  ? t('common.showLess', 'Show less') 
-                  : t('common.showAll', { count: colors.length, defaultValue: `Show all (${colors.length})` })}
-              </button>
-            )}
-          </div>
-  
-          <div>
-            <h3 className="font-semibold mb-2 text-sm uppercase tracking-widest text-muted-foreground">{t('products.category')}</h3>
-            <div className="grid grid-cols-2 gap-1">
-              {visibleCategories.map((category) => (
-                <div key={category} className="flex items-center gap-2 py-1.5 min-h-[36px] touch-manipulation">
-                  <Checkbox 
-                    id={`filter-category-${category}`}
-                    checked={filters.selectedTypes.includes(category)}
-                    onCheckedChange={() => filters.toggleType(category)}
-                    className="min-w-[18px] min-h-[18px] h-[18px] w-[18px]"
-                  />
-                  <Label 
-                    htmlFor={`filter-category-${category}`}
-                    className="text-xs cursor-pointer active:text-foreground/80 transition-colors capitalize flex-1"
-                  >
-                    {getCategoryTranslation(category)}
-                  </Label>
-                </div>
-              ))}
-            </div>
-            {categories.length > COMPACT_LIMIT && (
-              <button
-                onClick={() => setShowAllCategories(!showAllCategories)}
-                className="mt-2 text-xs text-primary hover:text-primary/80 transition-colors flex items-center gap-1"
-              >
-                <ChevronDown className={`w-3 h-3 transition-transform ${showAllCategories ? 'rotate-180' : ''}`} />
-                {showAllCategories 
-                  ? t('common.showLess', 'Show less') 
-                  : t('common.showAll', { count: categories.length, defaultValue: `Show all (${categories.length})` })}
-              </button>
-            )}
-          </div>
-  
-          <div>
-            <h3 className="font-semibold mb-2 text-sm uppercase tracking-widest text-muted-foreground">{t('products.gender')}</h3>
-            <div className="grid grid-cols-3 gap-1">
-              {genders.map((gender) => (
-                <div key={gender} className="flex items-center gap-2 py-1.5 min-h-[36px] touch-manipulation">
-                  <Checkbox 
-                    id={`filter-gender-${gender}`}
-                    checked={filters.selectedGenders.includes(gender)}
-                    onCheckedChange={() => filters.toggleGender(gender)}
-                    className="min-w-[18px] min-h-[18px] h-[18px] w-[18px]"
-                  />
-                  <Label 
-                    htmlFor={`filter-gender-${gender}`}
-                    className="text-xs cursor-pointer active:text-foreground/80 transition-colors capitalize flex-1"
-                  >
-                    {translateGender(gender)}
-                  </Label>
-                </div>
-              ))}
-            </div>
-          </div>
-  
-          <div>
-            <h3 className="font-semibold mb-3 text-sm uppercase tracking-widest text-muted-foreground">{t('products.brand')}</h3>
-            {filters.selectedBrand && (
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={() => { filters.setSelectedBrand(""); setCurrentPage(1); }}
-                className="mb-2 text-xs text-muted-foreground hover:text-foreground h-7"
-              >
-                Clear: {filters.selectedBrand}
-              </Button>
-            )}
-            <Input
-              type="text"
-              placeholder={t('products.searchBrand')}
-              value={brandSearchQuery}
-              onChange={(e: React.ChangeEvent<HTMLInputElement>) => setBrandSearchQuery(e.target.value)}
-              className="mb-2 h-9 text-sm"
-            />
-            <div className="max-h-40 overflow-y-auto space-y-1 border border-foreground/10 rounded-lg p-2">
-              {brandsList.length > 0 ? (
-                filteredBrandList.map((brand: { id: string; name: string }) => (
-                  <button
-                    key={brand.id}
-                    onClick={() => {
-                      filters.setSelectedBrand(brand.name);
-                      setCurrentPage(1);
-                    }}
-                    className={`w-full text-left px-2 py-1.5 rounded-md text-sm transition-colors ${
-                      filters.selectedBrand === brand.name
-                        ? "bg-primary text-primary-foreground"
-                        : "hover:bg-foreground/5"
-                    }`}
-                  >
-                    {brand.name}
-                  </button>
-                ))
-              ) : (
-                <p className="text-xs text-muted-foreground text-center py-3">{t('common.noResults')}</p>
-              )}
-            </div>
-          </div>
-  
-          <div>
-            <PriceRangeFilter
-              min={0}
-              max={maxPriceLimit}
-              minValue={filters.priceMin || 0}
-              maxValue={filters.priceMax || maxPriceLimit}
-              onApply={(min: number, max: number) => {
-                const minValue = min === 0 ? null : min;
-                const maxValue = max === maxPriceLimit ? null : max;
-                filters.setPriceRange(minValue, maxValue);
-                setCurrentPage(1);
-              }}
-              currency={getCurrencySymbol()}
-              showApplyButton={false}
-              step={currency === 'USD' ? 5 : 100}
-            />
-          </div>
-  
-          <div className="flex gap-2 pt-4 border-t border-foreground/10">
-            <Button 
-              variant="ghost" 
-              className="flex-1 text-muted-foreground hover:text-foreground h-10"
-              onClick={filters.clearFilters}
+  t: TFunction;
+  visibleColors: string[];
+  colors: string[];
+  showAllColors: boolean;
+  setShowAllColors: (v: boolean) => void;
+  visibleCategories: string[];
+  categories: string[];
+  showAllCategories: boolean;
+  setShowAllCategories: (v: boolean) => void;
+  COMPACT_LIMIT: number;
+  genders: string[];
+  filters: ReturnType<typeof useProductFilters>;
+  brands: Array<{ id: string; name: string; slug?: string }>;
+  brandSearchQuery: string;
+  setBrandSearchQuery: (v: string) => void;
+  setCurrentPage: (updater: number | ((p: number) => number)) => void;
+  getCurrencySymbol: () => string;
+  currency: string;
+  setFilterOpen: (v: boolean) => void;
+}>;
+
+function FiltersDialogContent(props: FiltersDialogProps) {
+  const {
+    t,
+    visibleColors,
+    colors,
+    showAllColors,
+    setShowAllColors,
+    visibleCategories,
+    categories,
+    showAllCategories,
+    setShowAllCategories,
+    COMPACT_LIMIT,
+    genders,
+    filters,
+    brands,
+    brandSearchQuery,
+    setBrandSearchQuery,
+    setCurrentPage,
+    getCurrencySymbol,
+    currency,
+    setFilterOpen,
+  } = props;
+
+  const brandsList = Array.isArray(brands)
+    ? (brands as Array<{ id: string; name: string; slug?: string }>)
+    : [];
+  const filteredBrandList = brandsList.filter(brand =>
+    brand.name.toLowerCase().includes(brandSearchQuery.toLowerCase())
+  );
+  const maxPriceLimit = getMaxPriceLimit(currency);
+
+  return (
+    <div className="space-y-6 py-4">
+      <div>
+        <h3 className="font-semibold mb-2 text-sm uppercase tracking-widest text-muted-foreground">
+          {t('products.color')}
+        </h3>
+        <div className="grid grid-cols-3 gap-1">
+          {visibleColors.map(color => (
+            <div
+              key={color}
+              className="flex items-center gap-2 py-1.5 min-h-[36px] touch-manipulation"
             >
-              {t('products.clearFilters')}
-            </Button>
-            <Button 
-              className="flex-1 bg-primary text-primary-foreground hover:bg-primary/90 h-10"
-              onClick={() => setFilterOpen(false)}
-            >
-              {t('products.applyFilters')}
-            </Button>
-          </div>
+              <Checkbox
+                id={`filter-color-${color}`}
+                checked={filters.selectedColors.includes(color)}
+                onCheckedChange={() => filters.toggleColor(color)}
+                className="min-w-[18px] min-h-[18px] h-[18px] w-[18px]"
+              />
+              <Label
+                htmlFor={`filter-color-${color}`}
+                className="text-xs cursor-pointer active:text-foreground/80 transition-colors capitalize flex-1"
+              >
+                {getColorTranslation(color)}
+              </Label>
+            </div>
+          ))}
         </div>
-    );
-  }
+        {colors.length > COMPACT_LIMIT && (
+          <button
+            onClick={() => setShowAllColors(!showAllColors)}
+            className="mt-2 text-xs text-primary hover:text-primary/80 transition-colors flex items-center gap-1"
+          >
+            <ChevronDown
+              className={`w-3 h-3 transition-transform ${showAllColors ? 'rotate-180' : ''}`}
+            />
+            {showAllColors
+              ? t('common.showLess', 'Show less')
+              : t('common.showAll', {
+                  count: colors.length,
+                  defaultValue: `Show all (${colors.length})`,
+                })}
+          </button>
+        )}
+      </div>
+
+      <div>
+        <h3 className="font-semibold mb-2 text-sm uppercase tracking-widest text-muted-foreground">
+          {t('products.category')}
+        </h3>
+        <div className="grid grid-cols-2 gap-1">
+          {visibleCategories.map(category => (
+            <div
+              key={category}
+              className="flex items-center gap-2 py-1.5 min-h-[36px] touch-manipulation"
+            >
+              <Checkbox
+                id={`filter-category-${category}`}
+                checked={filters.selectedTypes.includes(category)}
+                onCheckedChange={() => filters.toggleType(category)}
+                className="min-w-[18px] min-h-[18px] h-[18px] w-[18px]"
+              />
+              <Label
+                htmlFor={`filter-category-${category}`}
+                className="text-xs cursor-pointer active:text-foreground/80 transition-colors capitalize flex-1"
+              >
+                {getCategoryTranslation(category)}
+              </Label>
+            </div>
+          ))}
+        </div>
+        {categories.length > COMPACT_LIMIT && (
+          <button
+            onClick={() => setShowAllCategories(!showAllCategories)}
+            className="mt-2 text-xs text-primary hover:text-primary/80 transition-colors flex items-center gap-1"
+          >
+            <ChevronDown
+              className={`w-3 h-3 transition-transform ${showAllCategories ? 'rotate-180' : ''}`}
+            />
+            {showAllCategories
+              ? t('common.showLess', 'Show less')
+              : t('common.showAll', {
+                  count: categories.length,
+                  defaultValue: `Show all (${categories.length})`,
+                })}
+          </button>
+        )}
+      </div>
+
+      <div>
+        <h3 className="font-semibold mb-2 text-sm uppercase tracking-widest text-muted-foreground">
+          {t('products.gender')}
+        </h3>
+        <div className="grid grid-cols-3 gap-1">
+          {genders.map(gender => (
+            <div
+              key={gender}
+              className="flex items-center gap-2 py-1.5 min-h-[36px] touch-manipulation"
+            >
+              <Checkbox
+                id={`filter-gender-${gender}`}
+                checked={filters.selectedGenders.includes(gender)}
+                onCheckedChange={() => filters.toggleGender(gender)}
+                className="min-w-[18px] min-h-[18px] h-[18px] w-[18px]"
+              />
+              <Label
+                htmlFor={`filter-gender-${gender}`}
+                className="text-xs cursor-pointer active:text-foreground/80 transition-colors capitalize flex-1"
+              >
+                {translateGender(gender)}
+              </Label>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      <div>
+        <h3 className="font-semibold mb-3 text-sm uppercase tracking-widest text-muted-foreground">
+          {t('products.brand')}
+        </h3>
+        {filters.selectedBrand && (
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() => {
+              filters.setSelectedBrand('');
+              setCurrentPage(1);
+            }}
+            className="mb-2 text-xs text-muted-foreground hover:text-foreground h-7"
+          >
+            Clear: {filters.selectedBrand}
+          </Button>
+        )}
+        <Input
+          type="text"
+          placeholder={t('products.searchBrand')}
+          value={brandSearchQuery}
+          onChange={(e: React.ChangeEvent<HTMLInputElement>) => setBrandSearchQuery(e.target.value)}
+          className="mb-2 h-9 text-sm"
+        />
+        <div className="max-h-40 overflow-y-auto space-y-1 border border-foreground/10 rounded-lg p-2">
+          {brandsList.length > 0 ? (
+            filteredBrandList.map((brand: { id: string; name: string }) => (
+              <button
+                key={brand.id}
+                onClick={() => {
+                  filters.setSelectedBrand(brand.name);
+                  setCurrentPage(1);
+                }}
+                className={`w-full text-left px-2 py-1.5 rounded-md text-sm transition-colors ${
+                  filters.selectedBrand === brand.name
+                    ? 'bg-primary text-primary-foreground'
+                    : 'hover:bg-foreground/5'
+                }`}
+              >
+                {brand.name}
+              </button>
+            ))
+          ) : (
+            <p className="text-xs text-muted-foreground text-center py-3">
+              {t('common.noResults')}
+            </p>
+          )}
+        </div>
+      </div>
+
+      <div>
+        <PriceRangeFilter
+          min={0}
+          max={maxPriceLimit}
+          minValue={filters.priceMin || 0}
+          maxValue={filters.priceMax || maxPriceLimit}
+          onApply={(min: number, max: number) => {
+            const minValue = min === 0 ? null : min;
+            const maxValue = max === maxPriceLimit ? null : max;
+            filters.setPriceRange(minValue, maxValue);
+            setCurrentPage(1);
+          }}
+          currency={getCurrencySymbol()}
+          showApplyButton={false}
+          step={currency === 'USD' ? 5 : 100}
+        />
+      </div>
+
+      <div className="flex gap-2 pt-4 border-t border-foreground/10">
+        <Button
+          variant="ghost"
+          className="flex-1 text-muted-foreground hover:text-foreground h-10"
+          onClick={filters.clearFilters}
+        >
+          {t('products.clearFilters')}
+        </Button>
+        <Button
+          className="flex-1 bg-primary text-primary-foreground hover:bg-primary/90 h-10"
+          onClick={() => setFilterOpen(false)}
+        >
+          {t('products.applyFilters')}
+        </Button>
+      </div>
+    </div>
+  );
+}
 
 export function ProductsContent() {
   const { t } = useTranslation();
@@ -563,45 +632,45 @@ export function ProductsContent() {
   const { currency } = useCurrency();
   const { getCurrencySymbol } = useCurrencyConversion();
   const maxPriceLimit = getMaxPriceLimit(currency);
-  
+
   // Safe access to search params
   const searchParams = searchParamsHook || new URLSearchParams();
-  
+
   // Dynamic SEO based on filters
   const [seoData, setSeoData] = useState<SEOData | null>(null);
   const typeParam = searchParams?.get('type') || '';
   const colorParam = searchParams?.get('color') || '';
   const storeIdParam = searchParams?.get('store_id') || '';
-  
+
   // Debounce SEO params to reduce API calls
   const debouncedTypeParam = useDebounce(typeParam, 500);
   const debouncedColorParam = useDebounce(colorParam, 500);
-  
+
   // Fetch dynamic SEO data when filters change (with debounce)
   useEffect(() => {
     if (!debouncedTypeParam && !debouncedColorParam) {
       setSeoData(null);
       return;
     }
-    
+
     const fetchSEO = async () => {
       try {
         let data: SEOData | null = null;
-        
+
         // Priority: category > color > default
         if (debouncedTypeParam) {
           data = await seoApi.getCategorySEO(debouncedTypeParam);
         } else if (debouncedColorParam) {
           data = await seoApi.getColorSEO(debouncedColorParam);
         }
-        
+
         setSeoData(data);
       } catch (error) {
         console.error('Failed to fetch products SEO:', error);
         setSeoData(null);
       }
     };
-    
+
     fetchSEO();
   }, [debouncedTypeParam, debouncedColorParam]);
 
@@ -610,42 +679,58 @@ export function ProductsContent() {
       document.title = seoData.meta_title;
     }
   }, [seoData]);
-  
+
   // Use custom hooks for state management
   const filters = useProductFilters();
   const sort = useProductSort([] as Product[]);
   const layout = useGridLayout(6);
-  const [brandSearchQuery, setBrandSearchQuery] = useState("");
-  
+  const [brandSearchQuery, setBrandSearchQuery] = useState('');
+
   // Debounce search query
   const debouncedSearch = useDebounce(filters.searchQuery, 300);
 
-  const colors = ["Black", "White", "Gray", "Beige", "Brown", "Red", "Blue", "Navy", "Green", "Olive", "Yellow", "Orange", "Pink", "Purple", "Cream"];
-  const genders = ["men", "women", "unisex"];
+  const colors = [
+    'Black',
+    'White',
+    'Gray',
+    'Beige',
+    'Brown',
+    'Red',
+    'Blue',
+    'Navy',
+    'Green',
+    'Olive',
+    'Yellow',
+    'Orange',
+    'Pink',
+    'Purple',
+    'Cream',
+  ];
+  const genders = ['men', 'women', 'unisex'];
   const categories = [...PRODUCT_CATEGORIES];
-  
+
   // Compact filter states - show only first N items
   const [showAllColors, setShowAllColors] = useState(false);
   const [showAllCategories, setShowAllCategories] = useState(false);
   const COMPACT_LIMIT = 6;
-  
+
   const visibleColors = showAllColors ? colors : colors.slice(0, COMPACT_LIMIT);
   const visibleCategories = showAllCategories ? categories : categories.slice(0, COMPACT_LIMIT);
-  
+
   const itemsPerPage = 24;
 
   // Server-driven pagination
   const [currentPage, setCurrentPage] = useState(1);
   const [filterOpen, setFilterOpen] = useState(false);
-  
+
   // Defer data fetching until after initial render
   const [shouldFetchData, setShouldFetchData] = useState(false);
-  
+
   useEffect(() => {
     // Immediate fetch for better UX
     setShouldFetchData(true);
   }, []);
-  
+
   // Build API filters object (memoized to avoid query-key churn)
   const apiFilters = useMemo(
     () =>
@@ -657,25 +742,22 @@ export function ProductsContent() {
         sortBy: sort.sortBy,
         currency,
       }),
-    [
-      currentPage,
-      itemsPerPage,
-      debouncedSearch,
-      filters,
-      sort.sortBy,
-      currency,
-    ]
+    [currentPage, itemsPerPage, debouncedSearch, filters, sort.sortBy, currency]
   );
-  
+
   // Use aggregated hook for better performance with enhanced caching
-  const { data: pageData, isLoading: pageLoading, error: pageError } = useProductsPageData(apiFilters, { 
+  const {
+    data: pageData,
+    isLoading: pageLoading,
+    error: pageError,
+  } = useProductsPageData(apiFilters, {
     enabled: !storeIdParam && shouldFetchData,
     staleTime: 2 * 60 * 1000, // 2 minutes
     gcTime: 5 * 60 * 1000, // 5 minutes
     refetchOnWindowFocus: false,
-    refetchOnMount: false
+    refetchOnMount: false,
   });
-  
+
   // Use store-specific endpoint if store_id is present
   const storeProductsParams = useMemo(
     () => ({ page: currentPage, limit: itemsPerPage }),
@@ -683,27 +765,45 @@ export function ProductsContent() {
   );
 
   const { data: storeProductsData, error: storeError } = useStoreProducts(
-    storeIdParam || '', 
+    storeIdParam || '',
     storeProductsParams,
-    { 
+    {
       enabled: !!storeIdParam && shouldFetchData,
       staleTime: 3 * 60 * 1000, // 3 minutes for store data
       gcTime: 10 * 60 * 1000, // 10 minutes cache
-      refetchOnWindowFocus: false
+      refetchOnWindowFocus: false,
     }
   );
-  
+
   // Extract data
   const loading = storeIdParam ? false : pageLoading;
   const error = storeIdParam ? storeError : pageError;
   const products = selectProductsFromData(storeIdParam, storeProductsData, pageData);
-  
+
   // Extract brands from pageData
-  const brandsFromData = ((pageData as Record<string, unknown> | null)?.['brands'] as unknown[]) || [];
-  const brands = Array.isArray(brandsFromData) ? brandsFromData : [];
-  
+  const brandsFromData =
+    ((pageData as Record<string, unknown> | null)?.['brands'] as unknown[]) || [];
+  const brands: Array<{ id: string; name: string; slug?: string }> = Array.isArray(brandsFromData)
+    ? brandsFromData
+        .filter(item => typeof item === 'object' && item !== null)
+        .map(item => {
+          const record = item as Record<string, unknown>;
+          return {
+            id: String(record.id ?? record.slug ?? ''),
+            name: String(record.name ?? record.title ?? 'Unknown'),
+            slug: typeof record.slug === 'string' ? record.slug : undefined,
+          };
+        })
+    : [];
+
   // Extract pagination from API response
-  const pagination = selectServerPagination(storeIdParam, pageData, storeProductsData, currentPage, products);
+  const pagination = selectServerPagination(
+    storeIdParam,
+    pageData,
+    storeProductsData,
+    currentPage,
+    products
+  );
   const totalPages = pagination.totalPages;
 
   const handlePageChange = (page: number) => {
@@ -747,156 +847,158 @@ export function ProductsContent() {
       <div className="fixed inset-0 z-0 pointer-events-none opacity-20">
         <NeonAbstractions />
       </div>
-      
+
       <main className="container mx-auto px-4 py-8 relative z-10 pt-24 sm:pt-28">
         <div className="flex flex-col md:flex-row justify-between items-start md:items-end gap-6 mb-8">
-            <div>
-              <h1 className="text-3xl sm:text-4xl md:text-5xl font-display font-bold text-foreground mb-4 neon-text">
-                {pageHeading}
-              </h1>
-              <p className="text-muted-foreground max-w-2xl text-lg neon-description">
-                {pageDescription}
-              </p>
-            </div>
+          <div>
+            <h1 className="text-3xl sm:text-4xl md:text-5xl font-display font-bold text-foreground mb-4 neon-text">
+              {pageHeading}
+            </h1>
+            <p className="text-muted-foreground max-w-2xl text-lg neon-description">
+              {pageDescription}
+            </p>
           </div>
-  
-          {/* Controls Bar */}
-          <div className="sticky top-[72px] rounded-2xl z-30 bg-background/80 backdrop-blur-xl border border-foreground/10 p-4 mb-8 shadow-2xl transition-all duration-300">
-            <div className="flex flex-col gap-4">
-              <div className="flex flex-col lg:flex-row gap-4 items-stretch lg:items-center justify-between">
-                
-                {/* Search with animated border */}
-                <div className="relative flex-1 min-w-0">
-                  <div className="relative group">
-                    {/* Animated border gradient */}
-                    <div className="absolute -inset-0.5 bg-gradient-to-r from-white/60 via-white/90 to-white/60 rounded-xl blur-sm opacity-60 group-hover:opacity-85 group-focus-within:opacity-100 transition-opacity duration-300 animate-gradient-shift"></div>
-                    <div className="relative flex items-center">
-                      <Search className="absolute left-3 w-4 h-4 text-muted-foreground z-10 group-focus-within:text-white transition-colors" />
-                      <Input
-                        type="text"
-                        placeholder={t('products.searchPlaceholder')}
-                        value={filters.searchQuery}
-                        onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
-                            filters.setSearchQuery(e.target.value);
-                            setCurrentPage(1);
-                        }}
-                        className="pl-9 h-11 w-full bg-background border-foreground/10 focus:border-white/50 transition-all font-medium rounded-xl relative"
-                      />
-                    </div>
+        </div>
+
+        {/* Controls Bar */}
+        <div className="sticky top-[72px] rounded-2xl z-30 bg-background/80 backdrop-blur-xl border border-foreground/10 p-4 mb-8 shadow-2xl transition-all duration-300">
+          <div className="flex flex-col gap-4">
+            <div className="flex flex-col lg:flex-row gap-4 items-stretch lg:items-center justify-between">
+              {/* Search with animated border */}
+              <div className="relative flex-1 min-w-0">
+                <div className="relative group">
+                  {/* Animated border gradient */}
+                  <div className="absolute -inset-0.5 bg-gradient-to-r from-white/60 via-white/90 to-white/60 rounded-xl blur-sm opacity-60 group-hover:opacity-85 group-focus-within:opacity-100 transition-opacity duration-300 animate-gradient-shift"></div>
+                  <div className="relative flex items-center">
+                    <Search className="absolute left-3 w-4 h-4 text-muted-foreground z-10 group-focus-within:text-white transition-colors" />
+                    <Input
+                      type="text"
+                      placeholder={t('products.searchPlaceholder')}
+                      value={filters.searchQuery}
+                      onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
+                        filters.setSearchQuery(e.target.value);
+                        setCurrentPage(1);
+                      }}
+                      className="pl-9 h-11 w-full bg-background border-foreground/10 focus:border-white/50 transition-all font-medium rounded-xl relative"
+                    />
                   </div>
                 </div>
-  
-                <div className="flex flex-wrap items-center gap-3">
-                    {/* Filter Dialog */}
-                    <Dialog open={filterOpen} onOpenChange={setFilterOpen} modal={false}>
-                        <DialogTrigger asChild>
-                        <Button 
-                            variant={isFilterActive ? "default" : "outline"} 
-                            className="h-11 px-4 gap-2 rounded-xl relative overflow-hidden"
-                        >
-                            <Filter className="w-4 h-4" />
-                            <span className="hidden sm:inline">{t('products.filters')}</span>
-                            {isFilterActive && <div className="absolute top-2 right-2 w-2 h-2 rounded-full bg-primary animate-pulse" />}
-                        </Button>
-                        </DialogTrigger>
-                        <DialogContent className="sm:max-w-[425px] overflow-hidden flex flex-col max-h-[90vh]">
-                        <DialogHeader>
-                            <DialogTitle>{t('products.filters')}</DialogTitle>
-                            <DialogDescription className="text-white/60">
-                              {t('products.filtersDescription', 'Оберіть параметри для фільтрації товарів')}
-                            </DialogDescription>
-                        </DialogHeader>
-                        <div className="flex-1 overflow-y-auto pr-2">
-                            <FiltersDialogContent
-                                t={t}
-                                visibleColors={visibleColors}
-                                colors={colors}
-                                showAllColors={showAllColors}
-                                setShowAllColors={setShowAllColors}
-                                visibleCategories={visibleCategories}
-                                categories={categories}
-                                showAllCategories={showAllCategories}
-                                setShowAllCategories={setShowAllCategories}
-                                COMPACT_LIMIT={COMPACT_LIMIT}
-                                genders={genders}
-                                filters={filters}
-                                brands={brands}
-                                brandSearchQuery={brandSearchQuery}
-                                setBrandSearchQuery={setBrandSearchQuery}
-                                setCurrentPage={setCurrentPage}
-                                getCurrencySymbol={getCurrencySymbol}
-                                currency={currency}
-                                setFilterOpen={setFilterOpen}
-                            />
-                        </div>
-                        </DialogContent>
-                    </Dialog>
-  
-                  {/* Sort Select */}
-                  <Select 
-                    value={sort.sortBy} 
-                    onValueChange={(value) => {
-                        sort.setSortBy(value as SortOption);
-                        setCurrentPage(1);
-                    }}
-                   >
-                    <SelectTrigger className="w-[180px] h-11 bg-background/50 border-foreground/10 rounded-xl">
-                      <SelectValue placeholder={t('products.sortBy')} />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="default">{t('products.sortDefault')}</SelectItem>
-                      <SelectItem value="price_asc">{t('products.priceAsc')}</SelectItem>
-                      <SelectItem value="price_desc">{t('products.priceDesc')}</SelectItem>
-                      <SelectItem value="newest">{t('products.newest')}</SelectItem>
-                    </SelectContent>
-                  </Select>
-  
-                  {/* View Layout Toggle */}
-                  <div className="hidden sm:flex bg-background/50 p-1 rounded-xl border border-foreground/10">
+              </div>
+
+              <div className="flex flex-wrap items-center gap-3">
+                {/* Filter Dialog */}
+                <Dialog open={filterOpen} onOpenChange={setFilterOpen} modal={false}>
+                  <DialogTrigger asChild>
                     <Button
-                      variant={layout.columns === 2 ? "secondary" : "ghost"}
-                      size="icon"
-                      onClick={() => layout.setColumns(2)}
-                      className="h-9 w-9 rounded-lg"
-                      aria-label="Two columns"
+                      variant={isFilterActive ? 'default' : 'outline'}
+                      className="h-11 px-4 gap-2 rounded-xl relative overflow-hidden"
                     >
-                      <LayoutGrid className="w-4 h-4" />
+                      <Filter className="w-4 h-4" />
+                      <span className="hidden sm:inline">{t('products.filters')}</span>
+                      {isFilterActive && (
+                        <div className="absolute top-2 right-2 w-2 h-2 rounded-full bg-primary animate-pulse" />
+                      )}
                     </Button>
-                    <Button
-                      variant={layout.columns === 4 ? "secondary" : "ghost"}
-                      size="icon"
-                      onClick={() => layout.setColumns(4)}
-                      className="h-9 w-9 rounded-lg"
-                      aria-label="Four columns"
-                    >
-                      <Grid3x3 className="w-4 h-4" />
-                    </Button>
-                    <Button
-                      variant={layout.columns === 6 ? "secondary" : "ghost"}
-                      size="icon"
-                      onClick={() => layout.setColumns(6)}
-                      className="h-9 w-9 rounded-lg hidden lg:flex"
-                      aria-label="Six columns"
-                    >
-                      <Columns3 className="w-4 h-4" />
-                    </Button>
-                  </div>
+                  </DialogTrigger>
+                  <DialogContent className="sm:max-w-[425px] overflow-hidden flex flex-col max-h-[90vh]">
+                    <DialogHeader>
+                      <DialogTitle>{t('products.filters')}</DialogTitle>
+                      <DialogDescription className="text-white/60">
+                        {t(
+                          'products.filtersDescription',
+                          'Оберіть параметри для фільтрації товарів'
+                        )}
+                      </DialogDescription>
+                    </DialogHeader>
+                    <div className="flex-1 overflow-y-auto pr-2">
+                      <FiltersDialogContent
+                        t={t}
+                        visibleColors={visibleColors}
+                        colors={colors}
+                        showAllColors={showAllColors}
+                        setShowAllColors={setShowAllColors}
+                        visibleCategories={visibleCategories}
+                        categories={categories}
+                        showAllCategories={showAllCategories}
+                        setShowAllCategories={setShowAllCategories}
+                        COMPACT_LIMIT={COMPACT_LIMIT}
+                        genders={genders}
+                        filters={filters}
+                        brands={brands}
+                        brandSearchQuery={brandSearchQuery}
+                        setBrandSearchQuery={setBrandSearchQuery}
+                        setCurrentPage={setCurrentPage}
+                        getCurrencySymbol={getCurrencySymbol}
+                        currency={currency}
+                        setFilterOpen={setFilterOpen}
+                      />
+                    </div>
+                  </DialogContent>
+                </Dialog>
+
+                {/* Sort Select */}
+                <Select
+                  value={sort.sortBy}
+                  onValueChange={value => {
+                    sort.setSortBy(value as SortOption);
+                    setCurrentPage(1);
+                  }}
+                >
+                  <SelectTrigger className="w-[180px] h-11 bg-background/50 border-foreground/10 rounded-xl">
+                    <SelectValue placeholder={t('products.sortBy')} />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="default">{t('products.sortDefault')}</SelectItem>
+                    <SelectItem value="price_asc">{t('products.priceAsc')}</SelectItem>
+                    <SelectItem value="price_desc">{t('products.priceDesc')}</SelectItem>
+                    <SelectItem value="newest">{t('products.newest')}</SelectItem>
+                  </SelectContent>
+                </Select>
+
+                {/* View Layout Toggle */}
+                <div className="hidden sm:flex bg-background/50 p-1 rounded-xl border border-foreground/10">
+                  <Button
+                    variant={layout.columns === 2 ? 'secondary' : 'ghost'}
+                    size="icon"
+                    onClick={() => layout.setColumns(2)}
+                    className="h-9 w-9 rounded-lg"
+                    aria-label="Two columns"
+                  >
+                    <LayoutGrid className="w-4 h-4" />
+                  </Button>
+                  <Button
+                    variant={layout.columns === 4 ? 'secondary' : 'ghost'}
+                    size="icon"
+                    onClick={() => layout.setColumns(4)}
+                    className="h-9 w-9 rounded-lg"
+                    aria-label="Four columns"
+                  >
+                    <Grid3x3 className="w-4 h-4" />
+                  </Button>
+                  <Button
+                    variant={layout.columns === 6 ? 'secondary' : 'ghost'}
+                    size="icon"
+                    onClick={() => layout.setColumns(6)}
+                    className="h-9 w-9 rounded-lg hidden lg:flex"
+                    aria-label="Six columns"
+                  >
+                    <Columns3 className="w-4 h-4" />
+                  </Button>
                 </div>
               </div>
             </div>
           </div>
-  
-          {/* Main Content Grid */}
-          <div className="space-y-8">
-            {mainContent}
-           </div>
+        </div>
 
-          {/* Recently Viewed - Client Side */}
-          <RecentlyViewedProducts />
-  
-          {/* Personalized Recommends */}
-          <PersonalizedRecommendations />
-        </main>
-      </div>
+        {/* Main Content Grid */}
+        <div className="space-y-8">{mainContent}</div>
+
+        {/* Recently Viewed - Client Side */}
+        <RecentlyViewedProducts />
+
+        {/* Personalized Recommends */}
+        <PersonalizedRecommendations />
+      </main>
+    </div>
   );
 }

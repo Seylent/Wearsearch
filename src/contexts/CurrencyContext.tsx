@@ -7,6 +7,7 @@
 
 import React, { createContext, useContext, useState, useEffect, useCallback, useMemo, useRef, ReactNode } from 'react';
 import { api } from '@/services/api';
+import { retryWithBackoff } from '@/utils/retryWithBackoff';
 import { 
   CurrencyCode, 
   currencyStorage
@@ -94,7 +95,20 @@ export const CurrencyProvider: React.FC<CurrencyProviderProps> = ({
     setError(null);
     
     try {
-      const response = await api.get('/currency/rates');
+      // Rates are non-critical; keep them fast and resilient.
+      const response = await retryWithBackoff(
+        () => api.get('/currency/rates', { timeout: 5000 }),
+        {
+          maxAttempts: 2,
+          initialDelay: 500,
+          shouldRetry: (error) => {
+            const status = (error as { response?: { status?: number } })?.response?.status;
+            // Retry on timeouts/network/5xx and 429; don't retry on other 4xx.
+            if (status && status >= 400 && status < 500 && status !== 429) return false;
+            return true;
+          },
+        }
+      );
       
       if (!isMountedRef.current) return;
 

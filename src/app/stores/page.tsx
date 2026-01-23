@@ -1,11 +1,17 @@
 ﻿import { Suspense } from 'react';
 import { Metadata } from 'next';
 import StoresContent from '@/components/pages/StoresContent';
+import {
+  JsonLd,
+  generateBreadcrumbSchema,
+  generateItemListSchema,
+} from '@/lib/seo/structured-data';
 
 // SEO метадані для сторінки магазинів
 export const metadata: Metadata = {
   title: 'Магазини та бренди - Wearsearch | Знайдіть кращі ціни',
-  description: 'Перегляньте всі магазини та бренди на Wearsearch. Порівнюйте ціни, знаходьте найкращі пропозиції від популярних українських та міжнародних брендів.',
+  description:
+    'Перегляньте всі магазини та бренди на Wearsearch. Порівнюйте ціни, знаходьте найкращі пропозиції від популярних українських та міжнародних брендів.',
   keywords: [
     'магазини України',
     'бренди одягу',
@@ -14,7 +20,7 @@ export const metadata: Metadata = {
     'модні бренди',
     'магазини взуття',
     'аксесуари',
-    'найкращі ціни'
+    'найкращі ціни',
   ],
   openGraph: {
     title: 'Магазини та бренди - Wearsearch',
@@ -50,19 +56,36 @@ export const metadata: Metadata = {
   alternates: {
     canonical: '/stores',
     languages: {
-      'uk': '/stores',
-      'en': '/en/stores',
+      uk: '/stores',
+      en: '/en/stores',
     },
   },
 };
 
 export default function StoresPage() {
   return (
-    <Suspense fallback={
-      <div className="min-h-screen bg-black flex items-center justify-center">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-white"></div>
-      </div>
-    }>
+    <Suspense
+      fallback={
+        <div className="min-h-screen bg-black flex items-center justify-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-white"></div>
+        </div>
+      }
+    >
+      <JsonLd
+        data={generateBreadcrumbSchema([
+          { name: 'Головна', url: process.env.NEXT_PUBLIC_SITE_URL || 'https://wearsearch.com' },
+          {
+            name: 'Магазини',
+            url: `${process.env.NEXT_PUBLIC_SITE_URL || 'https://wearsearch.com'}/stores`,
+          },
+        ])}
+      />
+      <JsonLd
+        data={generateItemListSchema([], {
+          name: 'Магазини',
+          description: 'Список магазинів на Wearsearch',
+        })}
+      />
       <StoresContent />
     </Suspense>
   );

@@ -50,6 +50,12 @@ export const languageService = {
         language = LANGUAGE_CONFIG.DEFAULT;
       }
       localStorage.setItem(LANGUAGE_CONFIG.STORAGE_KEY, language);
+
+      // Also persist to cookie so the server can render correct <html lang>
+      if (typeof document !== 'undefined') {
+        const maxAge = 60 * 60 * 24 * 365; // 1 year
+        document.cookie = `${LANGUAGE_CONFIG.STORAGE_KEY}=${encodeURIComponent(language)}; Path=/; Max-Age=${maxAge}; SameSite=Lax`;
+      }
     } catch (error) {
       console.error('Failed to save language to localStorage:', error);
     }
@@ -82,8 +88,8 @@ const resources = {
   }
 };
 
-// 🔒 ALWAYS use default language on initial load to prevent hydration mismatch
-// Client-side language switch will happen after mount via useEffect
+// 🔒 ALWAYS use default language on initial load to prevent hydration mismatch.
+// Client-side language switch will happen after mount via useEffect.
 const initialLanguage = LANGUAGE_CONFIG.DEFAULT;
 
 if (!i18n.isInitialized) {

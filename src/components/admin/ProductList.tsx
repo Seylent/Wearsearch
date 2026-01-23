@@ -23,6 +23,44 @@ import {
 } from "lucide-react";
 import { getCategoryTranslation, getColorTranslation } from "@/utils/translations";
 
+type NormalizedProduct = {
+  id: string;
+  name: string;
+  brand: string;
+  category: string;
+  color: string;
+  price: number;
+  image: string;
+  raw: Record<string, unknown>;
+};
+
+const getString = (value: unknown, fallback = ''): string =>
+  typeof value === 'string' ? value : fallback;
+
+const getNumber = (value: unknown, fallback = 0): number =>
+  typeof value === 'number' ? value : Number(value) || fallback;
+
+const normalizeProduct = (product: Record<string, unknown>): NormalizedProduct => {
+  const id = String(product.id ?? product.product_id ?? product.uuid ?? '');
+  const name = getString(product.name ?? product.title ?? product.product_name, 'Untitled');
+  const brand = getString(product.brand ?? product.brand_name, '');
+  const category = getString(product.category ?? product.type, '');
+  const color = getString(product.color, '');
+  const price = getNumber(product.price ?? product.product_price, 0);
+  const image = getString(product.image ?? product.image_url ?? product.thumbnail, '');
+
+  return {
+    id,
+    name,
+    brand,
+    category,
+    color,
+    price,
+    image,
+    raw: product,
+  };
+};
+
 interface ProductListProps {
   // Data
   products: Array<Record<string, unknown>>;
@@ -75,10 +113,12 @@ export const ProductList: React.FC<ProductListProps> = ({
 }) => {
   const { t } = useTranslation();
   
-  const filteredProducts = products.filter(product =>
-    product.name?.toLowerCase().includes(searchProducts.toLowerCase()) ||
-    product.brand?.toLowerCase().includes(searchProducts.toLowerCase()) ||
-    product.category?.toLowerCase().includes(searchProducts.toLowerCase())
+  const normalizedProducts = products.map(normalizeProduct);
+  const searchLower = searchProducts.toLowerCase();
+  const filteredProducts = normalizedProducts.filter((product) =>
+    product.name.toLowerCase().includes(searchLower) ||
+    product.brand.toLowerCase().includes(searchLower) ||
+    product.category.toLowerCase().includes(searchLower)
   );
 
   return (
@@ -219,7 +259,7 @@ export const ProductList: React.FC<ProductListProps> = ({
           return viewMode === 'grid' ? (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 overflow-visible">
               {filteredProducts.map((product) => (
-                <div key={product.id} className="group p-4 rounded-xl border border-border/30 bg-card/30 backdrop-blur-sm hover:bg-card/50 transition-colors overflow-visible">
+                <div key={product.id || product.name} className="group p-4 rounded-xl border border-border/30 bg-card/30 backdrop-blur-sm hover:bg-card/50 transition-colors overflow-visible">
                   <div className="flex items-start justify-between mb-3">
                     <div className="flex items-center gap-3">
                       {isSelectMode && (
@@ -251,21 +291,21 @@ export const ProductList: React.FC<ProductListProps> = ({
                   </div>
                   
                   <div className="flex flex-wrap gap-1 mb-3">
-                    {product.category && (
-                      <span className="px-2 py-0.5 rounded text-xs bg-foreground/10">
-                        {getCategoryTranslation(product.category)}
-                      </span>
-                    )}
+                      {product.category && (
+                        <span className="px-2 py-0.5 rounded text-xs bg-foreground/10">
+                          {getCategoryTranslation(product.category)}
+                        </span>
+                      )}
                     {product.color && (
                       <span className="px-2 py-0.5 rounded text-xs bg-blue-500/10 text-blue-600">
                         {getColorTranslation(product.color)}
                       </span>
                     )}
-                    {product.brand && (
-                      <span className="px-2 py-0.5 rounded text-xs bg-foreground/10">
-                        {product.brand}
-                      </span>
-                    )}
+                      {product.brand && (
+                        <span className="px-2 py-0.5 rounded text-xs bg-foreground/10">
+                          {product.brand}
+                        </span>
+                      )}
                   </div>
                   
                   {!isSelectMode && (
@@ -274,7 +314,7 @@ export const ProductList: React.FC<ProductListProps> = ({
                         variant="outline"
                         size="sm"
                         className="hover:bg-foreground/10 border-border/50 text-xs flex-1"
-                        onClick={() => onEditProduct(product)}
+                        onClick={() => onEditProduct(product.raw)}
                       >
                         <Edit className="w-3 h-3 mr-1" />
                         Edit
@@ -283,7 +323,7 @@ export const ProductList: React.FC<ProductListProps> = ({
                         variant="outline"
                         size="sm"
                         className="hover:bg-destructive/20 hover:text-destructive border-border/50 text-xs"
-                        onClick={() => onDeleteProduct(product)}
+                        onClick={() => onDeleteProduct(product.raw)}
                       >
                         <Trash2 className="w-3 h-3" />
                       </Button>
@@ -315,13 +355,13 @@ export const ProductList: React.FC<ProductListProps> = ({
                 </thead>
                 <tbody>
                   {filteredProducts.map((product) => (
-                    <tr key={product.id} className="border-b border-border/20 hover:bg-card/20 transition-colors group">
+                    <tr key={product.id || product.name} className="border-b border-border/20 hover:bg-card/20 transition-colors group">
                       <td className="p-4">
                         {isSelectMode && (
                           <Checkbox
-                            checked={selectedProductIds.has(product.id)}
-                            onCheckedChange={() => onToggleProductSelection(product.id)}
-                          />
+                          checked={selectedProductIds.has(product.id)}
+                          onCheckedChange={() => onToggleProductSelection(product.id)}
+                        />
                         )}
                       </td>
                       <td className="p-4">
@@ -350,8 +390,8 @@ export const ProductList: React.FC<ProductListProps> = ({
                           {getCategoryTranslation(product.category)}
                         </span>
                       </td>
-                      <td className="p-4">{product.brand || '-'}</td>
-                      <td className="p-4 font-medium">${product.price}</td>
+                        <td className="p-4">{product.brand || '-'}</td>
+                        <td className="p-4 font-medium">${product.price}</td>
                       <td className="p-4">
                         {product.color && (
                           <span className="px-2 py-1 rounded-full text-xs bg-blue-500/10 text-blue-600">
@@ -366,7 +406,7 @@ export const ProductList: React.FC<ProductListProps> = ({
                               variant="outline"
                               size="sm"
                               className="hover:bg-foreground/10 border-border/50"
-                              onClick={() => onEditProduct(product)}
+                            onClick={() => onEditProduct(product.raw)}
                             >
                               <Edit className="w-4 h-4 mr-2" />
                               Edit
@@ -375,7 +415,7 @@ export const ProductList: React.FC<ProductListProps> = ({
                               variant="outline"
                               size="sm"
                               className="hover:bg-destructive/20 hover:text-destructive border-border/50"
-                              onClick={() => onDeleteProduct(product)}
+                            onClick={() => onDeleteProduct(product.raw)}
                             >
                               <Trash2 className="w-4 h-4" />
                             </Button>

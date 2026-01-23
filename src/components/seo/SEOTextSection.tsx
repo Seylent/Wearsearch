@@ -3,6 +3,8 @@
  * Містить SEO-текст під списком товарів
  */
 
+'use client';
+
 import React from 'react';
 
 interface SEOTextSectionProps {

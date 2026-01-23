@@ -1,8 +1,7 @@
 'use client';
 
 import { useEffect } from 'react';
-import { Button } from '@/components/ui/button';
-import { AlertTriangle } from 'lucide-react';
+import Link from 'next/link';
 
 export default function Error({
   error,
@@ -17,33 +16,25 @@ export default function Error({
 
   return (
     <div className="min-h-screen bg-black text-white flex items-center justify-center p-6">
-      <div className="max-w-md w-full text-center space-y-6">
-        <div className="w-16 h-16 rounded-full bg-red-500/10 flex items-center justify-center mx-auto">
-          <AlertTriangle className="w-8 h-8 text-red-500" />
-        </div>
-        
+      <div className="max-w-md w-full text-center space-y-4">
+        <div className="text-6xl font-bold text-white/10">500</div>
         <div className="space-y-2">
-          <h2 className="text-2xl font-bold">Щось пішло не так</h2>
-          <p className="text-white/60">
-            Вибачте за незручності. Спробуйте оновити сторінку.
-          </p>
+          <h2 className="text-xl font-bold">Щось пішло не так</h2>
+          <p className="text-white/60">Спробуйте оновити сторінку або повернутись пізніше.</p>
         </div>
-
-        {process.env.NODE_ENV === 'development' && error.message && (
-          <div className="p-4 rounded-lg bg-red-500/5 border border-red-500/20 text-left">
-            <p className="text-xs font-mono text-red-400 break-all">
-              {error.message}
-            </p>
-          </div>
-        )}
-
-        <div className="flex gap-4 justify-center">
-          <Button onClick={() => reset()} variant="default">
+        <div className="flex gap-3 justify-center">
+          <button
+            onClick={() => reset()}
+            className="px-4 py-2 rounded-lg bg-white text-black text-sm font-medium"
+          >
             Спробувати знову
-          </Button>
-          <Button onClick={() => window.location.href = '/'} variant="outline">
+          </button>
+          <Link
+            href="/"
+            className="px-4 py-2 rounded-lg border border-white/20 text-white text-sm font-medium"
+          >
             На головну
-          </Button>
+          </Link>
         </div>
       </div>
     </div>

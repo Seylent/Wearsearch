@@ -1,18 +1,32 @@
 /**
  * Translation API Route
- * Proxy to backend translation service integrated with LibreTranslate
+ * Proxy to backend translation service.
+ *
+ * Backend contract (as provided):
+ * POST /api/translate
+ *   { text: string, from: string, to: string }
+ * -> { success: true, translated: string, from, to, original }
  */
 
 import { NextRequest, NextResponse } from 'next/server';
 
-interface TranslationResponse {
-  translatedText?: string;
-  sourceLanguage?: string;
-  targetLanguage?: string;
-  error?: string;
-}
+export const dynamic = 'force-dynamic';
 
-export async function POST(request: NextRequest): Promise<NextResponse<TranslationResponse>> {
+type BackendTranslateResponse =
+  | {
+      success: true;
+      translated: string;
+      from: string;
+      to: string;
+      original: string;
+    }
+  | {
+      success: false;
+      message?: string;
+      error?: string;
+    };
+
+export async function POST(request: NextRequest): Promise<NextResponse> {
   try {
     const body = await request.json();
     const { text, from, to } = body;
@@ -23,42 +37,67 @@ export async function POST(request: NextRequest): Promise<NextResponse<Translati
       }, { status: 400 });
     }
 
-    if (!to) {
+    if (!from?.trim()) {
+      return NextResponse.json(
+        {
+          success: false,
+          message: 'Source language (from) is required',
+        },
+        { status: 400 }
+      );
+    }
+
+    if (!to?.trim()) {
       return NextResponse.json({
-        error: 'Target language (to) is required',
+        success: false,
+        message: 'Target language (to) is required',
       }, { status: 400 });
     }
 
-    // Forward to backend translation API with same format
-    const backendUrl = process.env.BACKEND_URL || 'http://localhost:3000';
+    if (typeof text === 'string' && text.length > 5000) {
+      return NextResponse.json(
+        {
+          success: false,
+          message: 'Text exceeds 5000 characters limit',
+        },
+        { status: 400 }
+      );
+    }
+
+    const backendUrl = process.env.NEXT_PUBLIC_API_URL || process.env.BACKEND_URL || 'http://localhost:3000';
+
+    // Forward auth header if present (needed for /batch in some setups; harmless otherwise)
+    const authHeader = request.headers.get('authorization');
+
     const response = await fetch(`${backendUrl}/api/translate`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
+        ...(authHeader ? { Authorization: authHeader } : {}),
       },
       body: JSON.stringify({
         text: text.trim(),
-        from: from || 'auto',
-        to,
+        from: from.trim(),
+        to: to.trim(),
       }),
     });
 
+    const data = (await response.json().catch(() => null)) as BackendTranslateResponse | null;
+
     if (!response.ok) {
-      const errorData = await response.json().catch(() => ({}));
-      return NextResponse.json({
-        error: errorData.message || `Backend error: ${response.status}`,
-      }, { status: response.status });
+      return NextResponse.json(
+        data ?? { success: false, message: `Backend error: ${response.status}` },
+        { status: response.status }
+      );
     }
 
-    const data = await response.json();
-    
-    // Return backend response as-is
     return NextResponse.json(data);
 
   } catch (error) {
     console.error('Translation proxy error:', error);
     return NextResponse.json({
-      error: 'Translation service unavailable',
+      success: false,
+      message: 'Translation service unavailable',
     }, { status: 500 });
   }
 }

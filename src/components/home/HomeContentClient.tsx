@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { useCurrencyConversion } from '@/hooks/useCurrencyConversion';
 import ProductCard from '@/components/ProductCard';
 import RecentlyViewedProducts from '@/components/RecentlyViewedProducts';
@@ -34,6 +35,7 @@ export default function HomeContentClient({
   banners = [],
   seoData,
 }: Readonly<HomeContentClientProps>) {
+  const { t } = useTranslation();
   const { currency } = useCurrencyConversion();
   const [products, setProducts] = useState<Product[]>(initialProducts);
   const [productsCurrency, setProductsCurrency] = useState<'UAH' | 'USD'>('UAH');
@@ -45,8 +47,8 @@ export default function HomeContentClient({
       // Use UAH as default if currency not loaded yet
       const currentCurrency = currency || 'UAH';
       
-      // If UAH, use initial products from SSR
-      if (currentCurrency === 'UAH') {
+      // If UAH and SSR provided products, use them directly.
+      if (currentCurrency === 'UAH' && initialProducts.length > 0) {
         setProducts(initialProducts);
         setProductsCurrency('UAH');
         return;
@@ -61,7 +63,7 @@ export default function HomeContentClient({
         if (!response.ok) {
           console.error('Failed to fetch products with currency');
           setProducts(initialProducts);
-          setProductsCurrency('UAH');
+          setProductsCurrency(currentCurrency === 'USD' ? 'USD' : 'UAH');
           return;
         }
 
@@ -89,12 +91,12 @@ export default function HomeContentClient({
         } else {
           console.warn('Unexpected home currency response shape:', data);
           setProducts(initialProducts);
-          setProductsCurrency('UAH');
+          setProductsCurrency(currentCurrency === 'USD' ? 'USD' : 'UAH');
         }
       } catch (error) {
         console.error('Error fetching products with currency:', error);
         setProducts(initialProducts);
-        setProductsCurrency('UAH');
+        setProductsCurrency(currentCurrency === 'USD' ? 'USD' : 'UAH');
       } finally {
         setIsLoading(false);
       }
@@ -130,13 +132,15 @@ export default function HomeContentClient({
               <div>
                 <div className="inline-flex items-center gap-2 mb-2 sm:mb-3">
                   <div className="w-1.5 h-1.5 rounded-full bg-white" aria-hidden="true" />
-                  <span className="text-[10px] sm:text-xs text-white/60 uppercase tracking-wider">Just In</span>
+                  <span className="text-[10px] sm:text-xs text-white/60 uppercase tracking-wider">
+                    {t('home.justIn', 'Just In')}
+                  </span>
                 </div>
                 <h2 className="font-display text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-bold text-white">
-                  New Arrivals
+                  {t('home.newArrivals', 'New Arrivals')}
                 </h2>
                 <p className="text-sm sm:text-base text-white/70 mt-1 sm:mt-2">
-                  Fresh pieces from the latest collections
+                  {t('home.freshPieces', 'Fresh pieces from the latest collections')}
                 </p>
               </div>
             </header>
@@ -168,16 +172,21 @@ export default function HomeContentClient({
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4" />
                     </svg>
                   </div>
-                  <h3 className="text-xl font-bold text-white mb-2">Немає доступних продуктів</h3>
+                  <h3 className="text-xl font-bold text-white mb-2">
+                    {t('home.noProductsTitle', 'Немає доступних продуктів')}
+                  </h3>
                   <p className="text-white/60 mb-4 max-w-md mx-auto">
-                    Підключіть backend сервер для завантаження продуктів.<br/>
-                    Перевірте NEXT_PUBLIC_API_URL в .env файлі.
+                    {t('home.noProductsDescription', 'Підключіть backend сервер для завантаження продуктів.')}
+                    <br />
+                    {t('home.noProductsHint', 'Перевірте NEXT_PUBLIC_API_URL в .env файлі.')}
                   </p>
                   <div className="text-sm text-white/40 font-mono bg-white/5 rounded-lg p-4 max-w-lg mx-auto">
                     <div className="text-left">
-                      <div className="text-white/60 mb-2">Очікується:</div>
+                      <div className="text-white/60 mb-2">{t('home.noProductsExpected', 'Очікується:')}</div>
                       <div>NEXT_PUBLIC_API_URL=http://localhost:3000</div>
-                      <div className="mt-3 text-white/60 mb-2">Або запустіть backend:</div>
+                      <div className="mt-3 text-white/60 mb-2">
+                        {t('home.noProductsBackend', 'Або запустіть backend:')}
+                      </div>
                       <div>cd backend && npm run dev</div>
                     </div>
                   </div>
@@ -186,7 +195,7 @@ export default function HomeContentClient({
             </div>
 
             {/* View All Button */}
-            <ViewAllButton label="View All Products" />
+            <ViewAllButton label={t('home.viewAllProducts', 'View All Products')} />
           </div>
         </section>
 

@@ -13,6 +13,7 @@
 
 import { revalidatePath } from 'next/cache';
 import { redirect } from 'next/navigation';
+import { fetchBackendJson } from '@/lib/backendFetch';
 
 // Contact form submission server action
 export async function submitContactForm(formData: FormData) {
@@ -36,24 +37,25 @@ export async function submitContactForm(formData: FormData) {
   }
 
   try {
-    // Send to your contact API or email service
-    const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000';
-    
-    const response = await fetch(`${API_URL}/api/contacts`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
+    const res = await fetchBackendJson<any>(
+      '/contacts',
+      {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          name,
+          email,
+          message,
+          subject,
+          submitted_at: new Date().toISOString(),
+        }),
       },
-      body: JSON.stringify({
-        name,
-        email,
-        message,
-        subject,
-        submitted_at: new Date().toISOString(),
-      }),
-    });
+      { preferV1: false }
+    );
 
-    if (!response.ok) {
+    if (!res) {
       throw new Error('Помилка при відправці повідомлення');
     }
 
@@ -85,23 +87,24 @@ export async function subscribeNewsletter(formData: FormData) {
   }
 
   try {
-    const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000';
-    
-    const response = await fetch(`${API_URL}/api/newsletter/subscribe`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
+    const res = await fetchBackendJson<any>(
+      '/newsletter/subscribe',
+      {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          email,
+          subscribed_at: new Date().toISOString(),
+          source: 'website',
+        }),
       },
-      body: JSON.stringify({
-        email,
-        subscribed_at: new Date().toISOString(),
-        source: 'website',
-      }),
-    });
+      { preferV1: false }
+    );
 
-    if (!response.ok) {
-      const errorData = await response.json();
-      throw new Error(errorData.message || 'Помилка при підписці');
+    if (!res) {
+      throw new Error('Помилка при підписці');
     }
 
     return { success: true, message: 'Успішно підписано на розсилку!' };

@@ -3,7 +3,7 @@
  * Reduces redundant API calls and improves performance
  */
 
-import { api } from './api';
+import { api } from '@/services/api';
 import { logError } from '@/services/logger';
 
 function asError(value: unknown): Error {
@@ -79,12 +79,12 @@ export const batchRequests = async <T extends Record<string, unknown | null>>(
   results.forEach((result, index) => {
     const key = entries[index][0];
     if (result.status === 'fulfilled') {
-      const { result: apiResult, error } = result.value;
-      if (error) {
-        logError(error, { component: 'batchRequest', action: key });
+      const value = result.value as { key: string; result?: unknown; error?: unknown };
+      if (value.error) {
+        logError(asError(value.error), { component: 'batchRequest', action: key });
         data[key as keyof T] = null as T[keyof T];
       } else {
-        data[key as keyof T] = apiResult as T[keyof T];
+        data[key as keyof T] = value.result as T[keyof T];
       }
     } else {
       logError(result.reason, { component: 'batchRequest', action: `FAILED_${key}` });

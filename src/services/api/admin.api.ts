@@ -95,12 +95,17 @@ export const adminApi = {
     return response.data;
   },
 
-  async createProduct(product: Product) {
+  async getProduct(id: string) {
+    const response = await api.get(`/admin/products/${id}`);
+    return response.data;
+  },
+
+  async createProduct(product: Record<string, unknown>) {
     const response = await api.post('/admin/products', product);
     return response.data;
   },
 
-  async updateProduct(id: string, product: Partial<Product>) {
+  async updateProduct(id: string, product: Record<string, unknown>) {
     const response = await api.put(`/admin/products/${id}`, product);
     return response.data;
   },

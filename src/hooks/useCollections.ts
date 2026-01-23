@@ -22,6 +22,7 @@ export interface Collection {
   emoji?: string;
   description?: string;
   items: CollectionItem[];
+  productCount?: number;
   createdAt: number;
   updatedAt: number;
 }
@@ -95,7 +96,7 @@ const generateId = (): string => {
 export const useCollections = () => {
   const queryClient = useQueryClient();
   const isLoggedIn = isAuthenticated();
-  
+
   // Local state for guest users
   const [localCollections, setLocalCollections] = useState<Collection[]>([]);
   // Local items tracking (for API users to know which products are in which collections)
@@ -121,12 +122,13 @@ export const useCollections = () => {
 
   // Transform API collections to local format, including locally tracked items
   const collections: Collection[] = isLoggedIn
-    ? (apiCollections || []).map((c) => ({
+    ? (apiCollections || []).map(c => ({
         id: c.id,
         name: c.name,
         emoji: c.emoji,
         description: c.description,
         items: collectionItems[c.id] || [],
+        productCount: c.productCount,
         createdAt: new Date(c.createdAt).getTime(),
         updatedAt: new Date(c.updatedAt).getTime(),
       }))
@@ -143,8 +145,15 @@ export const useCollections = () => {
 
   // Update collection mutation
   const updateMutation = useMutation({
-    mutationFn: ({ id, ...data }: { id: string; name?: string; emoji?: string; description?: string }) =>
-      collectionsService.updateCollection(id, data),
+    mutationFn: ({
+      id,
+      ...data
+    }: {
+      id: string;
+      name?: string;
+      emoji?: string;
+      description?: string;
+    }) => collectionsService.updateCollection(id, data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['collections'] });
     },
@@ -160,8 +169,15 @@ export const useCollections = () => {
 
   // Add to collection mutation
   const addItemMutation = useMutation({
-    mutationFn: ({ collectionId, productId, notes }: { collectionId: string; productId: string; notes?: string }) =>
-      collectionsService.addToCollection(collectionId, productId, notes),
+    mutationFn: ({
+      collectionId,
+      productId,
+      notes,
+    }: {
+      collectionId: string;
+      productId: string;
+      notes?: string;
+    }) => collectionsService.addToCollection(collectionId, productId, notes),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['collections'] });
     },
@@ -179,65 +195,73 @@ export const useCollections = () => {
   /**
    * Create a new collection
    */
-  const createCollection = useCallback((name: string, emoji?: string, description?: string): Collection => {
-    const newCollection: Collection = {
-      id: generateId(),
-      name: name.trim(),
-      emoji,
-      description,
-      items: [],
-      createdAt: Date.now(),
-      updatedAt: Date.now(),
-    };
+  const createCollection = useCallback(
+    (name: string, emoji?: string, description?: string): Collection => {
+      const newCollection: Collection = {
+        id: generateId(),
+        name: name.trim(),
+        emoji,
+        description,
+        items: [],
+        productCount: 0,
+        createdAt: Date.now(),
+        updatedAt: Date.now(),
+      };
 
-    if (isLoggedIn) {
-      createMutation.mutate({ name: name.trim(), emoji, description });
-    } else {
-      setLocalCollections((prev) => {
-        const updated = [...prev, newCollection];
-        saveCollections(updated);
-        return updated;
-      });
-    }
+      if (isLoggedIn) {
+        createMutation.mutate({ name: name.trim(), emoji, description });
+      } else {
+        setLocalCollections(prev => {
+          const updated = [...prev, newCollection];
+          saveCollections(updated);
+          return updated;
+        });
+      }
 
-    return newCollection;
-  }, [isLoggedIn, createMutation]);
+      return newCollection;
+    },
+    [isLoggedIn, createMutation]
+  );
 
   /**
    * Delete a collection
    */
-  const deleteCollection = useCallback((collectionId: string) => {
-    if (isLoggedIn) {
-      deleteMutation.mutate(collectionId);
-      // Also remove from local tracking
-      setCollectionItems((prev) => {
-        const updated = { ...prev };
-        delete updated[collectionId];
-        saveItems(updated);
-        return updated;
-      });
-    } else {
-      setLocalCollections((prev) => {
-        const updated = prev.filter((c) => c.id !== collectionId);
-        saveCollections(updated);
-        return updated;
-      });
-    }
-  }, [isLoggedIn, deleteMutation]);
+  const deleteCollection = useCallback(
+    (collectionId: string) => {
+      if (isLoggedIn) {
+        deleteMutation.mutate(collectionId);
+        // Also remove from local tracking
+        setCollectionItems(prev => {
+          const updated = { ...prev };
+          delete updated[collectionId];
+          saveItems(updated);
+          return updated;
+        });
+      } else {
+        setLocalCollections(prev => {
+          const updated = prev.filter(c => c.id !== collectionId);
+          saveCollections(updated);
+          return updated;
+        });
+      }
+    },
+    [isLoggedIn, deleteMutation]
+  );
 
   /**
    * Update collection details
    */
   const updateCollection = useCallback(
-    (collectionId: string, updates: Partial<Pick<Collection, 'name' | 'emoji' | 'description'>>) => {
+    (
+      collectionId: string,
+      updates: Partial<Pick<Collection, 'name' | 'emoji' | 'description'>>
+    ) => {
       if (isLoggedIn) {
         updateMutation.mutate({ id: collectionId, ...updates });
       } else {
-        setLocalCollections((prev) => {
-          const updated = prev.map((c) =>
-            c.id === collectionId
-              ? { ...c, ...updates, updatedAt: Date.now() }
-              : c
+        setLocalCollections(prev => {
+          const updated = prev.map(c =>
+            c.id === collectionId ? { ...c, ...updates, updatedAt: Date.now() } : c
           );
           saveCollections(updated);
           return updated;
@@ -250,81 +274,87 @@ export const useCollections = () => {
   /**
    * Add product to collection
    */
-  const addToCollection = useCallback((collectionId: string, productId: string, notes?: string) => {
-    if (isLoggedIn) {
-      // Call API
-      addItemMutation.mutate({ collectionId, productId, notes });
-      // Also update local tracking
-      setCollectionItems((prev) => {
-        const items = prev[collectionId] || [];
-        if (items.some((item) => item.productId === productId)) return prev;
-        const updated = {
-          ...prev,
-          [collectionId]: [...items, { productId, addedAt: Date.now() }],
-        };
-        saveItems(updated);
-        return updated;
-      });
-    } else {
-      setLocalCollections((prev) => {
-        const updated = prev.map((c) => {
-          if (c.id !== collectionId) return c;
-          
-          // Check if already in collection
-          if (c.items.some((item) => item.productId === productId)) return c;
-
-          return {
-            ...c,
-            items: [...c.items, { productId, addedAt: Date.now() }],
-            updatedAt: Date.now(),
+  const addToCollection = useCallback(
+    (collectionId: string, productId: string, notes?: string) => {
+      if (isLoggedIn) {
+        // Call API
+        addItemMutation.mutate({ collectionId, productId, notes });
+        // Also update local tracking
+        setCollectionItems(prev => {
+          const items = prev[collectionId] || [];
+          if (items.some(item => item.productId === productId)) return prev;
+          const updated = {
+            ...prev,
+            [collectionId]: [...items, { productId, addedAt: Date.now() }],
           };
+          saveItems(updated);
+          return updated;
         });
-        saveCollections(updated);
-        return updated;
-      });
-    }
-  }, [isLoggedIn, addItemMutation]);
+      } else {
+        setLocalCollections(prev => {
+          const updated = prev.map(c => {
+            if (c.id !== collectionId) return c;
+
+            // Check if already in collection
+            if (c.items.some(item => item.productId === productId)) return c;
+
+            return {
+              ...c,
+              items: [...c.items, { productId, addedAt: Date.now() }],
+              updatedAt: Date.now(),
+            };
+          });
+          saveCollections(updated);
+          return updated;
+        });
+      }
+    },
+    [isLoggedIn, addItemMutation]
+  );
 
   /**
    * Remove product from collection
    */
-  const removeFromCollection = useCallback((collectionId: string, productId: string) => {
-    if (isLoggedIn) {
-      // Call API
-      removeItemMutation.mutate({ collectionId, productId });
-      // Also update local tracking
-      setCollectionItems((prev) => {
-        const items = prev[collectionId] || [];
-        const updated = {
-          ...prev,
-          [collectionId]: items.filter((item) => item.productId !== productId),
-        };
-        saveItems(updated);
-        return updated;
-      });
-    } else {
-      setLocalCollections((prev) => {
-        const updated = prev.map((c) => {
-          if (c.id !== collectionId) return c;
-
-          return {
-            ...c,
-            items: c.items.filter((item) => item.productId !== productId),
-            updatedAt: Date.now(),
+  const removeFromCollection = useCallback(
+    (collectionId: string, productId: string) => {
+      if (isLoggedIn) {
+        // Call API
+        removeItemMutation.mutate({ collectionId, productId });
+        // Also update local tracking
+        setCollectionItems(prev => {
+          const items = prev[collectionId] || [];
+          const updated = {
+            ...prev,
+            [collectionId]: items.filter(item => item.productId !== productId),
           };
+          saveItems(updated);
+          return updated;
         });
-        saveCollections(updated);
-        return updated;
-      });
-    }
-  }, [isLoggedIn, removeItemMutation]);
+      } else {
+        setLocalCollections(prev => {
+          const updated = prev.map(c => {
+            if (c.id !== collectionId) return c;
+
+            return {
+              ...c,
+              items: c.items.filter(item => item.productId !== productId),
+              updatedAt: Date.now(),
+            };
+          });
+          saveCollections(updated);
+          return updated;
+        });
+      }
+    },
+    [isLoggedIn, removeItemMutation]
+  );
 
   /**
    * Check if product is in any collection
    */
   const getProductCollections = useCallback(
     (productId: string): Collection[] => {
-      return collections.filter((c) => c.items.some((item) => item.productId === productId));
+      return collections.filter(c => c.items.some(item => item.productId === productId));
     },
     [collections]
   );
@@ -334,8 +364,8 @@ export const useCollections = () => {
    */
   const isInCollection = useCallback(
     (collectionId: string, productId: string): boolean => {
-      const collection = collections.find((c) => c.id === collectionId);
-      return collection?.items.some((item) => item.productId === productId) ?? false;
+      const collection = collections.find(c => c.id === collectionId);
+      return collection?.items.some(item => item.productId === productId) ?? false;
     },
     [collections]
   );

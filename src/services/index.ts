@@ -1,10 +1,10 @@
 // Central export file for all services
 export { default as api, handleApiError } from './api';
 export { default as ENDPOINTS } from './endpoints';
-export { default as authService } from './authService';
-export { default as productService } from './productService';
-export { default as userService } from './userService';
-export { default as uploadService } from './uploadService';
+export { authService } from './authService';
+export { productService } from './productService';
+export { userService } from './userService';
+export { uploadService } from './uploadService';
 
 // Export types
 export type {
@@ -12,9 +12,7 @@ export type {
   LoginCredentials,
   RegisterData,
   AuthResponse,
-  ForgotPasswordData,
-  ResetPasswordData,
-} from './authService';
+} from '@/types';
 
 export type {
   Product,

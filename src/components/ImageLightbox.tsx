@@ -1,8 +1,8 @@
 'use client';
 
-import { useState, useEffect, useRef } from "react";
-import { createPortal } from "react-dom";
-import { X, ChevronLeft, ChevronRight, ZoomIn, ZoomOut, RotateCcw } from "lucide-react";
+import { useState, useEffect, useRef } from 'react';
+import { createPortal } from 'react-dom';
+import { X, ChevronLeft, ChevronRight, ZoomIn, ZoomOut, RotateCcw } from 'lucide-react';
 
 interface ImageLightboxProps {
   src: string;
@@ -13,13 +13,13 @@ interface ImageLightboxProps {
   initialIndex?: number;
 }
 
-export const ImageLightbox = ({ 
-  src, 
-  alt, 
-  isOpen, 
+export const ImageLightbox = ({
+  src,
+  alt,
+  isOpen,
   onClose,
   images = [],
-  initialIndex = 0
+  initialIndex = 0,
 }: ImageLightboxProps) => {
   const [currentIndex, setCurrentIndex] = useState(initialIndex);
   const [isAnimating, setIsAnimating] = useState(false);
@@ -30,6 +30,8 @@ export const ImageLightbox = ({
   const touchStartX = useRef<number>(0);
   const touchEndX = useRef<number>(0);
   const imageContainerRef = useRef<HTMLDivElement>(null);
+  const rafRef = useRef<number | null>(null);
+  const pendingPosition = useRef({ x: 0, y: 0 });
 
   const allImages = images.length > 0 ? images : [src];
   const currentImage = allImages[currentIndex] || src;
@@ -55,38 +57,46 @@ export const ImageLightbox = ({
       document.body.style.overflow = '';
       document.body.style.touchAction = '';
     }
-    
+
     return () => {
       document.body.style.overflow = '';
       document.body.style.touchAction = '';
     };
   }, [isOpen, initialIndex]);
 
+  useEffect(() => {
+    return () => {
+      if (rafRef.current !== null) {
+        cancelAnimationFrame(rafRef.current);
+      }
+    };
+  }, []);
+
   // Keyboard
   useEffect(() => {
     if (!isOpen) return;
 
     const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.key === "Escape") onClose();
-      if (e.key === "ArrowLeft" && allImages.length > 1 && zoom === 1) {
+      if (e.key === 'Escape') onClose();
+      if (e.key === 'ArrowLeft' && allImages.length > 1 && zoom === 1) {
         setCurrentIndex(prev => (prev - 1 + allImages.length) % allImages.length);
       }
-      if (e.key === "ArrowRight" && allImages.length > 1 && zoom === 1) {
+      if (e.key === 'ArrowRight' && allImages.length > 1 && zoom === 1) {
         setCurrentIndex(prev => (prev + 1) % allImages.length);
       }
-      if (e.key === "+" || e.key === "=") {
+      if (e.key === '+' || e.key === '=') {
         handleZoomIn();
       }
-      if (e.key === "-") {
+      if (e.key === '-') {
         handleZoomOut();
       }
-      if (e.key === "0") {
+      if (e.key === '0') {
         handleResetZoom();
       }
     };
 
-    window.addEventListener("keydown", handleKeyDown);
-    return () => window.removeEventListener("keydown", handleKeyDown);
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
   }, [isOpen, allImages.length, onClose, zoom]);
 
   // Zoom functions
@@ -109,6 +119,16 @@ export const ImageLightbox = ({
     setPosition({ x: 0, y: 0 });
   };
 
+  const schedulePositionUpdate = (x: number, y: number) => {
+    pendingPosition.current = { x, y };
+    if (rafRef.current === null) {
+      rafRef.current = requestAnimationFrame(() => {
+        setPosition(pendingPosition.current);
+        rafRef.current = null;
+      });
+    }
+  };
+
   // Mouse drag for panning
   const handleMouseDown = (e: React.MouseEvent) => {
     if (zoom > 1) {
@@ -121,7 +141,7 @@ export const ImageLightbox = ({
     if (isDragging && zoom > 1) {
       const newX = e.clientX - dragStart.current.x;
       const newY = e.clientY - dragStart.current.y;
-      setPosition({ x: newX, y: newY });
+      schedulePositionUpdate(newX, newY);
     }
   };
 
@@ -133,7 +153,10 @@ export const ImageLightbox = ({
   const handleTouchStart = (e: React.TouchEvent) => {
     if (zoom > 1 && e.touches.length === 1) {
       setIsDragging(true);
-      dragStart.current = { x: e.touches[0].clientX - position.x, y: e.touches[0].clientY - position.y };
+      dragStart.current = {
+        x: e.touches[0].clientX - position.x,
+        y: e.touches[0].clientY - position.y,
+      };
     } else if (zoom === 1) {
       touchStartX.current = e.touches[0].clientX;
     }
@@ -143,7 +166,7 @@ export const ImageLightbox = ({
     if (isDragging && zoom > 1 && e.touches.length === 1) {
       const newX = e.touches[0].clientX - dragStart.current.x;
       const newY = e.touches[0].clientY - dragStart.current.y;
-      setPosition({ x: newX, y: newY });
+      schedulePositionUpdate(newX, newY);
     } else if (zoom === 1) {
       touchEndX.current = e.touches[0].clientX;
     }
@@ -151,7 +174,7 @@ export const ImageLightbox = ({
 
   const handleTouchEnd = () => {
     setIsDragging(false);
-    
+
     if (zoom === 1) {
       const diff = touchStartX.current - touchEndX.current;
       const threshold = 50;
@@ -164,7 +187,7 @@ export const ImageLightbox = ({
         }
       }
     }
-    
+
     touchStartX.current = 0;
     touchEndX.current = 0;
   };
@@ -207,77 +230,77 @@ export const ImageLightbox = ({
   if (!isOpen) return null;
 
   const modalContent = (
-    <div 
-      className="fixed inset-0 z-[9999] flex flex-col items-center pt-3 md:pt-6"
+    <div
+      className="fixed inset-0 z-[9999] flex items-center justify-center p-3 md:p-6"
       onClick={handleClose}
     >
       {/* Backdrop */}
-      <div 
+      <div
         className={`absolute inset-0 bg-black/80 backdrop-blur-md transition-opacity duration-200 ${
           isAnimating ? 'opacity-100' : 'opacity-0'
         }`}
       />
-      
+
       {/* Compact Modal */}
-      <div 
-        className={`relative w-[calc(100%-16px)] max-w-[500px] rounded-2xl overflow-hidden border border-white/10 bg-zinc-900/95 backdrop-blur-2xl shadow-[0_8px_40px_rgba(0,0,0,0.5)] transition-all duration-200 ${
+      <div
+        className={`relative w-full h-full md:h-auto md:max-h-[90svh] md:max-w-[1200px] rounded-2xl md:rounded-3xl overflow-hidden border border-white/10 bg-zinc-900/95 backdrop-blur-2xl shadow-[0_8px_40px_rgba(0,0,0,0.5)] transition-all duration-200 flex flex-col ${
           isAnimating ? 'opacity-100 scale-100 translate-y-0' : 'opacity-0 scale-95 -translate-y-4'
         }`}
         onClick={e => e.stopPropagation()}
       >
         {/* Header */}
-        <div className="flex items-center justify-between px-3 py-2 border-b border-white/10">
+        <div className="flex items-center justify-between px-4 py-3 border-b border-white/10">
           <span className="text-xs text-white/60">
             {currentIndex + 1} / {allImages.length}
           </span>
-          
+
           {/* Zoom Controls */}
-          <div className="flex items-center gap-1">
+          <div className="hidden md:flex items-center gap-1">
             <button
               onClick={handleZoomOut}
               disabled={zoom <= 1}
-              className="w-7 h-7 flex items-center justify-center rounded-full hover:bg-white/10 active:bg-white/20 transition-colors disabled:opacity-30 disabled:cursor-not-allowed"
+              className="w-8 h-8 flex items-center justify-center rounded-full hover:bg-white/10 active:bg-white/20 transition-colors disabled:opacity-30 disabled:cursor-not-allowed"
               title="Зменшити"
             >
               <ZoomOut className="w-4 h-4 text-white/80" />
             </button>
-            
-            <span className="text-xs text-white/60 min-w-[36px] text-center">
+
+            <span className="text-xs text-white/60 min-w-[40px] text-center">
               {Math.round(zoom * 100)}%
             </span>
-            
+
             <button
               onClick={handleZoomIn}
               disabled={zoom >= 4}
-              className="w-7 h-7 flex items-center justify-center rounded-full hover:bg-white/10 active:bg-white/20 transition-colors disabled:opacity-30 disabled:cursor-not-allowed"
+              className="w-8 h-8 flex items-center justify-center rounded-full hover:bg-white/10 active:bg-white/20 transition-colors disabled:opacity-30 disabled:cursor-not-allowed"
               title="Збільшити"
             >
               <ZoomIn className="w-4 h-4 text-white/80" />
             </button>
-            
+
             {zoom > 1 && (
               <button
                 onClick={handleResetZoom}
-                className="w-7 h-7 flex items-center justify-center rounded-full hover:bg-white/10 active:bg-white/20 transition-colors ml-1"
+                className="w-8 h-8 flex items-center justify-center rounded-full hover:bg-white/10 active:bg-white/20 transition-colors ml-1"
                 title="Скинути зум"
               >
-                <RotateCcw className="w-3.5 h-3.5 text-white/80" />
+                <RotateCcw className="w-4 h-4 text-white/80" />
               </button>
             )}
           </div>
-          
+
           <button
             onClick={handleClose}
-            className="w-7 h-7 flex items-center justify-center rounded-full hover:bg-white/10 active:bg-white/20 transition-colors"
+            className="w-8 h-8 flex items-center justify-center rounded-full hover:bg-white/10 active:bg-white/20 transition-colors"
           >
             <X className="w-4 h-4 text-white/80" />
           </button>
         </div>
 
         {/* Image Container */}
-        <div 
+        <div
           ref={imageContainerRef}
-          className={`relative aspect-square bg-black/40 flex items-center justify-center overflow-hidden ${
+          className={`relative flex-1 min-h-[320px] bg-black/40 flex items-center justify-center overflow-hidden ${
             zoom > 1 ? 'cursor-grab' : 'cursor-zoom-in'
           } ${isDragging ? 'cursor-grabbing' : ''}`}
           onTouchStart={handleTouchStart}
@@ -296,49 +319,65 @@ export const ImageLightbox = ({
             className="max-w-full max-h-full object-contain select-none transition-transform duration-100"
             style={{
               transform: `scale(${zoom}) translate(${position.x / zoom}px, ${position.y / zoom}px)`,
+              willChange: 'transform',
             }}
             draggable={false}
           />
-          
+
           {/* Navigation Arrows - Inside (only when not zoomed) */}
           {allImages.length > 1 && zoom === 1 && (
             <>
               <button
-                onClick={(e) => { e.stopPropagation(); goToPrevious(); }}
-                className="absolute left-2 top-1/2 -translate-y-1/2 w-8 h-8 rounded-full bg-black/50 hover:bg-black/70 flex items-center justify-center text-white transition-colors"
+                onClick={e => {
+                  e.stopPropagation();
+                  goToPrevious();
+                }}
+                className="absolute left-3 top-1/2 -translate-y-1/2 w-10 h-10 rounded-full bg-black/60 hover:bg-black/80 flex items-center justify-center text-white transition-colors"
               >
-                <ChevronLeft className="w-4 h-4" />
+                <ChevronLeft className="w-5 h-5" />
               </button>
-              
+
               <button
-                onClick={(e) => { e.stopPropagation(); goToNext(); }}
-                className="absolute right-2 top-1/2 -translate-y-1/2 w-8 h-8 rounded-full bg-black/50 hover:bg-black/70 flex items-center justify-center text-white transition-colors"
+                onClick={e => {
+                  e.stopPropagation();
+                  goToNext();
+                }}
+                className="absolute right-3 top-1/2 -translate-y-1/2 w-10 h-10 rounded-full bg-black/60 hover:bg-black/80 flex items-center justify-center text-white transition-colors"
               >
-                <ChevronRight className="w-4 h-4" />
+                <ChevronRight className="w-5 h-5" />
               </button>
             </>
           )}
-          
+
           {/* Zoom hint */}
           {zoom === 1 && (
-            <div className="absolute bottom-2 left-1/2 -translate-x-1/2 px-2 py-1 rounded-full bg-black/50 text-white/60 text-[10px] pointer-events-none">
-              Двічі клікніть для зуму
+            <div className="absolute bottom-3 left-1/2 -translate-x-1/2 px-3 py-1.5 rounded-full bg-black/60 text-white/70 text-xs pointer-events-none">
+              Двічі натисніть для зуму
             </div>
           )}
         </div>
 
-        {/* Dots */}
+        {/* Thumbnails */}
         {allImages.length > 1 && (
-          <div className="flex items-center justify-center gap-1.5 py-2">
-            {allImages.map((_, idx) => (
-              <button
-                key={idx}
-                onClick={() => { setCurrentIndex(idx); handleResetZoom(); }}
-                className={`h-1.5 rounded-full transition-all ${
-                  idx === currentIndex ? 'bg-white w-4' : 'bg-white/30 w-1.5 hover:bg-white/50'
-                }`}
-              />
-            ))}
+          <div className="px-4 py-3 border-t border-white/10 bg-black/30">
+            <div className="flex items-center gap-2 overflow-x-auto">
+              {allImages.map((image, idx) => (
+                <button
+                  key={image}
+                  onClick={() => {
+                    setCurrentIndex(idx);
+                    handleResetZoom();
+                  }}
+                  className={`relative h-14 w-14 rounded-lg overflow-hidden border transition-all ${
+                    idx === currentIndex
+                      ? 'border-white'
+                      : 'border-white/20 opacity-70 hover:opacity-100'
+                  }`}
+                >
+                  <img src={image} alt={alt} className="h-full w-full object-cover" />
+                </button>
+              ))}
+            </div>
           </div>
         )}
       </div>

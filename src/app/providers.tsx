@@ -7,6 +7,7 @@
 
 import { ReactNode, Suspense } from 'react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import { ThemeProvider } from 'next-themes';
 import { TooltipProvider } from '@/components/ui/tooltip';
 import { Toaster } from '@/components/ui/toaster';
 import { Toaster as Sonner } from '@/components/ui/sonner';
@@ -53,7 +54,7 @@ const queryClient = new QueryClient({
         // Retry once on other errors
         return failureCount < 1;
       },
-      retryDelay: (attemptIndex) => Math.min(1000 * 2 ** attemptIndex, 30000),
+      retryDelay: attemptIndex => Math.min(1000 * 2 ** attemptIndex, 30000),
       staleTime: 5 * 60 * 1000, // 5 minutes - more reactive
       gcTime: 30 * 60 * 1000, // 30 minutes cache time - more reasonable
       // Reduce network waterfall by enabling structural sharing
@@ -72,22 +73,29 @@ interface AppProvidersProps {
 
 export const AppProviders = ({ children, initialCurrency }: AppProvidersProps) => {
   // Resource hints будуть додані через окремий компонент в layout
-  
+
   return (
     <QueryClientProvider client={queryClient}>
       <Suspense fallback={null}>
-        <CurrencyProvider initialCurrency={initialCurrency}>
-          <FavoritesProvider>
-            <TooltipProvider>
-              <AuthErrorBoundary>
-                <ClientInitializer />
-                {children}
-              </AuthErrorBoundary>
-              <Toaster />
-              <Sonner />
-            </TooltipProvider>
-          </FavoritesProvider>
-        </CurrencyProvider>
+        <ThemeProvider
+          attribute="class"
+          defaultTheme="light"
+          enableSystem={false}
+          disableTransitionOnChange
+        >
+          <CurrencyProvider initialCurrency={initialCurrency}>
+            <FavoritesProvider>
+              <TooltipProvider>
+                <AuthErrorBoundary>
+                  <ClientInitializer />
+                  {children}
+                </AuthErrorBoundary>
+                <Toaster />
+                <Sonner />
+              </TooltipProvider>
+            </FavoritesProvider>
+          </CurrencyProvider>
+        </ThemeProvider>
       </Suspense>
     </QueryClientProvider>
   );

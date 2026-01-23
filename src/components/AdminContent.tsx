@@ -32,6 +32,29 @@ const AdminContent = () => {
   const { isAuthenticated, isAdmin } = useAuth();
   const admin = useAdmin();
 
+  const products = (admin.products || []) as Array<Record<string, unknown>>;
+  const stores = (admin.stores || []) as Array<Record<string, unknown>>;
+  const brands = (admin.brands || []) as Array<Record<string, unknown>>;
+  const storeOptions = stores.map((store) => ({
+    id: String(store.id ?? ''),
+    name: String(store.name ?? 'Unknown'),
+  }));
+  const brandOptions = brands.map((brand) => ({
+    id: String(brand.id ?? ''),
+    name: String(brand.name ?? 'Unknown'),
+  }));
+  const storeManagementStores = storeOptions.map((store) => ({
+    id: Number(store.id) || 0,
+    name: store.name,
+    domain: '',
+    is_active: true,
+  }));
+  const brandManagementBrands = brands.map((brand) => ({
+    id: String(brand.id ?? ''),
+    name: String(brand.name ?? 'Unknown'),
+    is_active: typeof brand.is_active === 'boolean' ? brand.is_active : true,
+  }));
+
   useSEO({
     title: t('admin.title'),
     description: t('admin.description'),
@@ -103,7 +126,7 @@ const AdminContent = () => {
                 className="flex-shrink-0 data-[state=active]:bg-foreground data-[state=active]:text-background rounded-lg transition-all text-xs md:text-sm px-3 py-2.5 min-h-[44px]"
               >
                 <Package className="w-4 h-4 md:mr-2" />
-                <span className="hidden md:inline ml-1">{t('common.products')} ({admin.products.length})</span>
+                <span className="hidden md:inline ml-1">{t('common.products')} ({products.length})</span>
                 <span className="md:hidden ml-1">{t('admin.list')}</span>
               </TabsTrigger>
               <TabsTrigger 
@@ -171,8 +194,8 @@ const AdminContent = () => {
                 showTemplates={admin.showTemplates}
                 
                 // Data
-                stores={admin.stores}
-                brands={admin.brands}
+                stores={storeOptions}
+                brands={brandOptions}
                 
                 // Handlers
                 onProductNameChange={admin.setProductName}
@@ -196,6 +219,9 @@ const AdminContent = () => {
                 onRemoveSize={admin.removeSize}
                 onAddStore={admin.addStore}
                 onRemoveStore={admin.removeStore}
+                onUpdateStorePrice={admin.updateStorePrice}
+                onAddStoreSize={admin.addStoreSize}
+                onRemoveStoreSize={admin.removeStoreSize}
                 
                 // Template handlers
                 onSaveAsTemplate={admin.saveAsTemplate}
@@ -218,9 +244,7 @@ const AdminContent = () => {
             <TabsContent value="manage-products" className="space-y-6 overflow-visible">
               <Suspense fallback={<AdminTabSkeleton />}>
                 <ProductList
-                products={admin.products}
-                stores={admin.stores}
-                brands={admin.brands}
+                products={products}
                 searchProducts={admin.searchProducts}
                 onSearchProductsChange={admin.setSearchProducts}
                 viewMode={admin.viewMode}
@@ -232,7 +256,10 @@ const AdminContent = () => {
                 onSelectAllProducts={admin.selectAllProducts}
                 onEditProduct={(product) => {
                   // Load product for editing and switch to add-product tab
-                  admin.setEditingProductId(product.id);
+                  const id = String((product as Record<string, unknown>)?.id ?? '');
+                  if (id) {
+                    admin.setEditingProductId(id);
+                  }
                   admin.setActiveTab("add-product");
                 }}
                 onDeleteProduct={(product) => {
@@ -256,7 +283,6 @@ const AdminContent = () => {
                   console.log('Download template');
                 }}
                 loadingExport={admin.loadingExport}
-                resetFilters={() => admin.setSearchProducts("")}
               />
               </Suspense>
             </TabsContent>
@@ -265,7 +291,7 @@ const AdminContent = () => {
             <TabsContent value="stores" className="space-y-8 overflow-visible">
               <Suspense fallback={<AdminTabSkeleton />}>
                 <StoreManagement
-                stores={admin.stores}
+                stores={storeManagementStores}
                 onStoreCreate={async (storeData) => {
                   // Store creation handled by StoreManagement component with API integration
                   console.log('Create store:', storeData);
@@ -278,7 +304,7 @@ const AdminContent = () => {
                   // Store deletion handled by StoreManagement component with API integration
                   console.log('Delete store:', id);
                 }}
-                loading={admin.loading}
+                loading={admin.isLoadingDashboard}
               />
               </Suspense>
             </TabsContent>
@@ -287,7 +313,7 @@ const AdminContent = () => {
             <TabsContent value="brands" className="space-y-6">
               <Suspense fallback={<AdminTabSkeleton />}>
                 <BrandManagement
-                brands={admin.brands || []}
+                brands={brandManagementBrands}
                 onBrandCreate={async (brandData) => {
                   // Brand creation handled by BrandManagement component with API integration
                   console.log('Create brand:', brandData);
@@ -300,7 +326,7 @@ const AdminContent = () => {
                   // Brand deletion handled by BrandManagement component with API integration
                   console.log('Delete brand:', id);
                 }}
-                loading={admin.loading}
+                loading={admin.isLoadingDashboard}
               />
               </Suspense>
             </TabsContent>
@@ -315,46 +341,7 @@ const AdminContent = () => {
             {/* CONTACTS TAB */}
             <TabsContent value="contacts" className="space-y-6">
               <Suspense fallback={<AdminTabSkeleton />}>
-                <ContactManagement
-                contacts={[
-                  {
-                    id: '1',
-                    name: 'Іван Петренко',
-                    email: 'ivan@example.com',
-                    phone: '+380123456789',
-                    subject: 'Проблема з замовленням',
-                    message: 'Привіт! У мене проблема з моїм останнім замовленням #12345. Воно не було доставлене вчасно.',
-                    type: 'support',
-                    status: 'new',
-                    priority: 'high',
-                    created_at: new Date().toISOString(),
-                  },
-                  {
-                    id: '2',
-                    name: 'Марія Коваленко',
-                    email: 'maria@example.com',
-                    subject: 'Питання про доставку',
-                    message: 'Коли буде доставка мого замовлення? Чи є можливість відстежити його?',
-                    type: 'general',
-                    status: 'read',
-                    priority: 'medium',
-                    created_at: new Date(Date.now() - 86400000).toISOString(),
-                  },
-                ]}
-                onContactUpdate={async (id, updates) => {
-                  // Contact update to be implemented when contact API endpoint is available
-                  console.log('Update contact:', id, updates);
-                }}
-                onContactDelete={async (id) => {
-                  // Contact deletion to be implemented when contact API endpoint is available
-                  console.log('Delete contact:', id);
-                }}
-                onReply={async (contactId, message) => {
-                  // Reply functionality to be implemented when email service is integrated
-                  console.log('Reply to contact:', contactId, message);
-                }}
-                loading={admin.loading}
-              />
+                <ContactManagement />
               </Suspense>
             </TabsContent>
           </Tabs>

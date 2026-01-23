@@ -7,18 +7,6 @@ const withBundleAnalyzer = bundleAnalyzer({
 
 /** @type {import('next').NextConfig} */
 const nextConfig = {
-  images: {
-    remotePatterns: [
-      {
-        protocol: 'https',
-        hostname: '**',
-      },
-      {
-        protocol: 'http',
-        hostname: '**',
-      },
-    ],
-  },
   // Performance optimizations
   compiler: {
     removeConsole: process.env.NODE_ENV === 'production' ? {
@@ -36,13 +24,19 @@ const nextConfig = {
   productionBrowserSourceMaps: false,
   
   // Image optimization
+  // Keep a single `images` block (duplicate keys override each other).
   images: {
-    domains: ['wearsearch.com', 'images.wearsearch.com'],
+    // Prefer explicit domains, but allow patterns in dev to avoid _next/image 404s.
+    domains: [
+      'wearsearch.com',
+      'images.wearsearch.com',
+      'wearsearchs3.s3.eu-north-1.amazonaws.com',
+      'example.com',
+      'localhost',
+    ],
     remotePatterns: [
-        {
-            protocol: 'https',
-            hostname: '**',
-        },
+      { protocol: 'https', hostname: '**' },
+      { protocol: 'http', hostname: '**' },
     ],
     formats: ['image/webp', 'image/avif'],
     minimumCacheTTL: 60 * 60 * 24 * 30, // 30 days
@@ -109,6 +103,10 @@ const nextConfig = {
       {
         source: '/api/v1/:path*',
         destination: `${backendUrl}/api/v1/:path*`,
+      },
+      {
+        source: '/api/upload/:path*',
+        destination: `${backendUrl}/api/upload/:path*`,
       },
       {
         source: '/api/:path*',

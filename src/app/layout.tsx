@@ -3,15 +3,14 @@ import { Inter } from 'next/font/google';
 import { NextProviders } from './providers';
 import Navigation from '@/components/layout/Navigation';
 import Footer from '@/components/layout/Footer';
-import NavigationProgress from '@/components/NavigationProgress';
+import dynamic from 'next/dynamic';
 import { ResourceHintsInitializer } from '@/components/ResourceHintsInitializer';
-import { OfflineBanner } from '@/components/OfflineBanner';
-import "./globals.css";
+import './globals.css';
 
-const inter = Inter({ 
+const inter = Inter({
   subsets: ['latin', 'cyrillic'],
   display: 'swap',
-  variable: '--font-inter'
+  variable: '--font-inter',
 });
 
 // Basic metadata - pages will override this
@@ -20,8 +19,17 @@ export const metadata: Metadata = {
     default: 'Wearsearch - Discover Exceptional Fashion',
     template: '%s | Wearsearch',
   },
-  description: 'Discover and shop the latest fashion trends. Find clothing, footwear, and accessories from top stores with worldwide shipping.',
-  keywords: ['fashion', 'clothing', 'shopping', 'streetwear', 'designer', 'brands', 'online shopping'],
+  description:
+    'Discover and shop the latest fashion trends. Find clothing, footwear, and accessories from top stores with worldwide shipping.',
+  keywords: [
+    'fashion',
+    'clothing',
+    'shopping',
+    'streetwear',
+    'designer',
+    'brands',
+    'online shopping',
+  ],
   metadataBase: new URL('https://wearsearch.com'), // Replace with actual domain
   robots: {
     index: true,
@@ -39,36 +47,74 @@ export const viewport: Viewport = {
   maximumScale: 5,
 };
 
-export default function RootLayout({
-  children,
-}: {
-  readonly children: React.ReactNode
-}) {
-  // Keep lang deterministic between server and client to avoid hydration warnings
+export default function RootLayout({ children }: { readonly children: React.ReactNode }) {
+  // Keep SSR deterministic; client updates <html lang> after hydration.
   const htmlLang = 'uk';
+  const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://wearsearch.com';
+  const organizationSchema = {
+    '@context': 'https://schema.org',
+    '@type': 'Organization',
+    name: 'Wearsearch',
+    url: siteUrl,
+    logo: `${siteUrl}/favicon.png`,
+  };
+  const websiteSchema = {
+    '@context': 'https://schema.org',
+    '@type': 'WebSite',
+    name: 'Wearsearch',
+    url: siteUrl,
+    potentialAction: {
+      '@type': 'SearchAction',
+      target: `${siteUrl}/products?query={search_term_string}`,
+      'query-input': 'required name=search_term_string',
+    },
+  };
 
   return (
-    <html lang={htmlLang} className="dark" suppressHydrationWarning> 
-      <body className={`min-h-screen bg-black text-white font-sans antialiased overflow-x-hidden selection:bg-white/20 ${inter.variable}`} suppressHydrationWarning>
-         {/* Skip to main content link for accessibility */}
-         <a 
-           href="#main-content"
-           className="sr-only focus:not-sr-only focus:absolute focus:top-4 focus:left-4 focus:z-50 focus:px-4 focus:py-2 focus:bg-white focus:text-black focus:rounded-md focus:outline-none focus:ring-2 focus:ring-white"
-         >
-           Skip to main content
-         </a>
-         
-         <NextProviders>
-             <ResourceHintsInitializer />
-             <NavigationProgress />
-             <OfflineBanner />
-             <Navigation />
-             <main id="main-content" className="flex-1 w-full min-h-screen">
-                {children}
-             </main>
-             <Footer />
-         </NextProviders>
+    <html lang={htmlLang} suppressHydrationWarning>
+      <body
+        className={`min-h-screen bg-background text-foreground font-sans antialiased overflow-x-hidden selection:bg-foreground/20 ${inter.variable}`}
+        suppressHydrationWarning
+      >
+        {/* Skip to main content link for accessibility */}
+        <a
+          href="#main-content"
+          className="sr-only focus:not-sr-only focus:absolute focus:top-4 focus:left-4 focus:z-50 focus:px-4 focus:py-2 focus:bg-white focus:text-black focus:rounded-md focus:outline-none focus:ring-2 focus:ring-white"
+        >
+          Skip to main content
+        </a>
+
+        <NextProviders>
+          <ResourceHintsInitializer />
+          <NavigationProgress />
+          <OfflineBanner />
+          <Navigation />
+          <script
+            type="application/ld+json"
+            dangerouslySetInnerHTML={{ __html: JSON.stringify(organizationSchema) }}
+          />
+          <script
+            type="application/ld+json"
+            dangerouslySetInnerHTML={{ __html: JSON.stringify(websiteSchema) }}
+          />
+          <main id="main-content" className="flex-1 w-full min-h-screen">
+            {children}
+          </main>
+          <Footer />
+        </NextProviders>
       </body>
     </html>
   );
 }
+const NavigationProgress = dynamic(() => import('@/components/NavigationProgress'), {
+  ssr: false,
+  loading: () => null,
+});
+
+const OfflineBanner = dynamic(
+  () => import('@/components/OfflineBanner').then(mod => mod.OfflineBanner),
+  {
+    ssr: false,
+    loading: () => null,
+  }
+);

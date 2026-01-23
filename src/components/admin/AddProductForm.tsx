@@ -76,6 +76,9 @@ interface AddProductFormProps {
   onRemoveSize: (index: number) => void;
   onAddStore: () => void;
   onRemoveStore: (index: number) => void;
+  onUpdateStorePrice: (index: number, value: string) => void;
+  onAddStoreSize: (index: number, size: string) => void;
+  onRemoveStoreSize: (index: number, sizeIndex: number) => void;
   
   // Auto-translate checkbox
   autoTranslateDescription?: boolean;
@@ -148,6 +151,9 @@ export const AddProductForm: React.FC<AddProductFormProps> = ({
   onRemoveSize,
   onAddStore,
   onRemoveStore,
+  onUpdateStorePrice,
+  onAddStoreSize,
+  onRemoveStoreSize,
   
   // Template handlers
   onSaveAsTemplate,
@@ -164,6 +170,7 @@ export const AddProductForm: React.FC<AddProductFormProps> = ({
 }) => {
   const { t } = useTranslation();
   const isMounted = useClientOnly();
+  const [storeSizeInputs, setStoreSizeInputs] = useState<Record<string, string>>({});
   const isUpdating = !!editingProductId;
   let submitText: string;
   if (submitting) {
@@ -172,6 +179,17 @@ export const AddProductForm: React.FC<AddProductFormProps> = ({
     submitText = isUpdating ? t('admin.updateProduct') : t('admin.createProduct');
   }
   const productSubmitText = submitText;
+
+  const handleStoreSizeInputChange = (storeId: string, value: string) => {
+    setStoreSizeInputs((prev) => ({ ...prev, [storeId]: value }));
+  };
+
+  const handleAddStoreSize = (index: number, storeId: string) => {
+    const value = (storeSizeInputs[storeId] || '').trim();
+    if (!value) return;
+    onAddStoreSize(index, value);
+    setStoreSizeInputs((prev) => ({ ...prev, [storeId]: '' }));
+  };
 
   // Завантаження категорій з backend
   const [backendCategories, setBackendCategories] = useState<Array<{ id?: string; slug?: string; name: string }>>([]);
@@ -550,11 +568,64 @@ export const AddProductForm: React.FC<AddProductFormProps> = ({
               <div className="space-y-2">
                 {selectedStores.map((store, index) => (
                   <div key={`selected-store-${index}-${store.store_name}`} className="flex items-center justify-between p-3 rounded-lg bg-card/40 border border-border/30">
-                    <div className="flex-1">
+                    <div className="flex-1 space-y-2">
                       <p className="font-medium">{store.store_name}</p>
-                      <p className="text-sm text-muted-foreground">
-                        ${store.price} • {store.sizes.length > 0 ? store.sizes.join(", ") : t('admin.noSizes')}
-                      </p>
+
+                      <div className="flex flex-wrap gap-2 items-center">
+                        <Label className="text-xs text-muted-foreground">{t('admin.price')}</Label>
+                        <Input
+                          type="number"
+                          min="0"
+                          step="0.01"
+                          value={String(store.price ?? '')}
+                          onChange={(e) => onUpdateStorePrice(index, e.target.value)}
+                          className="h-8 w-32 bg-card/50 border-border/50 text-xs"
+                        />
+                      </div>
+
+                      <div className="flex flex-wrap gap-2 items-center">
+                        <Label className="text-xs text-muted-foreground">{t('admin.addSize')}</Label>
+                        <Input
+                          value={storeSizeInputs[store.store_id] || ''}
+                          onChange={(e) => handleStoreSizeInputChange(store.store_id, e.target.value)}
+                          placeholder={t('admin.sizePlaceholder')}
+                          className="h-8 w-32 bg-card/50 border-border/50 text-xs"
+                          onKeyDown={(e) => {
+                            if (e.key === 'Enter') {
+                              e.preventDefault();
+                              handleAddStoreSize(index, store.store_id);
+                            }
+                          }}
+                        />
+                        <Button
+                          type="button"
+                          onClick={() => handleAddStoreSize(index, store.store_id)}
+                          variant="outline"
+                          size="sm"
+                          className="h-8 px-2"
+                        >
+                          <Plus className="w-3 h-3" />
+                        </Button>
+                      </div>
+
+                      <div className="flex flex-wrap gap-2">
+                        {store.sizes.length > 0 ? (
+                          store.sizes.map((size, sizeIndex) => (
+                            <div key={`${store.store_id}-size-${sizeIndex}`} className="flex items-center gap-1 px-2 py-1 bg-primary/10 text-primary rounded-full">
+                              <span className="text-xs">{size}</span>
+                              <button
+                                type="button"
+                                onClick={() => onRemoveStoreSize(index, sizeIndex)}
+                                className="hover:text-destructive"
+                              >
+                                <X className="w-3 h-3" />
+                              </button>
+                            </div>
+                          ))
+                        ) : (
+                          <span className="text-xs text-muted-foreground">{t('admin.noSizes')}</span>
+                        )}
+                      </div>
                     </div>
                     <Button
                       type="button"
@@ -634,7 +705,7 @@ export const AddProductForm: React.FC<AddProductFormProps> = ({
                     >
                       <span className="font-medium">{template.name}</span>
                       <p className="text-xs text-muted-foreground">
-                        {template.data.category && getCategoryTranslation(template.data.category)}
+                        {typeof template.data.category === 'string' && getCategoryTranslation(template.data.category)}
                         {template.data.brand_id && brands.find(b => b.id === template.data.brand_id)?.name && 
                           ` • ${brands.find(b => b.id === template.data.brand_id)?.name}`}
                       </p>

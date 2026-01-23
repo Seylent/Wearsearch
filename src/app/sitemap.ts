@@ -1,4 +1,5 @@
 import type { MetadataRoute } from 'next';
+import { fetchBackendJson } from '@/lib/backendFetch';
 
 const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || 'https://wearsearch.com';
 
@@ -46,26 +47,18 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   ];
 
   try {
-    const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000';
-
     // Отримуємо категорії
     let categories: MetadataRoute.Sitemap = [];
     try {
-      const categoriesResponse = await fetch(`${API_URL}/api/categories?lang=uk`, {
-        next: { revalidate: 3600 }
-      });
-      
-      if (categoriesResponse.ok) {
-        const categoriesData = await categoriesResponse.json();
-        // Бекенд віддає { success: true, categories: [...] }
-        const categoriesArray = categoriesData.categories || categoriesData;
-        categories = (Array.isArray(categoriesArray) ? categoriesArray : []).map((category: { canonical_url?: string; slug: string; updated_at?: string }) => ({
-          url: category.canonical_url || `${SITE_URL}/products?type=${category.slug}`,
-          lastModified: category.updated_at ? new Date(category.updated_at) : currentDate,
-          changeFrequency: 'daily' as const,
-          priority: 0.8,
-        }));
-      }
+      const res = await fetchBackendJson<any>(`/categories?lang=uk`, { next: { revalidate: 3600 } });
+      const payload = res?.data;
+      const categoriesArray = payload?.categories || payload?.data || payload;
+      categories = (Array.isArray(categoriesArray) ? categoriesArray : []).map((category: { canonical_url?: string; slug: string; updated_at?: string }) => ({
+        url: category.canonical_url || `${SITE_URL}/products?type=${category.slug}`,
+        lastModified: category.updated_at ? new Date(category.updated_at) : currentDate,
+        changeFrequency: 'daily' as const,
+        priority: 0.8,
+      }));
     } catch (error) {
       console.error('Error fetching categories for sitemap:', error);
     }
@@ -73,21 +66,15 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     // Отримуємо бренди
     let brands: MetadataRoute.Sitemap = [];
     try {
-      const brandsResponse = await fetch(`${API_URL}/api/brands?lang=uk`, {
-        next: { revalidate: 3600 }
-      });
-      
-      if (brandsResponse.ok) {
-        const brandsData = await brandsResponse.json();
-        // Бекенд віддає { success: true, count: 10, data: [...] }
-        const brandsArray = brandsData.data || brandsData;
-        brands = (Array.isArray(brandsArray) ? brandsArray : []).map((brand: { canonical_url?: string; slug?: string; id: string; updated_at?: string }) => ({
-          url: brand.canonical_url || `${SITE_URL}/brands/${brand.slug || brand.id}`,
-          lastModified: brand.updated_at ? new Date(brand.updated_at) : currentDate,
-          changeFrequency: 'weekly' as const,
-          priority: 0.7,
-        }));
-      }
+      const res = await fetchBackendJson<any>(`/brands?lang=uk`, { next: { revalidate: 3600 } });
+      const payload = res?.data;
+      const brandsArray = payload?.data || payload?.brands || payload;
+      brands = (Array.isArray(brandsArray) ? brandsArray : []).map((brand: { canonical_url?: string; slug?: string; id: string; updated_at?: string }) => ({
+        url: brand.canonical_url || `${SITE_URL}/brands/${brand.slug || brand.id}`,
+        lastModified: brand.updated_at ? new Date(brand.updated_at) : currentDate,
+        changeFrequency: 'weekly' as const,
+        priority: 0.7,
+      }));
     } catch (error) {
       console.error('Error fetching brands for sitemap:', error);
     }
@@ -95,21 +82,15 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     // Отримуємо популярні продукти (для SEO)
     let products: MetadataRoute.Sitemap = [];
     try {
-      const productsResponse = await fetch(`${API_URL}/api/products/popular?limit=100&lang=uk`, {
-        next: { revalidate: 3600 }
-      });
-      
-      if (productsResponse.ok) {
-        const productsData = await productsResponse.json();
-        // Бекенд віддає { success: true, products: [...] }
-        const productsArray = productsData.products || productsData;
-        products = (Array.isArray(productsArray) ? productsArray : []).map((product: { canonical_url?: string; slug?: string; id: string; updated_at?: string }) => ({
-          url: product.canonical_url || `${SITE_URL}/products/${product.slug || product.id}`,
-          lastModified: product.updated_at ? new Date(product.updated_at) : currentDate,
-          changeFrequency: 'weekly' as const,
-          priority: 0.6,
-        }));
-      }
+      const res = await fetchBackendJson<any>(`/products/popular?limit=100&lang=uk`, { next: { revalidate: 3600 } });
+      const payload = res?.data;
+      const productsArray = payload?.products || payload?.data?.products || payload;
+      products = (Array.isArray(productsArray) ? productsArray : []).map((product: { canonical_url?: string; slug?: string; id: string; updated_at?: string }) => ({
+        url: product.canonical_url || `${SITE_URL}/products/${product.slug || product.id}`,
+        lastModified: product.updated_at ? new Date(product.updated_at) : currentDate,
+        changeFrequency: 'weekly' as const,
+        priority: 0.6,
+      }));
     } catch (error) {
       console.error('Error fetching products for sitemap:', error);
     }

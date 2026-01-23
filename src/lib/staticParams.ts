@@ -3,7 +3,7 @@
  * Functions for generateStaticParams in Next.js pages
  */
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000';
+import { fetchBackendJson } from '@/lib/backendFetch';
 
 /**
  * Fetch popular products for static generation
@@ -11,17 +11,14 @@ const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000';
  */
 export async function getPopularProductIds(limit = 50): Promise<string[]> {
   try {
-    const response = await fetch(`${API_URL}/api/v1/products?limit=${limit}&sort=popular`, {
-      next: { revalidate: 86400 } // Cache for 24 hours
-    });
-    
-    if (!response.ok) {
-      console.warn('[Static Params] Failed to fetch popular products:', response.status);
+    const res = await fetchBackendJson<any>(`/products?limit=${limit}&sort=popular`, { next: { revalidate: 86400 } });
+    if (!res) {
+      console.warn('[Static Params] Failed to fetch popular products');
       return [];
     }
-    
-    const data = await response.json();
-    const products = data?.data || data?.items || [];
+
+    const data = res.data;
+    const products = data?.data || data?.items || data?.products || data;
     
     return products
       .map((p: { id?: string | number }) => p?.id?.toString())
@@ -37,17 +34,14 @@ export async function getPopularProductIds(limit = 50): Promise<string[]> {
  */
 export async function getPopularStoreIds(limit = 30): Promise<string[]> {
   try {
-    const response = await fetch(`${API_URL}/api/stores?limit=${limit}`, {
-      next: { revalidate: 86400 }
-    });
-    
-    if (!response.ok) {
-      console.warn('[Static Params] Failed to fetch stores:', response.status);
+    const res = await fetchBackendJson<any>(`/stores?limit=${limit}`, { next: { revalidate: 86400 } }, { preferV1: false });
+    if (!res) {
+      console.warn('[Static Params] Failed to fetch stores');
       return [];
     }
-    
-    const data = await response.json();
-    const stores = data?.data || data?.items || [];
+
+    const data = res.data;
+    const stores = data?.data || data?.items || data?.stores || data;
     
     return stores
       .map((s: { id?: string | number }) => s?.id?.toString())

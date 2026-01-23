@@ -3,6 +3,7 @@
  */
 import type { Product } from '@/types';
 import type { Banner } from '@/types/banner';
+import { fetchBackendJson } from '@/lib/backendFetch';
 
 // Extended SEO interface for homepage
 interface ExtendedSEOData {
@@ -42,19 +43,14 @@ export interface HomepageAPIResponse {
 
 export async function getHomepageData(): Promise<HomepageAPIResponse> {
   try {
-    // Use backend URL from env or fallback to localhost backend
-    const baseUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000';
-    
-    console.log('📡 Fetching homepage data from:', baseUrl);
-    
     // Try BFF endpoint first (single request for all data)
     try {
-      const bffRes = await fetch(`${baseUrl}/api/pages/home`, {
-        next: { revalidate: 1800 }, // 30 min cache
+      const bff = await fetchBackendJson<any>(`/pages/home`, {
+        next: { revalidate: 1800 },
       });
-      
-      if (bffRes.ok) {
-        const response = await bffRes.json();
+
+      if (bff) {
+        const response = bff.data;
         console.log('✅ BFF homepage data received');
         
         // BFF returns: { success: true, data: { products, brands, statistics, banners } }
@@ -70,13 +66,13 @@ export async function getHomepageData(): Promise<HomepageAPIResponse> {
         }
         
         // Fetch SEO data separately
-        let seoData = null;
+        let seoData: ExtendedSEOData | null = null;
         try {
-          const seoRes = await fetch(`${baseUrl}/api/v1/seo/home/home`, {
-            next: { revalidate: 86400 }, // 24 hour cache
+          const seoRes = await fetchBackendJson<any>(`/seo/home/home`, {
+            next: { revalidate: 86400 },
           });
-          if (seoRes.ok) {
-            const seoResponse = await seoRes.json();
+          if (seoRes) {
+            const seoResponse = seoRes.data;
             seoData = seoResponse.item || seoResponse;
             console.log('📝 SEO data loaded:', seoData?.h1_title || 'No title');
           }
@@ -105,46 +101,39 @@ export async function getHomepageData(): Promise<HomepageAPIResponse> {
     }
     
     // Fallback: Parallel requests for better performance
-    const [productsRes, categoriesRes, statsRes] = await Promise.allSettled([
-      fetch(`${baseUrl}/api/products/popular?limit=12`, {
-        next: { revalidate: 3600 }, // 1 hour cache
-      }),
-      fetch(`${baseUrl}/api/categories?limit=12`, {
-        next: { revalidate: 7200 }, // 2 hour cache
-      }),
-      fetch(`${baseUrl}/api/statistics`, {
-        next: { revalidate: 3600 }, // 1 hour cache
-      }),
+    const [productsRes, categoriesRes, statsRes] = await Promise.all([
+      fetchBackendJson<any>(`/products/popular?limit=12`, { next: { revalidate: 3600 } }),
+      fetchBackendJson<any>(`/categories?limit=12`, { next: { revalidate: 7200 } }),
+      fetchBackendJson<any>(`/statistics`, { next: { revalidate: 3600 } }),
     ]);
 
     // Process results with fallbacks
-    let products: Product[] = [];
-    if (productsRes.status === 'fulfilled' && productsRes.value.ok) {
-      const data = await productsRes.value.json();
-      // Backend може віддавати: { success: true, products: [...] } або { products: [...] }
-      products = data.products || data || [];
-    }
+    const productsPayload = productsRes?.data;
+    const products: Product[] =
+      (productsPayload?.products || productsPayload?.data?.products || productsPayload?.items || productsPayload || []) as Product[];
     
     console.log('✅ Products loaded:', products.length);
       
-    let categories: Array<{ id: string; name: string; slug: string; imageUrl?: string; productCount: number }> = [];
-    if (categoriesRes.status === 'fulfilled' && categoriesRes.value.ok) {
-      const data = await categoriesRes.value.json();
-      // Backend може віддавати: { success: true, categories: [...] } або просто масив
-      categories = data.categories || data || [];
-    }
+    const categoriesPayload = categoriesRes?.data;
+    const categories =
+      (categoriesPayload?.categories || categoriesPayload?.data?.categories || categoriesPayload?.items || categoriesPayload || []) as Array<{
+        id: string;
+        name: string;
+        slug: string;
+        imageUrl?: string;
+        productCount: number;
+      }>;
       
-    let stats = { totalProducts: 0, totalBrands: 0, totalCategories: 0 };
-    if (statsRes.status === 'fulfilled' && statsRes.value.ok) {
-      const data = await statsRes.value.json();
-      stats = data.stats || data || stats;
-    }
+    const statsPayload = statsRes?.data;
+    const stats = (statsPayload?.stats || statsPayload || { totalProducts: 0, totalBrands: 0, totalCategories: 0 }) as {
+      totalProducts: number;
+      totalBrands: number;
+      totalCategories: number;
+    };
 
     // If no products loaded, log warning
     if (products.length === 0) {
       console.warn('⚠️ No products loaded from API. Check backend connection.');
-      console.warn('   Backend URL:', baseUrl);
-      console.warn('   Try: http://localhost:3001/api/pages/home');
     }
 
     return {

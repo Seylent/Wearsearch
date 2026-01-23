@@ -20,6 +20,9 @@
     "from": "від",
     "recommended": "Рекомендовано"
   },
+  "theme": {
+    "label": "Тема"
+  },
   "aria": {
     "mainNavigation": "Головна навігація",
     "navigateToHomepage": "Перейти на головну сторінку",
@@ -102,13 +105,13 @@
     "changing": "Зміна..."
   },
   "translation": {
-    "autoTranslate": "Автоматично перекладати опис українською",
+    "autoTranslate": "Автоматично перекладати опис англійською",
     "translating": "Переклад...",
     "translationSuccess": "Опис успішно перекладено",
     "translationError": "Переклад не вдався. Спробуйте ще раз.",
     "readMore": "Читати далі",
     "showLess": "Згорнути",
-    "willTranslate": "Опис буде автоматично перекладено українською при збереженні",
+    "willTranslate": "Опис буде автоматично перекладено англійською при збереженні",
     "translated": "Перекладено",
     "original": "Оригінал"
   },
@@ -185,6 +188,8 @@
     "loading": "Завантаження товарів...",
     "addToFavorites": "Додати до обраного",
     "removeFromFavorites": "Видалити з обраного",
+    "editProduct": "Редагувати товар",
+    "zoomImage": "Натисніть, щоб збільшити",
     "heading": "Всі товари",
     "subheading": "Знайдіть свій ідеальний стиль серед тисяч модних товарів",
     "storeTitle": "Товари магазину",
@@ -279,7 +284,12 @@
     "recentlyViewed": "Нещодавно переглянуті",
     "noRecentlyViewed": "Немає нещодавно переглянутих товарів",
     "removeFromRecent": "Видалити з нещодавно переглянутих",
-    "justIn": "щойно надійшло"
+    "justIn": "Щойно надійшло",
+    "noProductsTitle": "Немає доступних продуктів",
+    "noProductsDescription": "Підключіть backend сервер для завантаження продуктів.",
+    "noProductsHint": "Перевірте NEXT_PUBLIC_API_URL в .env файлі.",
+    "noProductsExpected": "Очікується:",
+    "noProductsBackend": "Або запустіть backend:"
   },
   "recentlyViewed": {
     "title": "Нещодавно переглянуті",
@@ -308,15 +318,42 @@
   },
   "sort": {
     "newest": "Спочатку нові",
-    "oldest": "Спочатку старі", 
+    "oldest": "Спочатку старі",
     "priceAsc": "Ціна: від низької",
     "priceDesc": "Ціна: від високої",
     "nameAsc": "Назва: А-Я",
     "nameDesc": "Назва: Я-А"
   },
   "favorites": {
+    "yourCollection": "Ваша колекція",
+    "title": "Обране",
+    "subtitle": "Збережені товари та магазини, які вам сподобались",
+    "products": "Улюблені товари",
+    "stores": "Улюблені магазини",
+    "seoTitle": "Обране",
+    "seoDescription": "Переглядайте та керуйте улюбленими товарами.",
     "noSearchResults": "Ніяких товарів не знайдено",
     "noFavorites": "Поки немає улюблених товарів"
+  },
+  "wishlist": {
+    "shareWithFriends": "Поділитися списком",
+    "shareHint": "Зробіть список публічним, щоб ділитися посиланням",
+    "shareTitle": "Публічний список бажань",
+    "shareDescription": "Увімкніть публічний доступ і надішліть посилання друзям.",
+    "privacySettings": "Налаштування доступу",
+    "publicWishlist": "Публічний список",
+    "anyoneCanView": "Будь-хто з посиланням може переглянути",
+    "onlyYouCanView": "Тільки ви можете переглядати",
+    "shareLink": "Посилання для поширення",
+    "generateLink": "Згенерувати посилання",
+    "linkGenerated": "Посилання створено",
+    "linkReady": "Ваше посилання готове до поширення",
+    "linkError": "Не вдалося створити посилання",
+    "linkCopied": "Посилання скопійовано",
+    "settingsSaved": "Налаштування збережено",
+    "nowPublic": "Список став публічним",
+    "nowPrivate": "Список став приватним",
+    "settingsError": "Не вдалося зберегти налаштування"
   },
   "about": {
     "ourStory": "Наша історія",
@@ -345,6 +382,7 @@
   "productDetail": {
     "description": "Опис",
     "similarProducts": "Схожі товари",
+    "product": "товар",
     "priceRangeAcrossStores": "Діапазон цін по магазинах",
     "availableAt": "Доступно в",
     "stores": "магазинів",

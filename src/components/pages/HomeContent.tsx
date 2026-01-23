@@ -1,13 +1,18 @@
-"use client";
+'use client';
 
 import { useRouter } from 'next/navigation';
 import { useTranslation } from 'react-i18next';
-import ProductCard from "@/components/ProductCard";
-import { NeonAbstractions } from "@/components/NeonAbstractions";
-import { ProductGridSkeleton } from "@/components/common/SkeletonLoader";
-import RecentlyViewedProducts from "@/components/RecentlyViewedProducts";
-import type { Product } from "@/services/productService";
-import type { SEOData } from "@/services/api/seo.api";
+import ProductCard from '@/components/ProductCard';
+import { NeonAbstractions } from '@/components/NeonAbstractions';
+import { ProductGridSkeleton } from '@/components/common/SkeletonLoader';
+import dynamic from 'next/dynamic';
+
+const RecentlyViewedProducts = dynamic(() => import('@/components/RecentlyViewedProducts'), {
+  ssr: false,
+  loading: () => null,
+});
+import type { Product } from '@/services/productService';
+import type { SEOData } from '@/services/api/seo.api';
 
 interface HomeContentProps {
   products: Product[];
@@ -16,9 +21,9 @@ interface HomeContentProps {
 }
 
 export function HomeContent({ products, seoData, isLoading }: Readonly<HomeContentProps>) {
-  const router = useRouter(); 
+  const router = useRouter();
   const { t } = useTranslation();
-  
+
   return (
     <div className="min-h-screen bg-black text-white">
       {/* Hero Section */}
@@ -39,9 +44,13 @@ export function HomeContent({ products, seoData, isLoading }: Readonly<HomeConte
                 {!seoData?.h1_title && (
                   <>
                     <span className="block relative inline-block">
-                      <span className="text-white filter brightness-125">{t('home.exceptional')}</span>
+                      <span className="text-white filter brightness-125">
+                        {t('home.exceptional')}
+                      </span>
                     </span>
-                    <span className="block text-white filter brightness-110">{t('home.fashion')}</span>
+                    <span className="block text-white filter brightness-110">
+                      {t('home.fashion')}
+                    </span>
                   </>
                 )}
               </h1>
@@ -51,30 +60,29 @@ export function HomeContent({ products, seoData, isLoading }: Readonly<HomeConte
                 {seoData?.content_text || t('home.heroSubtitle')}
               </p>
 
-            {/* Scroll down button */}
-            <div className="flex justify-center mb-6 sm:mb-10">
-              <button
-                onClick={() => {
-                  const productsSection = document.getElementById('products-section');
-                  productsSection?.scrollIntoView({ behavior: 'smooth', block: 'start' });
-                }}
-                className="relative w-12 h-12 sm:w-16 sm:h-16 rounded-full border-2 border-white/30 bg-white/5 backdrop-blur-md hover:bg-white/10 hover:border-white/40 transition-all duration-300 flex items-center justify-center group cursor-pointer"
-                aria-label="Scroll to products"
-              >
-                <svg
-                  className="w-6 h-6 text-white "
-                  fill="none"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth="2"
-                  viewBox="0 0 24 24"
-                  stroke="currentColor"
+              {/* Scroll down button */}
+              <div className="flex justify-center mb-6 sm:mb-10">
+                <button
+                  onClick={() => {
+                    const productsSection = document.getElementById('products-section');
+                    productsSection?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                  }}
+                  className="relative w-12 h-12 sm:w-16 sm:h-16 rounded-full border-2 border-white/30 bg-white/5 backdrop-blur-md hover:bg-white/10 hover:border-white/40 transition-all duration-300 flex items-center justify-center group cursor-pointer"
+                  aria-label="Scroll to products"
                 >
-                  <path d="M19 14l-7 7m0 0l-7-7m7 7V3"></path>
-                </svg>
-              </button>
-            </div>
-
+                  <svg
+                    className="w-6 h-6 text-white "
+                    fill="none"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth="2"
+                    viewBox="0 0 24 24"
+                    stroke="currentColor"
+                  >
+                    <path d="M19 14l-7 7m0 0l-7-7m7 7V3"></path>
+                  </svg>
+                </button>
+              </div>
             </div>
           </div>
         </section>
@@ -87,10 +95,16 @@ export function HomeContent({ products, seoData, isLoading }: Readonly<HomeConte
               <div>
                 <div className="inline-flex items-center gap-2 mb-2 sm:mb-3">
                   <div className="w-1.5 h-1.5 rounded-full bg-white" aria-hidden="true" />
-                  <span className="text-[10px] sm:text-xs text-white/60 uppercase tracking-wider">{t('home.justIn')}</span>
+                  <span className="text-[10px] sm:text-xs text-white/60 uppercase tracking-wider">
+                    {t('home.justIn')}
+                  </span>
                 </div>
-                <h2 className="font-display text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-bold text-white">{t('home.newArrivals')}</h2>
-                <p className="text-sm sm:text-base text-white/70 mt-1 sm:mt-2">{t('home.freshPieces')}</p>
+                <h2 className="font-display text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-bold text-white">
+                  {t('home.newArrivals')}
+                </h2>
+                <p className="text-sm sm:text-base text-white/70 mt-1 sm:mt-2">
+                  {t('home.freshPieces')}
+                </p>
               </div>
             </header>
 
@@ -114,8 +128,8 @@ export function HomeContent({ products, seoData, isLoading }: Readonly<HomeConte
 
             {/* View All Button - Glassmorphism */}
             <nav className="text-center mt-12">
-              <button 
-                onClick={() => router.push("/products")}
+              <button
+                onClick={() => router.push('/products')}
                 className="relative px-8 py-3 rounded-full border border-white/20 bg-white/5 backdrop-blur-[30px] text-white font-medium text-sm hover:bg-white/10 hover:border-white/30 transition-all duration-300 overflow-hidden group"
               >
                 <span className="relative">{t('home.viewAllProducts')}</span>
@@ -127,10 +141,7 @@ export function HomeContent({ products, seoData, isLoading }: Readonly<HomeConte
         {/* Recently Viewed Section */}
         <section className="py-8 sm:py-12 bg-black border-t border-white/5">
           <div className="container mx-auto px-4 sm:px-6">
-            <RecentlyViewedProducts 
-              maxItems={8} 
-              showClearButton={true}
-            />
+            <RecentlyViewedProducts maxItems={8} showClearButton={true} />
           </div>
         </section>
       </main>

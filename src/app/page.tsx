@@ -9,6 +9,7 @@ import HomeContent from '@/components/home/HomeContentServer';
 
 // SEO utilities
 import { generateHomeMetadata } from '@/lib/seo/metadata-utils';
+import { JsonLd, generateItemListSchema } from '@/lib/seo/structured-data';
 
 // Metadata
 export const metadata: Metadata = generateHomeMetadata();
@@ -18,16 +19,39 @@ export default async function HomePage() {
   try {
     // Fetch data on the server
     const homepageData = await getHomepageData();
-    
+
+    const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://wearsearch.com';
+    const itemListData = generateItemListSchema(
+      (homepageData.popularProducts || []).slice(0, 20).map(item => {
+        const product = item as {
+          id: string;
+          name?: string;
+          canonical_url?: string;
+          slug?: string;
+        };
+        return {
+          name: product.name || 'Product',
+          url: product.canonical_url || `${siteUrl}/products/${product.slug || product.id}`,
+        };
+      }),
+      {
+        name: 'Популярні товари',
+        description: 'Популярні товари на Wearsearch',
+      }
+    );
+
     return (
-      <Suspense fallback={
-        <div className="min-h-screen bg-black text-white flex items-center justify-center">
-          <div className="text-center">
-            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-white mx-auto mb-4"></div>
-            <p className="text-white/80">Loading homepage...</p>
+      <Suspense
+        fallback={
+          <div className="min-h-screen bg-black text-white flex items-center justify-center">
+            <div className="text-center">
+              <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-white mx-auto mb-4"></div>
+              <p className="text-white/80">Loading homepage...</p>
+            </div>
           </div>
-        </div>
-      }>
+        }
+      >
+        <JsonLd data={itemListData} />
         <HomeContent
           featuredProducts={homepageData.featuredProducts}
           newProducts={homepageData.newProducts}
@@ -41,7 +65,7 @@ export default async function HomePage() {
     );
   } catch (error) {
     console.error('Error in HomePage:', error);
-    
+
     // Error fallback
     return (
       <div className="min-h-screen bg-black text-white flex items-center justify-center">

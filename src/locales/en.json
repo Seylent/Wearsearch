@@ -20,6 +20,9 @@
     "from": "from",
     "recommended": "Recommended"
   },
+  "theme": {
+    "label": "Theme"
+  },
   "aria": {
     "mainNavigation": "Main navigation",
     "navigateToHomepage": "Navigate to homepage",
@@ -59,7 +62,7 @@
   },
   "nav": {
     "allItems": "All Items",
-    "stores": "Stores", 
+    "stores": "Stores",
     "about": "About",
     "contacts": "Contacts",
     "favorites": "Favorites",
@@ -72,11 +75,11 @@
   },
   "profile": {
     "title": "Profile",
-    "seoTitle": "Profile", 
+    "seoTitle": "Profile",
     "seoDescription": "Manage your profile, security settings, and account preferences.",
     "myAccount": "My Account",
     "settings": "Settings",
-    "profileInfo": "Profile Information", 
+    "profileInfo": "Profile Information",
     "changePassword": "Change Password",
     "dangerZone": "Danger Zone",
     "deleteAccount": "Delete Account",
@@ -89,26 +92,26 @@
     "accountDeleted": "Account Deleted",
     "accountDeletedDesc": "Your account has been permanently deleted",
     "emailCannotBeChanged": "Email cannot be changed",
-    "displayNamePlaceholder": "Enter your nickname", 
+    "displayNamePlaceholder": "Enter your nickname",
     "displayNameHint": "This name will be displayed on your profile",
     "usernamePlaceholder": "Enter your username",
     "usernameHint": "Unique username for your account",
     "saving": "Saving...",
     "saveChanges": "Save Changes",
     "currentPassword": "Current Password",
-    "newPassword": "New Password", 
+    "newPassword": "New Password",
     "confirmNewPassword": "Confirm New Password",
     "changePasswordBtn": "Change Password",
     "changing": "Changing..."
   },
   "translation": {
-    "autoTranslate": "Auto-translate description to Ukrainian",
+    "autoTranslate": "Auto-translate description to English",
     "translating": "Translating...",
     "translationSuccess": "Description translated successfully",
     "translationError": "Translation failed. Please try again.",
     "readMore": "Read more",
     "showLess": "Show less",
-    "willTranslate": "Description will be automatically translated to Ukrainian when saving",
+    "willTranslate": "Description will be automatically translated to English when saving",
     "translated": "Translated",
     "original": "Original"
   },
@@ -184,6 +187,8 @@
     "loading": "Loading products...",
     "addToFavorites": "Add to favorites",
     "removeFromFavorites": "Remove from favorites",
+    "editProduct": "Edit product",
+    "zoomImage": "Click to zoom",
     "heading": "All Products",
     "subheading": "Find your perfect style among thousands of fashion items",
     "storeTitle": "Store Products",
@@ -278,21 +283,18 @@
     "recentlyViewed": "Recently Viewed",
     "noRecentlyViewed": "No recently viewed products",
     "removeFromRecent": "Remove from recently viewed",
-    "justIn": "Just In"
+    "justIn": "Just In",
+    "noProductsTitle": "No products available",
+    "noProductsDescription": "Connect the backend server to load products.",
+    "noProductsHint": "Check NEXT_PUBLIC_API_URL in your .env file.",
+    "noProductsExpected": "Expected:",
+    "noProductsBackend": "Or start the backend:"
   },
   "recentlyViewed": {
     "title": "Recently Viewed",
     "clearAll": "Clear all",
     "remove": "Remove from recently viewed",
     "empty": "No recently viewed products"
-  },
-  "home": {
-    "newArrivals": "New Arrivals",
-    "freshPieces": "Fresh pieces from the latest collections",
-    "viewAllProducts": "View All Products",
-    "recentlyViewed": "Recently Viewed",
-    "noRecentlyViewed": "No recently viewed products",
-    "removeFromRecent": "Remove from recently viewed"
   },
   "footer": {
     "shop": "Shop",
@@ -342,8 +344,35 @@
     "selectMode": "Select Mode"
   },
   "favorites": {
+    "yourCollection": "Your collection",
+    "title": "Favorites",
+    "subtitle": "Saved items and stores you love",
+    "products": "Favorite products",
+    "stores": "Favorite stores",
+    "seoTitle": "Favorites",
+    "seoDescription": "View and manage your favorite products.",
     "noSearchResults": "No products match your search",
     "noFavorites": "No favorite products yet"
+  },
+  "wishlist": {
+    "shareWithFriends": "Share wishlist",
+    "shareHint": "Make it public to share a link",
+    "shareTitle": "Public wishlist",
+    "shareDescription": "Enable public access and send the link to friends.",
+    "privacySettings": "Privacy settings",
+    "publicWishlist": "Public wishlist",
+    "anyoneCanView": "Anyone with the link can view",
+    "onlyYouCanView": "Only you can view",
+    "shareLink": "Share link",
+    "generateLink": "Generate link",
+    "linkGenerated": "Link created",
+    "linkReady": "Your link is ready to share",
+    "linkError": "Failed to generate link",
+    "linkCopied": "Link copied",
+    "settingsSaved": "Settings saved",
+    "nowPublic": "Wishlist is now public",
+    "nowPrivate": "Wishlist is now private",
+    "settingsError": "Failed to save settings"
   },
   "about": {
     "ourStory": "Our Story",
@@ -372,6 +401,7 @@
   "productDetail": {
     "description": "Description",
     "similarProducts": "Similar products",
+    "product": "product",
     "priceRangeAcrossStores": "Price range across stores",
     "availableAt": "Available at",
     "stores": "stores",

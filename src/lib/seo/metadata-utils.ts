@@ -20,19 +20,19 @@ const MAX_DESCRIPTION_LENGTH = 160;
  */
 export function generateSEOTitle(mainQuery: string, clarification?: string): string {
   let title = mainQuery;
-  
+
   if (clarification) {
     title = `${mainQuery} — ${clarification}`;
   }
-  
+
   title = `${title} | ${SITE_NAME}`;
-  
+
   // Перевірка довжини
   if (title.length > MAX_TITLE_LENGTH) {
     const maxMainLength = MAX_TITLE_LENGTH - SITE_NAME.length - 3; // 3 для " | "
     title = `${mainQuery.substring(0, maxMainLength)}... | ${SITE_NAME}`;
   }
-  
+
   return title;
 }
 
@@ -45,20 +45,20 @@ export function generateSEOTitle(mainQuery: string, clarification?: string): str
  */
 export function generateSEODescription(what: string, benefit?: string, action?: string): string {
   let description = what;
-  
+
   if (benefit) {
     description += ` ${benefit}`;
   }
-  
+
   if (action) {
     description += `. ${action}`;
   }
-  
+
   // Обрізаємо якщо занадто довго
   if (description.length > MAX_DESCRIPTION_LENGTH) {
     description = description.substring(0, MAX_DESCRIPTION_LENGTH - 3) + '...';
   }
-  
+
   return description;
 }
 
@@ -73,17 +73,16 @@ export function generateCategoryMetadata(
     keywords?: string[];
   }
 ): Metadata {
-  const title = generateSEOTitle(
-    categoryName,
-    'порівняння цін онлайн'
-  );
-  
-  const description = options?.description || generateSEODescription(
-    `Знайди найкращі пропозиції на ${categoryName.toLowerCase()}`,
-    'з актуальними цінами від різних магазинів',
-    'Порівнюй та обирай вигідніше на Wearsearch'
-  );
-  
+  const title = generateSEOTitle(categoryName, 'порівняння цін онлайн');
+
+  const description =
+    options?.description ||
+    generateSEODescription(
+      `Знайди найкращі пропозиції на ${categoryName.toLowerCase()}`,
+      'з актуальними цінами від різних магазинів',
+      'Порівнюй та обирай вигідніше на Wearsearch'
+    );
+
   return {
     title,
     description,
@@ -120,17 +119,16 @@ export function generateBrandMetadata(
     keywords?: string[];
   }
 ): Metadata {
-  const title = generateSEOTitle(
-    `${brandName} — офіційна продукція`,
-    'ціни та порівняння'
-  );
-  
-  const description = options?.description || generateSEODescription(
-    `Вся продукція ${brandName} в одному місці`,
-    'Порівнюй ціни від різних магазинів',
-    'Знайди найкращу пропозицію за лічені секунди'
-  );
-  
+  const title = generateSEOTitle(`${brandName} — офіційна продукція`, 'ціни та порівняння');
+
+  const description =
+    options?.description ||
+    generateSEODescription(
+      `Вся продукція ${brandName} в одному місці`,
+      'Порівнюй ціни від різних магазинів',
+      'Знайди найкращу пропозицію за лічені секунди'
+    );
+
   return {
     title,
     description,
@@ -168,17 +166,21 @@ export function generateProductMetadata(
     price?: string;
     currency?: string;
     keywords?: string[];
+    canonicalUrl?: string;
   }
 ): Metadata {
   const fullName = brandName ? `${brandName} ${productName}` : productName;
   const title = generateSEOTitle(fullName, 'де купити вигідно');
-  
-  const description = options?.description || generateSEODescription(
-    `${fullName} — порівняння цін`,
-    'від перевірених магазинів',
-    'Обери найкращу пропозицію на Wearsearch'
-  );
-  
+  const canonicalUrl = options?.canonicalUrl;
+
+  const description =
+    options?.description ||
+    generateSEODescription(
+      `${fullName} — порівняння цін`,
+      'від перевірених магазинів',
+      'Обери найкращу пропозицію на Wearsearch'
+    );
+
   return {
     title,
     description,
@@ -187,8 +189,9 @@ export function generateProductMetadata(
       title: `${fullName} | ${SITE_NAME}`,
       description,
       images: options?.imageUrl ? [options.imageUrl] : [],
-      type: 'website', // Змінено з 'product' на 'website'
+      type: 'website',
       siteName: SITE_NAME,
+      ...(canonicalUrl ? { url: canonicalUrl } : {}),
     },
     twitter: {
       card: 'summary_large_image',
@@ -196,6 +199,7 @@ export function generateProductMetadata(
       description,
       images: options?.imageUrl ? [options.imageUrl] : [],
     },
+    ...(canonicalUrl ? { alternates: { canonical: canonicalUrl } } : {}),
     robots: {
       index: true,
       follow: true,
@@ -207,14 +211,12 @@ export function generateProductMetadata(
  * Метадані для сторінки пошуку (з noindex)
  */
 export function generateSearchMetadata(query?: string): Metadata {
-  const title = query 
-    ? `Результати пошуку: ${query} | ${SITE_NAME}`
-    : `Пошук | ${SITE_NAME}`;
-  
+  const title = query ? `Результати пошуку: ${query} | ${SITE_NAME}` : `Пошук | ${SITE_NAME}`;
+
   const description = query
     ? `Знайдено результати для запиту "${query}". Порівнюй ціни та обирай краще на Wearsearch.`
     : 'Шукай товари, бренди та магазини. Порівнюй ціни в одному місці.';
-  
+
   return {
     title,
     description,
@@ -235,7 +237,7 @@ export function generateFilteredPageMetadata(
   const filterStr = Object.entries(filters)
     .map(([key, value]) => `${key}: ${value}`)
     .join(', ');
-  
+
   return {
     title: `${basePage} — ${filterStr} | ${SITE_NAME}`,
     description: `${basePage} з фільтрами: ${filterStr}`,
@@ -252,7 +254,8 @@ export function generateFilteredPageMetadata(
 export function generateHomeMetadata(): Metadata {
   return {
     title: `${SITE_NAME} — Знайди найкращі ціни на одяг та взуття онлайн`,
-    description: 'Порівнюй ціни на модний одяг, взуття та аксесуари від топових брендів. Знайди найвигідніші пропозиції в одному місці.',
+    description:
+      'Порівнюй ціни на модний одяг, взуття та аксесуари від топових брендів. Знайди найвигідніші пропозиції в одному місці.',
     keywords: [
       'порівняння цін',
       'одяг онлайн',

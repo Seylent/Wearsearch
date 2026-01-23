@@ -74,10 +74,12 @@ export function generateProductSchema(product: {
     '@type': 'Product',
     name: product.name,
     description: product.description,
-    brand: product.brand ? {
-      '@type': 'Brand',
-      name: product.brand,
-    } : undefined,
+    brand: product.brand
+      ? {
+          '@type': 'Brand',
+          name: product.brand,
+        }
+      : undefined,
     image: product.image,
     offers: {
       '@type': 'Offer',
@@ -86,11 +88,14 @@ export function generateProductSchema(product: {
       availability: `https://schema.org/${product.availability || 'InStock'}`,
       url: `${SITE_URL}/products/${product.id}`,
     },
-    aggregateRating: product.rating && product.reviewCount ? {
-      '@type': 'AggregateRating',
-      ratingValue: product.rating.toString(),
-      reviewCount: product.reviewCount.toString(),
-    } : undefined,
+    aggregateRating:
+      product.rating && product.reviewCount
+        ? {
+            '@type': 'AggregateRating',
+            ratingValue: product.rating.toString(),
+            reviewCount: product.reviewCount.toString(),
+          }
+        : undefined,
   };
 }
 
@@ -108,6 +113,27 @@ export function generateBreadcrumbSchema(
       position: index + 1,
       name: item.name,
       item: item.url,
+    })),
+  };
+}
+
+/**
+ * ItemList Schema для сторінок колекцій (категорії, бренди)
+ */
+export function generateItemListSchema(
+  items: Array<{ name: string; url: string }>,
+  options?: { name?: string; description?: string }
+): StructuredData {
+  return {
+    '@context': 'https://schema.org',
+    '@type': 'ItemList',
+    name: options?.name,
+    description: options?.description,
+    itemListElement: items.map((item, index) => ({
+      '@type': 'ListItem',
+      position: index + 1,
+      name: item.name,
+      url: item.url,
     })),
   };
 }

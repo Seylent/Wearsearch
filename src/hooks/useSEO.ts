@@ -2,7 +2,7 @@
 
 /**
  * useSEO Hook - Dynamic SEO Meta Tags Management
- * 
+ *
  * Manages document title, meta description, OpenGraph, Twitter Cards, and canonical URLs
  * SSR-ready structure with proper cleanup
  */
@@ -85,7 +85,7 @@ const updateOpenGraphTags = (
   updateMetaTag('meta[property="og:url"]', 'property', canonicalUrl);
   updateMetaTag('meta[property="og:image"]', 'property', image);
   updateMetaTag('meta[property="og:site_name"]', 'property', DEFAULT_SITE_NAME);
-  
+
   if (publishedTime) {
     updateMetaTag('meta[property="article:published_time"]', 'property', publishedTime);
   }
@@ -129,7 +129,9 @@ const updateCanonicalLink = (canonicalUrl: string): void => {
 const updateStructuredData = (structuredData: object): void => {
   try {
     if (!document.head) return;
-    let script = document.querySelector('script[type="application/ld+json"][data-dynamic]');
+    let script = document.querySelector(
+      'script[type="application/ld+json"][data-dynamic]'
+    ) as HTMLScriptElement | null;
     if (!script) {
       script = document.createElement('script');
       script.type = 'application/ld+json';
@@ -176,12 +178,10 @@ export const useSEO = ({
   useEffect(() => {
     // Guard for SSR and cleanup edge cases
     if (globalThis.window === undefined || typeof document === 'undefined') return;
-    
+
     // Full title with site name
-    const fullTitle = title.includes(DEFAULT_SITE_NAME) 
-      ? title 
-      : `${title} | ${DEFAULT_SITE_NAME}`;
-    
+    const fullTitle = title.includes(DEFAULT_SITE_NAME) ? title : `${title} | ${DEFAULT_SITE_NAME}`;
+
     // Update document title
     document.title = fullTitle;
 
@@ -191,10 +191,18 @@ export const useSEO = ({
     // Update all meta tags using helper functions
     updateBasicMeta(description, keywords, author);
     updateRobotsMeta(noindex);
-    updateOpenGraphTags(fullTitle, description, type, canonicalUrl, image, publishedTime, modifiedTime);
+    updateOpenGraphTags(
+      fullTitle,
+      description,
+      type,
+      canonicalUrl,
+      image,
+      publishedTime,
+      modifiedTime
+    );
     updateTwitterTags(fullTitle, description, image);
     updateCanonicalLink(canonicalUrl);
-    
+
     if (structuredData) {
       updateStructuredData(structuredData);
     }
@@ -204,7 +212,20 @@ export const useSEO = ({
       // Note: In SSR, this cleanup ensures no memory leaks
       // Meta tags are managed per-page, not removed on unmount
     };
-  }, [title, description, keywords, image, type, author, publishedTime, modifiedTime, canonical, noindex, structuredData, pathname]);
+  }, [
+    title,
+    description,
+    keywords,
+    image,
+    type,
+    author,
+    publishedTime,
+    modifiedTime,
+    canonical,
+    noindex,
+    structuredData,
+    pathname,
+  ]);
 };
 
 /**
@@ -216,6 +237,7 @@ export const generateProductStructuredData = (product: {
   description?: string;
   image_url: string;
   price?: number;
+  currency?: string;
   brand?: string;
   category?: string;
 }) => ({
@@ -224,17 +246,21 @@ export const generateProductStructuredData = (product: {
   name: product.name,
   description: product.description || `${product.name} - Available at Wearsearch`,
   image: product.image_url,
-  brand: product.brand ? {
-    '@type': 'Brand',
-    name: product.brand,
-  } : undefined,
+  brand: product.brand
+    ? {
+        '@type': 'Brand',
+        name: product.brand,
+      }
+    : undefined,
   category: product.category,
-  offers: product.price ? {
-    '@type': 'Offer',
-    price: product.price,
-    priceCurrency: 'USD',
-    availability: 'https://schema.org/InStock',
-  } : undefined,
+  offers: product.price
+    ? {
+        '@type': 'Offer',
+        price: product.price,
+        priceCurrency: product.currency || 'UAH',
+        availability: 'https://schema.org/InStock',
+      }
+    : undefined,
 });
 
 /**
@@ -260,8 +286,5 @@ export const generateOrganizationStructuredData = () => ({
   name: DEFAULT_SITE_NAME,
   url: 'https://wearsearch.com',
   logo: 'https://wearsearch.com/logo.png',
-  sameAs: [
-    'https://twitter.com/wearsearch',
-    'https://instagram.com/wearsearch',
-  ],
+  sameAs: ['https://twitter.com/wearsearch', 'https://instagram.com/wearsearch'],
 });

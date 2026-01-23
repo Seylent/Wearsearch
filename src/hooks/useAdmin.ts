@@ -11,6 +11,7 @@ import { useToast } from "@/hooks/use-toast";
 import { adminApi } from "@/services/api/admin.api";
 import { advancedApi } from "@/services/api/advanced.api";
 import { useAuth } from "@/features/auth/hooks/useAuth";
+import { api } from "@/services/api";
 
 const isRecord = (value: unknown): value is Record<string, unknown> => 
   typeof value === "object" && value !== null;
@@ -135,6 +136,41 @@ export const useAdmin = () => {
     }
   }, [toast]);
 
+  const updateStorePrice = useCallback((index: number, value: string) => {
+    setSelectedStores(prev =>
+      prev.map((store, i) =>
+        i === index
+          ? { ...store, price: Number.isFinite(Number(value)) ? Number(value) : 0 }
+          : store
+      )
+    );
+  }, []);
+
+  const addStoreSize = useCallback((index: number, size: string) => {
+    const trimmed = size.trim();
+    if (!trimmed) return;
+    setSelectedStores(prev =>
+      prev.map((store, i) =>
+        i === index
+          ? {
+              ...store,
+              sizes: store.sizes.includes(trimmed) ? store.sizes : [...store.sizes, trimmed],
+            }
+          : store
+      )
+    );
+  }, []);
+
+  const removeStoreSize = useCallback((index: number, sizeIndex: number) => {
+    setSelectedStores(prev =>
+      prev.map((store, i) =>
+        i === index
+          ? { ...store, sizes: store.sizes.filter((_, sIndex) => sIndex !== sizeIndex) }
+          : store
+      )
+    );
+  }, []);
+
   // Initialize dashboard
   useEffect(() => {
     if (isAuthenticated && isAdmin) {
@@ -149,7 +185,7 @@ export const useAdmin = () => {
   }, [dashboardData]);
   
   const stores = useMemo(() => {
-    return dashboardData?.stores?.items || [];
+    return (dashboardData?.stores?.items || []) as Array<{ id: string; name: string }>;
   }, [dashboardData]);
   
   const brands = useMemo(() => {
@@ -158,51 +194,133 @@ export const useAdmin = () => {
 
   // Load product data when editing
   useEffect(() => {
-    if (editingProductId && products.length > 0) {
-      const product = products.find((p: { id: string }) => p.id === editingProductId) as Record<string, unknown> | undefined;
-      if (product) {
-        console.log('Loading product for edit:', product);
-        setProductName((product.name as string) || "");
-        setProductCategory((product.type as string) || "");
-        setProductColor((product.color as string) || "");
-        setProductGender((product.gender as string) || "unisex");
-        setProductBrandId((product.brand_id as string) || "");
-        setProductDescription((product.description as string) || (product.description_en as string) || "");
-        setProductImageUrl((product.image_url as string) || "");
-        
-        // Handle images - backend може повертати або масив або одиночне фото
-        if (product.images && Array.isArray(product.images)) {
-          setProductImages(product.images as string[]);
-        } else if (product.image_url) {
-          setProductImages([product.image_url as string]);
-        } else {
-          setProductImages([]);
-        }
-        
-        setPrimaryImageIndex(0);
-        setProductStatus((product.status as "draft" | "published") || "published");
-        setPublishAt((product.publish_at as string) || "");
-        setUnpublishAt((product.unpublish_at as string) || "");
-        
-        // Load stores - backend повертає product_stores масив
-        if (product.product_stores && Array.isArray(product.product_stores)) {
-          const storesData = (product.product_stores as Array<Record<string, unknown>>).map((ps) => {
-            // ps може мати вкладений об'єкт stores або просто store_id
-            const storeId = (ps.store_id as string) || ((ps.stores as Record<string, unknown>)?.id as string) || "";
-            const storeName = (ps.store_name as string) || ((ps.stores as Record<string, unknown>)?.name as string) || (stores.find((s: { id: string }) => s.id === storeId) as { name?: string })?.name || "Unknown Store";
-            return {
-              store_id: storeId,
-              store_name: storeName,
-              price: (ps.price as number) || 0,
-              sizes: (ps.sizes as string[]) || []
-            };
-          });
-          setSelectedStores(storesData);
-        } else {
-          setSelectedStores([]);
-        }
+    if (!editingProductId || products.length === 0) return;
+
+    let cancelled = false;
+
+    const normalizeStores = (product: Record<string, unknown>) => {
+      // 1) Newer shape: product.product_stores
+      if (Array.isArray(product.product_stores)) {
+        return (product.product_stores as Array<Record<string, unknown>>).map((ps) => {
+          const nestedStore = (ps.stores as Record<string, unknown> | undefined) ?? undefined;
+          const storeId = (ps.store_id as string) || (nestedStore?.id as string) || '';
+          const storeName =
+            (ps.store_name as string) ||
+            (nestedStore?.name as string) ||
+            (stores.find((s: { id: string }) => s.id === storeId) as { name?: string } | undefined)?.name ||
+            'Unknown Store';
+
+          return {
+            store_id: storeId,
+            store_name: storeName,
+            price: Number(ps.price) || 0,
+            sizes: (ps.sizes as string[]) || [],
+          };
+        });
       }
+
+      // 2) Admin API contract: product.stores
+      if (Array.isArray(product.stores)) {
+        return (product.stores as Array<Record<string, unknown>>).map((s) => {
+          const storeId = (s.store_id as string) || (s.id as string) || '';
+          const storeName =
+            (s.store_name as string) ||
+            (stores.find((st: { id: string }) => st.id === storeId) as { name?: string } | undefined)?.name ||
+            'Unknown Store';
+
+          return {
+            store_id: storeId,
+            store_name: storeName,
+            price: Number(s.price) || 0,
+            sizes: (s.sizes as string[]) || [],
+          };
+        });
+      }
+
+      return null;
+    };
+
+    const base = products.find((p: { id: string }) => p.id === editingProductId) as Record<string, unknown> | undefined;
+    if (!base) return;
+
+    // Fill basic fields from dashboard list item
+    console.log('Loading product for edit:', base);
+    setProductName((base.name as string) || '');
+    setProductCategory((base.type as string) || '');
+    setProductColor((base.color as string) || '');
+    setProductGender((base.gender as string) || 'unisex');
+    setProductBrandId((base.brand_id as string) || '');
+    setProductDescription((base.description as string) || (base.description_en as string) || '');
+    setProductImageUrl((base.image_url as string) || '');
+
+    if (base.images && Array.isArray(base.images)) {
+      setProductImages(base.images as string[]);
+    } else if (base.image_url) {
+      setProductImages([base.image_url as string]);
+    } else {
+      setProductImages([]);
     }
+
+    setPrimaryImageIndex(0);
+    setProductStatus((base.status as 'draft' | 'published') || 'published');
+    setPublishAt((base.publish_at as string) || '');
+    setUnpublishAt((base.unpublish_at as string) || '');
+
+    // Stores often are NOT included in dashboard list item.
+    // Try to read stores from the base item, otherwise fetch full product details.
+    (async () => {
+      const fromBase = normalizeStores(base);
+      if (fromBase) {
+        if (!cancelled) setSelectedStores(fromBase);
+        return;
+      }
+
+      // Dashboard list often doesn't include stores. Fetch them from canonical endpoint.
+      try {
+        const storesRes = await api.get(`/items/${editingProductId}/stores`);
+        const body: unknown = storesRes.data;
+        const items =
+          (Array.isArray(body) ? body : (isRecord(body) && (Array.isArray(body.items) ? body.items : Array.isArray(body.stores) ? body.stores : null))) ??
+          [];
+
+        const mapped = (items as Array<Record<string, unknown>>).map((s) => {
+          const storeId = (s.store_id as string) || (s.id as string) || '';
+          const storeName =
+            (s.store_name as string) ||
+            (s.name as string) ||
+            (stores.find((st: { id: string }) => st.id === storeId) as { name?: string } | undefined)?.name ||
+            'Unknown Store';
+
+          const priceRaw = (s.price as unknown) ?? (s.product_price as unknown) ?? (s.productPrice as unknown);
+          const price = typeof priceRaw === 'number' ? priceRaw : Number(priceRaw);
+
+          const sizesRaw =
+            (s.sizes as unknown) ??
+            (s.available_sizes as unknown) ??
+            (s.availableSizes as unknown) ??
+            (s.size_list as unknown);
+          const sizes = Array.isArray(sizesRaw)
+            ? sizesRaw.map((size) => String(size))
+            : [];
+
+          return {
+            store_id: storeId,
+            store_name: storeName,
+            price: Number.isFinite(price) ? price : 0,
+            sizes,
+          };
+        });
+
+        if (!cancelled) setSelectedStores(mapped);
+      } catch (error) {
+        console.warn('Failed to load product stores for edit:', error);
+        if (!cancelled) setSelectedStores([]);
+      }
+    })();
+
+    return () => {
+      cancelled = true;
+    };
   }, [editingProductId, products, stores]);
 
   // Handle URL parameter for editing product
@@ -394,10 +512,10 @@ export const useAdmin = () => {
 
       let result;
       if (editingProductId) {
-        result = await adminApi.updateProduct(editingProductId, productData);
+        result = await adminApi.updateProduct(editingProductId, productData as any);
         console.log('Product updated, response:', result);
       } else {
-        result = await adminApi.createProduct(productData);
+        result = await adminApi.createProduct(productData as any);
         console.log('Product created, response:', result);
       }
 
@@ -592,6 +710,9 @@ export const useAdmin = () => {
     removeSize,
     addStore,
     removeStore,
+    updateStorePrice,
+    addStoreSize,
+    removeStoreSize,
     
     // Publishing
     publishAt,

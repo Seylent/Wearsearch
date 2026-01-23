@@ -2,6 +2,7 @@
  * Server-side data fetching for Products
  */
 import type { Product } from '@/types';
+import { fetchBackendJson } from '@/lib/backendFetch';
 
 export interface ProductsAPIResponse {
   products: Product[];
@@ -41,18 +42,15 @@ export async function getProductsData(params?: {
   if (params?.store) searchParams.set('store', params.store);
 
   try {
-    const baseUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000';
-    
     // Try BFF endpoint first
     try {
-      const bffUrl = `${baseUrl}/api/pages/products?${searchParams.toString()}`;
-      const response = await fetch(bffUrl, {
-        next: { revalidate: 60 }, // 1 min cache
+      const res = await fetchBackendJson<any>(`/pages/products?${searchParams.toString()}`, {
+        next: { revalidate: 60 },
         headers: { 'Content-Type': 'application/json' },
       });
 
-      if (response.ok) {
-        const data = await response.json();
+      if (res) {
+        const data = res.data;
         // BFF returns: { items: Product[], meta: { page, totalPages, totalItems, hasNext, hasPrev } }
         return {
           products: data.items || [],
@@ -71,14 +69,12 @@ export async function getProductsData(params?: {
     }
     
     // Fallback to direct products endpoint
-    const fallbackUrl = `${baseUrl}/api/products?${searchParams.toString()}`;
-    const response = await fetch(fallbackUrl, {
+    const fallback = await fetchBackendJson<any>(`/products?${searchParams.toString()}`, {
       next: { revalidate: 60 },
       headers: { 'Content-Type': 'application/json' },
-    });
+    }, { preferV1: false });
 
-    if (!response.ok) {
-      console.warn(`Products API error: ${response.status}`);
+    if (!fallback) {
       return {
         products: [],
         total: 0,
@@ -86,7 +82,7 @@ export async function getProductsData(params?: {
       };
     }
 
-    const data = await response.json();
+    const data = fallback.data;
     
     return {
       products: data.items || data.products || data || [],

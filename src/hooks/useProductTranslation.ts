@@ -63,8 +63,8 @@ export const useProductTranslation = () => {
         },
         body: JSON.stringify({
           text: text.trim(),
-          sourceLanguage: fromLang,
-          targetLanguage: toLang,
+          from: fromLang,
+          to: toLang,
         }),
       });
 
@@ -73,12 +73,13 @@ export const useProductTranslation = () => {
       }
 
       const data = await response.json();
-      
-      if (data.error) {
-        throw new Error(data.error);
+
+      if (data?.success && typeof data.translated === 'string') {
+        return data.translated;
       }
-      
-      return data.translatedText || text;
+
+      // Graceful fallback
+      return text;
     } catch (error) {
       console.error('Translation error:', error);
       // Return original text on error (graceful degradation)
