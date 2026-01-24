@@ -4,6 +4,7 @@
  */
 
 import { useState, useEffect, useCallback } from 'react';
+import { api } from '@/services/api';
 import type { Product } from '@/types';
 
 const STORAGE_KEY = 'wearsearch_recently_viewed';
@@ -16,6 +17,7 @@ export interface RecentlyViewedItem {
   image_url?: string;
   brand?: string;
   price?: number | string;
+  currency?: string;
   category?: string;
   viewedAt: number;
 }
@@ -62,9 +64,18 @@ export const useRecentlyViewed = () => {
   const addItem = useCallback((product: Product) => {
     if (!product?.id) return;
 
-    setItems((prevItems) => {
+    const rawPrice =
+      product.price ??
+      product.min_price ??
+      (product as unknown as { price_min?: number | string }).price_min ??
+      product.max_price ??
+      (product as unknown as { price_max?: number | string }).price_max;
+    const normalizedPrice =
+      typeof rawPrice === 'number' || typeof rawPrice === 'string' ? rawPrice : undefined;
+
+    setItems(prevItems => {
       // Remove if already exists
-      const filtered = prevItems.filter((item) => item.id !== String(product.id));
+      const filtered = prevItems.filter(item => item.id !== String(product.id));
 
       // Create new item
       const newItem: RecentlyViewedItem = {
@@ -73,7 +84,8 @@ export const useRecentlyViewed = () => {
         image: product.image,
         image_url: product.image_url,
         brand: product.brand,
-        price: product.price,
+        price: normalizedPrice,
+        currency: (product as unknown as { currency?: string }).currency ?? 'UAH',
         category: product.category || product.type,
         viewedAt: Date.now(),
       };
@@ -85,12 +97,49 @@ export const useRecentlyViewed = () => {
     });
   }, []);
 
+  const refreshPrices = useCallback(async (currency: 'UAH' | 'USD') => {
+    if (typeof window === 'undefined') return;
+
+    const current = getStoredItems();
+    if (current.length === 0) return;
+
+    const updatedItems = await Promise.all(
+      current.map(async item => {
+        try {
+          const response = await api.get(
+            `/products/${item.id}/detail?currency=${encodeURIComponent(currency)}`
+          );
+          const body = response.data;
+          const payload = body?.data ?? body?.item ?? body;
+          const product = payload?.product ?? payload;
+          const price =
+            product?.price_min ??
+            product?.price ??
+            product?.min_price ??
+            product?.price_min ??
+            item.price;
+
+          return {
+            ...item,
+            price,
+            currency,
+          };
+        } catch {
+          return item;
+        }
+      })
+    );
+
+    setItems(updatedItems);
+    saveItems(updatedItems);
+  }, []);
+
   /**
    * Remove a product from recently viewed
    */
   const removeItem = useCallback((productId: string) => {
-    setItems((prevItems) => {
-      const updated = prevItems.filter((item) => item.id !== productId);
+    setItems(prevItems => {
+      const updated = prevItems.filter(item => item.id !== productId);
       saveItems(updated);
       return updated;
     });
@@ -109,6 +158,7 @@ export const useRecentlyViewed = () => {
     addItem,
     removeItem,
     clearAll,
+    refreshPrices,
     count: items.length,
   };
 };

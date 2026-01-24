@@ -1,6 +1,7 @@
 import type { Metadata, Viewport } from 'next';
 import { Inter } from 'next/font/google';
 import { NextProviders } from './providers';
+import { getServerCurrency } from '@/utils/currencyStorage';
 import Navigation from '@/components/layout/Navigation';
 import Footer from '@/components/layout/Footer';
 import dynamic from 'next/dynamic';
@@ -47,9 +48,10 @@ export const viewport: Viewport = {
   maximumScale: 5,
 };
 
-export default function RootLayout({ children }: { readonly children: React.ReactNode }) {
+export default async function RootLayout({ children }: { readonly children: React.ReactNode }) {
   // Keep SSR deterministic; client updates <html lang> after hydration.
   const htmlLang = 'uk';
+  const initialCurrency = await getServerCurrency();
   const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://wearsearch.com';
   const organizationSchema = {
     '@context': 'https://schema.org',
@@ -84,7 +86,7 @@ export default function RootLayout({ children }: { readonly children: React.Reac
           Skip to main content
         </a>
 
-        <NextProviders>
+        <NextProviders initialCurrency={initialCurrency}>
           <ResourceHintsInitializer />
           <NavigationProgress />
           <OfflineBanner />

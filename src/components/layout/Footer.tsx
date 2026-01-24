@@ -1,19 +1,18 @@
 'use client';
 
-import Link from "next/link";
-import { useTranslation } from "react-i18next";
+import Link from 'next/link';
+import { useTranslation } from 'react-i18next';
 
 const Footer = () => {
   const { t } = useTranslation();
 
   const footerLinks = {
     shop: [
-      { name: t('footer.allItems'), href: "/products" },
-      { name: t('footer.saved'), href: "/favorites" },  
+      { name: t('footer.allItems'), href: '/products' },
+      { name: t('footer.saved'), href: '/favorites' },
+      { name: t('footer.wishlists'), href: '/wishlists' },
     ],
-    company: [
-      { name: t('footer.about'), href: "/about" },      
-    ],
+    company: [{ name: t('footer.about'), href: '/about' }],
   };
 
   return (
@@ -26,7 +25,7 @@ const Footer = () => {
               {t('footer.shop')}
             </h4>
             <ul className="space-y-3">
-              {footerLinks.shop.map((link) => (
+              {footerLinks.shop.map(link => (
                 <li key={link.name}>
                   <Link
                     href={link.href}
@@ -44,7 +43,7 @@ const Footer = () => {
               {t('footer.company')}
             </h4>
             <ul className="space-y-3">
-              {footerLinks.company.map((link) => (      
+              {footerLinks.company.map(link => (
                 <li key={link.name}>
                   <Link
                     href={link.href}
@@ -55,7 +54,10 @@ const Footer = () => {
                 </li>
               ))}
               <li>
-                <Link href="/contacts" className="text-sm text-muted-foreground hover:text-foreground transition-colors">
+                <Link
+                  href="/contacts"
+                  className="text-sm text-muted-foreground hover:text-foreground transition-colors"
+                >
                   {t('footer.contact')}
                 </Link>
               </li>
@@ -66,10 +68,16 @@ const Footer = () => {
         {/* Bottom */}
         <div className="pt-8 border-t border-zinc-800/50 flex justify-center items-center">
           <div className="flex gap-6">
-            <Link href="/privacy" className="text-xs text-zinc-600 hover:text-zinc-400 transition-colors select-none">
+            <Link
+              href="/privacy"
+              className="text-xs text-zinc-600 hover:text-zinc-400 transition-colors select-none"
+            >
               {t('footer.privacyPolicy')}
             </Link>
-            <Link href="/terms" className="text-xs text-zinc-600 hover:text-zinc-400 transition-colors select-none">
+            <Link
+              href="/terms"
+              className="text-xs text-zinc-600 hover:text-zinc-400 transition-colors select-none"
+            >
               {t('footer.termsOfService')}
             </Link>
           </div>

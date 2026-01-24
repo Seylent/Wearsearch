@@ -5,7 +5,7 @@
 
 import { useState, useEffect, useCallback, useMemo } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { isAuthenticated } from '@/utils/authStorage';
+import { useIsAuthenticated } from '@/hooks/useIsAuthenticated';
 import searchService from '@/services/searchService';
 
 const HISTORY_KEY = 'wearsearch_search_history';
@@ -45,8 +45,8 @@ const saveHistory = (items: SearchHistoryItem[]): void => {
  */
 export const useSearchHistory = () => {
   const queryClient = useQueryClient();
-  const isLoggedIn = isAuthenticated();
-  
+  const isLoggedIn = useIsAuthenticated();
+
   // Local state for guests
   const [localHistory, setLocalHistory] = useState<SearchHistoryItem[]>([]);
 
@@ -80,7 +80,7 @@ export const useSearchHistory = () => {
 
   // Transform API history to local format
   const history: SearchHistoryItem[] = isLoggedIn
-    ? (apiHistory || []).map((h) => ({
+    ? (apiHistory || []).map(h => ({
         query: h.query,
         searchedAt: new Date(h.searchedAt).getTime(),
       }))
@@ -89,7 +89,7 @@ export const useSearchHistory = () => {
   // Popular queries from API or defaults - memoize to prevent changing on every render
   const popularQueries: string[] = useMemo(() => {
     return apiPopularQueries
-      ? apiPopularQueries.map((p) => p.query)
+      ? apiPopularQueries.map(p => p.query)
       : ['nike', 'adidas', 'sneakers', 'jacket', 'hoodie', 'jeans', 't-shirt', 'shoes'];
   }, [apiPopularQueries]);
 
@@ -115,47 +115,53 @@ export const useSearchHistory = () => {
   /**
    * Add a search query to history
    */
-  const addToHistory = useCallback((query: string, resultsCount?: number) => {
-    const trimmed = query.trim().toLowerCase();
-    if (!trimmed || trimmed.length < 2) return;
+  const addToHistory = useCallback(
+    (query: string, resultsCount?: number) => {
+      const trimmed = query.trim().toLowerCase();
+      if (!trimmed || trimmed.length < 2) return;
 
-    // Track via API (works for both authenticated and guest users)
-    trackMutation.mutate({ query: trimmed, resultsCount });
+      // Track via API (works for both authenticated and guest users)
+      trackMutation.mutate({ query: trimmed, resultsCount });
 
-    // Also save locally for guests
-    if (!isLoggedIn) {
-      setLocalHistory((prevHistory) => {
-        // Remove if already exists
-        const filtered = prevHistory.filter((item) => item.query.toLowerCase() !== trimmed);
+      // Also save locally for guests
+      if (!isLoggedIn) {
+        setLocalHistory(prevHistory => {
+          // Remove if already exists
+          const filtered = prevHistory.filter(item => item.query.toLowerCase() !== trimmed);
 
-        // Create new item
-        const newItem: SearchHistoryItem = {
-          query: trimmed,
-          searchedAt: Date.now(),
-        };
+          // Create new item
+          const newItem: SearchHistoryItem = {
+            query: trimmed,
+            searchedAt: Date.now(),
+          };
 
-        // Add to beginning, limit to MAX_HISTORY_ITEMS
-        const updated = [newItem, ...filtered].slice(0, MAX_HISTORY_ITEMS);
-        saveHistory(updated);
-        return updated;
-      });
-    }
-  }, [isLoggedIn, trackMutation]);
+          // Add to beginning, limit to MAX_HISTORY_ITEMS
+          const updated = [newItem, ...filtered].slice(0, MAX_HISTORY_ITEMS);
+          saveHistory(updated);
+          return updated;
+        });
+      }
+    },
+    [isLoggedIn, trackMutation]
+  );
 
   /**
    * Remove a query from history
    */
-  const removeFromHistory = useCallback((query: string) => {
-    // For guests, remove from localStorage
-    if (!isLoggedIn) {
-      setLocalHistory((prevHistory) => {
-        const updated = prevHistory.filter((item) => item.query !== query);
-        saveHistory(updated);
-        return updated;
-      });
-    }
-    // Note: API doesn't have individual item removal - could add if needed
-  }, [isLoggedIn]);
+  const removeFromHistory = useCallback(
+    (query: string) => {
+      // For guests, remove from localStorage
+      if (!isLoggedIn) {
+        setLocalHistory(prevHistory => {
+          const updated = prevHistory.filter(item => item.query !== query);
+          saveHistory(updated);
+          return updated;
+        });
+      }
+      // Note: API doesn't have individual item removal - could add if needed
+    },
+    [isLoggedIn]
+  );
 
   /**
    * Clear all search history
@@ -178,18 +184,16 @@ export const useSearchHistory = () => {
       if (!trimmed) {
         // Return recent history + popular
         return [
-          ...history.slice(0, 5).map((h) => h.query),
-          ...popularQueries.filter((p) => !history.some((h) => h.query === p)).slice(0, 3),
+          ...history.slice(0, 5).map(h => h.query),
+          ...popularQueries.filter(p => !history.some(h => h.query === p)).slice(0, 3),
         ];
       }
 
       // Filter history and popular that match input
-      const historyMatches = history
-        .filter((h) => h.query.includes(trimmed))
-        .map((h) => h.query);
+      const historyMatches = history.filter(h => h.query.includes(trimmed)).map(h => h.query);
 
       const popularMatches = popularQueries.filter(
-        (p) => p.includes(trimmed) && !historyMatches.includes(p)
+        p => p.includes(trimmed) && !historyMatches.includes(p)
       );
 
       return [...historyMatches, ...popularMatches].slice(0, 8);

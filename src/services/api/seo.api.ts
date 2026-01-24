@@ -38,7 +38,8 @@ export const seoApi = {
     try {
       const lang = getCurrentLanguage();
       const response = await api.get<SEOResponse>('/seo/home/home', {
-        params: { lang }
+        params: { lang },
+        headers: { 'X-Skip-Retry': 'true' },
       });
       return response.data.item;
     } catch (error) {
@@ -46,7 +47,8 @@ export const seoApi = {
       // Return default SEO if API fails
       return {
         meta_title: 'Wearsearch - Discover Exceptional Fashion',
-        meta_description: 'Discover and shop the latest fashion trends. Find clothing, footwear, and accessories from top stores with worldwide shipping.',
+        meta_description:
+          'Discover and shop the latest fashion trends. Find clothing, footwear, and accessories from top stores with worldwide shipping.',
         h1_title: 'Discover Exceptional Fashion',
       };
     }
@@ -59,7 +61,8 @@ export const seoApi = {
     try {
       const lang = getCurrentLanguage();
       const response = await api.get<SEOResponse>(`/seo/category/${categorySlug}`, {
-        params: { lang }
+        params: { lang },
+        headers: { 'X-Skip-Retry': 'true' },
       });
       return response.data.item;
     } catch (error) {
@@ -79,7 +82,8 @@ export const seoApi = {
     try {
       const lang = getCurrentLanguage();
       const response = await api.get<SEOResponse>(`/seo/color/${colorSlug}`, {
-        params: { lang }
+        params: { lang },
+        headers: { 'X-Skip-Retry': 'true' },
       });
       return response.data.item;
     } catch (error) {
@@ -99,7 +103,8 @@ export const seoApi = {
     try {
       const lang = getCurrentLanguage();
       const response = await api.get<SEOResponse>(`/seo/product/${productId}`, {
-        params: { lang }
+        params: { lang },
+        headers: { 'X-Skip-Retry': 'true' },
       });
       return response.data.item;
     } catch (error) {
@@ -119,7 +124,8 @@ export const seoApi = {
     try {
       const lang = getCurrentLanguage();
       const response = await api.get<SEOResponse>(`/seo/store/${storeId}`, {
-        params: { lang }
+        params: { lang },
+        headers: { 'X-Skip-Retry': 'true' },
       });
       return response.data.item;
     } catch (error) {
@@ -139,7 +145,8 @@ export const seoApi = {
     try {
       const lang = getCurrentLanguage();
       const response = await api.get<SEOResponse>(`/seo/brand/${brandId}`, {
-        params: { lang }
+        params: { lang },
+        headers: { 'X-Skip-Retry': 'true' },
       });
       return response.data.item;
     } catch (error) {

@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
-import { User, Heart, LogOut, Settings, Shield } from 'lucide-react';
+import { User, Heart, LogOut, Settings, Shield, FolderHeart } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { isAuthenticated, clearAuth } from '@/utils/authStorage';
 import {
@@ -31,13 +31,13 @@ export function UserProfileMenu() {
 
   useEffect(() => {
     loadUser();
-    
+
     // Listen for auth events
     window.addEventListener('authChange', loadUser);
     window.addEventListener('auth:logout', loadUser);
     window.addEventListener('auth:login', loadUser);
     window.addEventListener('storage', loadUser);
-    
+
     return () => {
       window.removeEventListener('authChange', loadUser);
       window.removeEventListener('auth:logout', loadUser);
@@ -52,7 +52,7 @@ export function UserProfileMenu() {
       setUser(null);
       return;
     }
-    
+
     const userStr = localStorage.getItem('user');
     if (userStr) {
       try {
@@ -100,7 +100,7 @@ export function UserProfileMenu() {
           </div>
         </button>
       </DropdownMenuTrigger>
-      <DropdownMenuContent 
+      <DropdownMenuContent
         align="end"
         side="bottom"
         sideOffset={8}
@@ -127,39 +127,47 @@ export function UserProfileMenu() {
             </div>
           </div>
         </DropdownMenuLabel>
-        
+
         <DropdownMenuSeparator className="bg-border/50 my-2" />
-        
-        <DropdownMenuItem 
-          onClick={() => router.push('/profile')} 
+
+        <DropdownMenuItem
+          onClick={() => router.push('/profile')}
           className="cursor-pointer rounded-lg px-4 py-3 min-h-[44px] touch-manipulation"
         >
           <User className="h-5 w-5 mr-3" />
           <span className="text-base font-medium">{t('nav.profile')}</span>
         </DropdownMenuItem>
-        
-        <DropdownMenuItem 
-          onClick={() => router.push('/favorites')} 
+
+        <DropdownMenuItem
+          onClick={() => router.push('/favorites')}
           className="cursor-pointer rounded-lg px-4 py-3 min-h-[44px] touch-manipulation"
         >
           <Heart className="h-5 w-5 mr-3" />
           <span className="text-base font-medium">{t('nav.favorites')}</span>
         </DropdownMenuItem>
-        
+
+        <DropdownMenuItem
+          onClick={() => router.push('/wishlists')}
+          className="cursor-pointer rounded-lg px-4 py-3 min-h-[44px] touch-manipulation"
+        >
+          <FolderHeart className="h-5 w-5 mr-3" />
+          <span className="text-base font-medium">{t('nav.wishlists')}</span>
+        </DropdownMenuItem>
+
         {isAdmin && (
-          <DropdownMenuItem 
-            onClick={() => router.push('/admin')} 
+          <DropdownMenuItem
+            onClick={() => router.push('/admin')}
             className="cursor-pointer rounded-lg px-4 py-3 min-h-[44px] touch-manipulation"
           >
             <Settings className="h-5 w-5 mr-3" />
             <span className="text-base font-medium">{t('admin.title')}</span>
           </DropdownMenuItem>
         )}
-        
+
         <DropdownMenuSeparator className="bg-border/30 my-1" />
-        
-        <DropdownMenuItem 
-          onClick={handleLogout} 
+
+        <DropdownMenuItem
+          onClick={handleLogout}
           className="cursor-pointer rounded-lg px-4 py-3 min-h-[44px] text-destructive focus:bg-destructive/10 touch-manipulation"
         >
           <LogOut className="h-5 w-5 mr-3" />

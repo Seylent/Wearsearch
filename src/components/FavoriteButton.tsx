@@ -5,12 +5,8 @@ import { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
 import { useAddFavorite, useRemoveFavorite } from '@/hooks/useApi';
-import { isAuthenticated } from '@/utils/authStorage';
-import { 
-  isGuestFavorite, 
-  addGuestFavorite, 
-  removeGuestFavorite 
-} from '@/services/guestFavorites';
+import { useIsAuthenticated } from '@/hooks/useIsAuthenticated';
+import { isGuestFavorite, addGuestFavorite, removeGuestFavorite } from '@/services/guestFavorites';
 import { useTranslation } from 'react-i18next';
 import { translateSuccessCode } from '@/utils/errorTranslation';
 import { useFavoritesContext } from '@/contexts/FavoritesContext';
@@ -27,14 +23,14 @@ interface FavoriteButtonProps {
 // Heart burst particles component
 const HeartBurst = ({ show }: { show: boolean }) => {
   if (!show) return null;
-  
+
   return (
     <div className="absolute inset-0 pointer-events-none overflow-visible">
       {/* Expanding ring */}
       <div className="absolute inset-0 flex items-center justify-center">
         <div className="w-4 h-4 rounded-full border-2 border-red-400 animate-ping opacity-75" />
       </div>
-      
+
       {/* Mini hearts bursting out */}
       {Array.from({ length: 6 }, (_, i) => (
         <div
@@ -46,7 +42,7 @@ const HeartBurst = ({ show }: { show: boolean }) => {
             transform: `rotate(${i * 60}deg)`,
           }}
         >
-          <Heart 
+          <Heart
             className="w-2 h-2 fill-red-400 text-red-400"
             style={{
               animation: `heartFade 0.6s ease-out forwards`,
@@ -55,7 +51,7 @@ const HeartBurst = ({ show }: { show: boolean }) => {
           />
         </div>
       ))}
-      
+
       {/* CSS for custom animations */}
       <style>{`
         @keyframes heartBurst {
@@ -71,20 +67,20 @@ const HeartBurst = ({ show }: { show: boolean }) => {
   );
 };
 
-export function FavoriteButton({ 
-  productId, 
-  className = '', 
+export function FavoriteButton({
+  productId,
+  className = '',
   size = 'icon',
   variant = 'ghost',
-  showText = false
+  showText = false,
 }: Readonly<FavoriteButtonProps>) {
   const { toast } = useToast();
   const { t } = useTranslation();
-  const isLoggedIn = isAuthenticated();
+  const isLoggedIn = useIsAuthenticated();
   const [guestFavorited, setGuestFavorited] = useState(false);
   const [showBurst, setShowBurst] = useState(false);
   const [isAnimating, setIsAnimating] = useState(false);
-  
+
   // Use context instead of direct hook call (prevents multiple API requests)
   const { isFavorited: isInFavorites, isLoading: isFavoritesLoading } = useFavoritesContext();
   const addFavorite = useAddFavorite();
@@ -98,9 +94,7 @@ export function FavoriteButton({
   }, [productId, isLoggedIn]);
 
   // Check if current product is in favorites (from context - no extra API calls!)
-  const isFavorited = isLoggedIn
-    ? isInFavorites(productId)
-    : guestFavorited;
+  const isFavorited = isLoggedIn ? isInFavorites(productId) : guestFavorited;
 
   const triggerBurstAnimation = () => {
     setShowBurst(true);
@@ -177,7 +171,9 @@ export function FavoriteButton({
   return (
     <Button
       onClick={handleToggleFavorite}
-      disabled={isLoggedIn && (addFavorite.isPending || removeFavorite.isPending || isFavoritesLoading)}
+      disabled={
+        isLoggedIn && (addFavorite.isPending || removeFavorite.isPending || isFavoritesLoading)
+      }
       variant={variant}
       size={size}
       className={cn(
@@ -191,7 +187,7 @@ export function FavoriteButton({
       role="button"
     >
       <HeartBurst show={showBurst} />
-      <Heart 
+      <Heart
         className={cn(
           'h-5 w-5 transition-all duration-200',
           showText && 'mr-2',

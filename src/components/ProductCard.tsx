@@ -58,17 +58,14 @@ const ProductCard: React.FC<ProductCardProps> = memo(
     description,
     description_en,
     description_ua,
-    priceCurrency,
   }) => {
     const { t } = useTranslation();
-    const { currency: ctxCurrency } = useCurrencyConversion();
-    const currency = priceCurrency ?? ctxCurrency;
+    const { formatPrice } = useCurrencyConversion();
 
-    // Backend does conversion; frontend only formats.
-    const formatPrice = (value: number): string => {
-      const symbol = currency === 'USD' ? '$' : '₴';
-      if (currency === 'USD') return `${symbol}${value.toFixed(2)}`;
-      return `${value.toFixed(0)} ${symbol}`;
+    const toNumber = (value?: string | number): number | null => {
+      if (value === undefined || value === null) return null;
+      const num = typeof value === 'number' ? value : Number.parseFloat(String(value));
+      return Number.isFinite(num) ? num : null;
     };
     const cardRef = useRef<HTMLDivElement>(null);
 
@@ -79,10 +76,10 @@ const ProductCard: React.FC<ProductCardProps> = memo(
 
     // Backend sends prices in correct currency via ?currency=UAH/USD
     // Just use the values as-is, no conversion needed
-    const displayMinPrice = minPrice ?? price;
-    const displayMaxPrice = maxPrice;
+    const displayMinPrice = toNumber(minPrice ?? price);
+    const displayMaxPrice = toNumber(maxPrice);
     const showPriceRange =
-      displayMinPrice && displayMaxPrice && displayMinPrice !== displayMaxPrice;
+      displayMinPrice !== null && displayMaxPrice !== null && displayMinPrice !== displayMaxPrice;
 
     // Handle both 'image' and 'image_url' from different API responses
     const imgSrc = image || '/placeholder-product.jpg';
@@ -214,12 +211,15 @@ const ProductCard: React.FC<ProductCardProps> = memo(
             <div className="mt-2">
               {showPriceRange ? (
                 <p className="font-display text-sm sm:text-base font-bold text-foreground dark:text-white">
-                  {formatPrice(Number(displayMinPrice) || 0)} -{' '}
-                  {formatPrice(Number(displayMaxPrice) || 0)}
+                  {formatPrice(displayMinPrice ?? 0)} - {formatPrice(displayMaxPrice ?? 0)}
+                </p>
+              ) : displayMinPrice !== null ? (
+                <p className="font-display text-sm sm:text-base font-bold text-foreground dark:text-white">
+                  {t('common.from')} {formatPrice(displayMinPrice)}
                 </p>
               ) : (
-                <p className="font-display text-sm sm:text-base font-bold text-foreground dark:text-white">
-                  {t('common.from')} {formatPrice(Number(displayMinPrice) || 0)}
+                <p className="font-display text-sm sm:text-base font-bold text-foreground/50 dark:text-white/50">
+                  {t('products.priceUnavailable', 'Price unavailable')}
                 </p>
               )}
               {!!(storeCount && storeCount > 0) && (

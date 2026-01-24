@@ -6,6 +6,7 @@
 import { useQuery } from '@tanstack/react-query';
 import { authService } from '@/services/authService';
 import { getAuth } from '@/utils/authStorage';
+import { useIsAuthenticated } from '@/hooks/useIsAuthenticated';
 import recommendationsService, {
   RecommendedProduct,
   SimilarProduct,
@@ -16,7 +17,7 @@ import recommendationsService, {
  * Hook for getting personalized recommendations
  */
 export const useRecommendations = (limit: number = 10) => {
-  const isLoggedIn = globalThis.window !== undefined && authService.isAuthenticated();
+  const isLoggedIn = useIsAuthenticated();
 
   const { data, isLoading, error, refetch } = useQuery({
     queryKey: ['recommendations', limit],
@@ -66,7 +67,7 @@ export const trackInteraction = async (
 ): Promise<void> => {
   // Only track if authenticated (recommendations work for logged-in users)
   if (!authService.isAuthenticated()) return;
-  
+
   await recommendationsService.trackInteraction(productId, type);
 };
 

@@ -7,10 +7,15 @@
 import { useQuery, UseQueryOptions, keepPreviousData } from '@tanstack/react-query';
 import { api } from '@/services/api';
 import { logApiError } from '@/services/logger';
+import i18n from '@/i18n';
 
-type QueryOptions = Omit<UseQueryOptions<unknown, Error, unknown, readonly unknown[]>, 'queryKey' | 'queryFn'>;
+type QueryOptions = Omit<
+  UseQueryOptions<unknown, Error, unknown, readonly unknown[]>,
+  'queryKey' | 'queryFn'
+>;
 
-const isRecord = (value: unknown): value is Record<string, unknown> => typeof value === 'object' && value !== null;
+const isRecord = (value: unknown): value is Record<string, unknown> =>
+  typeof value === 'object' && value !== null;
 
 const getRecord = (value: unknown, key: string): Record<string, unknown> | undefined => {
   if (!isRecord(value)) return undefined;
@@ -41,7 +46,7 @@ const getErrorMessage = (error: unknown): string => {
  * Homepage Data - Fetch all homepage data in one call
  * Combines: products, brands, statistics
  * Reduces 2-3 requests → 1 request
- * 
+ *
  * Backend endpoint: GET /api/pages/home
  * Response: { products: Product[], brands: Brand[], stats: Stats }
  */
@@ -57,18 +62,19 @@ export const useHomepageData = (currency: string = 'UAH', options?: QueryOptions
         if (process.env.NODE_ENV === 'development') {
           console.log('[API] Homepage data received');
         }
-        
+
         // BFF returns: { success: true, data: { products, brands, statistics } }
         const apiData = response.data?.data || response.data;
-        
+
         return {
           products: apiData.products || [],
           brands: apiData.brands || [],
-          statistics: apiData.statistics || apiData.stats || { 
-            total_products: 0, 
-            total_stores: 0, 
-            total_brands: 0 
-          },
+          statistics: apiData.statistics ||
+            apiData.stats || {
+              total_products: 0,
+              total_stores: 0,
+              total_brands: 0,
+            },
         };
       } catch (error) {
         // Check for rate limit error
@@ -83,7 +89,7 @@ export const useHomepageData = (currency: string = 'UAH', options?: QueryOptions
             statistics: { total_products: 0, total_stores: 0, total_brands: 0 },
           };
         }
-        
+
         // Fallback to individual calls
         if (process.env.NODE_ENV === 'development') {
           console.log('[Homepage] Using fallback endpoints');
@@ -92,16 +98,19 @@ export const useHomepageData = (currency: string = 'UAH', options?: QueryOptions
         try {
           const [productsRes, statsRes] = await Promise.all([
             api.get('/products/popular', { params: { limit: 12, currency } }),
-            api.get('/statistics').catch(() => ({ data: { total_products: 0, total_stores: 0, total_brands: 0 } })),
+            api
+              .get('/statistics')
+              .catch(() => ({ data: { total_products: 0, total_stores: 0, total_brands: 0 } })),
           ]);
-          
+
           const productsData = productsRes.data;
           const statsData = statsRes.data;
-          
+
           return {
             products: productsData.products || productsData || [],
             brands: [],
-            statistics: statsData.stats || statsData || { total_products: 0, total_stores: 0, total_brands: 0 },
+            statistics: statsData.stats ||
+              statsData || { total_products: 0, total_stores: 0, total_brands: 0 },
           };
         } catch (_error: unknown) {
           return {
@@ -125,7 +134,7 @@ export const useHomepageData = (currency: string = 'UAH', options?: QueryOptions
  * Products Page Data - Fetch all products page data in one call with filters
  * Combines: products, brands, pagination
  * Reduces 2-3 requests → 1 request
- * 
+ *
  * Backend endpoint (v1): GET /api/v1/pages/products
  * Response: { items: [...], meta: {...}, facets: {...} }
  */
@@ -199,7 +208,7 @@ export const useProductsPageData = (filters: ProductFilters = {}, options?: Quer
         const response = await api.get('/pages/products', { params });
 
         const body: unknown = response.data?.data || response.data;
-        const items = (getArray(body, 'items') ?? []);
+        const items = getArray(body, 'items') ?? [];
         const meta = getRecord(body, 'meta') ?? {};
         const facets = getRecord(body, 'facets') ?? {};
         const currency = getRecord(body, 'currency');
@@ -207,11 +216,21 @@ export const useProductsPageData = (filters: ProductFilters = {}, options?: Quer
         const page = asNumber(meta.page, filters.page ?? 1);
         const limit = asNumber(meta.limit, filters.limit ?? 24);
         const totalItems = asNumber(meta.totalItems, items.length);
-        const totalPages = asNumber(meta.totalPages, Math.max(1, Math.ceil(totalItems / Math.max(1, limit))));
+        const totalPages = asNumber(
+          meta.totalPages,
+          Math.max(1, Math.ceil(totalItems / Math.max(1, limit)))
+        );
         const hasNext = typeof meta.hasNext === 'boolean' ? meta.hasNext : page < totalPages;
         const hasPrev = typeof meta.hasPrev === 'boolean' ? meta.hasPrev : page > 1;
 
-        const pagination: PaginationInfo = { page, limit, totalItems, totalPages, hasNext, hasPrev };
+        const pagination: PaginationInfo = {
+          page,
+          limit,
+          totalItems,
+          totalPages,
+          hasNext,
+          hasPrev,
+        };
         const facetsBrands = facets.brands;
         const brands = Array.isArray(facetsBrands) ? facetsBrands : [];
 
@@ -221,26 +240,40 @@ export const useProductsPageData = (filters: ProductFilters = {}, options?: Quer
         if (process.env.NODE_ENV !== 'production') {
           console.log('[Products Page] Using fallback endpoints');
         }
-        
+
         const [productsRes, brandsRes] = await Promise.all([
           api.get('/items', { params: buildV1ProductsParams(filters) }),
           api.get('/brands').catch(() => ({ data: [] })),
         ]);
 
         const productsBody: unknown = productsRes.data;
-        const items = (getArray(productsBody, 'items') ?? (Array.isArray(productsBody) ? productsBody : []));
+        const items =
+          getArray(productsBody, 'items') ?? (Array.isArray(productsBody) ? productsBody : []);
         const meta = getRecord(productsBody, 'meta') ?? {};
 
         const page = asNumber(meta.page, filters.page ?? 1);
         const limit = asNumber(meta.limit, filters.limit ?? 24);
         const totalItems = asNumber(meta.totalItems, items.length);
-        const totalPages = asNumber(meta.totalPages, Math.max(1, Math.ceil(totalItems / Math.max(1, limit))));
+        const totalPages = asNumber(
+          meta.totalPages,
+          Math.max(1, Math.ceil(totalItems / Math.max(1, limit)))
+        );
         const hasNext = typeof meta.hasNext === 'boolean' ? meta.hasNext : page < totalPages;
         const hasPrev = typeof meta.hasPrev === 'boolean' ? meta.hasPrev : page > 1;
-        const pagination: PaginationInfo = { page, limit, totalItems, totalPages, hasNext, hasPrev };
+        const pagination: PaginationInfo = {
+          page,
+          limit,
+          totalItems,
+          totalPages,
+          hasNext,
+          hasPrev,
+        };
 
         const brandsBody: unknown = brandsRes.data;
-        const brands = (getArray(brandsBody, 'items') ?? getArray(brandsBody, 'brands') ?? (Array.isArray(brandsBody) ? brandsBody : []));
+        const brands =
+          getArray(brandsBody, 'items') ??
+          getArray(brandsBody, 'brands') ??
+          (Array.isArray(brandsBody) ? brandsBody : []);
 
         return { products: items, brands, pagination };
       }
@@ -254,7 +287,7 @@ export const useProductsPageData = (filters: ProductFilters = {}, options?: Quer
       if (status && status >= 400 && status < 500) return false;
       return failureCount < 2;
     },
-    retryDelay: (attemptIndex) => Math.min(1000 * 2 ** attemptIndex, 10000),
+    retryDelay: attemptIndex => Math.min(1000 * 2 ** attemptIndex, 10000),
     ...options,
   });
 };
@@ -263,15 +296,22 @@ export const useProductsPageData = (filters: ProductFilters = {}, options?: Quer
  * Product Detail Data - Fetch all product detail data in one call
  * Combines: product, stores, brand, relatedProducts
  * Reduces 3-4 requests → 1 request
- * 
- * Backend endpoint (v1): GET /api/v1/pages/product/:id
- * Response: { item: { product, stores, brand, relatedProducts } }
+ *
+ * Backend endpoint (v1): GET /api/v1/products/:id/detail
+ * Response: { product, brand, stores, reviews, seo }
  */
-export const useProductDetailData = (productId: string, currency: string = 'UAH', options?: QueryOptions) => {
+export const useProductDetailData = (
+  productId: string,
+  currency: string = 'UAH',
+  options?: QueryOptions
+) => {
   const extractStoresArray = (storesBody: unknown): unknown[] => {
     return Array.isArray(storesBody)
       ? storesBody
-      : (getArray(storesBody, 'stores') ?? getArray(storesBody, 'items') ?? getArray(storesBody, 'data') ?? []);
+      : (getArray(storesBody, 'stores') ??
+          getArray(storesBody, 'items') ??
+          getArray(storesBody, 'data') ??
+          []);
   };
 
   const fetchProductDetailFallback = async (productId: string) => {
@@ -280,7 +320,8 @@ export const useProductDetailData = (productId: string, currency: string = 'UAH'
     const product = (isRecord(productBody) ? productBody.product : undefined) ?? productBody;
 
     const rawBrandId = isRecord(product) ? product.brand_id : undefined;
-    const brandId = typeof rawBrandId === 'string' || typeof rawBrandId === 'number' ? String(rawBrandId) : '';
+    const brandId =
+      typeof rawBrandId === 'string' || typeof rawBrandId === 'number' ? String(rawBrandId) : '';
 
     const [storesRes, brandRes] = await Promise.all([
       api.get(`/items/${productId}/stores`),
@@ -297,6 +338,8 @@ export const useProductDetailData = (productId: string, currency: string = 'UAH'
       stores: storesArray,
       brand: (isRecord(brandRes.data) ? brandRes.data.data : undefined) ?? brandRes.data ?? null,
       relatedProducts: [],
+      reviews: [],
+      seo: null,
     };
   };
 
@@ -305,23 +348,42 @@ export const useProductDetailData = (productId: string, currency: string = 'UAH'
     queryFn: async () => {
       if (!productId) throw new Error('Product ID is required');
       try {
-        // v1 BFF: single call
-        const response = await api.get(`/pages/product/${productId}`, { params: { currency } });
+        const lang = i18n.language || 'en';
+        const response = await api.get(
+          `/products/${productId}/detail?lang=${encodeURIComponent(lang)}&currency=${encodeURIComponent(
+            currency
+          )}`
+        );
         const body: unknown = response.data;
-        const item = getRecord(body, 'item') ?? {};
+        const data = (getRecord(body, 'data') ?? getRecord(body, 'item') ?? body) as Record<
+          string,
+          unknown
+        >;
+
+        const storesArray = extractStoresArray(data?.stores);
+
+        const relatedProducts = Array.isArray(data?.relatedProducts)
+          ? data.relatedProducts
+          : Array.isArray(data?.related_products)
+            ? data.related_products
+            : [];
 
         return {
-          product: item?.product ?? null,
-          stores: Array.isArray(item?.stores) ? item.stores : [],
-          brand: item?.brand ?? null,
-          relatedProducts: Array.isArray(item?.relatedProducts) ? item.relatedProducts : [],
+          product: data?.product ?? null,
+          stores: storesArray,
+          brand: data?.brand ?? null,
+          reviews: Array.isArray(data?.reviews) ? data.reviews : [],
+          seo: isRecord(data?.seo) ? data.seo : null,
+          relatedProducts,
         };
       } catch {
         // Fallback to individual endpoints (keeps the app functional if the BFF isn't deployed yet)
         try {
           return await fetchProductDetailFallback(productId);
         } catch (fallbackError: unknown) {
-          logApiError(fallbackError, `/pages/product/${productId}`, { component: 'useProductDetail' });
+          logApiError(fallbackError, `/products/${productId}/detail`, {
+            component: 'useProductDetail',
+          });
           throw fallbackError;
         }
       }
@@ -336,7 +398,7 @@ export const useProductDetailData = (productId: string, currency: string = 'UAH'
 
 /**
  * Stores Page Data - Fetch stores list in one call (paginated)
- * 
+ *
  * Backend endpoint (v1): GET /api/v1/pages/stores?page&limit&search
  * Response: { items: [...], meta: {...} }
  */
@@ -356,24 +418,38 @@ export const useStoresPageData = (
 
         const response = await api.get('/pages/stores', { params: query });
         const body: unknown = response.data;
-        const items = (getArray(body, 'items') ?? []);
+        const items = getArray(body, 'items') ?? [];
         const meta = getRecord(body, 'meta') ?? {};
 
         const page = asNumber(meta.page, params?.page ?? 1);
         const limit = asNumber(meta.limit, params?.limit ?? 24);
         const totalItems = asNumber(meta.totalItems, items.length);
-        const totalPages = asNumber(meta.totalPages, Math.max(1, Math.ceil(totalItems / Math.max(1, limit))));
+        const totalPages = asNumber(
+          meta.totalPages,
+          Math.max(1, Math.ceil(totalItems / Math.max(1, limit)))
+        );
         const hasNext = typeof meta.hasNext === 'boolean' ? meta.hasNext : page < totalPages;
         const hasPrev = typeof meta.hasPrev === 'boolean' ? meta.hasPrev : page > 1;
 
-        const pagination: PaginationInfo = { page, limit, totalItems, totalPages, hasNext, hasPrev };
+        const pagination: PaginationInfo = {
+          page,
+          limit,
+          totalItems,
+          totalPages,
+          hasNext,
+          hasPrev,
+        };
         return { stores: items, pagination };
       } catch (error: unknown) {
-        console.warn('[Stores Page] v1 endpoint failed, using fallback /stores:', getErrorMessage(error));
+        console.warn(
+          '[Stores Page] v1 endpoint failed, using fallback /stores:',
+          getErrorMessage(error)
+        );
 
         const response = await api.get('/stores');
         const body: unknown = response.data;
-        const stores = getArray(body, 'items') ?? getArray(body, 'stores') ?? (Array.isArray(body) ? body : []);
+        const stores =
+          getArray(body, 'items') ?? getArray(body, 'stores') ?? (Array.isArray(body) ? body : []);
 
         // Best-effort client-side search for fallback
         const search = params?.search?.trim();
@@ -409,7 +485,7 @@ export const useStoresPageData = (
  * Admin Dashboard Data - Fetch all admin dashboard data in one call
  * Combines: products, stores, brands
  * Reduces 3 requests → 1 request
- * 
+ *
  * Note: If backend implements this endpoint, update Admin.tsx to use this hook
  * Backend endpoint: GET /api/admin/dashboard
  * Response: { success: true, data: { products: [...], stores: [...], brands: [...] } }
@@ -433,7 +509,7 @@ export const useAdminDashboardData = (options?: QueryOptions) => {
 /**
  * Batch API Requests - Generic utility for batching multiple API calls
  * Use this when you need custom combinations of data
- * 
+ *
  * @example
  * const { data, isLoading } = useBatchedRequests({
  *   products: () => api.get('/items'),
@@ -445,8 +521,10 @@ export const useBatchedRequests = (
   requests: Record<string, () => Promise<{ data: unknown }>>,
   options?: QueryOptions
 ) => {
-  const requestKeys = Object.keys(requests).sort((a, b) => a.localeCompare(b)).join(',');
-  
+  const requestKeys = Object.keys(requests)
+    .sort((a, b) => a.localeCompare(b))
+    .join(',');
+
   return useQuery({
     queryKey: ['batched-requests', requestKeys],
     queryFn: async () => {
@@ -461,7 +539,7 @@ export const useBatchedRequests = (
           }
         })
       );
-      
+
       return Object.fromEntries(results);
     },
     staleTime: 5 * 60 * 1000,

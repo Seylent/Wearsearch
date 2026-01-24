@@ -12,6 +12,7 @@ import { Button } from '@/components/ui/button';
 import ProductCard from '@/components/ProductCard';
 import { useRecentlyViewed, type RecentlyViewedItem } from '@/hooks/useRecentlyViewed';
 import { cn } from '@/lib/utils';
+import { useCurrency } from '@/contexts/CurrencyContext';
 
 interface RecentlyViewedProductsProps {
   className?: string;
@@ -29,7 +30,12 @@ const RecentlyViewedProducts: React.FC<RecentlyViewedProductsProps> = ({
   excludeProductId,
 }) => {
   const { t } = useTranslation();
-  const { items, removeItem, clearAll, count: _count } = useRecentlyViewed();
+  const { items, removeItem, clearAll, count: _count, refreshPrices } = useRecentlyViewed();
+  const { currency } = useCurrency();
+
+  React.useEffect(() => {
+    refreshPrices(currency);
+  }, [currency, refreshPrices]);
 
   // Filter out excluded product
   const filteredItems = excludeProductId

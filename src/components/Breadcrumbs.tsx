@@ -22,12 +22,17 @@ export const Breadcrumbs: React.FC<BreadcrumbsProps> = ({ items = [], className 
 
   return (
     <nav aria-label="Breadcrumb" className={cn('text-xs sm:text-sm', className)}>
-      <div className="flex flex-wrap items-center text-foreground/60">
-        <Link href="/" className="hover:text-foreground transition-colors">
-          <Home className="w-4 h-4" />
+      <div className="flex flex-wrap items-baseline gap-2 text-foreground/60 leading-none">
+        <Link
+          href="/"
+          className="inline-flex items-center leading-none hover:text-foreground transition-colors"
+        >
+          <Home className="w-4 h-4 -translate-y-[1px]" />
         </Link>
 
-        <span className="mx-2 text-foreground/30">/</span>
+        <span className="inline-flex items-center text-foreground/30 leading-none -translate-y-[1px]">
+          /
+        </span>
 
         {items.map((item, index) => {
           const isLast = index === items.length - 1;
@@ -35,14 +40,28 @@ export const Breadcrumbs: React.FC<BreadcrumbsProps> = ({ items = [], className 
           return (
             <React.Fragment key={index}>
               {item.href && !isLast ? (
-                <Link href={item.href} className="hover:text-foreground transition-colors">
+                <Link
+                  href={item.href}
+                  className="inline-flex items-center leading-none hover:text-foreground transition-colors"
+                >
                   {item.label}
                 </Link>
               ) : (
-                <span className={isLast ? 'text-foreground' : ''}>{item.label}</span>
+                <span
+                  className={cn(
+                    'inline-flex items-center leading-none',
+                    isLast ? 'text-foreground' : ''
+                  )}
+                >
+                  {item.label}
+                </span>
               )}
 
-              {!isLast && <span className="mx-2 text-foreground/30">/</span>}
+              {!isLast && (
+                <span className="inline-flex items-center text-foreground/30 leading-none -translate-y-[1px]">
+                  /
+                </span>
+              )}
             </React.Fragment>
           );
         })}

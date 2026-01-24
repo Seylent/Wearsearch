@@ -69,7 +69,7 @@ const Navigation: React.FC = () => {
           suppressHydrationWarning
         >
           <span
-            className="text-background text-base sm:text-lg md:text-xl uppercase tracking-wide dark:text-white"
+            className="flex items-center leading-none translate-y-[1px] sm:translate-y-0 text-background text-base sm:text-lg md:text-xl uppercase tracking-wide dark:text-white"
             style={{ fontFamily: "'Youre Gone', Outfit, system-ui, sans-serif" }}
           >
             Wearsearch

@@ -9,7 +9,7 @@ import Link from 'next/link';
 import { Sparkles, TrendingUp, Heart, Eye, Loader2 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useRecommendations } from '@/hooks/useRecommendations';
-import { isAuthenticated } from '@/utils/authStorage';
+import { useIsAuthenticated } from '@/hooks/useIsAuthenticated';
 import { useCurrencyConversion } from '@/hooks/useCurrencyConversion';
 
 interface PersonalizedRecommendationsProps {
@@ -31,9 +31,10 @@ const PersonalizedRecommendations: React.FC<PersonalizedRecommendationsProps> = 
   const { t } = useTranslation();
   const { formatPrice } = useCurrencyConversion();
   const { recommendations, isLoading, isEnabled } = useRecommendations(limit);
+  const isLoggedIn = useIsAuthenticated();
 
   // Don't show for non-authenticated users
-  if (!isAuthenticated()) {
+  if (!isLoggedIn) {
     return null;
   }
 
@@ -72,7 +73,7 @@ const PersonalizedRecommendations: React.FC<PersonalizedRecommendationsProps> = 
         {recommendations.map((product, index) => {
           // Skip products without valid id
           if (!product.id && product.id !== 0) return null;
-          
+
           const ReasonIcon = product.reason ? reasonIcons[product.reason] : Sparkles;
           const imageUrl = product.image || product.image_url || '/placeholder.png';
 
@@ -89,7 +90,7 @@ const PersonalizedRecommendations: React.FC<PersonalizedRecommendationsProps> = 
                   className="w-full h-full object-cover transition-transform group-hover:scale-105"
                   loading="lazy"
                 />
-                
+
                 {/* Reason badge */}
                 {product.reason && (
                   <div className="absolute top-2 left-2 px-2 py-1 rounded-full bg-purple-500/80 backdrop-blur-sm flex items-center gap-1">
@@ -118,11 +119,7 @@ const PersonalizedRecommendations: React.FC<PersonalizedRecommendationsProps> = 
                   <span className="text-sm font-semibold text-white">
                     {formatPrice(Number(product.price) || 0)}
                   </span>
-                  {product.brand && (
-                    <span className="text-xs text-white/40">
-                      {product.brand}
-                    </span>
-                  )}
+                  {product.brand && <span className="text-xs text-white/40">{product.brand}</span>}
                 </div>
               </div>
             </Link>

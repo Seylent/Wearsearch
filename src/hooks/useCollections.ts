@@ -5,8 +5,11 @@
 
 import { useState, useEffect, useCallback } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { isAuthenticated } from '@/utils/authStorage';
-import collectionsService from '@/services/collectionsService';
+import { useIsAuthenticated } from '@/hooks/useIsAuthenticated';
+import collectionsService, {
+  type Collection as ApiCollection,
+  type CollectionItem as ApiCollectionItem,
+} from '@/services/collectionsService';
 
 const STORAGE_KEY = 'wearsearch_collections';
 const ITEMS_STORAGE_KEY = 'wearsearch_collection_items';
@@ -83,6 +86,22 @@ const saveItems = (items: Record<string, CollectionItem[]>): void => {
   }
 };
 
+const toLocalCollectionItem = (item: ApiCollectionItem): CollectionItem => ({
+  productId: item.productId,
+  addedAt: new Date(item.addedAt).getTime(),
+});
+
+const toLocalCollection = (collection: ApiCollection): Collection => ({
+  id: collection.id,
+  name: collection.name,
+  emoji: collection.emoji,
+  description: collection.description,
+  items: Array.isArray(collection.items) ? collection.items.map(toLocalCollectionItem) : [],
+  productCount: collection.productCount,
+  createdAt: new Date(collection.createdAt).getTime(),
+  updatedAt: new Date(collection.updatedAt).getTime(),
+});
+
 /**
  * Generate unique ID
  */
@@ -95,7 +114,7 @@ const generateId = (): string => {
  */
 export const useCollections = () => {
   const queryClient = useQueryClient();
-  const isLoggedIn = isAuthenticated();
+  const isLoggedIn = useIsAuthenticated();
 
   // Local state for guest users
   const [localCollections, setLocalCollections] = useState<Collection[]>([]);
@@ -118,20 +137,57 @@ export const useCollections = () => {
     queryFn: collectionsService.getCollections,
     enabled: isLoggedIn,
     staleTime: 1000 * 60 * 5, // 5 minutes
+    retry: false,
+    refetchOnWindowFocus: false,
   });
+
+  useEffect(() => {
+    if (!isLoggedIn || !apiCollections) return;
+    const apiItems = apiCollections.reduce<Record<string, CollectionItem[]>>((acc, collection) => {
+      if (Array.isArray(collection.items) && collection.items.length > 0) {
+        const normalizedItems = collection.items
+          .filter(item => Boolean(item.productId))
+          .map(item => ({
+            productId: item.productId,
+            addedAt: new Date(item.addedAt).getTime(),
+          }));
+
+        if (normalizedItems.length > 0) {
+          acc[collection.id] = normalizedItems;
+        }
+      }
+      return acc;
+    }, {});
+
+    if (Object.keys(apiItems).length > 0) {
+      setCollectionItems(apiItems);
+      saveItems(apiItems);
+    }
+  }, [apiCollections, isLoggedIn]);
 
   // Transform API collections to local format, including locally tracked items
   const collections: Collection[] = isLoggedIn
-    ? (apiCollections || []).map(c => ({
-        id: c.id,
-        name: c.name,
-        emoji: c.emoji,
-        description: c.description,
-        items: collectionItems[c.id] || [],
-        productCount: c.productCount,
-        createdAt: new Date(c.createdAt).getTime(),
-        updatedAt: new Date(c.updatedAt).getTime(),
-      }))
+    ? (apiCollections || []).map(c => {
+        const apiItems = Array.isArray(c.items)
+          ? c.items
+              .filter(item => Boolean(item.productId))
+              .map(item => ({
+                productId: item.productId,
+                addedAt: new Date(item.addedAt).getTime(),
+              }))
+          : [];
+
+        return {
+          id: c.id,
+          name: c.name,
+          emoji: c.emoji,
+          description: c.description,
+          items: apiItems.length > 0 ? apiItems : collectionItems[c.id] || [],
+          productCount: c.productCount,
+          createdAt: new Date(c.createdAt).getTime(),
+          updatedAt: new Date(c.updatedAt).getTime(),
+        };
+      })
     : localCollections;
 
   // Create collection mutation
@@ -169,7 +225,7 @@ export const useCollections = () => {
 
   // Add to collection mutation
   const addItemMutation = useMutation({
-    mutationFn: ({
+    mutationFn: async ({
       collectionId,
       productId,
       notes,
@@ -177,9 +233,39 @@ export const useCollections = () => {
       collectionId: string;
       productId: string;
       notes?: string;
-    }) => collectionsService.addToCollection(collectionId, productId, notes),
-    onSuccess: () => {
+    }) => {
+      const latest = await queryClient.fetchQuery({
+        queryKey: ['collections'],
+        queryFn: collectionsService.getCollections,
+      });
+      const match = (latest ?? []).find(collection => collection.id === collectionId);
+      if (!match) {
+        throw new Error('Collection not found');
+      }
+      return collectionsService.addToCollection(match.id, productId, notes);
+    },
+    onSuccess: (item, variables) => {
       queryClient.invalidateQueries({ queryKey: ['collections'] });
+
+      if (!item?.productId) return;
+      setCollectionItems(prev => {
+        const existing = prev[variables.collectionId] ?? [];
+        if (existing.some(existingItem => existingItem.productId === item.productId)) {
+          return prev;
+        }
+        const updated = {
+          ...prev,
+          [variables.collectionId]: [
+            ...existing,
+            {
+              productId: item.productId,
+              addedAt: new Date(item.addedAt).getTime(),
+            },
+          ],
+        };
+        saveItems(updated);
+        return updated;
+      });
     },
   });
 
@@ -196,10 +282,33 @@ export const useCollections = () => {
    * Create a new collection
    */
   const createCollection = useCallback(
-    (name: string, emoji?: string, description?: string): Collection => {
+    async (name: string, emoji?: string, description?: string): Promise<Collection | null> => {
+      const trimmedName = name.trim();
+      if (!trimmedName) return null;
+
+      if (isLoggedIn) {
+        const created = await createMutation.mutateAsync({
+          name: trimmedName,
+          emoji,
+          description,
+        });
+        const normalized = created ? toLocalCollection(created) : null;
+        if (normalized?.id) return normalized;
+
+        await queryClient.invalidateQueries({ queryKey: ['collections'] });
+        const refreshed = await queryClient.fetchQuery({
+          queryKey: ['collections'],
+          queryFn: collectionsService.getCollections,
+        });
+        const match = (refreshed ?? []).find(
+          collection => collection.name === trimmedName && collection.emoji === emoji
+        );
+        return match ? toLocalCollection(match) : null;
+      }
+
       const newCollection: Collection = {
         id: generateId(),
-        name: name.trim(),
+        name: trimmedName,
         emoji,
         description,
         items: [],
@@ -208,15 +317,11 @@ export const useCollections = () => {
         updatedAt: Date.now(),
       };
 
-      if (isLoggedIn) {
-        createMutation.mutate({ name: name.trim(), emoji, description });
-      } else {
-        setLocalCollections(prev => {
-          const updated = [...prev, newCollection];
-          saveCollections(updated);
-          return updated;
-        });
-      }
+      setLocalCollections(prev => {
+        const updated = [...prev, newCollection];
+        saveCollections(updated);
+        return updated;
+      });
 
       return newCollection;
     },
@@ -279,17 +384,6 @@ export const useCollections = () => {
       if (isLoggedIn) {
         // Call API
         addItemMutation.mutate({ collectionId, productId, notes });
-        // Also update local tracking
-        setCollectionItems(prev => {
-          const items = prev[collectionId] || [];
-          if (items.some(item => item.productId === productId)) return prev;
-          const updated = {
-            ...prev,
-            [collectionId]: [...items, { productId, addedAt: Date.now() }],
-          };
-          saveItems(updated);
-          return updated;
-        });
       } else {
         setLocalCollections(prev => {
           const updated = prev.map(c => {

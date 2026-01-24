@@ -37,16 +37,21 @@ export default function HomeContentClient({
 }: Readonly<HomeContentClientProps>) {
   const { t } = useTranslation();
   const { currency } = useCurrencyConversion();
+  const [isMounted, setIsMounted] = useState(false);
   const [products, setProducts] = useState<Product[]>(initialProducts);
   const [productsCurrency, setProductsCurrency] = useState<'UAH' | 'USD'>('UAH');
   const [isLoading, setIsLoading] = useState(false);
+
+  useEffect(() => {
+    setIsMounted(true);
+  }, []);
 
   useEffect(() => {
     // Always fetch with current currency to ensure correct prices
     const fetchProductsWithCurrency = async () => {
       // Use UAH as default if currency not loaded yet
       const currentCurrency = currency || 'UAH';
-      
+
       // If UAH and SSR provided products, use them directly.
       if (currentCurrency === 'UAH' && initialProducts.length > 0) {
         setProducts(initialProducts);
@@ -59,7 +64,7 @@ export default function HomeContentClient({
         // Use the same v1 endpoint shape as the rest of the app.
         // Next rewrites proxy this to backend: http://localhost:3000
         const response = await fetch(`/api/v1/pages/home?currency=${currentCurrency}`);
-         
+
         if (!response.ok) {
           console.error('Failed to fetch products with currency');
           setProducts(initialProducts);
@@ -72,18 +77,16 @@ export default function HomeContentClient({
         // v1 homepage endpoint can return different shapes, e.g.
         // - { success, data: { featured_products: [...] } }
         // - { item: { featured_products / products / items: [...] }, currency: { code: 'USD' } }
-        const topCurrency = (data?.currency?.code === 'USD' || data?.currency?.code === 'UAH')
-          ? data.currency.code
-          : currentCurrency;
+        const topCurrency =
+          data?.currency?.code === 'USD' || data?.currency?.code === 'UAH'
+            ? data.currency.code
+            : currentCurrency;
 
         const item = data?.item ?? data?.data ?? data;
         const inner = item?.data ?? item;
 
         const featured =
-          inner?.featured_products ??
-          inner?.featuredProducts ??
-          inner?.products ??
-          inner?.items;
+          inner?.featured_products ?? inner?.featuredProducts ?? inner?.products ?? inner?.items;
 
         if (Array.isArray(featured)) {
           setProducts(featured);
@@ -107,14 +110,15 @@ export default function HomeContentClient({
 
   const hasProducts = products.length > 0;
 
+  if (!isMounted) {
+    return null;
+  }
+
   return (
-    <div className="min-h-screen bg-black text-white">
+    <div className="min-h-screen bg-black text-white" suppressHydrationWarning>
       <main id="main-content">
         {/* Hero Section */}
-        <HomeHero 
-          h1Title={seoData?.h1_title}
-          contentText={seoData?.content_text}
-        />
+        <HomeHero h1Title={seoData?.h1_title} contentText={seoData?.content_text} />
 
         {/* Banners Section - Best placement after hero */}
         {banners.length > 0 && (
@@ -154,35 +158,52 @@ export default function HomeContentClient({
 
             <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-3 sm:gap-4">
               {hasProducts ? (
-                products.slice(0, 12).map((product) => (
-                  <ProductCard
-                    key={product.id}
-                    id={product.id}
-                    name={product.name}
-                    image={product.image_url || product.image || ''}
-                    price={product.price}
-                    brand={product.brand}
-                    priceCurrency={productsCurrency}
-                  />
-                ))
+                products
+                  .slice(0, 12)
+                  .map(product => (
+                    <ProductCard
+                      key={product.id}
+                      id={product.id}
+                      name={product.name}
+                      image={product.image_url || product.image || ''}
+                      price={product.price}
+                      brand={product.brand}
+                      priceCurrency={productsCurrency}
+                    />
+                  ))
               ) : (
                 <div className="col-span-full text-center py-16 px-4">
                   <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-white/5 mb-4">
-                    <svg className="w-8 h-8 text-white/40" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4" />
+                    <svg
+                      className="w-8 h-8 text-white/40"
+                      fill="none"
+                      viewBox="0 0 24 24"
+                      stroke="currentColor"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4"
+                      />
                     </svg>
                   </div>
                   <h3 className="text-xl font-bold text-white mb-2">
                     {t('home.noProductsTitle', 'Немає доступних продуктів')}
                   </h3>
                   <p className="text-white/60 mb-4 max-w-md mx-auto">
-                    {t('home.noProductsDescription', 'Підключіть backend сервер для завантаження продуктів.')}
+                    {t(
+                      'home.noProductsDescription',
+                      'Підключіть backend сервер для завантаження продуктів.'
+                    )}
                     <br />
                     {t('home.noProductsHint', 'Перевірте NEXT_PUBLIC_API_URL в .env файлі.')}
                   </p>
                   <div className="text-sm text-white/40 font-mono bg-white/5 rounded-lg p-4 max-w-lg mx-auto">
                     <div className="text-left">
-                      <div className="text-white/60 mb-2">{t('home.noProductsExpected', 'Очікується:')}</div>
+                      <div className="text-white/60 mb-2">
+                        {t('home.noProductsExpected', 'Очікується:')}
+                      </div>
                       <div>NEXT_PUBLIC_API_URL=http://localhost:3000</div>
                       <div className="mt-3 text-white/60 mb-2">
                         {t('home.noProductsBackend', 'Або запустіть backend:')}
@@ -202,10 +223,7 @@ export default function HomeContentClient({
         {/* Recently Viewed Section */}
         <section className="py-8 sm:py-12 bg-black border-t border-white/5">
           <div className="container mx-auto px-4 sm:px-6">
-            <RecentlyViewedProducts
-              maxItems={8}
-              showClearButton={true}
-            />
+            <RecentlyViewedProducts maxItems={8} showClearButton={true} />
           </div>
         </section>
       </main>

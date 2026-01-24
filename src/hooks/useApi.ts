@@ -3,17 +3,23 @@
  * Centralized API hooks using React Query
  */
 
-import { useQuery, useMutation, useQueryClient, UseQueryOptions, keepPreviousData } from '@tanstack/react-query';
+import {
+  useQuery,
+  useMutation,
+  useQueryClient,
+  UseQueryOptions,
+  keepPreviousData,
+} from '@tanstack/react-query';
 import { api, apiLegacy } from '@/services/api';
 import { getAuth } from '@/utils/authStorage';
-import type {
-  Product,
-  Brand,
-  FavoritesResponse,
-} from '@/types';
+import { useIsAuthenticated } from '@/hooks/useIsAuthenticated';
+import type { Product, Brand, FavoritesResponse } from '@/types';
 
 // Helper type for optional query options
-type QueryOptions = Omit<UseQueryOptions<unknown, Error, unknown, readonly unknown[]>, 'queryKey' | 'queryFn'>;
+type QueryOptions = Omit<
+  UseQueryOptions<unknown, Error, unknown, readonly unknown[]>,
+  'queryKey' | 'queryFn'
+>;
 
 type PaginationInfo = {
   page: number;
@@ -29,7 +35,8 @@ const asNumber = (value: unknown, fallback: number): number => {
   return Number.isFinite(num) ? num : fallback;
 };
 
-const isRecord = (value: unknown): value is Record<string, unknown> => typeof value === 'object' && value !== null;
+const isRecord = (value: unknown): value is Record<string, unknown> =>
+  typeof value === 'object' && value !== null;
 
 const getRecord = (value: unknown, key: string): Record<string, unknown> | undefined => {
   if (!isRecord(value)) return undefined;
@@ -60,7 +67,7 @@ const formatErrorMessage = (error: unknown): string => {
     }
   }
   return 'Unknown error';
-}
+};
 
 // Query keys
 export const queryKeys = {
@@ -140,11 +147,23 @@ export const useRelatedProducts = (productId: string) => {
   return useQuery({
     queryKey: queryKeys.relatedProducts(productId),
     queryFn: async () => {
-      // Canonical: related products come from the aggregated v1 endpoint.
-      const response = await api.get(`/pages/product/${productId}`);
-      const body: unknown = response.data;
-      const related = getRecord(body, 'item')?.relatedProducts;
-      return Array.isArray(related) ? related : [];
+      try {
+        const response = await api.get(`/products/${productId}/detail`);
+        const body: unknown = response.data;
+        const payload =
+          getRecord(body, 'data') ?? getRecord(body, 'item') ?? (isRecord(body) ? body : {});
+        const related =
+          getRecord(payload, 'relatedProducts') ??
+          getRecord(payload, 'related_products') ??
+          (payload as { relatedProducts?: unknown }).relatedProducts ??
+          (payload as { related_products?: unknown }).related_products;
+        return Array.isArray(related) ? related : [];
+      } catch {
+        const response = await api.get(`/pages/product/${productId}`);
+        const body: unknown = response.data;
+        const related = getRecord(body, 'item')?.relatedProducts;
+        return Array.isArray(related) ? related : [];
+      }
     },
     enabled: !!productId,
     staleTime: 10 * 60 * 1000, // 10 minutes
@@ -175,7 +194,7 @@ export const useStores = (options?: QueryOptions) => {
 };
 
 export const useStoreProducts = (
-  storeId: string, 
+  storeId: string,
   params?: { category?: string; page?: number; limit?: number },
   options?: QueryOptions
 ) => {
@@ -195,13 +214,17 @@ export const useStoreProducts = (
       const itemsFromProducts = getArray(body, 'products');
       const items = itemsFromItems ?? itemsFromProducts ?? (Array.isArray(body) ? body : []);
 
-      const store = (isRecord(body) ? body.store : undefined) ?? getRecord(body, 'data')?.store ?? null;
+      const store =
+        (isRecord(body) ? body.store : undefined) ?? getRecord(body, 'data')?.store ?? null;
 
       const meta = getRecord(body, 'meta') ?? {};
       const page = asNumber(meta.page, params?.page ?? 1);
       const limit = asNumber(meta.limit, params?.limit ?? 24);
       const totalItems = asNumber(meta.totalItems, items.length);
-      const totalPages = asNumber(meta.totalPages, Math.max(1, Math.ceil(totalItems / Math.max(1, limit))));
+      const totalPages = asNumber(
+        meta.totalPages,
+        Math.max(1, Math.ceil(totalItems / Math.max(1, limit)))
+      );
       const hasNext = typeof meta.hasNext === 'boolean' ? meta.hasNext : page < totalPages;
       const hasPrev = typeof meta.hasPrev === 'boolean' ? meta.hasPrev : page > 1;
 
@@ -259,7 +282,7 @@ export const useProductsByIds = (ids: Array<string | number>, options?: QueryOpt
     queryFn: async () => {
       const uniqueIds = Array.from(new Set(normalizedIds));
       const results = await Promise.all(
-        uniqueIds.map(async (id) => {
+        uniqueIds.map(async id => {
           const res = await api.get(`/items/${id}`);
           const body: unknown = res.data;
           if (!isRecord(body)) return body;
@@ -338,7 +361,8 @@ export const useStats = () => {
         // Canonical v1: stats are part of /pages/home response.
         const response = await api.get('/pages/home');
         const body: unknown = response.data;
-        const item = getRecord(body, 'item') ?? getRecord(body, 'data') ?? (isRecord(body) ? body : undefined);
+        const item =
+          getRecord(body, 'item') ?? getRecord(body, 'data') ?? (isRecord(body) ? body : undefined);
         const statistics = item && isRecord(item.statistics) ? item.statistics : {};
 
         return {
@@ -372,13 +396,13 @@ export const useFavorites = () => {
         if (!token) {
           return { favorites: [], total: 0 };
         }
-        
-        // Canonical v1: favorites come from an aggregated page endpoint.
-        // This endpoint requires auth; keep it lightweight (first page, larger limit).
-        const response = await api.get('/pages/favorites', { params: { page: 1, limit: 100 } });
+
+        const response = await api.get('/users/me/favorites', { params: { page: 1, limit: 100 } });
         const body: unknown = response.data;
-        const items = (getArray(body, 'items') ?? []);
-        const meta = getRecord(body, 'meta');
+        const payload =
+          getRecord(body, 'data') ?? getRecord(body, 'item') ?? (isRecord(body) ? body : {});
+        const items = getArray(payload, 'items') ?? [];
+        const meta = getRecord(payload, 'meta');
         const total = typeof meta?.totalItems === 'number' ? meta.totalItems : items.length;
 
         // NOTE: items are Products; FavoritesContext can check by fav.id.
@@ -419,6 +443,8 @@ export const useFavoritesPage = (
   params?: { page?: number; limit?: number },
   options?: QueryOptions
 ) => {
+  const isLoggedIn = useIsAuthenticated();
+
   return useQuery({
     queryKey: ['favorites-page', params],
     placeholderData: keepPreviousData,
@@ -427,15 +453,20 @@ export const useFavoritesPage = (
       query.set('page', String(params?.page ?? 1));
       query.set('limit', String(params?.limit ?? 24));
 
-      const response = await api.get('/pages/favorites', { params: query });
+      const response = await api.get('/users/me/favorites', { params: query });
       const body: unknown = response.data;
-      const items = (getArray(body, 'items') ?? []);
-      const meta = getRecord(body, 'meta') ?? {};
+      const payload =
+        getRecord(body, 'data') ?? getRecord(body, 'item') ?? (isRecord(body) ? body : {});
+      const items = getArray(payload, 'items') ?? [];
+      const meta = getRecord(payload, 'meta') ?? {};
 
       const page = asNumber(meta.page, params?.page ?? 1);
       const limit = asNumber(meta.limit, params?.limit ?? 24);
       const totalItems = asNumber(meta.totalItems, items.length);
-      const totalPages = asNumber(meta.totalPages, Math.max(1, Math.ceil(totalItems / Math.max(1, limit))));
+      const totalPages = asNumber(
+        meta.totalPages,
+        Math.max(1, Math.ceil(totalItems / Math.max(1, limit)))
+      );
       const hasNext = typeof meta.hasNext === 'boolean' ? meta.hasNext : page < totalPages;
       const hasPrev = typeof meta.hasPrev === 'boolean' ? meta.hasPrev : page > 1;
 
@@ -445,7 +476,7 @@ export const useFavoritesPage = (
     staleTime: 30 * 1000,
     gcTime: 5 * 60 * 1000,
     refetchOnWindowFocus: false,
-    enabled: globalThis.window !== undefined && !!getAuth(),
+    enabled: isLoggedIn && !!getAuth(),
     ...options,
   });
 };
@@ -465,7 +496,7 @@ export const useContacts = () => {
 // Mutations
 export const useAddFavorite = () => {
   const queryClient = useQueryClient();
-  
+
   return useMutation({
     mutationFn: async (productId: string) => {
       // v1 favorites CRUD isn't implemented yet in backend; use explicit legacy endpoint.
@@ -476,14 +507,14 @@ export const useAddFavorite = () => {
     onMutate: async (productId: string) => {
       // Cancel outgoing refetches
       await queryClient.cancelQueries({ queryKey: queryKeys.favorites });
-      
+
       // Snapshot current value
       const previousFavorites = queryClient.getQueryData(queryKeys.favorites);
-      
+
       // Optimistically update
       queryClient.setQueryData(queryKeys.favorites, (old: FavoritesResponse | undefined) => {
         if (!old) return old;
-        
+
         return {
           ...old,
           favorites: [
@@ -497,7 +528,7 @@ export const useAddFavorite = () => {
           ],
         };
       });
-      
+
       return { previousFavorites };
     },
     // Rollback on error
@@ -516,7 +547,7 @@ export const useAddFavorite = () => {
 
 export const useRemoveFavorite = () => {
   const queryClient = useQueryClient();
-  
+
   return useMutation({
     mutationFn: async (productId: string) => {
       // v1 favorites CRUD isn't implemented yet in backend; use explicit legacy endpoint.
@@ -527,20 +558,20 @@ export const useRemoveFavorite = () => {
     onMutate: async (productId: string) => {
       // Cancel outgoing refetches
       await queryClient.cancelQueries({ queryKey: queryKeys.favorites });
-      
+
       // Snapshot current value
       const previousFavorites = queryClient.getQueryData(queryKeys.favorites);
-      
+
       // Optimistically remove from cache
       queryClient.setQueryData(queryKeys.favorites, (old: FavoritesResponse | undefined) => {
         if (!old) return old;
-        
+
         return {
           ...old,
-          favorites: (old.favorites || []).filter((fav) => fav.product_id !== productId),
+          favorites: (old.favorites || []).filter(fav => fav.product_id !== productId),
         };
       });
-      
+
       return { previousFavorites };
     },
     // Rollback on error
@@ -560,20 +591,21 @@ export const useRemoveFavorite = () => {
 // Sync guest favorites after login
 export const useSyncGuestFavorites = () => {
   const queryClient = useQueryClient();
-  
+
   return useMutation({
     mutationFn: async (guestFavorites: string[]) => {
       const response = await api.post('/favorites/sync', { guestFavorites });
       return response.data;
     },
-    onSuccess: (data) => {
+    onSuccess: data => {
       // Invalidate favorites cache to refresh with merged data
       queryClient.invalidateQueries({ queryKey: queryKeys.favorites, refetchType: 'active' });
       console.log(`✅ Synced ${data.added} favorites. Total: ${data.total}`);
       return data;
     },
     onError: (error: unknown) => {
-      const isRec = (v: unknown): v is Record<string, unknown> => typeof v === 'object' && v !== null;
+      const isRec = (v: unknown): v is Record<string, unknown> =>
+        typeof v === 'object' && v !== null;
       const response = isRec(error) ? error.response : undefined;
       const responseData = isRec(response) ? response.data : undefined;
       const message = formatErrorMessage(error);
@@ -602,7 +634,7 @@ export const useCheckFavorite = (productId: string, enabled = true) => {
 
 export const useCreateProduct = () => {
   const queryClient = useQueryClient();
-  
+
   return useMutation({
     mutationFn: async (productData: unknown) => {
       const response = await api.post('/admin/products', productData);
@@ -616,7 +648,7 @@ export const useCreateProduct = () => {
 
 export const useUpdateProduct = () => {
   const queryClient = useQueryClient();
-  
+
   return useMutation({
     mutationFn: async ({ id, data }: { id: string; data: unknown }) => {
       const response = await api.put(`/admin/products/${id}`, data);
@@ -630,7 +662,7 @@ export const useUpdateProduct = () => {
 
 export const useDeleteProduct = () => {
   const queryClient = useQueryClient();
-  
+
   return useMutation({
     mutationFn: async (id: string) => {
       const response = await api.delete(`/admin/products/${id}`);

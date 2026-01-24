@@ -150,14 +150,11 @@ const updateStructuredData = (structuredData: object): void => {
 const updateRobotsMeta = (noindex: boolean): void => {
   if (noindex) {
     updateMetaTag('meta[name="robots"]', 'name', 'noindex, nofollow');
-  } else {
-    try {
-      const robotsMeta = document.querySelector('meta[name="robots"]');
-      robotsMeta?.remove();
-    } catch (error) {
-      console.debug('Failed to remove robots meta tag:', error);
-    }
+    return;
   }
+
+  // Avoid removing tags created by Next/React to prevent unmount errors.
+  updateMetaTag('meta[name="robots"]', 'name', 'index, follow');
 };
 
 export const useSEO = ({

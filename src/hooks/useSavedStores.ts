@@ -5,8 +5,8 @@
 
 import { useState, useEffect, useCallback, useMemo } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { authService } from '@/services/authService';
 import { getAuth } from '@/utils/authStorage';
+import { useIsAuthenticated } from '@/hooks/useIsAuthenticated';
 import { api, apiLegacy } from '@/services/api';
 
 const STORAGE_KEY = 'wearsearch_saved_stores';
@@ -17,6 +17,47 @@ export interface SavedStore {
   logo_url?: string;
   savedAt: number;
 }
+
+const toStoredTimestamp = (value: unknown): number | null => {
+  if (typeof value === 'number' && Number.isFinite(value)) return value;
+  if (typeof value === 'string') {
+    const parsed = Date.parse(value);
+    return Number.isNaN(parsed) ? null : parsed;
+  }
+  return null;
+};
+
+const normalizeSavedStore = (entry: unknown): SavedStore | null => {
+  if (!entry || typeof entry !== 'object') return null;
+  const record = entry as Record<string, unknown>;
+  const store = (
+    record.store && typeof record.store === 'object' ? record.store : record
+  ) as Record<string, unknown>;
+  const id = String(record.store_id ?? store.id ?? record.id ?? '').trim();
+  const name = String(store.name ?? record.name ?? '').trim();
+  if (!id || !name) return null;
+  const savedAt = toStoredTimestamp(record.saved_at ?? record.savedAt) ?? Date.now();
+  return {
+    id,
+    name,
+    logo_url: (store.logo_url ?? store.logoUrl ?? record.logo_url) as string | undefined,
+    savedAt,
+  };
+};
+
+const parseSavedStores = (data: unknown): SavedStore[] => {
+  if (Array.isArray(data)) {
+    return data.map(normalizeSavedStore).filter(Boolean) as SavedStore[];
+  }
+  if (data && typeof data === 'object') {
+    const record = data as Record<string, unknown>;
+    const stores = record.stores ?? record.items ?? record.data;
+    if (Array.isArray(stores)) {
+      return stores.map(normalizeSavedStore).filter(Boolean) as SavedStore[];
+    }
+  }
+  return [];
+};
 
 /**
  * Get saved stores from localStorage
@@ -47,7 +88,7 @@ const saveToStorage = (stores: SavedStore[]): void => {
  */
 export const useSavedStores = () => {
   const queryClient = useQueryClient();
-  const isLoggedIn = globalThis.window !== undefined && authService.isAuthenticated();
+  const isLoggedIn = useIsAuthenticated();
   const [localStores, setLocalStores] = useState<SavedStore[]>([]);
 
   // Load from localStorage on mount
@@ -61,13 +102,17 @@ export const useSavedStores = () => {
     queryFn: async () => {
       try {
         // Try v1 API first
-        const response = await api.get('/users/me/saved-stores');
-        return response.data?.stores || response.data || [];
+        const response = await api.get('/users/me/saved-stores', {
+          headers: { 'X-Skip-Retry': 'true' },
+        });
+        return parseSavedStores(response.data);
       } catch {
         // Fallback to legacy API
         try {
-          const response = await apiLegacy.get('/user/saved-stores');
-          return response.data?.stores || response.data || [];
+          const response = await apiLegacy.get('/user/saved-stores', {
+            headers: { 'X-Skip-Retry': 'true' },
+          });
+          return parseSavedStores(response.data);
         } catch {
           return [];
         }
@@ -84,7 +129,7 @@ export const useSavedStores = () => {
 
   // Combine local and API stores - memoize to prevent changing on every render
   const stores = useMemo(() => {
-    return isLoggedIn ? (apiStores || []) : localStores;
+    return isLoggedIn ? apiStores || [] : localStores;
   }, [isLoggedIn, apiStores, localStores]);
 
   // Add store mutation
@@ -99,7 +144,7 @@ export const useSavedStores = () => {
       }
       return store;
     },
-    onSuccess: (store) => {
+    onSuccess: store => {
       if (isLoggedIn) {
         queryClient.invalidateQueries({ queryKey: ['savedStores'] });
       } else {
@@ -109,8 +154,8 @@ export const useSavedStores = () => {
           logo_url: store.logo_url,
           savedAt: Date.now(),
         };
-        setLocalStores((prev) => {
-          const filtered = prev.filter((s) => s.id !== store.id);
+        setLocalStores(prev => {
+          const filtered = prev.filter(s => s.id !== store.id);
           const updated = [newStore, ...filtered];
           saveToStorage(updated);
           return updated;
@@ -131,12 +176,12 @@ export const useSavedStores = () => {
       }
       return storeId;
     },
-    onSuccess: (storeId) => {
+    onSuccess: storeId => {
       if (isLoggedIn) {
         queryClient.invalidateQueries({ queryKey: ['savedStores'] });
       } else {
-        setLocalStores((prev) => {
-          const updated = prev.filter((s) => s.id !== storeId);
+        setLocalStores(prev => {
+          const updated = prev.filter(s => s.id !== storeId);
           saveToStorage(updated);
           return updated;
         });

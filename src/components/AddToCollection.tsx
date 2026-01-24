@@ -37,13 +37,8 @@ const AddToCollection: React.FC<AddToCollectionProps> = ({
 }) => {
   const { t } = useTranslation();
   const { toast } = useToast();
-  const {
-    collections,
-    createCollection,
-    addToCollection,
-    removeFromCollection,
-    isInCollection,
-  } = useCollections();
+  const { collections, createCollection, addToCollection, removeFromCollection, isInCollection } =
+    useCollections();
 
   const [isOpen, setIsOpen] = useState(false);
   const [showNewForm, setShowNewForm] = useState(false);
@@ -65,12 +60,14 @@ const AddToCollection: React.FC<AddToCollectionProps> = ({
     }
   };
 
-  const handleCreateAndAdd = () => {
+  const handleCreateAndAdd = async () => {
     if (!newName.trim()) return;
 
-    const collection = createCollection(newName.trim());
-    addToCollection(collection.id, productId);
-    
+    const collection = await createCollection(newName.trim());
+    if (collection?.id) {
+      addToCollection(collection.id, productId);
+    }
+
     toast({
       title: t('collections.createdAndAdded', 'Collection created'),
       description: `${productName || 'Product'} ${t('collections.addedToDesc', 'was added to')} "${newName}"`,
@@ -80,9 +77,7 @@ const AddToCollection: React.FC<AddToCollectionProps> = ({
     setShowNewForm(false);
   };
 
-  const productCollectionsCount = collections.filter((c) =>
-    isInCollection(c.id, productId)
-  ).length;
+  const productCollectionsCount = collections.filter(c => isInCollection(c.id, productId)).length;
 
   return (
     <Dialog open={isOpen} onOpenChange={setIsOpen} modal={false}>
@@ -98,9 +93,7 @@ const AddToCollection: React.FC<AddToCollectionProps> = ({
           aria-label={t('collections.addToCollection', 'Add to collection')}
         >
           <FolderPlus className="w-4 h-4" />
-          {size !== 'icon' && (
-            <span className="ml-2">{t('collections.save', 'Save')}</span>
-          )}
+          {size !== 'icon' && <span className="ml-2">{t('collections.save', 'Save')}</span>}
           {productCollectionsCount > 0 && (
             <span className="absolute -top-1 -right-1 w-4 h-4 rounded-full bg-purple-500 text-[10px] font-bold flex items-center justify-center">
               {productCollectionsCount}
@@ -139,7 +132,7 @@ const AddToCollection: React.FC<AddToCollectionProps> = ({
             <>
               {/* Existing collections */}
               <div className="space-y-2 max-h-60 overflow-y-auto">
-                {collections.map((collection) => {
+                {collections.map(collection => {
                   const isIn = isInCollection(collection.id, productId);
                   return (
                     <button
@@ -162,9 +155,7 @@ const AddToCollection: React.FC<AddToCollectionProps> = ({
                       <div
                         className={cn(
                           'w-5 h-5 rounded-full border-2 flex items-center justify-center transition-colors',
-                          isIn
-                            ? 'bg-purple-500 border-purple-500'
-                            : 'border-white/30'
+                          isIn ? 'bg-purple-500 border-purple-500' : 'border-white/30'
                         )}
                       >
                         {isIn && <Check className="w-3 h-3 text-white" />}
@@ -179,16 +170,19 @@ const AddToCollection: React.FC<AddToCollectionProps> = ({
                 <div className="flex gap-2 pt-2 border-t border-white/10">
                   <Input
                     value={newName}
-                    onChange={(e) => setNewName(e.target.value)}
+                    onChange={e => setNewName(e.target.value)}
                     placeholder={t('collections.newName', 'New collection name')}
                     className="flex-1 bg-white/5 border-white/10 text-white"
                     autoFocus
-                    onKeyDown={(e) => {
+                    onKeyDown={e => {
                       if (e.key === 'Enter') handleCreateAndAdd();
                       if (e.key === 'Escape') setShowNewForm(false);
                     }}
                   />
-                  <Button onClick={handleCreateAndAdd} className="bg-white text-black hover:bg-white/90">
+                  <Button
+                    onClick={handleCreateAndAdd}
+                    className="bg-white text-black hover:bg-white/90"
+                  >
                     {t('common.add', 'Add')}
                   </Button>
                 </div>

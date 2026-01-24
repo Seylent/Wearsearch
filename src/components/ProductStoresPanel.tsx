@@ -14,6 +14,7 @@ import {
   Send,
   Instagram,
   Package,
+  ExternalLink,
 } from 'lucide-react';
 import type { TFunction } from 'i18next';
 
@@ -27,6 +28,7 @@ type NormalizedStore = {
   shipping_info?: string;
   telegram_url?: string;
   instagram_url?: string;
+  store_url?: string;
 };
 
 interface ProductStoresPanelProps {
@@ -290,6 +292,19 @@ const ProductStoresPanel: React.FC<ProductStoresPanelProps> = ({
                             <Button variant="outline" size="sm" className="w-full">
                               <Instagram className="w-4 h-4 mr-1" />
                               Instagram
+                            </Button>
+                          </a>
+                        )}
+                        {store.store_url && (
+                          <a
+                            href={store.store_url}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="flex-1"
+                          >
+                            <Button variant="outline" size="sm" className="w-full">
+                              <ExternalLink className="w-4 h-4 mr-1" />
+                              {t('productDetail.visitStore', 'Store')}
                             </Button>
                           </a>
                         )}

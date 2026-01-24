@@ -3,7 +3,7 @@
  * Display and submit product reviews with real API integration
  */
 
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Star, ThumbsUp, MessageSquare, User, Send, Loader2 } from 'lucide-react';
@@ -11,7 +11,7 @@ import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { Progress } from '@/components/ui/progress';
 import { useToast } from '@/hooks/use-toast';
-import { isAuthenticated } from '@/utils/authStorage';
+import { useIsAuthenticated } from '@/hooks/useIsAuthenticated';
 import { cn } from '@/lib/utils';
 import reviewsService, {
   ProductReview as ApiReview,
@@ -73,36 +73,41 @@ const transformStats = (stats: ApiReviewStats): ReviewStats => ({
   ratingDistribution: stats.ratingDistribution,
 });
 
-const ProductReviews: React.FC<ProductReviewsProps> = ({
-  productId,
-  className,
-}) => {
+const ProductReviews: React.FC<ProductReviewsProps> = ({ productId, className }) => {
   const { t } = useTranslation();
   const { toast } = useToast();
   const queryClient = useQueryClient();
-  
+
   const [showForm, setShowForm] = useState(false);
   const [rating, setRating] = useState(0);
   const [hoverRating, setHoverRating] = useState(0);
   const [content, setContent] = useState('');
   const [sortBy, setSortBy] = useState<ReviewSortOption>('newest');
 
-  const isLoggedIn = isAuthenticated();
+  const isLoggedIn = useIsAuthenticated();
 
   // Fetch reviews from API
-  const { data, isLoading, error: _error } = useQuery({
+  const {
+    data,
+    isLoading,
+    error: _error,
+  } = useQuery({
     queryKey: ['reviews', productId, sortBy],
     queryFn: () => reviewsService.getProductReviews(productId, { sort: sortBy, limit: 20 }),
     staleTime: 1000 * 60 * 5, // 5 minutes
   });
 
-  const reviews = useMemo(() => 
-    (data?.reviews || []).map(transformReview),
-    [data?.reviews]
-  );
-  
-  const stats = useMemo(() => 
-    data?.stats ? transformStats(data.stats) : { averageRating: 0, totalReviews: 0, ratingDistribution: { 5: 0, 4: 0, 3: 0, 2: 0, 1: 0 } },
+  const reviews = useMemo(() => (data?.reviews || []).map(transformReview), [data?.reviews]);
+
+  const stats = useMemo(
+    () =>
+      data?.stats
+        ? transformStats(data.stats)
+        : {
+            averageRating: 0,
+            totalReviews: 0,
+            ratingDistribution: { 5: 0, 4: 0, 3: 0, 2: 0, 1: 0 },
+          },
     [data?.stats]
   );
 
@@ -182,7 +187,7 @@ const ProductReviews: React.FC<ProductReviewsProps> = ({
 
           {/* Rating distribution */}
           <div className="flex-1 space-y-1.5">
-            {[5, 4, 3, 2, 1].map((star) => {
+            {[5, 4, 3, 2, 1].map(star => {
               const count = stats.ratingDistribution[star as keyof typeof stats.ratingDistribution];
               const percentage = stats.totalReviews > 0 ? (count / stats.totalReviews) * 100 : 0;
               return (
@@ -212,9 +217,7 @@ const ProductReviews: React.FC<ProductReviewsProps> = ({
       {/* Review form */}
       {showForm && (
         <div className="p-6 rounded-xl bg-white/5 border border-white/10 space-y-4">
-          <h3 className="font-semibold text-white">
-            {t('reviews.yourReview', 'Your Review')}
-          </h3>
+          <h3 className="font-semibold text-white">{t('reviews.yourReview', 'Your Review')}</h3>
 
           {/* Star rating input */}
           <div>
@@ -222,7 +225,7 @@ const ProductReviews: React.FC<ProductReviewsProps> = ({
               {t('reviews.yourRating', 'Your Rating')}
             </label>
             <div className="flex gap-1">
-              {[1, 2, 3, 4, 5].map((star) => (
+              {[1, 2, 3, 4, 5].map(star => (
                 <button
                   key={star}
                   onMouseEnter={() => setHoverRating(star)}
@@ -252,7 +255,7 @@ const ProductReviews: React.FC<ProductReviewsProps> = ({
             <Textarea
               id="review-content"
               value={content}
-              onChange={(e) => setContent(e.target.value)}
+              onChange={e => setContent(e.target.value)}
               placeholder={t('reviews.placeholder', 'Share your experience with this product...')}
               className="min-h-[120px] bg-white/5 border-white/10 text-white placeholder:text-white/30"
             />
@@ -302,7 +305,7 @@ const ProductReviews: React.FC<ProductReviewsProps> = ({
       {/* Sort options */}
       {reviews.length > 0 && (
         <div className="flex gap-2 flex-wrap">
-          {(['newest', 'oldest', 'highest', 'lowest', 'helpful'] as const).map((option) => (
+          {(['newest', 'oldest', 'highest', 'lowest', 'helpful'] as const).map(option => (
             <button
               key={option}
               onClick={() => setSortBy(option)}
@@ -330,7 +333,7 @@ const ProductReviews: React.FC<ProductReviewsProps> = ({
             </p>
           </div>
         ) : (
-          reviews.map((review) => <ReviewCard key={review.id} review={review} />)
+          reviews.map(review => <ReviewCard key={review.id} review={review} />)
         )}
       </div>
     </section>
@@ -352,7 +355,7 @@ const StarRating: React.FC<StarRatingProps> = ({ rating, size = 'md', className 
 
   return (
     <div className={cn('flex gap-0.5', className)}>
-      {[1, 2, 3, 4, 5].map((star) => {
+      {[1, 2, 3, 4, 5].map(star => {
         let fillClass: string;
         if (rating >= star) {
           fillClass = 'text-yellow-400 fill-yellow-400';
@@ -361,13 +364,8 @@ const StarRating: React.FC<StarRatingProps> = ({ rating, size = 'md', className 
         } else {
           fillClass = 'text-white/20';
         }
-        
-        return (
-          <Star
-            key={star}
-            className={cn(sizes[size], fillClass)}
-          />
-        );
+
+        return <Star key={star} className={cn(sizes[size], fillClass)} />;
       })}
     </div>
   );
@@ -381,12 +379,13 @@ const ReviewCard: React.FC<ReviewCardProps> = ({ review }) => {
   const { t } = useTranslation();
   const { toast } = useToast();
   const queryClient = useQueryClient();
+  const isLoggedIn = useIsAuthenticated();
   const [helpfulCount, setHelpfulCount] = useState(review.helpful);
   const [isHelpful, setIsHelpful] = useState(false);
 
   const helpfulMutation = useMutation({
     mutationFn: () => reviewsService.toggleHelpful(review.id),
-    onSuccess: (data) => {
+    onSuccess: data => {
       setHelpfulCount(data.helpfulCount);
       setIsHelpful(!isHelpful);
       queryClient.invalidateQueries({ queryKey: ['reviews', review.productId] });
@@ -400,7 +399,7 @@ const ReviewCard: React.FC<ReviewCardProps> = ({ review }) => {
   });
 
   const handleHelpfulClick = () => {
-    if (!isAuthenticated()) {
+    if (!isLoggedIn) {
       toast({
         title: t('reviews.loginToHelp', 'Please log in to mark reviews as helpful'),
         variant: 'destructive',
@@ -410,13 +409,16 @@ const ReviewCard: React.FC<ReviewCardProps> = ({ review }) => {
     helpfulMutation.mutate();
   };
 
-  const formattedDate = useMemo(() => {
-    if (globalThis.window === undefined) return '';
-    return new Date(review.createdAt).toLocaleDateString('uk-UA', {
-      year: 'numeric',
-      month: 'short',
-      day: 'numeric',
-    });
+  const [formattedDate, setFormattedDate] = useState('');
+
+  useEffect(() => {
+    setFormattedDate(
+      new Date(review.createdAt).toLocaleDateString('uk-UA', {
+        year: 'numeric',
+        month: 'short',
+        day: 'numeric',
+      })
+    );
   }, [review.createdAt]);
 
   return (
@@ -451,9 +453,7 @@ const ReviewCard: React.FC<ReviewCardProps> = ({ review }) => {
         </div>
       </div>
 
-      {review.title && (
-        <h4 className="font-medium text-white">{review.title}</h4>
-      )}
+      {review.title && <h4 className="font-medium text-white">{review.title}</h4>}
 
       <p className="text-white/80 text-sm leading-relaxed">{review.content}</p>
 

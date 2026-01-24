@@ -39,7 +39,7 @@ const CollectionManager: React.FC<CollectionManagerProps> = ({ className }) => {
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editName, setEditName] = useState('');
 
-  const handleCreate = () => {
+  const handleCreate = async () => {
     if (!newName.trim()) {
       toast({
         title: t('collections.nameRequired', 'Name is required'),
@@ -48,7 +48,7 @@ const CollectionManager: React.FC<CollectionManagerProps> = ({ className }) => {
       return;
     }
 
-    createCollection(newName.trim(), newEmoji);
+    await createCollection(newName.trim(), newEmoji);
     toast({
       title: t('collections.created', 'Collection created'),
       description: `"${newName}" ${t('collections.createdDesc', 'has been created successfully')}`,
@@ -83,8 +83,8 @@ const CollectionManager: React.FC<CollectionManagerProps> = ({ className }) => {
     setEditName('');
   };
 
-  const handleCreateFromTemplate = (template: typeof templates[0]) => {
-    createCollection(template.name, template.emoji);
+  const handleCreateFromTemplate = async (template: (typeof templates)[0]) => {
+    await createCollection(template.name, template.emoji);
     toast({
       title: t('collections.created', 'Collection created'),
       description: `"${template.name}" ${t('collections.createdDesc', 'has been created successfully')}`,
@@ -121,7 +121,10 @@ const CollectionManager: React.FC<CollectionManagerProps> = ({ className }) => {
                 {t('collections.createNew', 'Create New Collection')}
               </DialogTitle>
               <DialogDescription className="text-white/60">
-                {t('collections.collectionDescription', 'Create a collection to organize your products')}
+                {t(
+                  'collections.collectionDescription',
+                  'Create a collection to organize your products'
+                )}
               </DialogDescription>
             </DialogHeader>
 
@@ -132,7 +135,7 @@ const CollectionManager: React.FC<CollectionManagerProps> = ({ className }) => {
                   {t('collections.quickStart', 'Quick Start')}
                 </Label>
                 <div className="flex flex-wrap gap-2">
-                  {templates.map((template) => (
+                  {templates.map(template => (
                     <button
                       key={template.name}
                       onClick={() => handleCreateFromTemplate(template)}
@@ -165,7 +168,7 @@ const CollectionManager: React.FC<CollectionManagerProps> = ({ className }) => {
                   <Input
                     id="collection-name"
                     value={newName}
-                    onChange={(e) => setNewName(e.target.value)}
+                    onChange={e => setNewName(e.target.value)}
                     placeholder={t('collections.namePlaceholder', 'My Collection')}
                     className="mt-1.5 bg-white/5 border-white/10 text-white"
                   />
@@ -176,7 +179,7 @@ const CollectionManager: React.FC<CollectionManagerProps> = ({ className }) => {
                     {t('collections.icon', 'Icon')}
                   </Label>
                   <div className="flex flex-wrap gap-2">
-                    {EMOJI_OPTIONS.map((emoji) => (
+                    {EMOJI_OPTIONS.map(emoji => (
                       <button
                         key={emoji}
                         onClick={() => setNewEmoji(emoji)}
@@ -193,7 +196,10 @@ const CollectionManager: React.FC<CollectionManagerProps> = ({ className }) => {
                   </div>
                 </div>
 
-                <Button onClick={handleCreate} className="w-full bg-white text-black hover:bg-white/90">
+                <Button
+                  onClick={handleCreate}
+                  className="w-full bg-white text-black hover:bg-white/90"
+                >
                   {t('collections.createButton', 'Create Collection')}
                 </Button>
               </div>
@@ -213,7 +219,7 @@ const CollectionManager: React.FC<CollectionManagerProps> = ({ className }) => {
         </div>
       ) : (
         <div className="space-y-2">
-          {collections.map((collection) => (
+          {collections.map(collection => (
             <CollectionItem
               key={collection.id}
               collection={collection}
@@ -263,10 +269,10 @@ const CollectionItem: React.FC<CollectionItemProps> = ({
         <div className="flex-1 flex items-center gap-2">
           <Input
             value={editName}
-            onChange={(e) => onEditName(e.target.value)}
+            onChange={e => onEditName(e.target.value)}
             className="flex-1 h-8 bg-white/10 border-white/20 text-white text-sm"
             autoFocus
-            onKeyDown={(e) => {
+            onKeyDown={e => {
               if (e.key === 'Enter') onSaveEdit();
               if (e.key === 'Escape') onCancelEdit();
             }}

@@ -13,6 +13,7 @@ import { convertS3UrlToHttps } from '@/lib/utils';
 import { FavoriteButton } from '@/components/FavoriteButton';
 import dynamic from 'next/dynamic';
 import ShareButton from '@/components/ShareButton';
+import AddToWishlistButton from '@/components/AddToWishlistButton';
 const ProductStoresPanel = dynamic(() => import('@/components/ProductStoresPanel'), {
   ssr: false,
   loading: () => null,
@@ -54,11 +55,22 @@ function getFirstString(...values: unknown[]): string | null {
   return null;
 }
 
+function getNestedString(value: unknown): string | null {
+  if (typeof value === 'string') return value.trim() || null;
+  if (value && typeof value === 'object') {
+    const record = value as Record<string, unknown>;
+    return getFirstString(record.name, record.title, record.slug, record.value, record.label);
+  }
+  return null;
+}
+
 type DetailData = {
   product?: unknown;
   stores?: unknown;
   brand?: unknown;
   relatedProducts?: unknown;
+  reviews?: unknown;
+  seo?: unknown;
 };
 
 type NormalizedStore = Record<string, unknown> & {
@@ -68,6 +80,7 @@ type NormalizedStore = Record<string, unknown> & {
   sizes: string[];
   telegram_url?: string | null;
   instagram_url?: string | null;
+  store_url?: string | null;
   shipping_info?: string | null;
   is_recommended?: boolean;
   logo_url?: string | null;
@@ -77,7 +90,54 @@ const normalizeProductRecord = (raw: unknown): Product | null => {
   if (!isRecord(raw)) return null;
   const id = String(raw.id ?? raw.product_id ?? raw.uuid ?? '').trim();
   if (!id) return null;
-  const name = typeof raw.name === 'string' ? raw.name : String(raw.title ?? '');
+  const name = getFirstString(raw.name, raw.title, raw.product_name) ?? '';
+  const description = getFirstString(
+    raw.description,
+    raw.short_description,
+    raw.description_ua,
+    raw.description_uk,
+    raw.description_en,
+    raw.details,
+    raw.summary
+  );
+
+  const rawCategory =
+    getFirstString(
+      raw.category,
+      raw.type,
+      raw.category_name,
+      raw.category_slug,
+      raw.product_type,
+      raw.type_name
+    ) ||
+    getNestedString(raw.category) ||
+    getNestedString(raw.type) ||
+    getNestedString(raw.category_info) ||
+    getNestedString(raw.product_category);
+
+  const rawColor =
+    getFirstString(
+      raw.color,
+      raw.color_name,
+      raw.color_slug,
+      raw.color_ua,
+      raw.color_uk,
+      raw.color_en
+    ) ||
+    getNestedString(raw.color) ||
+    getNestedString(raw.color_info);
+
+  const rawGender =
+    getFirstString(
+      raw.gender,
+      raw.gender_name,
+      raw.gender_slug,
+      raw.gender_ua,
+      raw.gender_uk,
+      raw.gender_en
+    ) ||
+    getNestedString(raw.gender) ||
+    getNestedString(raw.gender_info);
 
   return {
     ...raw,
@@ -89,25 +149,16 @@ const normalizeProductRecord = (raw: unknown): Product | null => {
         : isRecord(raw.brands) && typeof raw.brands.name === 'string'
           ? raw.brands.name
           : undefined,
-    category:
-      typeof raw.category === 'string'
-        ? raw.category
-        : typeof raw.type === 'string'
-          ? raw.type
-          : undefined,
-    type:
-      typeof raw.type === 'string'
-        ? raw.type
-        : typeof raw.category === 'string'
-          ? raw.category
-          : undefined,
+    category: rawCategory ?? undefined,
+    type: rawCategory ?? undefined,
     image_url: typeof raw.image_url === 'string' ? raw.image_url : undefined,
     image: typeof raw.image === 'string' ? raw.image : undefined,
     price: (raw.price ?? raw.min_price ?? raw.max_price) as Product['price'],
-    description: typeof raw.description === 'string' ? raw.description : undefined,
+    description: description ?? getNestedString(raw.description) ?? undefined,
     description_ua: typeof raw.description_ua === 'string' ? raw.description_ua : undefined,
     description_en: typeof raw.description_en === 'string' ? raw.description_en : undefined,
-    gender: typeof raw.gender === 'string' ? raw.gender : undefined,
+    color: rawColor ?? undefined,
+    gender: rawGender ?? undefined,
   } as Product;
 };
 
@@ -118,6 +169,7 @@ const ProductDetail = () => {
   const router = useRouter();
   const { t } = useTranslation();
   const { formatPrice } = useCurrencyConversion();
+  const { currency: activeCurrency, exchangeRate } = useCurrency();
   const { currency } = useCurrency();
   const { isAuthenticated, isAdmin: authIsAdmin } = useAuth();
   const selectedImage = 0; // Currently always showing first image
@@ -126,6 +178,7 @@ const ProductDetail = () => {
 
   // Dynamic SEO from API
   const [seoData, setSeoData] = useState<SEOData | null>(null);
+  const lastSeoProductIdRef = useRef<string | null>(null);
 
   // Store filters
   const [storeSearch, setStoreSearch] = useState('');
@@ -168,9 +221,19 @@ const ProductDetail = () => {
     return null;
   }, [productData]);
 
+  const detailSeo = useMemo(() => {
+    if (!isRecord(detailData)) return null;
+    return isRecord(detailData.seo) ? (detailData.seo as unknown as SEOData) : null;
+  }, [detailData]);
+
   // Fetch SEO data when product ID changes
   useEffect(() => {
-    if (!id) return;
+    if (detailSeo) {
+      setSeoData(detailSeo);
+      return;
+    }
+    if (!id || lastSeoProductIdRef.current === id) return;
+    lastSeoProductIdRef.current = id;
 
     const fetchSEO = async () => {
       try {
@@ -182,7 +245,7 @@ const ProductDetail = () => {
     };
 
     fetchSEO();
-  }, [id]);
+  }, [detailSeo, id]);
 
   useSEO({
     title:
@@ -262,12 +325,21 @@ const ProductDetail = () => {
 
     // Helper function to extract price from various field names
     const extractPrice = (storeRecord: Record<string, unknown>): number | null => {
-      const rawPrice =
+      const priceCandidate =
         storeRecord['product_price'] ??
         storeRecord['price'] ??
         storeRecord['item_price'] ??
         storeRecord['store_price'] ??
+        storeRecord['price_uah'] ??
+        storeRecord['price_value'] ??
+        storeRecord['price_amount'] ??
+        storeRecord['amount'] ??
+        storeRecord['value'] ??
         null;
+
+      const rawPrice = isRecord(priceCandidate)
+        ? (priceCandidate['amount'] ?? priceCandidate['value'] ?? priceCandidate['price'] ?? null)
+        : priceCandidate;
 
       const numericPrice =
         rawPrice != null && (typeof rawPrice === 'string' || typeof rawPrice === 'number')
@@ -284,20 +356,31 @@ const ProductDetail = () => {
       const storeRecord: Record<string, unknown> = isRecord(store) ? store : {};
 
       const storesObj = isRecord(storeRecord['stores']) ? storeRecord['stores'] : undefined;
+      const storeInfo = isRecord(storeRecord['store']) ? storeRecord['store'] : undefined;
 
       const rawId =
-        storeRecord['id'] ?? storeRecord['store_id'] ?? (storesObj ? storesObj['id'] : undefined);
+        storeRecord['id'] ??
+        storeRecord['store_id'] ??
+        (storeInfo ? storeInfo['id'] : undefined) ??
+        (storesObj ? storesObj['id'] : undefined);
       const id = typeof rawId === 'string' || typeof rawId === 'number' ? String(rawId) : '';
 
       const rawName =
         storeRecord['name'] ??
         storeRecord['store_name'] ??
+        (storeInfo ? storeInfo['name'] : undefined) ??
         (storesObj ? storesObj['name'] : undefined);
       const name = typeof rawName === 'string' ? rawName : '';
 
-      const finalPrice = extractPrice(storeRecord);
+      const basePrice = extractPrice(storeRecord) ?? (storeInfo ? extractPrice(storeInfo) : null);
+      const finalPrice = basePrice;
       const rawSizes = storeRecord['sizes'] ?? storeRecord['available_sizes'];
       const sizes = parseSizes(rawSizes);
+      const storeUrl = getFirstString(storeRecord['url'], storeInfo ? storeInfo['url'] : undefined);
+      const normalizedTelegram = storeUrl && /t\.me|telegram/i.test(storeUrl) ? storeUrl : null;
+      const normalizedInstagram = storeUrl && /instagram\.com/i.test(storeUrl) ? storeUrl : null;
+      const normalizedStoreUrl =
+        storeUrl && !normalizedTelegram && !normalizedInstagram ? storeUrl : null;
 
       return {
         ...storeRecord,
@@ -306,28 +389,52 @@ const ProductDetail = () => {
         price: finalPrice,
         sizes,
         // Normalize URL fields
-        telegram_url: getFirstString(storeRecord['telegram_url'], storeRecord['telegram']),
-        instagram_url: getFirstString(storeRecord['instagram_url'], storeRecord['instagram']),
+        telegram_url: getFirstString(
+          storeRecord['telegram_url'],
+          storeRecord['telegram'],
+          storeInfo ? storeInfo['telegram_url'] : undefined,
+          storeInfo ? storeInfo['telegram'] : undefined,
+          normalizedTelegram
+        ),
+        instagram_url: getFirstString(
+          storeRecord['instagram_url'],
+          storeRecord['instagram'],
+          storeInfo ? storeInfo['instagram_url'] : undefined,
+          storeInfo ? storeInfo['instagram'] : undefined,
+          normalizedInstagram
+        ),
+        store_url: normalizedStoreUrl,
         shipping_info: getFirstString(
           storeRecord['shipping_info'],
           storeRecord['shipping'],
-          storeRecord['location']
+          storeRecord['location'],
+          storeInfo ? storeInfo['shipping_info'] : undefined,
+          storeInfo ? storeInfo['shipping'] : undefined,
+          storeInfo ? storeInfo['location'] : undefined
         ),
         is_recommended: Boolean(
           storeRecord['is_recommended'] ??
           storeRecord['recommended'] ??
-          storeRecord['isRecommended']
+          storeRecord['isRecommended'] ??
+          (storeInfo ? storeInfo['is_recommended'] : undefined) ??
+          (storeInfo ? storeInfo['recommended'] : undefined) ??
+          (storeInfo ? storeInfo['isRecommended'] : undefined)
         ),
-        logo_url: getFirstString(storeRecord['logo_url'], storeRecord['logo']),
+        logo_url: getFirstString(
+          storeRecord['logo_url'],
+          storeRecord['logo'],
+          storeInfo ? storeInfo['logo_url'] : undefined,
+          storeInfo ? storeInfo['logo'] : undefined
+        ),
       };
     });
 
     return normalized;
-  }, [storesData]);
+  }, [storesData, product]);
 
   const relatedProducts = useMemo(() => {
     if (!isRecord(detailData)) return undefined;
-    const value = detailData['relatedProducts'];
+    const value = detailData['relatedProducts'] ?? detailData['related_products'];
     return Array.isArray(value) ? value : undefined;
   }, [detailData]);
 
@@ -338,6 +445,30 @@ const ProductDetail = () => {
     if (product?.brand) return product.brand;
     return null;
   }, [brand, product]);
+
+  const { i18n } = useTranslation();
+
+  const descriptionText = useMemo(() => {
+    const lang = i18n.language || 'uk';
+    const isEnglish = lang.startsWith('en');
+    const localizedDescription = isEnglish
+      ? (product?.description_en as string | undefined) ||
+        (product
+          ? ((product as unknown as { description_uk?: string }).description_uk ??
+            (product as unknown as { description_ua?: string }).description_ua)
+          : undefined)
+      : product
+        ? ((product as unknown as { description_uk?: string }).description_uk ??
+          (product as unknown as { description_ua?: string }).description_ua)
+        : undefined;
+
+    return (
+      localizedDescription ||
+      (product?.description ? String(product.description) : '') ||
+      seoData?.meta_description ||
+      null
+    );
+  }, [product, seoData, i18n.language]);
 
   // Track recently viewed products and interactions
   const { addItem: addToRecentlyViewed } = useRecentlyViewed();
@@ -519,6 +650,11 @@ const ProductDetail = () => {
                       variant="ghost"
                       className="w-12 h-12 rounded-full bg-foreground/80 text-background backdrop-blur-sm md:hover:bg-foreground md:hover:text-background active:bg-foreground active:text-background transition-all dark:bg-black/60 dark:text-white dark:md:hover:bg-white dark:md:hover:text-black dark:active:bg-white dark:active:text-black"
                     />
+                    <AddToWishlistButton
+                      productId={String(id)}
+                      productName={product.name}
+                      className="bg-foreground/80 text-background backdrop-blur-sm md:hover:bg-foreground md:hover:text-background active:bg-foreground active:text-background transition-all dark:bg-black/60 dark:text-white dark:md:hover:bg-white dark:md:hover:text-black dark:active:bg-white dark:active:text-black"
+                    />
                     <ShareButton
                       title={product.name}
                       description={product.description}
@@ -619,10 +755,10 @@ const ProductDetail = () => {
               </div>
 
               {/* Description */}
-              {product.description && (
+              {descriptionText && (
                 <div className="mb-8 p-6 rounded-xl border border-border/50 bg-card/40 backdrop-blur-sm">
                   <h3 className="font-semibold mb-2">{t('productDetail.description')}</h3>
-                  <p className="text-muted-foreground leading-relaxed">{product.description}</p>
+                  <p className="text-muted-foreground leading-relaxed">{descriptionText}</p>
                 </div>
               )}
             </div>
@@ -676,7 +812,7 @@ const ProductDetail = () => {
           <LazySection minHeight="220px" rootMargin="200px">
             <RelatedProducts
               productId={String(id)}
-              products={relatedProducts}
+              products={relatedProducts && relatedProducts.length > 0 ? relatedProducts : undefined}
               className="mb-16 animate-fade-in-up"
             />
           </LazySection>

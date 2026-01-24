@@ -5,6 +5,7 @@
 
 import axios, { AxiosInstance, AxiosError, InternalAxiosRequestConfig, AxiosResponse } from 'axios';
 import { API_CONFIG } from '@/config/api.config';
+import { clearAuth } from '@/utils/authStorage';
 import { handleApiError as createApiError, ApiError } from './api/errorHandler';
 import { retryWithBackoff } from '@/utils/retryWithBackoff';
 import type { ApiError as ApiErrorType } from '@/types';
@@ -217,6 +218,10 @@ function handleAuthError(apiError: ApiError, _originalError: unknown): void {
 
   if (wasAuthenticated && process.env.NODE_ENV !== 'production') {
     console.warn('🔒 Authentication error - token may be expired');
+  }
+
+  if (wasAuthenticated) {
+    clearAuth();
   }
 }
 
