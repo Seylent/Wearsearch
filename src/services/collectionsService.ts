@@ -3,7 +3,7 @@
  * Handles user collections/wishlists API calls
  */
 
-import api, { handleApiError } from './api';
+import api, { apiLegacy, handleApiError } from './api';
 import { Product } from './productService';
 
 // Types
@@ -32,6 +32,12 @@ export interface CollectionWithItems extends Collection {
 
 const isRecord = (value: unknown): value is Record<string, unknown> =>
   typeof value === 'object' && value !== null;
+
+const getRecord = (value: unknown, key: string): Record<string, unknown> | undefined => {
+  if (!isRecord(value)) return undefined;
+  const nested = value[key];
+  return isRecord(nested) ? nested : undefined;
+};
 
 const hasProductReference = (record: Record<string, unknown>): boolean => {
   const product = isRecord(record.product) ? (record.product as Record<string, unknown>) : null;
@@ -68,9 +74,16 @@ export const collectionsService = {
         headers: { 'X-Skip-Retry': 'true' },
       });
       const body: unknown = response.data;
-      const collectionsRaw = (body as { collections?: unknown }).collections ?? body;
+      const payload = getRecord(body, 'data') ?? (isRecord(body) ? body : undefined);
+      const collectionsRaw =
+        (payload as { collections?: unknown }).collections ??
+        (payload as { items?: unknown }).items ??
+        payload ??
+        [];
       const collections = Array.isArray(collectionsRaw) ? collectionsRaw : [];
-      const itemsByCollection = collectItemsByCollection((body as { items?: unknown }).items);
+      const itemsByCollection = collectItemsByCollection(
+        (payload as { items?: unknown }).items ?? (body as { items?: unknown }).items
+      );
 
       return collections.map(raw => {
         const collection = transformCollection(raw as Record<string, unknown>);
@@ -103,10 +116,13 @@ export const collectionsService = {
     try {
       const response = await api.post('/users/me/collections', data);
       const body: unknown = response.data;
+      const dataRecord = getRecord(body, 'data');
       const payload =
         (body as { collection?: unknown }).collection ??
         (body as { item?: unknown }).item ??
-        (isRecord(body) && isRecord(body.data) ? body.data : undefined) ??
+        (dataRecord?.collection as unknown) ??
+        (dataRecord?.item as unknown) ??
+        dataRecord ??
         body;
       if (!isRecord(payload)) {
         throw new Error('Invalid collection response');
@@ -130,7 +146,19 @@ export const collectionsService = {
   ): Promise<Collection> {
     try {
       const response = await api.put(`/users/me/collections/${collectionId}`, data);
-      return transformCollection(response.data.collection || response.data);
+      const body: unknown = response.data;
+      const dataRecord = getRecord(body, 'data');
+      const payload =
+        (body as { collection?: unknown }).collection ??
+        (body as { item?: unknown }).item ??
+        (dataRecord?.collection as unknown) ??
+        (dataRecord?.item as unknown) ??
+        dataRecord ??
+        body;
+      if (!isRecord(payload)) {
+        throw new Error('Invalid collection response');
+      }
+      return transformCollection(payload);
     } catch (error) {
       throw handleApiError(error);
     }
@@ -143,17 +171,27 @@ export const collectionsService = {
     try {
       await api.delete(`/users/me/collections/${collectionId}`);
     } catch (error) {
-      throw handleApiError(error);
+      const apiError = handleApiError(error);
+      if (apiError.status === 404) {
+        try {
+          await apiLegacy.delete(`/user/collections/${collectionId}`);
+          return;
+        } catch (legacyError) {
+          throw handleApiError(legacyError);
+        }
+      }
+      throw apiError;
     }
   },
 
   /**
    * Get items in a collection
    */
-  async getCollectionItems(collectionId: string): Promise<CollectionItem[]> {
+  async getCollectionItems(collectionId: string, currency?: string): Promise<CollectionItem[]> {
     try {
       const response = await api.get(`/users/me/collections/${collectionId}/items`, {
         headers: { 'X-Skip-Retry': 'true' },
+        params: currency ? { currency } : undefined,
       });
       const items = extractCollectionItems(response.data).filter(hasProductReference);
       return items.map(item => transformCollectionItem(item as Record<string, unknown>));
@@ -183,12 +221,31 @@ export const collectionsService = {
     try {
       const response = await api.post(`/users/me/collections/${collectionId}/items`, {
         product_id: productId,
+        productId,
+        collection_id: collectionId,
+        collectionId,
         notes,
       });
       const item = (response.data?.item ?? response.data) as Record<string, unknown>;
       return transformCollectionItem(item);
     } catch (error) {
-      throw handleApiError(error);
+      const apiError = handleApiError(error);
+      if (apiError.status === 404) {
+        try {
+          const response = await apiLegacy.post(`/user/collections/${collectionId}/items`, {
+            product_id: productId,
+            productId,
+            collection_id: collectionId,
+            collectionId,
+            notes,
+          });
+          const item = (response.data?.item ?? response.data) as Record<string, unknown>;
+          return transformCollectionItem(item);
+        } catch (legacyError) {
+          throw handleApiError(legacyError);
+        }
+      }
+      throw apiError;
     }
   },
 
@@ -199,7 +256,16 @@ export const collectionsService = {
     try {
       await api.delete(`/users/me/collections/${collectionId}/items/${productId}`);
     } catch (error) {
-      throw handleApiError(error);
+      const apiError = handleApiError(error);
+      if (apiError.status === 404) {
+        try {
+          await apiLegacy.delete(`/user/collections/${collectionId}/items/${productId}`);
+          return;
+        } catch (legacyError) {
+          throw handleApiError(legacyError);
+        }
+      }
+      throw apiError;
     }
   },
 };

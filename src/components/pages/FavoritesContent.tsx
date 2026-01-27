@@ -207,7 +207,7 @@ function FavoritesWithParams() {
             }
 
             return (
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+              <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6">
                 {filteredFavorites.map((favorite: unknown, index: number) => {
                   const record = isRecord(favorite) ? favorite : {};
                   const productRecord = isRecord(record['product']) ? record['product'] : record;
@@ -248,6 +248,7 @@ function FavoritesWithParams() {
                       price={productPrice}
                       category={productCategory}
                       brand={productBrand}
+                      priority={index < 4}
                     />
                   );
                 })}

@@ -4,7 +4,9 @@
  */
 
 const deriveLegacyBaseUrl = (baseUrl: string): string => {
-  const normalized = String(baseUrl || '').trim().replace(/\/+$/, '');
+  const normalized = String(baseUrl || '')
+    .trim()
+    .replace(/\/+$/, '');
   if (!normalized) return '/api';
 
   // Most common: '/api/v1' or 'https://host/api/v1' -> remove trailing '/v1'
@@ -14,9 +16,25 @@ const deriveLegacyBaseUrl = (baseUrl: string): string => {
   return normalized;
 };
 
+const resolveBaseUrl = (): string => {
+  const envBase = process.env.NEXT_PUBLIC_API_BASE_URL;
+  if (envBase) return envBase;
+
+  if (typeof window !== 'undefined' && process.env.NODE_ENV !== 'production') {
+    const port = window.location?.port;
+    if (port && port !== '3000') {
+      return 'http://localhost:3000/api/v1';
+    }
+  }
+
+  return '/api/v1';
+};
+
+const resolvedBaseUrl = resolveBaseUrl();
+
 export const API_CONFIG = {
-  BASE_URL: process.env.NEXT_PUBLIC_API_BASE_URL || '/api/v1',
-  LEGACY_BASE_URL: deriveLegacyBaseUrl(process.env.NEXT_PUBLIC_API_BASE_URL || '/api/v1'),
+  BASE_URL: resolvedBaseUrl,
+  LEGACY_BASE_URL: deriveLegacyBaseUrl(resolvedBaseUrl),
   TIMEOUT: 15000,
   WITH_CREDENTIALS: true,
 } as const;

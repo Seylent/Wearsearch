@@ -41,6 +41,7 @@ interface ProductCardProps {
   description_en?: string;
   description_ua?: string;
   priceCurrency?: CurrencyCode;
+  priority?: boolean;
 }
 
 const ProductCard: React.FC<ProductCardProps> = memo(
@@ -58,6 +59,7 @@ const ProductCard: React.FC<ProductCardProps> = memo(
     description,
     description_en,
     description_ua,
+    priority = false,
   }) => {
     const { t } = useTranslation();
     const { formatPrice } = useCurrencyConversion();
@@ -149,8 +151,9 @@ const ProductCard: React.FC<ProductCardProps> = memo(
               style={{
                 filter: 'grayscale(100%) contrast(1.1) brightness(1.05)',
               }}
-              loading="lazy"
+              loading={priority ? undefined : 'lazy'}
               quality={75}
+              priority={priority}
             />
 
             {/* Subtle gradient on hover - NO WHITE GLOW */}

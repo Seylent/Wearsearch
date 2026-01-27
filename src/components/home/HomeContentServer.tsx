@@ -41,13 +41,14 @@ export default function HomeContent({
   featuredProducts,
   banners = [],
   seoData,
+  categories,
 }: Readonly<HomeContentProps>) {
   return (
-    <HomeContentClient 
+    <HomeContentClient
       initialProducts={featuredProducts}
       banners={banners}
       seoData={seoData}
+      categories={categories}
     />
   );
 }
-

@@ -23,15 +23,28 @@ import { cn } from '@/lib/utils';
 
 interface CollectionManagerProps {
   className?: string;
+  activeCollectionId?: string | null;
+  onSelect?: (collectionId: string) => void;
+  filterQuery?: string;
 }
 
 const EMOJI_OPTIONS = ['❤️', '🛒', '🎁', '☀️', '🔥', '⭐', '👔', '👟', '👗', '🧥', '💎', '🎯'];
 
-const CollectionManager: React.FC<CollectionManagerProps> = ({ className }) => {
+const CollectionManager: React.FC<CollectionManagerProps> = ({
+  className,
+  activeCollectionId,
+  onSelect,
+  filterQuery,
+}) => {
   const { t } = useTranslation();
   const { toast } = useToast();
   const { collections, createCollection, deleteCollection, updateCollection, templates } =
     useCollections();
+
+  const normalizedQuery = filterQuery?.trim().toLowerCase() ?? '';
+  const filteredCollections = normalizedQuery
+    ? collections.filter(collection => collection.name.toLowerCase().includes(normalizedQuery))
+    : collections;
 
   const [isCreateOpen, setIsCreateOpen] = useState(false);
   const [newName, setNewName] = useState('');
@@ -92,35 +105,36 @@ const CollectionManager: React.FC<CollectionManagerProps> = ({ className }) => {
   };
 
   return (
-    <div className={cn('space-y-4', className)}>
+    <div className={cn('space-y-4 rounded-2xl border border-border/50 bg-card/40 p-4', className)}>
       {/* Header */}
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-2">
-          <FolderHeart className="w-5 h-5 text-white/60" />
-          <h2 className="font-display text-lg font-semibold text-white">
+          <FolderHeart className="w-5 h-5 text-foreground/70" />
+          <h2 className="font-display text-lg font-semibold text-foreground">
             {t('collections.title', 'Collections')}
           </h2>
-          <span className="text-sm text-white/40">({collections.length})</span>
+          <span className="text-sm text-muted-foreground">({collections.length})</span>
         </div>
 
         <Dialog open={isCreateOpen} onOpenChange={setIsCreateOpen} modal={false}>
           <DialogTrigger asChild>
             <Button
-              variant="ghost"
+              id="collection-manager-create-trigger"
+              variant="outline"
               size="sm"
-              className="text-white/60 hover:text-white hover:bg-white/10"
+              className="gap-2"
             >
               <Plus className="w-4 h-4 mr-1" />
               {t('collections.create', 'New')}
             </Button>
           </DialogTrigger>
 
-          <DialogContent className="sm:max-w-md bg-zinc-900 border-white/10">
+          <DialogContent className="sm:max-w-md bg-background border-border">
             <DialogHeader>
-              <DialogTitle className="text-white">
+              <DialogTitle className="text-foreground">
                 {t('collections.createNew', 'Create New Collection')}
               </DialogTitle>
-              <DialogDescription className="text-white/60">
+              <DialogDescription className="text-muted-foreground">
                 {t(
                   'collections.collectionDescription',
                   'Create a collection to organize your products'
@@ -131,7 +145,7 @@ const CollectionManager: React.FC<CollectionManagerProps> = ({ className }) => {
             <div className="space-y-4 py-4">
               {/* Quick templates */}
               <div>
-                <Label className="text-sm text-white/60 mb-2 block">
+                <Label className="text-sm text-muted-foreground mb-2 block">
                   {t('collections.quickStart', 'Quick Start')}
                 </Label>
                 <div className="flex flex-wrap gap-2">
@@ -139,7 +153,7 @@ const CollectionManager: React.FC<CollectionManagerProps> = ({ className }) => {
                     <button
                       key={template.name}
                       onClick={() => handleCreateFromTemplate(template)}
-                      className="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-sm bg-white/5 text-white/70 hover:bg-white/10 hover:text-white transition-colors"
+                      className="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-sm bg-muted/40 text-foreground/80 hover:bg-muted/70 transition-colors"
                     >
                       <span>{template.emoji}</span>
                       <span>{template.name}</span>
@@ -153,7 +167,7 @@ const CollectionManager: React.FC<CollectionManagerProps> = ({ className }) => {
                   <span className="w-full border-t border-white/10" />
                 </div>
                 <div className="relative flex justify-center text-xs uppercase">
-                  <span className="bg-zinc-900 px-2 text-white/40">
+                  <span className="bg-background px-2 text-muted-foreground">
                     {t('collections.or', 'or create custom')}
                   </span>
                 </div>
@@ -162,7 +176,7 @@ const CollectionManager: React.FC<CollectionManagerProps> = ({ className }) => {
               {/* Custom collection form */}
               <div className="space-y-4">
                 <div>
-                  <Label htmlFor="collection-name" className="text-sm text-white/60">
+                  <Label htmlFor="collection-name" className="text-sm text-muted-foreground">
                     {t('collections.name', 'Name')}
                   </Label>
                   <Input
@@ -170,12 +184,12 @@ const CollectionManager: React.FC<CollectionManagerProps> = ({ className }) => {
                     value={newName}
                     onChange={e => setNewName(e.target.value)}
                     placeholder={t('collections.namePlaceholder', 'My Collection')}
-                    className="mt-1.5 bg-white/5 border-white/10 text-white"
+                    className="mt-1.5"
                   />
                 </div>
 
                 <div>
-                  <Label className="text-sm text-white/60 mb-2 block">
+                  <Label className="text-sm text-muted-foreground mb-2 block">
                     {t('collections.icon', 'Icon')}
                   </Label>
                   <div className="flex flex-wrap gap-2">
@@ -186,8 +200,8 @@ const CollectionManager: React.FC<CollectionManagerProps> = ({ className }) => {
                         className={cn(
                           'w-10 h-10 rounded-lg text-lg flex items-center justify-center transition-all',
                           newEmoji === emoji
-                            ? 'bg-white/20 ring-2 ring-white/40'
-                            : 'bg-white/5 hover:bg-white/10'
+                            ? 'bg-foreground/10 ring-2 ring-foreground/30'
+                            : 'bg-muted/30 hover:bg-muted/60'
                         )}
                       >
                         {emoji}
@@ -196,10 +210,7 @@ const CollectionManager: React.FC<CollectionManagerProps> = ({ className }) => {
                   </div>
                 </div>
 
-                <Button
-                  onClick={handleCreate}
-                  className="w-full bg-white text-black hover:bg-white/90"
-                >
+                <Button onClick={handleCreate} className="w-full">
                   {t('collections.createButton', 'Create Collection')}
                 </Button>
               </div>
@@ -209,8 +220,8 @@ const CollectionManager: React.FC<CollectionManagerProps> = ({ className }) => {
       </div>
 
       {/* Collections list */}
-      {collections.length === 0 ? (
-        <div className="text-center py-8 text-white/40">
+      {filteredCollections.length === 0 ? (
+        <div className="text-center py-8 text-muted-foreground">
           <FolderHeart className="w-12 h-12 mx-auto mb-3 opacity-50" />
           <p>{t('collections.empty', 'No collections yet')}</p>
           <p className="text-sm mt-1">
@@ -219,7 +230,7 @@ const CollectionManager: React.FC<CollectionManagerProps> = ({ className }) => {
         </div>
       ) : (
         <div className="space-y-2">
-          {collections.map(collection => (
+          {filteredCollections.map(collection => (
             <CollectionItem
               key={collection.id}
               collection={collection}
@@ -230,6 +241,8 @@ const CollectionManager: React.FC<CollectionManagerProps> = ({ className }) => {
               onSaveEdit={() => handleSaveEdit(collection)}
               onCancelEdit={handleCancelEdit}
               onDelete={() => handleDelete(collection)}
+              isActive={collection.id === activeCollectionId}
+              onSelect={onSelect}
             />
           ))}
         </div>
@@ -247,6 +260,8 @@ interface CollectionItemProps {
   onSaveEdit: () => void;
   onCancelEdit: () => void;
   onDelete: () => void;
+  isActive?: boolean;
+  onSelect?: (collectionId: string) => void;
 }
 
 const CollectionItem: React.FC<CollectionItemProps> = ({
@@ -258,11 +273,22 @@ const CollectionItem: React.FC<CollectionItemProps> = ({
   onSaveEdit,
   onCancelEdit,
   onDelete,
+  isActive,
+  onSelect,
 }) => {
   const { t } = useTranslation();
 
   return (
-    <div className="flex items-center gap-3 p-3 rounded-lg bg-white/5 border border-white/10 hover:bg-white/8 transition-colors group">
+    <button
+      type="button"
+      onClick={() => onSelect?.(collection.id)}
+      className={cn(
+        'w-full flex items-center gap-3 p-3 rounded-xl border transition-colors group text-left',
+        isActive
+          ? 'border-foreground/40 bg-foreground/5'
+          : 'border-border/40 bg-background/40 hover:bg-muted/40'
+      )}
+    >
       <span className="text-xl">{collection.emoji || '📁'}</span>
 
       {isEditing ? (
@@ -270,7 +296,7 @@ const CollectionItem: React.FC<CollectionItemProps> = ({
           <Input
             value={editName}
             onChange={e => onEditName(e.target.value)}
-            className="flex-1 h-8 bg-white/10 border-white/20 text-white text-sm"
+            className="flex-1 h-8 text-sm"
             autoFocus
             onKeyDown={e => {
               if (e.key === 'Enter') onSaveEdit();
@@ -278,15 +304,21 @@ const CollectionItem: React.FC<CollectionItemProps> = ({
             }}
           />
           <button
-            onClick={onSaveEdit}
-            className="p-1.5 rounded-md hover:bg-white/10 text-green-400"
+            onClick={e => {
+              e.stopPropagation();
+              onSaveEdit();
+            }}
+            className="p-1.5 rounded-md hover:bg-muted/60 text-green-600"
             aria-label={t('common.save', 'Save')}
           >
             <Check className="w-4 h-4" />
           </button>
           <button
-            onClick={onCancelEdit}
-            className="p-1.5 rounded-md hover:bg-white/10 text-white/60"
+            onClick={e => {
+              e.stopPropagation();
+              onCancelEdit();
+            }}
+            className="p-1.5 rounded-md hover:bg-muted/60 text-muted-foreground"
             aria-label={t('common.cancel', 'Cancel')}
           >
             <X className="w-4 h-4" />
@@ -295,33 +327,39 @@ const CollectionItem: React.FC<CollectionItemProps> = ({
       ) : (
         <>
           <div className="flex-1 min-w-0">
-            <h3 className="font-medium text-white truncate">{collection.name}</h3>
-            <p className="text-xs text-white/40">
-              {collection.items.length} {t('collections.items', 'items')}
+            <h3 className="font-medium text-foreground truncate">{collection.name}</h3>
+            <p className="text-xs text-muted-foreground">
+              {collection.productCount ?? collection.items.length} {t('collections.items', 'items')}
             </p>
           </div>
 
           <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
             <button
-              onClick={onStartEdit}
-              className="p-1.5 rounded-md hover:bg-white/10 text-white/60 hover:text-white"
+              onClick={e => {
+                e.stopPropagation();
+                onStartEdit();
+              }}
+              className="p-1.5 rounded-md hover:bg-muted/60 text-muted-foreground hover:text-foreground"
               aria-label={t('common.edit', 'Edit')}
             >
               <Edit2 className="w-4 h-4" />
             </button>
             <button
-              onClick={onDelete}
-              className="p-1.5 rounded-md hover:bg-white/10 text-white/60 hover:text-red-400"
+              onClick={e => {
+                e.stopPropagation();
+                onDelete();
+              }}
+              className="p-1.5 rounded-md hover:bg-muted/60 text-muted-foreground hover:text-red-500"
               aria-label={t('common.delete', 'Delete')}
             >
               <Trash2 className="w-4 h-4" />
             </button>
           </div>
 
-          <ChevronRight className="w-4 h-4 text-white/30" />
+          <ChevronRight className="w-4 h-4 text-muted-foreground" />
         </>
       )}
-    </div>
+    </button>
   );
 };
 

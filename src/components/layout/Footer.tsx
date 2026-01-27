@@ -21,6 +21,17 @@ const Footer = () => {
         <div className="grid grid-cols-1 md:grid-cols-2 gap-10 mb-12">
           {/* Links */}
           <div>
+            <div className="mb-6 max-w-md">
+              <h4 className="font-display font-semibold mb-3 text-sm tracking-wider uppercase text-white">
+                {t('footer.styleNotesTitle', 'Style notes')}
+              </h4>
+              <p className="text-sm text-muted-foreground leading-relaxed">
+                {t(
+                  'footer.styleNotesBody',
+                  'Discover new drops, seasonal edits, and timeless staples. We focus on fit, fabric, and longevity so every choice feels intentional.'
+                )}
+              </p>
+            </div>
             <h4 className="font-display font-semibold mb-5 text-sm tracking-wider uppercase text-white">
               {t('footer.shop')}
             </h4>

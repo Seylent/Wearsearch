@@ -387,6 +387,8 @@ export const useStats = () => {
 
 // Favorites
 export const useFavorites = () => {
+  const isLoggedIn = useIsAuthenticated();
+
   return useQuery({
     queryKey: queryKeys.favorites,
     queryFn: async () => {
@@ -435,7 +437,7 @@ export const useFavorites = () => {
     refetchOnReconnect: false, // Don't refetch on reconnect to avoid bursts
     refetchInterval: false, // Disable automatic refetching
     // Only fetch if user is authenticated - check token exists and not expired
-    enabled: false, // Disabled by default - favorites will be fetched only when explicitly needed
+    enabled: isLoggedIn && !!getAuth(),
   });
 };
 

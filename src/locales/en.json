@@ -74,6 +74,43 @@
     "signIn": "Sign In",
     "signOut": "Sign Out"
   },
+  "footer": {
+    "styleNotesTitle": "Style notes",
+    "styleNotesBody": "Discover new drops, seasonal edits, and timeless staples. We focus on fit, fabric, and longevity so every choice feels intentional.",
+    "shop": "Shop",
+    "company": "Company",
+    "contact": "Contacts",
+    "allItems": "All items",
+    "saved": "Saved",
+    "wishlists": "Wishlists",
+    "about": "About",
+    "privacyPolicy": "Privacy policy",
+    "termsOfService": "Terms of service"
+  },
+  "home": {
+    "shopByGender": "Shop by vibe",
+    "genderPicks": "Find your lane",
+    "genderHint": "Curated edits for every silhouette and mood",
+    "women": "Women",
+    "womenTag": "Soft power tailoring",
+    "men": "Men",
+    "menTag": "Utility with edge",
+    "unisex": "Unisex",
+    "unisexTag": "Fluid essentials",
+    "browse": "Browse",
+    "scrollHint": "Swipe to explore",
+    "scrollHintDesktop": "Drag or use arrows",
+    "categoriesLabel": "Categories",
+    "shopByCategory": "Browse by category",
+    "categoryHint": "Swipe through the essential edits",
+    "viewAllCategories": "View all",
+    "items": "items",
+    "explore": "Explore",
+    "scrollLeft": "Scroll left",
+    "scrollRight": "Scroll right",
+    "styleNotesTitle": "Style notes from Wearsearch",
+    "styleNotesBody": "Browse new drops, seasonal edits, and wardrobe anchors in one place. We focus on fit, fabric, and longevity, so every piece you save feels intentional and wearable for years."
+  },
   "profile": {
     "title": "Profile",
     "seoTitle": "Profile",
@@ -214,6 +251,7 @@
     "seoDescription": "View product details and compare prices across stores."
   },
   "collections": {
+    "title": "Wishlists",
     "created": "Collection created",
     "deleted": "Collection deleted",
     "quickStart": "Quick Start",

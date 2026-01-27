@@ -1,8 +1,9 @@
 'use client';
 
-import React, { useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
+import Link from 'next/link';
 import { useTranslation } from 'react-i18next';
-import { FolderHeart, Plus, Search, Share2 } from 'lucide-react';
+import { FolderHeart, Search, Share2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import CollectionManager from '@/components/CollectionManager';
@@ -12,17 +13,15 @@ import { useQuery } from '@tanstack/react-query';
 import collectionsService from '@/services/collectionsService';
 import { cn } from '@/lib/utils';
 import WishlistPrivacySettings from '@/components/WishlistPrivacySettings';
+import { mapCollectionItemsResponse } from '@/utils/apiMappers';
+import { useCurrency } from '@/contexts/CurrencyContext';
+import { useCurrencyConversion } from '@/hooks/useCurrencyConversion';
 
 const isRecord = (value: unknown): value is Record<string, unknown> =>
   typeof value === 'object' && value !== null;
 
 const getString = (value: unknown, fallback = ''): string =>
   typeof value === 'string' && value.trim() ? value : fallback;
-
-const getNumberOrString = (value: unknown, fallback: number): string | number => {
-  if (typeof value === 'string' || typeof value === 'number') return value;
-  return fallback;
-};
 
 export default function WishlistsContent({ className }: { className?: string }) {
   const { t } = useTranslation();
@@ -34,20 +33,29 @@ export default function WishlistsContent({ className }: { className?: string }) 
   const [searchQuery, setSearchQuery] = useState('');
   const [showSettings, setShowSettings] = useState(false);
 
+  useEffect(() => {
+    if (!activeCollectionId && collections.length > 0) {
+      setActiveCollectionId(collections[0].id);
+    }
+  }, [activeCollectionId, collections]);
+
+  const { currency } = useCurrency();
+  const { formatPrice } = useCurrencyConversion();
+
   const { data: collectionItems, isLoading: collectionItemsLoading } = useQuery({
-    queryKey: ['collectionItems', activeCollectionId],
-    queryFn: () => collectionsService.getCollectionItems(activeCollectionId as string),
+    queryKey: ['collectionItems', activeCollectionId, currency],
+    queryFn: () => collectionsService.getCollectionItems(activeCollectionId as string, currency),
     enabled: isLoggedIn && Boolean(activeCollectionId),
     staleTime: 1000 * 60 * 2,
     retry: false,
     refetchOnWindowFocus: false,
   });
-
-  const filteredCollections = useMemo(() => {
-    if (!searchQuery.trim()) return collections;
-    const query = searchQuery.toLowerCase();
-    return collections.filter(collection => collection.name.toLowerCase().includes(query));
-  }, [collections, searchQuery]);
+  const mappedItems = useMemo(() => {
+    if (!collectionItems) return [] as any[];
+    if (Array.isArray(collectionItems)) return collectionItems as any[];
+    const { items } = mapCollectionItemsResponse(collectionItems, currency);
+    return items ?? [];
+  }, [collectionItems, currency]);
 
   return (
     <div className={cn('min-h-screen bg-background text-foreground', className)}>
@@ -69,22 +77,16 @@ export default function WishlistsContent({ className }: { className?: string }) 
               </p>
             </div>
             <div className="shrink-0 text-left sm:text-right">
-              <Button variant="outline" size="sm" className="gap-2 w-full sm:w-auto">
-                <Plus className="w-4 h-4" />
-                {t('collections.create', 'Create wishlist')}
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setShowSettings(!showSettings)}
+                className="gap-2 w-full sm:w-auto"
+              >
+                <Share2 className="w-4 h-4" />
+                {t('wishlist.shareWithFriends')}
               </Button>
-              <div className="mt-3">
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => setShowSettings(!showSettings)}
-                  className="gap-2 w-full sm:w-auto"
-                >
-                  <Share2 className="w-4 h-4" />
-                  {t('wishlist.shareWithFriends')}
-                </Button>
-                <p className="text-xs text-muted-foreground mt-1">{t('wishlist.shareHint')}</p>
-              </div>
+              <p className="text-xs text-muted-foreground mt-2">{t('wishlist.shareHint')}</p>
             </div>
           </div>
         </div>
@@ -104,80 +106,80 @@ export default function WishlistsContent({ className }: { className?: string }) 
           </div>
         </div>
 
-        <CollectionManager className="mb-6" />
+        <div className="grid gap-6 lg:grid-cols-[320px_minmax(0,1fr)]">
+          <CollectionManager
+            className="lg:sticky lg:top-28"
+            activeCollectionId={activeCollectionId}
+            onSelect={setActiveCollectionId}
+            filterQuery={searchQuery}
+          />
 
-        {filteredCollections.length > 0 && (
-          <div className="flex gap-2 overflow-x-auto pb-2 -mx-1 px-1 mb-6">
-            {filteredCollections.map(collection => (
-              <Button
-                key={collection.id}
-                variant={activeCollectionId === collection.id ? 'default' : 'outline'}
-                size="sm"
-                className="rounded-full shrink-0"
-                onClick={() => setActiveCollectionId(collection.id)}
-              >
-                <span className="mr-2">{collection.emoji || '❤️'}</span>
-                {collection.name}
-                <span className="ml-2 text-xs text-muted-foreground">
-                  {collection.productCount ?? collection.items.length}
-                </span>
-              </Button>
-            ))}
-          </div>
-        )}
-
-        {activeCollectionId && (
           <div className="mb-16">
             <div className="flex items-center gap-2 sm:gap-3 mb-6">
               <div className="w-2 h-8 bg-gradient-to-b from-foreground to-foreground/50 rounded-full"></div>
               <h2 className="font-display text-xl sm:text-2xl font-bold">
-                {collections.find(c => c.id === activeCollectionId)?.name}
+                {collections.find(c => c.id === activeCollectionId)?.name ??
+                  t('collections.title', 'Wishlists')}
               </h2>
             </div>
 
-            {collectionItemsLoading ? (
+            {!activeCollectionId ? (
+              <div className="text-center py-12 border border-dashed border-border/30 rounded-2xl bg-card/5">
+                {t('collections.empty', 'Create a wishlist to get started')}
+              </div>
+            ) : collectionItemsLoading ? (
               <div className="text-center py-12 text-muted-foreground">Loading...</div>
-            ) : collectionItems && collectionItems.length > 0 ? (
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-                {collectionItems.map((product: unknown, index: number) => {
-                  const record = isRecord(product) ? product : {};
-                  const productRecord = isRecord(record['product']) ? record['product'] : record;
+            ) : mappedItems && mappedItems.length > 0 ? (
+              <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
+                {mappedItems.map((item: any, index: number) => {
+                  const productRecord = isRecord(item) ? item.product : item;
                   const productId =
-                    getNumberOrString(productRecord['id'], index) ??
-                    getNumberOrString(record['product_id'], index);
-                  const productName = getString(productRecord['name'], 'Unknown');
-                  const productImage =
-                    getString(productRecord['image_url']) || getString(productRecord['image']);
+                    productRecord?.id ??
+                    productRecord?.product_id ??
+                    (isRecord(item) ? item.product_id : undefined) ??
+                    index;
+                  const productName = getString(productRecord?.name, 'Unknown');
+                  const productImage = productRecord?.image_url || productRecord?.image;
                   const priceValue =
-                    productRecord['price_min'] ??
-                    productRecord['price'] ??
-                    productRecord['min_price'];
-                  const productPrice =
-                    typeof priceValue === 'number' || typeof priceValue === 'string'
-                      ? String(priceValue)
-                      : '0';
-                  const productBrand = getString(productRecord['brand']);
+                    productRecord?.price_min ?? productRecord?.price ?? productRecord?.min_price;
+                  const numericPrice =
+                    typeof priceValue === 'number'
+                      ? priceValue
+                      : typeof priceValue === 'string'
+                        ? Number(priceValue)
+                        : NaN;
+                  const productPrice = Number.isFinite(numericPrice)
+                    ? formatPrice(numericPrice)
+                    : '—';
+                  const productBrand = getString(productRecord?.brand);
 
                   return (
-                    <div
+                    <Link
                       key={`${productId}-${index}`}
-                      className="rounded-2xl border border-border/40 p-4"
+                      href={`/products/${productId}`}
+                      className="group overflow-hidden rounded-2xl border border-border/40 bg-card/50 shadow-sm transition hover:border-foreground/40"
                     >
-                      <div className="text-sm font-semibold">{productName}</div>
-                      {productBrand && (
-                        <div className="text-xs text-muted-foreground">{productBrand}</div>
-                      )}
-                      <div className="text-sm font-semibold mt-2">{productPrice}</div>
-                      {productImage && (
-                        <div className="mt-3 h-32 w-full rounded-xl bg-muted/30 overflow-hidden">
+                      <div className="relative aspect-[3/4] bg-muted/30">
+                        {productImage && (
                           <img
                             src={productImage}
                             alt={productName}
-                            className="h-full w-full object-cover"
+                            className="h-full w-full object-cover transition duration-300 group-hover:scale-[1.02]"
                           />
+                        )}
+                      </div>
+                      <div className="p-3 sm:p-4">
+                        <div className="text-sm sm:text-base font-semibold leading-snug line-clamp-2">
+                          {productName}
                         </div>
-                      )}
-                    </div>
+                        {productBrand && (
+                          <div className="text-xs text-muted-foreground mt-1">{productBrand}</div>
+                        )}
+                        <div className="text-sm sm:text-base font-semibold mt-2 sm:mt-3">
+                          {productPrice}
+                        </div>
+                      </div>
+                    </Link>
                   );
                 })}
               </div>
@@ -187,7 +189,7 @@ export default function WishlistsContent({ className }: { className?: string }) 
               </div>
             )}
           </div>
-        )}
+        </div>
       </main>
     </div>
   );

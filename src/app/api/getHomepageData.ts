@@ -52,19 +52,38 @@ export async function getHomepageData(): Promise<HomepageAPIResponse> {
       if (bff) {
         const response = bff.data;
         console.log('✅ BFF homepage data received');
-        
+
         // BFF returns: { success: true, data: { products, brands, statistics, banners } }
         const data = response.data || response;
         const products = data.products || [];
         const categories = data.categories || [];
-        const banners = data.banners || [];
+        let banners = data.banners || [];
         const stats = data.statistics || data.stats || {};
-        
+
+        if (!Array.isArray(banners) || banners.length === 0) {
+          const bannersRes = await fetchBackendJson<any>(`/banners`, {
+            next: { revalidate: 600 },
+          });
+          const bannersPayload = bannersRes?.data;
+          const fetchedBanners = (
+            bannersPayload?.data?.banners && Array.isArray(bannersPayload.data.banners)
+              ? bannersPayload.data.banners
+              : bannersPayload?.banners && Array.isArray(bannersPayload.banners)
+                ? bannersPayload.banners
+                : bannersPayload?.items && Array.isArray(bannersPayload.items)
+                  ? bannersPayload.items
+                  : Array.isArray(bannersPayload)
+                    ? bannersPayload
+                    : []
+          ) as Banner[];
+          banners = fetchedBanners;
+        }
+
         if (process.env.NODE_ENV === 'development') {
           console.log('📦 Products loaded:', products.length);
           console.log('🎨 Banners loaded:', banners.length);
         }
-        
+
         // Fetch SEO data separately
         let seoData: ExtendedSEOData | null = null;
         try {
@@ -79,7 +98,7 @@ export async function getHomepageData(): Promise<HomepageAPIResponse> {
         } catch (_seoError: unknown) {
           console.log('⚠️ SEO data not available');
         }
-        
+
         return {
           featuredProducts: products.slice(0, 8),
           newProducts: products.slice(0, 8),
@@ -99,37 +118,58 @@ export async function getHomepageData(): Promise<HomepageAPIResponse> {
         console.log('⚠️ BFF endpoint not available, falling back to individual calls');
       }
     }
-    
+
     // Fallback: Parallel requests for better performance
-    const [productsRes, categoriesRes, statsRes] = await Promise.all([
+    const [productsRes, categoriesRes, statsRes, bannersRes] = await Promise.all([
       fetchBackendJson<any>(`/products/popular?limit=12`, { next: { revalidate: 3600 } }),
       fetchBackendJson<any>(`/categories?limit=12`, { next: { revalidate: 7200 } }),
       fetchBackendJson<any>(`/statistics`, { next: { revalidate: 3600 } }),
+      fetchBackendJson<any>(`/banners`, { next: { revalidate: 600 } }),
     ]);
 
     // Process results with fallbacks
     const productsPayload = productsRes?.data;
-    const products: Product[] =
-      (productsPayload?.products || productsPayload?.data?.products || productsPayload?.items || productsPayload || []) as Product[];
-    
+    const products: Product[] = (productsPayload?.products ||
+      productsPayload?.data?.products ||
+      productsPayload?.items ||
+      productsPayload ||
+      []) as Product[];
+
     console.log('✅ Products loaded:', products.length);
-      
+
     const categoriesPayload = categoriesRes?.data;
-    const categories =
-      (categoriesPayload?.categories || categoriesPayload?.data?.categories || categoriesPayload?.items || categoriesPayload || []) as Array<{
-        id: string;
-        name: string;
-        slug: string;
-        imageUrl?: string;
-        productCount: number;
-      }>;
-      
+    const categories = (categoriesPayload?.categories ||
+      categoriesPayload?.data?.categories ||
+      categoriesPayload?.items ||
+      categoriesPayload ||
+      []) as Array<{
+      id: string;
+      name: string;
+      slug: string;
+      imageUrl?: string;
+      productCount: number;
+    }>;
+
     const statsPayload = statsRes?.data;
-    const stats = (statsPayload?.stats || statsPayload || { totalProducts: 0, totalBrands: 0, totalCategories: 0 }) as {
+    const stats = (statsPayload?.stats ||
+      statsPayload || { totalProducts: 0, totalBrands: 0, totalCategories: 0 }) as {
       totalProducts: number;
       totalBrands: number;
       totalCategories: number;
     };
+
+    const bannersPayload = bannersRes?.data;
+    const banners = (
+      bannersPayload?.data?.banners && Array.isArray(bannersPayload.data.banners)
+        ? bannersPayload.data.banners
+        : bannersPayload?.banners && Array.isArray(bannersPayload.banners)
+          ? bannersPayload.banners
+          : bannersPayload?.items && Array.isArray(bannersPayload.items)
+            ? bannersPayload.items
+            : Array.isArray(bannersPayload)
+              ? bannersPayload
+              : []
+    ) as Banner[];
 
     // If no products loaded, log warning
     if (products.length === 0) {
@@ -141,13 +181,13 @@ export async function getHomepageData(): Promise<HomepageAPIResponse> {
       newProducts: products.slice(0, 8),
       popularProducts: products.slice(0, 8),
       categories,
-      banners: [],
+      banners,
       seoData: null,
       stats,
     };
   } catch (error) {
     console.error('Error fetching homepage data:', error);
-    
+
     // Return empty data as fallback
     return {
       featuredProducts: [],
@@ -181,8 +221,9 @@ export function getMockHomepageData(): HomepageAPIResponse {
     banners: [],
     seoData: {
       title: 'WearSearch - Find Your Perfect Style',
-      description: 'Discover the latest fashion trends and products from top brands. ' + 
-                  'Shop clothing, shoes, and accessories with fast shipping.',
+      description:
+        'Discover the latest fashion trends and products from top brands. ' +
+        'Shop clothing, shoes, and accessories with fast shipping.',
       keywords: 'fashion, clothing, shoes, accessories, style',
       canonicalUrl: process.env.NEXT_PUBLIC_SITE_URL || 'https://wearsearch.com',
       ogTitle: 'WearSearch - Find Your Perfect Style',

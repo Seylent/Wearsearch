@@ -11,6 +11,7 @@ import { useTranslation } from 'react-i18next';
 import { translateSuccessCode } from '@/utils/errorTranslation';
 import { useFavoritesContext } from '@/contexts/FavoritesContext';
 import { cn } from '@/lib/utils';
+import { useQueryClient } from '@tanstack/react-query';
 
 interface FavoriteButtonProps {
   productId: string;
@@ -83,6 +84,7 @@ export function FavoriteButton({
 
   // Use context instead of direct hook call (prevents multiple API requests)
   const { isFavorited: isInFavorites, isLoading: isFavoritesLoading } = useFavoritesContext();
+  const queryClient = useQueryClient();
   const addFavorite = useAddFavorite();
   const removeFavorite = useRemoveFavorite();
 
@@ -132,20 +134,56 @@ export function FavoriteButton({
     try {
       if (isFavorited) {
         await removeFavorite.mutateAsync(productId);
+        queryClient.invalidateQueries({ queryKey: ['favorites'] });
         toast({
           title: 'Успішно',
           description: 'Товар видалено з обраного',
         });
       } else {
-        await addFavorite.mutateAsync(productId);
+        const resp = await addFavorite.mutateAsync(productId);
+        queryClient.invalidateQueries({ queryKey: ['favorites'] });
         triggerBurstAnimation();
-        toast({
-          title: 'Успішно',
-          description: 'Товар додано в обране',
-        });
+        const data: any = (resp && (resp as any).data) || resp || {};
+        const message = data?.message;
+        const fav = data?.favorite;
+        if (message) {
+          toast({ title: 'Успішно', description: message });
+        } else if (fav) {
+          if (fav.id || fav.created_at) {
+            toast({ title: 'Успішно', description: 'Товар додано в обране' });
+          } else if (fav.product_id && (fav.added_at === null || fav.added_at === undefined)) {
+            toast({ title: 'Успішно', description: 'Товар вже додано до обраного' });
+          } else {
+            toast({ title: 'Успішно', description: 'Товар додано в обране' });
+          }
+        } else {
+          toast({ title: 'Успішно', description: 'Товар додано в обране' });
+        }
       }
     } catch (error: unknown) {
       console.error('Favorite action failed:', error);
+      // If the product is already in favorites (idempotent), do not surface a destructive error
+      const existingErrMsg = (() => {
+        try {
+          const anyError: any = error;
+          return (
+            anyError?.response?.data?.error ??
+            anyError?.response?.data?.message ??
+            anyError?.message ??
+            ''
+          );
+        } catch {
+          return '';
+        }
+      })();
+      if (existingErrMsg && /already\s+in\s+favorites|already\s+exists/i.test(existingErrMsg)) {
+        toast({
+          title: 'Успішно',
+          description: existingErrMsg,
+          variant: 'default',
+        });
+        return;
+      }
       const errorMsg = (() => {
         if (!error || typeof error !== 'object') return 'Помилка при оновленні обраного';
         const maybeAxiosError = error as {

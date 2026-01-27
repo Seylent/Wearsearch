@@ -125,14 +125,15 @@ export const useCollections = () => {
   useEffect(() => {
     if (!isLoggedIn) {
       setLocalCollections(getStoredCollections());
-    } else {
-      // Load items mapping for API users
-      setCollectionItems(getStoredItems());
+      return;
     }
+
+    // Load items mapping for API users
+    setCollectionItems(getStoredItems());
   }, [isLoggedIn]);
 
   // API query for authenticated users
-  const { data: apiCollections, isLoading } = useQuery({
+  const { data: apiCollections, isLoading } = useQuery<ApiCollection[]>({
     queryKey: ['collections'],
     queryFn: collectionsService.getCollections,
     enabled: isLoggedIn,
@@ -189,6 +190,90 @@ export const useCollections = () => {
         };
       })
     : localCollections;
+
+  const createLocalCollection = useCallback(
+    (name: string, emoji?: string, description?: string): Collection => {
+      const newCollection: Collection = {
+        id: generateId(),
+        name: name.trim(),
+        emoji,
+        description,
+        items: [],
+        productCount: 0,
+        createdAt: Date.now(),
+        updatedAt: Date.now(),
+      };
+
+      setLocalCollections(prev => {
+        const updated = [...prev, newCollection];
+        saveCollections(updated);
+        return updated;
+      });
+
+      return newCollection;
+    },
+    []
+  );
+
+  const updateLocalCollection = useCallback(
+    (
+      collectionId: string,
+      updates: Partial<Pick<Collection, 'name' | 'emoji' | 'description'>>
+    ) => {
+      setLocalCollections(prev => {
+        const updated = prev.map(c =>
+          c.id === collectionId ? { ...c, ...updates, updatedAt: Date.now() } : c
+        );
+        saveCollections(updated);
+        return updated;
+      });
+    },
+    []
+  );
+
+  const deleteLocalCollection = useCallback((collectionId: string) => {
+    setLocalCollections(prev => {
+      const updated = prev.filter(c => c.id !== collectionId);
+      saveCollections(updated);
+      return updated;
+    });
+  }, []);
+
+  const addLocalItem = useCallback((collectionId: string, productId: string) => {
+    setLocalCollections(prev => {
+      const updated = prev.map(c => {
+        if (c.id !== collectionId) return c;
+        if (c.items.some(item => item.productId === productId)) return c;
+
+        const items = [...c.items, { productId, addedAt: Date.now() }];
+        return {
+          ...c,
+          items,
+          productCount: items.length,
+          updatedAt: Date.now(),
+        };
+      });
+      saveCollections(updated);
+      return updated;
+    });
+  }, []);
+
+  const removeLocalItem = useCallback((collectionId: string, productId: string) => {
+    setLocalCollections(prev => {
+      const updated = prev.map(c => {
+        if (c.id !== collectionId) return c;
+        const items = c.items.filter(item => item.productId !== productId);
+        return {
+          ...c,
+          items,
+          productCount: items.length,
+          updatedAt: Date.now(),
+        };
+      });
+      saveCollections(updated);
+      return updated;
+    });
+  }, []);
 
   // Create collection mutation
   const createMutation = useMutation({
@@ -306,26 +391,9 @@ export const useCollections = () => {
         return match ? toLocalCollection(match) : null;
       }
 
-      const newCollection: Collection = {
-        id: generateId(),
-        name: trimmedName,
-        emoji,
-        description,
-        items: [],
-        productCount: 0,
-        createdAt: Date.now(),
-        updatedAt: Date.now(),
-      };
-
-      setLocalCollections(prev => {
-        const updated = [...prev, newCollection];
-        saveCollections(updated);
-        return updated;
-      });
-
-      return newCollection;
+      return createLocalCollection(trimmedName, emoji, description);
     },
-    [isLoggedIn, createMutation]
+    [isLoggedIn, createMutation, createLocalCollection, queryClient]
   );
 
   /**
@@ -342,15 +410,12 @@ export const useCollections = () => {
           saveItems(updated);
           return updated;
         });
-      } else {
-        setLocalCollections(prev => {
-          const updated = prev.filter(c => c.id !== collectionId);
-          saveCollections(updated);
-          return updated;
-        });
+        return;
       }
+
+      deleteLocalCollection(collectionId);
     },
-    [isLoggedIn, deleteMutation]
+    [isLoggedIn, deleteMutation, deleteLocalCollection]
   );
 
   /**
@@ -363,84 +428,61 @@ export const useCollections = () => {
     ) => {
       if (isLoggedIn) {
         updateMutation.mutate({ id: collectionId, ...updates });
-      } else {
-        setLocalCollections(prev => {
-          const updated = prev.map(c =>
-            c.id === collectionId ? { ...c, ...updates, updatedAt: Date.now() } : c
-          );
-          saveCollections(updated);
-          return updated;
-        });
+        return;
       }
+
+      updateLocalCollection(collectionId, updates);
     },
-    [isLoggedIn, updateMutation]
+    [isLoggedIn, updateMutation, updateLocalCollection]
   );
 
   /**
    * Add product to collection
    */
   const addToCollection = useCallback(
-    (collectionId: string, productId: string, notes?: string) => {
+    async (collectionId: string, productId: string, notes?: string) => {
       if (isLoggedIn) {
-        // Call API
-        addItemMutation.mutate({ collectionId, productId, notes });
-      } else {
-        setLocalCollections(prev => {
-          const updated = prev.map(c => {
-            if (c.id !== collectionId) return c;
-
-            // Check if already in collection
-            if (c.items.some(item => item.productId === productId)) return c;
-
-            return {
-              ...c,
-              items: [...c.items, { productId, addedAt: Date.now() }],
-              updatedAt: Date.now(),
-            };
-          });
-          saveCollections(updated);
-          return updated;
-        });
+        try {
+          await addItemMutation.mutateAsync({ collectionId, productId, notes });
+          return;
+        } catch {
+          return;
+        }
       }
+
+      addLocalItem(collectionId, productId);
     },
-    [isLoggedIn, addItemMutation]
+    [isLoggedIn, addItemMutation, addLocalItem]
   );
 
   /**
    * Remove product from collection
    */
   const removeFromCollection = useCallback(
-    (collectionId: string, productId: string) => {
+    async (collectionId: string, productId: string) => {
       if (isLoggedIn) {
-        // Call API
-        removeItemMutation.mutate({ collectionId, productId });
-        // Also update local tracking
-        setCollectionItems(prev => {
-          const items = prev[collectionId] || [];
-          const updated = {
-            ...prev,
-            [collectionId]: items.filter(item => item.productId !== productId),
-          };
-          saveItems(updated);
-          return updated;
-        });
-      } else {
-        setLocalCollections(prev => {
-          const updated = prev.map(c => {
-            if (c.id !== collectionId) return c;
-
-            return {
-              ...c,
-              items: c.items.filter(item => item.productId !== productId),
-              updatedAt: Date.now(),
+        try {
+          // Call API
+          await removeItemMutation.mutateAsync({ collectionId, productId });
+          // Also update local tracking
+          setCollectionItems(prev => {
+            const items = prev[collectionId] || [];
+            const updated = {
+              ...prev,
+              [collectionId]: items.filter(item => item.productId !== productId),
             };
+            saveItems(updated);
+            return updated;
           });
-          saveCollections(updated);
-          return updated;
-        });
+          return;
+        } catch {
+          return;
+        }
       }
+
+      removeLocalItem(collectionId, productId);
     },
-    [isLoggedIn, removeItemMutation]
+    [isLoggedIn, removeItemMutation, removeLocalItem]
   );
 
   /**
