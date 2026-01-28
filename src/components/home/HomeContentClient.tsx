@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import Link from 'next/link';
 import { useTranslation } from 'react-i18next';
 import { ArrowUpRight } from 'lucide-react';
@@ -52,14 +52,6 @@ export default function HomeContentClient({
   const [products, setProducts] = useState<Product[]>(initialProducts);
   const [productsCurrency, setProductsCurrency] = useState<'UAH' | 'USD'>('UAH');
   const [isLoading, setIsLoading] = useState(false);
-  const categoriesTrackRef = useRef<HTMLDivElement | null>(null);
-  const genderTrackRef = useRef<HTMLDivElement | null>(null);
-  const [isDraggingCategories, setIsDraggingCategories] = useState(false);
-  const [isDraggingGender, setIsDraggingGender] = useState(false);
-  const dragStartX = useRef(0);
-  const dragScrollLeft = useRef(0);
-  const genderDragStartX = useRef(0);
-  const genderDragScrollLeft = useRef(0);
 
   const fallbackCategories = useMemo(
     () =>
@@ -78,106 +70,40 @@ export default function HomeContentClient({
   const categoryCards = normalizedCategories.map(category => {
     const slug = (category.slug || category.name).toLowerCase();
     const normalizedSlug = slug.replace(/\s+/g, '-');
+    const nameKey = (category.name || '').toLowerCase().replace(/\s+/g, '-');
     const imageMap: Record<string, string> = {
-      jackets:
-        'https://images.unsplash.com/photo-1483985988355-763728e1935b?q=80&w=1200&auto=format&fit=crop',
-      hoodies:
-        'https://images.unsplash.com/photo-1512436991641-6745cdb1723f?q=80&w=1200&auto=format&fit=crop',
-      't-shirts':
-        'https://images.unsplash.com/photo-1521572163474-6864f9cf17ab?q=80&w=1200&auto=format&fit=crop',
-      pants:
-        'https://images.unsplash.com/photo-1475178626620-a4d074967452?q=80&w=1200&auto=format&fit=crop',
-      jeans:
-        'https://images.unsplash.com/photo-1541099649105-f69ad21f3246?q=80&w=1200&auto=format&fit=crop',
-      shorts:
-        'https://images.unsplash.com/photo-1516826957135-700dedea698c?q=80&w=1200&auto=format&fit=crop',
-      shoes:
-        'https://images.unsplash.com/photo-1528701800489-20be3c0ea6d2?q=80&w=1200&auto=format&fit=crop',
-      accessories:
-        'https://images.unsplash.com/photo-1483985988355-763728e1935b?q=80&w=1200&auto=format&fit=crop',
+      jackets: '/home/category-jackets.webp',
+      puffer: '/home/category-jackets.webp',
+      hoodies: '/home/category-hoodies.webp',
+      hoodie: '/home/category-hoodies.webp',
+      't-shirts': '/home/category-tshirts.webp',
+      tshirts: '/home/category-tshirts.webp',
+      't-shirt': '/home/category-tshirts.webp',
+      pants: '/home/category-pants.webp',
+      sweatpants: '/home/category-pants.webp',
+      jeans: '/home/category-jeans.webp',
+      shorts: '/home/category-shorts.webp',
+      shoes: '/home/category-shoes.webp',
+      sneakers: '/home/category-shoes.webp',
+      accessories: '/home/category-accessories.webp',
+      // Ukrainian fallbacks
+      куртки: '/home/category-jackets.webp',
+      пуховики: '/home/category-jackets.webp',
+      худі: '/home/category-hoodies.webp',
+      футболки: '/home/category-tshirts.webp',
+      штани: '/home/category-pants.webp',
+      джинси: '/home/category-jeans.webp',
+      шорти: '/home/category-shorts.webp',
+      взуття: '/home/category-shoes.webp',
+      аксесуари: '/home/category-accessories.webp',
     };
+    const localImage =
+      imageMap[normalizedSlug] || imageMap[nameKey] || imageMap[slug] || imageMap[category.name];
     return {
       ...category,
-      imageUrl: category.imageUrl || imageMap[normalizedSlug],
-      tone:
-        {
-          jackets: 'from-neutral-100 via-white to-neutral-200',
-          hoodies: 'from-stone-100 via-white to-stone-200',
-          't-shirts': 'from-zinc-100 via-white to-zinc-200',
-          pants: 'from-slate-100 via-white to-slate-200',
-          jeans: 'from-neutral-100 via-white to-neutral-200',
-          shorts: 'from-amber-100/70 via-white to-amber-200/70',
-          shoes: 'from-emerald-100/60 via-white to-emerald-200/60',
-          accessories: 'from-sky-100/70 via-white to-sky-200/70',
-        }[normalizedSlug] || 'from-neutral-100 via-white to-neutral-200',
+      imageUrl: localImage || category.imageUrl,
     };
   });
-
-  const handleCategoryScroll = (direction: 'left' | 'right') => {
-    const track = categoriesTrackRef.current;
-    if (!track) return;
-    const scrollAmount = track.clientWidth * 0.7;
-    track.scrollBy({
-      left: direction === 'left' ? -scrollAmount : scrollAmount,
-      behavior: 'smooth',
-    });
-  };
-
-  const handleCategoryPointerDown = (event: React.PointerEvent<HTMLDivElement>) => {
-    const track = categoriesTrackRef.current;
-    if (!track) return;
-    setIsDraggingCategories(true);
-    dragStartX.current = event.clientX;
-    dragScrollLeft.current = track.scrollLeft;
-    track.setPointerCapture(event.pointerId);
-  };
-
-  const handleCategoryPointerMove = (event: React.PointerEvent<HTMLDivElement>) => {
-    const track = categoriesTrackRef.current;
-    if (!track || !isDraggingCategories) return;
-    const distance = event.clientX - dragStartX.current;
-    track.scrollLeft = dragScrollLeft.current - distance;
-  };
-
-  const handleCategoryPointerUp = (event: React.PointerEvent<HTMLDivElement>) => {
-    const track = categoriesTrackRef.current;
-    if (!track) return;
-    setIsDraggingCategories(false);
-    track.releasePointerCapture(event.pointerId);
-  };
-
-  const handleGenderScroll = (direction: 'left' | 'right') => {
-    const track = genderTrackRef.current;
-    if (!track) return;
-    const scrollAmount = track.clientWidth * 0.7;
-    track.scrollBy({
-      left: direction === 'left' ? -scrollAmount : scrollAmount,
-      behavior: 'smooth',
-    });
-  };
-
-  const handleGenderPointerDown = (event: React.PointerEvent<HTMLDivElement>) => {
-    const track = genderTrackRef.current;
-    if (!track) return;
-    setIsDraggingGender(true);
-    genderDragStartX.current = event.clientX;
-    genderDragScrollLeft.current = track.scrollLeft;
-    track.setPointerCapture(event.pointerId);
-  };
-
-  const handleGenderPointerMove = (event: React.PointerEvent<HTMLDivElement>) => {
-    const track = genderTrackRef.current;
-    if (!track || !isDraggingGender) return;
-    const distance = event.clientX - genderDragStartX.current;
-    track.scrollLeft = genderDragScrollLeft.current - distance;
-  };
-
-  const handleGenderPointerUp = (event: React.PointerEvent<HTMLDivElement>) => {
-    const track = genderTrackRef.current;
-    if (!track) return;
-    setIsDraggingGender(false);
-    track.releasePointerCapture(event.pointerId);
-  };
 
   useEffect(() => {
     setIsMounted(true);
@@ -265,7 +191,7 @@ export default function HomeContentClient({
           </section>
         )}
 
-        <section className="py-10 sm:py-14 bg-background text-foreground border-y border-border">
+        <section className="py-12 sm:py-16 bg-white text-foreground dark:bg-black border-y border-border">
           <div className="container mx-auto px-4 sm:px-6">
             <header className="flex items-end justify-between gap-4 mb-6 sm:mb-8">
               <div>
@@ -278,7 +204,7 @@ export default function HomeContentClient({
                     {t('home.shopByGender', 'Shop by vibe')}
                   </span>
                 </div>
-                <h2 className="font-display text-2xl sm:text-3xl md:text-4xl font-bold text-foreground">
+                <h2 className="font-display text-2xl sm:text-3xl md:text-4xl font-bold">
                   {t('home.genderPicks', 'Find your lane')}
                 </h2>
                 <p className="text-sm sm:text-base text-muted-foreground mt-2">
@@ -289,83 +215,42 @@ export default function HomeContentClient({
 
             <div className="flex items-center justify-between text-xs text-muted-foreground mb-3 sm:mb-4">
               <span>{t('home.scrollHint', 'Swipe to explore')}</span>
-              <span className="hidden sm:inline">
-                {t('home.scrollHintDesktop', 'Drag or use arrows')}
-              </span>
             </div>
 
             <div className="relative">
-              <button
-                type="button"
-                onClick={() => handleGenderScroll('left')}
-                className="hidden sm:flex absolute left-0 top-1/2 -translate-y-1/2 z-10 h-9 w-9 items-center justify-center rounded-full border border-border bg-background/90 text-muted-foreground shadow-sm hover:text-foreground"
-                aria-label={t('home.scrollLeft', 'Scroll left')}
-              >
-                ‹
-              </button>
-              <button
-                type="button"
-                onClick={() => handleGenderScroll('right')}
-                className="hidden sm:flex absolute right-0 top-1/2 -translate-y-1/2 z-10 h-9 w-9 items-center justify-center rounded-full border border-border bg-background/90 text-muted-foreground shadow-sm hover:text-foreground"
-                aria-label={t('home.scrollRight', 'Scroll right')}
-              >
-                ›
-              </button>
+              <div className="pointer-events-none absolute inset-y-0 left-0 w-8 bg-gradient-to-r from-white to-transparent dark:from-black" />
+              <div className="pointer-events-none absolute inset-y-0 right-0 w-8 bg-gradient-to-l from-white to-transparent dark:from-black" />
 
-              <div className="pointer-events-none absolute inset-y-0 left-0 w-8 bg-gradient-to-r from-background to-transparent" />
-              <div className="pointer-events-none absolute inset-y-0 right-0 w-8 bg-gradient-to-l from-background to-transparent" />
-
-              <div
-                ref={genderTrackRef}
-                onPointerDown={handleGenderPointerDown}
-                onPointerMove={handleGenderPointerMove}
-                onPointerUp={handleGenderPointerUp}
-                onPointerLeave={handleGenderPointerUp}
-                className={`flex gap-4 overflow-x-auto pb-2 -mx-1 px-1 snap-x snap-mandatory ${
-                  isDraggingGender ? 'cursor-grabbing' : 'cursor-grab'
-                }`}
-              >
+              <div className="flex gap-4 overflow-x-auto pb-2 -mx-1 px-1 snap-x snap-mandatory">
                 {[
                   {
                     label: t('home.women', 'Women'),
                     sub: t('home.womenTag', 'Soft power tailoring'),
                     href: '/products?gender=women',
-                    image:
-                      'https://images.unsplash.com/photo-1485230895905-ec40ba36b9bc?q=80&w=1600&auto=format&fit=crop',
+                    accent: 'from-fuchsia-500/60 via-fuchsia-400/30 to-transparent',
                   },
                   {
                     label: t('home.men', 'Men'),
                     sub: t('home.menTag', 'Utility with edge'),
                     href: '/products?gender=men',
-                    image:
-                      'https://images.unsplash.com/photo-1495385794356-15371f348c31?q=80&w=1600&auto=format&fit=crop',
+                    accent: 'from-cyan-500/60 via-sky-400/30 to-transparent',
                   },
                   {
                     label: t('home.unisex', 'Unisex'),
                     sub: t('home.unisexTag', 'Fluid essentials'),
                     href: '/products?gender=unisex',
-                    image:
-                      'https://images.unsplash.com/photo-1503342217505-b0a15ec3261c?q=80&w=1600&auto=format&fit=crop',
+                    accent: 'from-emerald-500/60 via-lime-400/30 to-transparent',
                   },
                 ].map(card => (
                   <Link
                     key={card.label}
                     href={card.href}
-                    className="group relative min-w-[260px] sm:min-w-[320px] snap-start overflow-hidden rounded-2xl border border-border bg-card transition hover:border-foreground/40 shadow-[0_10px_24px_rgba(15,15,15,0.08)]"
+                    className="group relative min-w-[260px] sm:min-w-[300px] min-h-[170px] snap-start rounded-2xl border border-border bg-white/90 dark:bg-black p-5 transition hover:border-foreground/40"
                   >
-                    <div className="absolute inset-0">
-                      <img
-                        src={card.image}
-                        alt={card.label}
-                        className="h-full w-full object-cover transition duration-500 group-hover:scale-[1.03]"
-                      />
-                    </div>
-                    <div className="absolute inset-0 bg-gradient-to-r from-background/95 via-background/70 to-background/10" />
-                    <div className="relative z-10 flex h-full flex-col gap-3 p-5">
-                      <div className="text-xl sm:text-2xl font-semibold text-foreground">
+                    <div className="relative z-10 flex h-full flex-col gap-3">
+                      <div className="text-lg sm:text-xl font-semibold text-foreground">
                         {card.label}
                       </div>
-                      <p className="text-sm text-muted-foreground max-w-xs">{card.sub}</p>
                       <div className="mt-auto inline-flex items-center gap-2 text-sm text-foreground">
                         {t('home.browse', 'Browse')}
                         <ArrowUpRight className="h-4 w-4" />
@@ -378,7 +263,7 @@ export default function HomeContentClient({
           </div>
         </section>
 
-        <section className="py-10 sm:py-16 bg-background text-foreground border-b border-border">
+        <section className="py-10 sm:py-16 bg-white text-foreground dark:bg-black border-b border-border">
           <div className="container mx-auto px-4 sm:px-6">
             <header className="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-4 mb-6">
               <div>
@@ -408,59 +293,21 @@ export default function HomeContentClient({
             </header>
 
             <div className="relative">
-              <button
-                type="button"
-                onClick={() => handleCategoryScroll('left')}
-                className="hidden sm:flex absolute left-0 top-1/2 -translate-y-1/2 z-10 h-10 w-10 items-center justify-center rounded-full border border-border bg-background/90 text-muted-foreground shadow-sm hover:text-foreground"
-                aria-label={t('home.scrollLeft', 'Scroll left')}
-              >
-                ‹
-              </button>
-              <button
-                type="button"
-                onClick={() => handleCategoryScroll('right')}
-                className="hidden sm:flex absolute right-0 top-1/2 -translate-y-1/2 z-10 h-10 w-10 items-center justify-center rounded-full border border-border bg-background/90 text-muted-foreground shadow-sm hover:text-foreground"
-                aria-label={t('home.scrollRight', 'Scroll right')}
-              >
-                ›
-              </button>
+              <div className="pointer-events-none absolute inset-y-0 left-0 w-8 bg-gradient-to-r from-white to-transparent dark:from-black" />
+              <div className="pointer-events-none absolute inset-y-0 right-0 w-8 bg-gradient-to-l from-white to-transparent dark:from-black" />
 
-              <div className="pointer-events-none absolute inset-y-0 left-0 w-8 bg-gradient-to-r from-background to-transparent" />
-              <div className="pointer-events-none absolute inset-y-0 right-0 w-8 bg-gradient-to-l from-background to-transparent" />
-
-              <div
-                ref={categoriesTrackRef}
-                onPointerDown={handleCategoryPointerDown}
-                onPointerMove={handleCategoryPointerMove}
-                onPointerUp={handleCategoryPointerUp}
-                onPointerLeave={handleCategoryPointerUp}
-                className={`flex gap-4 overflow-x-auto pb-4 -mx-1 px-1 snap-x snap-mandatory ${
-                  isDraggingCategories ? 'cursor-grabbing' : 'cursor-grab'
-                }`}
-              >
+              <div className="flex gap-4 overflow-x-auto pb-4 -mx-1 px-1 snap-x snap-mandatory">
                 {categoryCards.map(category => (
                   <Link
                     key={category.id}
                     href={`/products?type=${encodeURIComponent(category.slug)}`}
-                    className="group min-w-[220px] sm:min-w-[260px] snap-start rounded-2xl border border-border bg-card overflow-hidden transition hover:border-foreground/40 shadow-[0_10px_20px_rgba(15,15,15,0.06)]"
+                    className="group relative min-w-[240px] sm:min-w-[280px] min-h-[120px] snap-start rounded-2xl border border-border bg-white/90 dark:bg-zinc-950/80 p-5 transition hover:border-foreground/40"
                   >
-                    <div className={`relative h-40 bg-gradient-to-br ${category.tone}`}>
-                      {category.imageUrl && (
-                        <img
-                          src={category.imageUrl}
-                          alt={category.name}
-                          className="h-full w-full object-cover transition duration-300 group-hover:scale-[1.02]"
-                        />
-                      )}
-                      <div className="absolute inset-0 bg-gradient-to-t from-background/70 via-background/30 to-transparent" />
+                    <div className="absolute right-4 top-4 text-xs text-muted-foreground opacity-0 transition group-hover:opacity-100">
+                      {t('home.open', 'Open')}
                     </div>
-                    <div className="p-4">
-                      <div className="text-base font-semibold text-foreground">{category.name}</div>
-                      <div className="text-xs text-muted-foreground mt-1">
-                        {category.productCount
-                          ? `${category.productCount} ${t('home.items', 'items')}`
-                          : t('home.explore', 'Explore')}
-                      </div>
+                    <div className="h-full flex items-center justify-center text-base font-semibold text-foreground text-center">
+                      {category.name}
                     </div>
                   </Link>
                 ))}

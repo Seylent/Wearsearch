@@ -207,7 +207,7 @@ body[style*='padding-right'] {
 @layer base {
   :root {
     /* Light theme (default tokens) */
-    --background: 0 0% 98%;
+    --background: 0 0% 100%;
     --foreground: 0 0% 8%;
 
     --card: 0 0% 100%;
@@ -241,8 +241,8 @@ body[style*='padding-right'] {
     --neon-glow: 0 0 40px rgba(0, 0, 0, 0.08);
     --neon-glow-soft: 0 0 60px rgba(0, 0, 0, 0.05);
     --neon-glow-intense: 0 0 80px rgba(0, 0, 0, 0.12);
-    --card-surface: 0 0% 98%;
-    --card-surface-hover: 0 0% 95%;
+    --card-surface: 0 0% 100%;
+    --card-surface-hover: 0 0% 97%;
     --text-secondary: 0 0% 32%;
     --text-tertiary: 0 0% 45%;
     --neon-fg: 0 0% 12%;
@@ -255,8 +255,8 @@ body[style*='padding-right'] {
     --page-gradient:
       radial-gradient(circle at 15% 15%, rgba(0, 0, 0, 0.08), transparent 45%),
       radial-gradient(circle at 85% 20%, rgba(0, 0, 0, 0.05), transparent 50%),
-      linear-gradient(180deg, #ffffff 0%, #f1f1f1 100%);
-    --section-gradient: linear-gradient(180deg, #ffffff 0%, #f2f2f2 100%);
+      linear-gradient(180deg, #ffffff 0%, #ffffff 100%);
+    --section-gradient: linear-gradient(180deg, #ffffff 0%, #ffffff 100%);
     --surface-glow:
       radial-gradient(circle at 20% 10%, rgba(0, 0, 0, 0.08), transparent 50%),
       radial-gradient(circle at 80% 0%, rgba(0, 0, 0, 0.06), transparent 55%);

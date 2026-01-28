@@ -8,15 +8,16 @@ import ukTranslations from './locales/uk.json';
  */
 export const SUPPORTED_LANGUAGES = {
   EN: 'en',
-  UK: 'uk'
+  UK: 'uk',
 } as const;
 
-export type SupportedLanguage = typeof SUPPORTED_LANGUAGES[keyof typeof SUPPORTED_LANGUAGES];
+export type SupportedLanguage = (typeof SUPPORTED_LANGUAGES)[keyof typeof SUPPORTED_LANGUAGES];
 
 export const LANGUAGE_CONFIG = {
   DEFAULT: SUPPORTED_LANGUAGES.UK,
   STORAGE_KEY: 'wearsearch_language',
-  SUPPORTED: [SUPPORTED_LANGUAGES.UK, SUPPORTED_LANGUAGES.EN]
+  EXPLICIT_KEY: 'wearsearch_language_explicit',
+  SUPPORTED: [SUPPORTED_LANGUAGES.UK, SUPPORTED_LANGUAGES.EN],
 } as const;
 
 /**
@@ -50,6 +51,7 @@ export const languageService = {
         language = LANGUAGE_CONFIG.DEFAULT;
       }
       localStorage.setItem(LANGUAGE_CONFIG.STORAGE_KEY, language);
+      localStorage.setItem(LANGUAGE_CONFIG.EXPLICIT_KEY, 'true');
 
       // Also persist to cookie so the server can render correct <html lang>
       if (typeof document !== 'undefined') {
@@ -76,16 +78,16 @@ export const languageService = {
   getInitialLanguage(): SupportedLanguage {
     // URL detection disabled - use stored preference only
     return this.getLanguage();
-  }
+  },
 };
 
 const resources = {
   en: {
-    translation: enTranslations
+    translation: enTranslations,
   },
   uk: {
-    translation: ukTranslations
-  }
+    translation: ukTranslations,
+  },
 };
 
 // 🔒 ALWAYS use default language on initial load to prevent hydration mismatch.
@@ -93,45 +95,43 @@ const resources = {
 const initialLanguage = LANGUAGE_CONFIG.DEFAULT;
 
 if (!i18n.isInitialized) {
-  i18n
-    .use(initReactI18next)
-    .init({
-      resources,
-      lng: initialLanguage,
-      fallbackLng: LANGUAGE_CONFIG.DEFAULT,
-      
-      interpolation: {
-        escapeValue: false
-      },
+  i18n.use(initReactI18next).init({
+    resources,
+    lng: initialLanguage,
+    fallbackLng: LANGUAGE_CONFIG.DEFAULT,
 
-      // Missing key handling for better debugging
-      saveMissing: true,
-      missingKeyHandler: (lngs, ns, key, fallbackValue) => {
-        // Only log in development and use debug level to reduce noise
-        if (process.env.NODE_ENV !== 'production') {
-          console.debug(`[i18n] Missing key: "${key}" (${lngs.join(', ')}) -> "${fallbackValue}"`);
-        }
-      },
+    interpolation: {
+      escapeValue: false,
+    },
 
-      // Return key if translation is missing (instead of empty string)
-      returnNull: false,
-      returnEmptyString: false,
-      
-      // Prevent hydration issues
-      react: {
-        useSuspense: false
+    // Missing key handling for better debugging
+    saveMissing: true,
+    missingKeyHandler: (lngs, ns, key, fallbackValue) => {
+      // Only log in development and use debug level to reduce noise
+      if (process.env.NODE_ENV !== 'production') {
+        console.debug(`[i18n] Missing key: "${key}" (${lngs.join(', ')}) -> "${fallbackValue}"`);
       }
-    });
+    },
+
+    // Return key if translation is missing (instead of empty string)
+    returnNull: false,
+    returnEmptyString: false,
+
+    // Prevent hydration issues
+    react: {
+      useSuspense: false,
+    },
+  });
 
   // Centralized language change handler
-  i18n.on('languageChanged', (lng) => {
+  i18n.on('languageChanged', lng => {
     languageService.setLanguage(lng as SupportedLanguage);
-    
+
     // Update HTML lang attribute for accessibility and SEO
     if (typeof document !== 'undefined') {
       document.documentElement.lang = lng;
     }
-    
+
     // Log language change in development
     if (process.env.NODE_ENV !== 'production') {
       console.log(`Language changed to: ${lng}`);
