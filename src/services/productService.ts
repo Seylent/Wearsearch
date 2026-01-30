@@ -23,13 +23,19 @@ export interface Product {
   name: string;
   category: string;
   price: string;
-  image?: string;        // Frontend field
-  image_url?: string;    // Backend field
+  price_min?: string | number;
+  min_price?: string | number;
+  max_price?: string | number;
+  maxPrice?: string | number;
+  currency?: string;
+  image?: string; // Frontend field
+  image_url?: string; // Backend field
   images?: string[];
   description: string;
   stores?: Store[];
   color: string;
   type: string;
+  saves_count?: number;
   brand_id?: number;
   brand?: string;
   gender?: string;
@@ -56,6 +62,11 @@ export interface PaginationParams {
   limit?: number;
 }
 
+export interface PopularSavedOptions {
+  limit?: number;
+  noCache?: boolean;
+}
+
 export interface ProductsResponse {
   products: Product[];
   total: number;
@@ -73,12 +84,9 @@ export const productService = {
     pagination?: PaginationParams
   ): Promise<ProductsResponse> {
     try {
-      const response: AxiosResponse<ProductsResponse> = await api.get(
-        ENDPOINTS.PRODUCTS.LIST,
-        {
-          params: { ...filters, ...pagination },
-        }
-      );
+      const response: AxiosResponse<ProductsResponse> = await api.get(ENDPOINTS.PRODUCTS.LIST, {
+        params: { ...filters, ...pagination },
+      });
       return response.data;
     } catch (error) {
       throw new Error(handleApiError(error));
@@ -124,12 +132,9 @@ export const productService = {
    */
   async searchProducts(query: string, pagination?: PaginationParams): Promise<ProductsResponse> {
     try {
-      const response: AxiosResponse<ProductsResponse> = await api.get(
-        ENDPOINTS.PRODUCTS.SEARCH,
-        {
-          params: { q: query, ...pagination },
-        }
-      );
+      const response: AxiosResponse<ProductsResponse> = await api.get(ENDPOINTS.PRODUCTS.SEARCH, {
+        params: { q: query, ...pagination },
+      });
       return response.data;
     } catch (error) {
       throw new Error(handleApiError(error));
@@ -161,10 +166,31 @@ export const productService = {
    */
   async getCategories(): Promise<string[]> {
     try {
-      const response: AxiosResponse<string[]> = await api.get(
-        ENDPOINTS.PRODUCTS.CATEGORIES
-      );
+      const response: AxiosResponse<string[]> = await api.get(ENDPOINTS.PRODUCTS.CATEGORIES);
       return response.data;
+    } catch (error) {
+      throw new Error(handleApiError(error));
+    }
+  },
+
+  /**
+   * Get top products by saves (wishlist + favorites)
+   */
+  async getPopularSaved(options: PopularSavedOptions = {}): Promise<Product[]> {
+    try {
+      const params: Record<string, string | number> = {};
+      if (options.limit) params.limit = options.limit;
+      if (options.noCache) params.no_cache = 1;
+
+      const response: AxiosResponse<unknown> = await api.get(ENDPOINTS.PRODUCTS.POPULAR_SAVED, {
+        params,
+      });
+      const body: unknown = response.data;
+      const items = getArrayProp(body, 'items');
+      if (items) return items as Product[];
+      if (Array.isArray(body)) return body as Product[];
+      const products = getArrayProp(body, 'products');
+      return products ? (products as Product[]) : [];
     } catch (error) {
       throw new Error(handleApiError(error));
     }

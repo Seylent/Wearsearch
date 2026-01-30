@@ -13,7 +13,8 @@ import type { User } from '@/types';
 // Cache key for auth queries
 const AUTH_QUERY_KEY = ['auth', 'current-user'];
 
-const isRecord = (value: unknown): value is Record<string, unknown> => typeof value === 'object' && value !== null;
+const isRecord = (value: unknown): value is Record<string, unknown> =>
+  typeof value === 'object' && value !== null;
 
 const getErrorStatus = (error: unknown): number | undefined => {
   if (!isRecord(error)) return undefined;
@@ -45,14 +46,18 @@ export const useAuth = () => {
   const hasToken = isMounted ? !!getAuth() : false;
 
   // Use React Query for caching and preventing duplicate requests
-  const { data: user, isLoading, error: _error } = useQuery<User | null, unknown>({
+  const {
+    data: user,
+    isLoading,
+    error: _error,
+  } = useQuery<User | null, unknown>({
     queryKey: AUTH_QUERY_KEY,
     queryFn: async () => {
       try {
         const token = getAuth();
-        console.log('🔍 Fetching current user data...', { 
+        console.log('🔍 Fetching current user data...', {
           hasToken: !!token,
-          tokenPreview: token ? `${token.substring(0, 20)}...` : 'none'
+          tokenPreview: token ? `${token.substring(0, 20)}...` : 'none',
         });
         return await authService.getCurrentUser();
       } catch (error) {
@@ -91,10 +96,11 @@ export const useAuth = () => {
       // Retry other errors up to 1 time only
       return failureCount < 1;
     },
-    retryDelay: (attemptIndex) => Math.min(2000 * 2 ** attemptIndex, 60000),
+    retryDelay: attemptIndex => Math.min(2000 * 2 ** attemptIndex, 60000),
   });
 
   const isAdmin = user?.role === 'admin';
+  const canAccessAdminPanel = user?.role === 'admin' || user?.role === 'store_owner';
 
   // Manual refresh function
   const checkAuth = useCallback(async () => {
@@ -118,9 +124,9 @@ export const useAuth = () => {
     const handleAuthLogin = async () => {
       console.log('🔄 Auth login event received, refetching user...');
       // Force immediate refetch instead of just invalidating
-      await queryClient.refetchQueries({ 
+      await queryClient.refetchQueries({
         queryKey: AUTH_QUERY_KEY,
-        type: 'active'
+        type: 'active',
       });
     };
 
@@ -143,6 +149,7 @@ export const useAuth = () => {
   return {
     user: user || null,
     isAdmin,
+    canAccessAdminPanel,
     isLoading,
     isAuthenticated: !!user,
     checkAuth,

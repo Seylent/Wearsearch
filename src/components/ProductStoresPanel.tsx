@@ -142,7 +142,7 @@ const ProductStoresPanel: React.FC<ProductStoresPanelProps> = ({
               {isFilterOpen && (
                 <div
                   ref={filterDropdownRef}
-                  className="absolute left-0 top-full mt-2 w-64 max-h-[80vh] overflow-y-auto z-[1100] rounded-2xl border border-white/10 bg-zinc-900/95 backdrop-blur-2xl text-white p-1.5 shadow-[0_8px_32px_rgba(0,0,0,0.4)] animate-in fade-in-0 zoom-in-95 slide-in-from-top-2"
+                  className="absolute right-0 left-auto top-full mt-2 w-full sm:w-72 max-h-[70vh] overflow-y-auto rounded-2xl border border-border bg-background/95 backdrop-blur-2xl text-foreground p-1.5 shadow-[0_8px_32px_rgba(0,0,0,0.25)] animate-in fade-in-0 zoom-in-95 slide-in-from-top-2 z-[50]"
                 >
                   <div className="text-xs uppercase tracking-widest text-muted-foreground px-3 py-2 font-medium">
                     {t('productDetail.sortBy')}
@@ -150,28 +150,32 @@ const ProductStoresPanel: React.FC<ProductStoresPanelProps> = ({
 
                   <button
                     onClick={() => setSortBy('name')}
-                    className="w-full flex items-center cursor-pointer mx-1 rounded-lg px-3 py-2.5 text-sm text-white/80 hover:bg-white/10 hover:text-white transition-colors"
+                    className="w-full flex items-center cursor-pointer mx-1 rounded-lg px-3 py-2.5 text-sm text-muted-foreground hover:bg-muted hover:text-foreground transition-colors"
                   >
                     <Tag className="h-4 w-4 mr-3 text-muted-foreground" />
-                    <span className="flex-1 text-left">{t('productDetail.name')}</span>
+                    <span className="flex-1 text-left leading-snug">{t('productDetail.name')}</span>
                     {sortBy === 'name' && <span className="ml-2 text-primary">✓</span>}
                   </button>
 
                   <button
                     onClick={() => setSortBy('price-asc')}
-                    className="w-full flex items-center cursor-pointer mx-1 rounded-lg px-3 py-2.5 text-sm text-white/80 hover:bg-white/10 hover:text-white transition-colors"
+                    className="w-full flex items-center cursor-pointer mx-1 rounded-lg px-3 py-2.5 text-sm text-muted-foreground hover:bg-muted hover:text-foreground transition-colors"
                   >
                     <SortAsc className="h-4 w-4 mr-3 text-muted-foreground" />
-                    <span className="flex-1 text-left">{t('productDetail.priceAsc')}</span>
+                    <span className="flex-1 text-left leading-snug">
+                      {t('productDetail.priceAsc')}
+                    </span>
                     {sortBy === 'price-asc' && <span className="ml-2 text-primary">✓</span>}
                   </button>
 
                   <button
                     onClick={() => setSortBy('price-desc')}
-                    className="w-full flex items-center cursor-pointer mx-1 rounded-lg px-3 py-2.5 text-sm text-white/80 hover:bg-white/10 hover:text-white transition-colors"
+                    className="w-full flex items-center cursor-pointer mx-1 rounded-lg px-3 py-2.5 text-sm text-muted-foreground hover:bg-muted hover:text-foreground transition-colors"
                   >
                     <ChevronDown className="h-4 w-4 mr-3 text-muted-foreground" />
-                    <span className="flex-1 text-left">{t('productDetail.priceDesc')}</span>
+                    <span className="flex-1 text-left leading-snug">
+                      {t('productDetail.priceDesc')}
+                    </span>
                     {sortBy === 'price-desc' && <span className="ml-2 text-primary">✓</span>}
                   </button>
 
@@ -183,13 +187,15 @@ const ProductStoresPanel: React.FC<ProductStoresPanelProps> = ({
 
                   <button
                     onClick={() => setShowRecommendedOnly(!showRecommendedOnly)}
-                    className="w-full flex items-center cursor-pointer mx-1 rounded-lg px-3 py-2.5 text-sm text-white/80 hover:bg-white/10 hover:text-white transition-colors"
+                    className="w-full flex items-center cursor-pointer mx-1 rounded-lg px-3 py-2.5 text-sm text-muted-foreground hover:bg-muted hover:text-foreground transition-colors"
                   >
                     <Star className="h-4 w-4 mr-3 text-muted-foreground" />
-                    <span className="flex-1 text-left">{t('productDetail.recommendedOnly')}</span>
+                    <span className="flex-1 text-left leading-snug">
+                      {t('productDetail.recommendedOnly')}
+                    </span>
                     <div
                       className={`w-4 h-4 rounded border ${
-                        showRecommendedOnly ? 'bg-primary border-primary' : 'border-white/30'
+                        showRecommendedOnly ? 'bg-primary border-primary' : 'border-border'
                       } flex items-center justify-center`}
                     >
                       {showRecommendedOnly && <span className="text-[10px]">✓</span>}

@@ -1,12 +1,12 @@
 'use client';
 
 import React, { useEffect, useMemo, useState } from 'react';
-import Link from 'next/link';
 import { useTranslation } from 'react-i18next';
 import { FolderHeart, Search, Share2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import CollectionManager from '@/components/CollectionManager';
+import ProductCard from '@/components/ProductCard';
 import { useCollections } from '@/hooks/useCollections';
 import { useIsAuthenticated } from '@/hooks/useIsAuthenticated';
 import { useQuery } from '@tanstack/react-query';
@@ -15,13 +15,37 @@ import { cn } from '@/lib/utils';
 import WishlistPrivacySettings from '@/components/WishlistPrivacySettings';
 import { mapCollectionItemsResponse } from '@/utils/apiMappers';
 import { useCurrency } from '@/contexts/CurrencyContext';
-import { useCurrencyConversion } from '@/hooks/useCurrencyConversion';
 
 const isRecord = (value: unknown): value is Record<string, unknown> =>
   typeof value === 'object' && value !== null;
 
 const getString = (value: unknown, fallback = ''): string =>
   typeof value === 'string' && value.trim() ? value : fallback;
+
+const toNumber = (value: unknown): number | undefined => {
+  if (typeof value === 'number' && Number.isFinite(value)) return value;
+  if (typeof value === 'string' && value.trim()) {
+    const parsed = Number.parseFloat(value);
+    if (Number.isFinite(parsed)) return parsed;
+  }
+  return undefined;
+};
+
+const getStorePrices = (value: unknown): number[] => {
+  const record = isRecord(value) ? value : {};
+  const stores = Array.isArray(record.product_stores)
+    ? record.product_stores
+    : Array.isArray(record.stores)
+      ? record.stores
+      : [];
+
+  return stores
+    .map(store => {
+      if (!isRecord(store)) return undefined;
+      return toNumber(store.price ?? store.price_min ?? store.min_price);
+    })
+    .filter((price): price is number => typeof price === 'number');
+};
 
 export default function WishlistsContent({ className }: { className?: string }) {
   const { t } = useTranslation();
@@ -40,7 +64,6 @@ export default function WishlistsContent({ className }: { className?: string }) 
   }, [activeCollectionId, collections]);
 
   const { currency } = useCurrency();
-  const { formatPrice } = useCurrencyConversion();
 
   const { data: collectionItems, isLoading: collectionItemsLoading } = useQuery({
     queryKey: ['collectionItems', activeCollectionId, currency],
@@ -132,54 +155,64 @@ export default function WishlistsContent({ className }: { className?: string }) 
             ) : mappedItems && mappedItems.length > 0 ? (
               <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
                 {mappedItems.map((item: any, index: number) => {
-                  const productRecord = isRecord(item) ? item.product : item;
-                  const productId =
+                  const itemRecord = isRecord(item) ? item : {};
+                  const productRecord = isRecord(itemRecord.product)
+                    ? itemRecord.product
+                    : itemRecord;
+                  const storePrices = [
+                    ...getStorePrices(itemRecord),
+                    ...getStorePrices(productRecord),
+                  ];
+                  const storeMinPrice = storePrices.length ? Math.min(...storePrices) : undefined;
+                  const storeMaxPrice = storePrices.length ? Math.max(...storePrices) : undefined;
+                  const productId = String(
                     productRecord?.id ??
-                    productRecord?.product_id ??
-                    (isRecord(item) ? item.product_id : undefined) ??
-                    index;
+                      productRecord?.product_id ??
+                      (isRecord(item) ? item.product_id : undefined) ??
+                      index
+                  );
                   const productName = getString(productRecord?.name, 'Unknown');
-                  const productImage = productRecord?.image_url || productRecord?.image;
-                  const priceValue =
-                    productRecord?.price_min ?? productRecord?.price ?? productRecord?.min_price;
-                  const numericPrice =
-                    typeof priceValue === 'number'
-                      ? priceValue
-                      : typeof priceValue === 'string'
-                        ? Number(priceValue)
-                        : NaN;
-                  const productPrice = Number.isFinite(numericPrice)
-                    ? formatPrice(numericPrice)
-                    : '—';
+                  const productImage =
+                    getString(productRecord?.image_url) ||
+                    getString(productRecord?.image) ||
+                    undefined;
+                  const minPrice = toNumber(
+                    itemRecord?.price_min ??
+                      itemRecord?.min_price ??
+                      storeMinPrice ??
+                      productRecord?.price_min ??
+                      productRecord?.min_price
+                  );
+                  const maxPrice = toNumber(
+                    itemRecord?.max_price ?? storeMaxPrice ?? productRecord?.max_price
+                  );
+                  const price = toNumber(
+                    itemRecord?.price ??
+                      itemRecord?.price_min ??
+                      storeMinPrice ??
+                      productRecord?.price ??
+                      productRecord?.price_min
+                  );
                   const productBrand = getString(productRecord?.brand);
+                  const productCurrency =
+                    typeof itemRecord?.currency === 'string'
+                      ? itemRecord.currency
+                      : typeof productRecord?.currency === 'string'
+                        ? productRecord.currency
+                        : undefined;
 
                   return (
-                    <Link
+                    <ProductCard
                       key={`${productId}-${index}`}
-                      href={`/products/${productId}`}
-                      className="group overflow-hidden rounded-2xl border border-border/40 bg-card/50 shadow-sm transition hover:border-foreground/40"
-                    >
-                      <div className="relative aspect-[3/4] bg-muted/30">
-                        {productImage && (
-                          <img
-                            src={productImage}
-                            alt={productName}
-                            className="h-full w-full object-cover transition duration-300 group-hover:scale-[1.02]"
-                          />
-                        )}
-                      </div>
-                      <div className="p-3 sm:p-4">
-                        <div className="text-sm sm:text-base font-semibold leading-snug line-clamp-2">
-                          {productName}
-                        </div>
-                        {productBrand && (
-                          <div className="text-xs text-muted-foreground mt-1">{productBrand}</div>
-                        )}
-                        <div className="text-sm sm:text-base font-semibold mt-2 sm:mt-3">
-                          {productPrice}
-                        </div>
-                      </div>
-                    </Link>
+                      id={productId}
+                      name={productName}
+                      image={productImage}
+                      minPrice={minPrice}
+                      maxPrice={maxPrice}
+                      price={price}
+                      brand={productBrand}
+                      priceCurrency={productCurrency as any}
+                    />
                   );
                 })}
               </div>

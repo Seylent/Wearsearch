@@ -4,6 +4,7 @@
 import type { Product } from '@/types';
 import type { Banner } from '@/types/banner';
 import { fetchBackendJson } from '@/lib/backendFetch';
+import { getServerLanguage } from '@/utils/languageStorage';
 
 // Extended SEO interface for homepage
 interface ExtendedSEOData {
@@ -43,9 +44,11 @@ export interface HomepageAPIResponse {
 
 export async function getHomepageData(): Promise<HomepageAPIResponse> {
   try {
+    const lang = await getServerLanguage();
+
     // Try BFF endpoint first (single request for all data)
     try {
-      const bff = await fetchBackendJson<any>(`/pages/home`, {
+      const bff = await fetchBackendJson<any>(`/pages/home?lang=${encodeURIComponent(lang)}`, {
         next: { revalidate: 1800 },
       });
 
@@ -87,9 +90,12 @@ export async function getHomepageData(): Promise<HomepageAPIResponse> {
         // Fetch SEO data separately
         let seoData: ExtendedSEOData | null = null;
         try {
-          const seoRes = await fetchBackendJson<any>(`/seo/home/home`, {
-            next: { revalidate: 86400 },
-          });
+          const seoRes = await fetchBackendJson<any>(
+            `/seo/home/home?lang=${encodeURIComponent(lang)}`,
+            {
+              next: { revalidate: 86400 },
+            }
+          );
           if (seoRes) {
             const seoResponse = seoRes.data;
             seoData = seoResponse.item || seoResponse;
@@ -121,17 +127,21 @@ export async function getHomepageData(): Promise<HomepageAPIResponse> {
 
     // Fallback: Parallel requests for better performance
     const [productsRes, categoriesRes, statsRes, bannersRes] = await Promise.all([
-      fetchBackendJson<any>(`/products/popular?limit=12`, { next: { revalidate: 3600 } }),
-      fetchBackendJson<any>(`/categories?limit=12`, { next: { revalidate: 7200 } }),
+      fetchBackendJson<any>(`/products/popular-saved?limit=12&lang=${encodeURIComponent(lang)}`, {
+        next: { revalidate: 3600 },
+      }),
+      fetchBackendJson<any>(`/categories?limit=12&lang=${encodeURIComponent(lang)}`, {
+        next: { revalidate: 7200 },
+      }),
       fetchBackendJson<any>(`/statistics`, { next: { revalidate: 3600 } }),
       fetchBackendJson<any>(`/banners`, { next: { revalidate: 600 } }),
     ]);
 
     // Process results with fallbacks
     const productsPayload = productsRes?.data;
-    const products: Product[] = (productsPayload?.products ||
+    const products: Product[] = (productsPayload?.items ||
+      productsPayload?.products ||
       productsPayload?.data?.products ||
-      productsPayload?.items ||
       productsPayload ||
       []) as Product[];
 

@@ -50,7 +50,6 @@ export const CurrencySwitch: React.FC<CurrencySwitchProps> = ({
         className={`flex items-center gap-2 ${className}`}
         disabled={loading}
       >
-        <Coins className="h-4 w-4" />
         <span className="font-medium">
           {currentSymbol} {currentName}
         </span>

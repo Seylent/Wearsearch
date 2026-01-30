@@ -39,6 +39,7 @@ interface HomeContentProps {
 // SERVER COMPONENT - Passes data to client component
 export default function HomeContent({
   featuredProducts,
+  popularProducts,
   banners = [],
   seoData,
   categories,
@@ -46,6 +47,7 @@ export default function HomeContent({
   return (
     <HomeContentClient
       initialProducts={featuredProducts}
+      initialPopularProducts={popularProducts}
       banners={banners}
       seoData={seoData}
       categories={categories}

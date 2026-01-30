@@ -9,7 +9,7 @@ export interface User {
   email: string;
   username?: string;
   display_name?: string;
-  role?: 'user' | 'admin';
+  role?: 'user' | 'admin' | 'moderator' | 'store_owner';
   created_at?: string;
   updated_at?: string;
 }
@@ -52,7 +52,11 @@ export interface Product {
   type?: string; // Legacy field for backward compatibility
   color?: string;
   price?: number | string;
+  currency?: string;
+  price_currency?: string;
+  saves_count?: number;
   min_price?: number | string; // Minimum price across all stores
+  price_min?: number | string; // Alias from some APIs
   max_price?: number | string; // Maximum price across all stores
   store_count?: number; // Number of stores selling this product
   // CamelCase aliases for client components

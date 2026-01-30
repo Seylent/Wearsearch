@@ -199,6 +199,9 @@ export interface PublicWishlist {
     brand?: string;
     image_url?: string;
     price?: number;
+    price_min?: number;
+    max_price?: number;
+    currency?: string;
     added_at?: string;
   }>;
   items_count: number;
@@ -297,8 +300,13 @@ export const getShareLink = async (): Promise<{ share_url: string; share_id: str
 };
 
 // Get public wishlist by share ID (no auth required)
-export const getPublicWishlist = async (shareId: string): Promise<PublicWishlist> => {
-  const response = await api.get(`/wishlist/public/${shareId}`);
+export const getPublicWishlist = async (
+  shareId: string,
+  currency?: string
+): Promise<PublicWishlist> => {
+  const response = await api.get(`/wishlist/public/${shareId}`, {
+    params: currency ? { currency } : undefined,
+  });
   const data = response.data;
 
   // Debug logging - show full structure
@@ -321,6 +329,8 @@ export const getPublicWishlist = async (shareId: string): Promise<PublicWishlist
     items_count: 0,
   };
 
+  const responseCurrency = typeof data.currency === 'string' ? data.currency : undefined;
+
   // Try to find items array in various locations
   const itemsSource = data.items || data.products || data.favorites || data.data?.items || [];
 
@@ -339,6 +349,28 @@ export const getPublicWishlist = async (shareId: string): Promise<PublicWishlist
           : typeof item.price === 'string'
             ? parseFloat(item.price)
             : undefined,
+      price_min:
+        typeof item.price_min === 'number'
+          ? item.price_min
+          : typeof item.price_min === 'string'
+            ? parseFloat(item.price_min)
+            : typeof item.min_price === 'number'
+              ? item.min_price
+              : typeof item.min_price === 'string'
+                ? parseFloat(item.min_price)
+                : undefined,
+      max_price:
+        typeof item.max_price === 'number'
+          ? item.max_price
+          : typeof item.max_price === 'string'
+            ? parseFloat(item.max_price)
+            : undefined,
+      currency:
+        typeof item.currency === 'string'
+          ? item.currency
+          : typeof item.price_currency === 'string'
+            ? item.price_currency
+            : responseCurrency,
       added_at: (item.added_at as string | undefined) || (item.created_at as string | undefined),
     }));
   }

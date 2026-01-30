@@ -11,31 +11,35 @@ interface ImageUploaderProps {
   label?: string;
 }
 
-export const ImageUploader = ({ onImageUpload, currentImage, label: _label = "Product Image" }: ImageUploaderProps) => {
+export const ImageUploader = ({
+  onImageUpload,
+  currentImage,
+  label: _label = 'Product Image',
+}: ImageUploaderProps) => {
   const { t } = useTranslation();
   const [preview, setPreview] = useState<string>(currentImage || '');
   const [dragActive, setDragActive] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const { toast } = useToast();
-  
+
   // Use centralized upload hook instead of direct fetch
   const uploadMutation = useImageUpload();
 
   const handleFileChange = async (selectedFile: File) => {
     if (!selectedFile.type.startsWith('image/')) {
       toast({
-        variant: "destructive",
-        title: "Invalid file type",
-        description: "Please select an image file",
+        variant: 'destructive',
+        title: t('imageUploader.invalidTypeTitle'),
+        description: t('imageUploader.invalidTypeDescription'),
       });
       return;
     }
 
     if (selectedFile.size > 5 * 1024 * 1024) {
       toast({
-        variant: "destructive",
-        title: "File too large",
-        description: "Image must be less than 5MB",
+        variant: 'destructive',
+        title: t('imageUploader.fileTooLargeTitle'),
+        description: t('imageUploader.fileTooLargeDescription'),
       });
       return;
     }
@@ -53,8 +57,8 @@ export const ImageUploader = ({ onImageUpload, currentImage, label: _label = "Pr
       onImageUpload(url);
       setPreview(url); // Update preview with uploaded URL
       toast({
-        title: "Success",
-        description: "Image uploaded successfully",
+        title: t('imageUploader.uploadSuccessTitle'),
+        description: t('imageUploader.uploadSuccessDescription'),
       });
     } catch (error) {
       // Error handling is done in the hook
@@ -73,9 +77,9 @@ export const ImageUploader = ({ onImageUpload, currentImage, label: _label = "Pr
   const handleDrag = (e: React.DragEvent) => {
     e.preventDefault();
     e.stopPropagation();
-    if (e.type === "dragenter" || e.type === "dragover") {
+    if (e.type === 'dragenter' || e.type === 'dragover') {
       setDragActive(true);
-    } else if (e.type === "dragleave") {
+    } else if (e.type === 'dragleave') {
       setDragActive(false);
     }
   };
@@ -105,9 +109,7 @@ export const ImageUploader = ({ onImageUpload, currentImage, label: _label = "Pr
     <div className="space-y-4">
       <div
         className={`relative border-2 border-dashed rounded-2xl transition-all ${
-          dragActive
-            ? 'border-primary bg-primary/5'
-            : 'border-border hover:border-primary/50'
+          dragActive ? 'border-primary bg-primary/5' : 'border-border hover:border-primary/50'
         }`}
         onDragEnter={handleDrag}
         onDragLeave={handleDrag}
@@ -116,26 +118,12 @@ export const ImageUploader = ({ onImageUpload, currentImage, label: _label = "Pr
       >
         {preview ? (
           <div className="relative group">
-            <img
-              src={preview}
-              alt="Preview"
-              className="w-full h-64 object-cover rounded-2xl"
-            />
+            <img src={preview} alt="Preview" className="w-full h-64 object-cover rounded-2xl" />
             <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity rounded-2xl flex items-center justify-center gap-2">
-              <Button
-                type="button"
-                variant="secondary"
-                size="sm"
-                onClick={handleClick}
-              >
-                Change
+              <Button type="button" variant="secondary" size="sm" onClick={handleClick}>
+                {t('imageUploader.change')}
               </Button>
-              <Button
-                type="button"
-                variant="destructive"
-                size="sm"
-                onClick={handleRemove}
-              >
+              <Button type="button" variant="destructive" size="sm" onClick={handleRemove}>
                 <X className="w-4 h-4" />
               </Button>
             </div>
@@ -153,10 +141,10 @@ export const ImageUploader = ({ onImageUpload, currentImage, label: _label = "Pr
               </div>
               <div>
                 <p className="text-sm font-medium select-none">
-                  Click to upload or drag and drop
+                  {t('imageUploader.clickToUpload')}
                 </p>
                 <p className="text-xs text-muted-foreground select-none">
-                  PNG, JPG, GIF up to 5MB
+                  {t('imageUploader.fileTypes')}
                 </p>
               </div>
             </div>
@@ -175,14 +163,11 @@ export const ImageUploader = ({ onImageUpload, currentImage, label: _label = "Pr
       {uploadMutation.isPending && (
         <div className="flex items-center justify-center gap-2 p-3 rounded-lg bg-muted/50">
           <span className="animate-spin">⏳</span>
-          <span className="text-sm">Uploading image...</span>
+          <span className="text-sm">{t('imageUploader.uploading')}</span>
         </div>
       )}
 
-      <p className="text-xs text-muted-foreground select-none">
-        💡 Tip: You can also paste an image URL directly in the Image URL field below
-      </p>
+      <p className="text-xs text-muted-foreground select-none">💡 {t('imageUploader.tip')}</p>
     </div>
   );
 };
-

@@ -7,19 +7,11 @@
 
 import React, { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { 
-  Globe,
-  Save,
-  Send,
-  Instagram,
-  Video,
-  Mail,
-  Facebook,
-  Twitter
-} from "lucide-react";
+import api from '@/services/api';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Globe, Save, Send, Instagram, Video, Mail, Facebook, Twitter } from 'lucide-react';
 
 interface ContactInfo {
   telegram?: string;
@@ -36,7 +28,7 @@ export const ContactManagement: React.FC = () => {
     telegram: '@wearsearch',
     instagram: '@wearsearch',
     tiktok: '@wearsearch',
-    email: 'support@wearsearch.com'
+    email: 'support@wearsearch.com',
   });
   const [loading, setLoading] = useState(false);
   const [isSaved, setIsSaved] = useState(false);
@@ -59,13 +51,14 @@ export const ContactManagement: React.FC = () => {
     try {
       // Save to localStorage for immediate use
       localStorage.setItem('site_contacts', JSON.stringify(contactInfo));
-      
-      // In future, this will make API call to backend
-      // await fetch('/api/v1/contacts', {
-      //   method: 'PUT', 
-      //   headers: { 'Content-Type': 'application/json' },
-      //   body: JSON.stringify(contactInfo)
-      // });
+
+      try {
+        await api.put('/contacts', contactInfo, {
+          headers: { 'Content-Type': 'application/json' },
+        });
+      } catch (error) {
+        console.warn('Failed to persist contacts to backend:', error);
+      }
 
       setIsSaved(true);
       setTimeout(() => setIsSaved(false), 3000);
@@ -79,7 +72,7 @@ export const ContactManagement: React.FC = () => {
   const handleChange = (field: keyof ContactInfo, value: string) => {
     setContactInfo(prev => ({
       ...prev,
-      [field]: value
+      [field]: value,
     }));
     setIsSaved(false);
   };
@@ -91,11 +84,11 @@ export const ContactManagement: React.FC = () => {
           <Globe className="w-6 h-6" />
           {t('contacts.title', 'Контактна інформація')}
         </h2>
-        
-        <Button 
+
+        <Button
           onClick={handleSave}
           disabled={loading}
-          className={isSaved ? "bg-green-600 hover:bg-green-700" : ""}
+          className={isSaved ? 'bg-green-600 hover:bg-green-700' : ''}
         >
           {(() => {
             if (loading) {
@@ -135,7 +128,10 @@ export const ContactManagement: React.FC = () => {
         <CardContent>
           <div className="grid gap-4 md:grid-cols-2">
             <div>
-              <label htmlFor="telegram" className="block text-sm font-medium mb-2 flex items-center gap-2">
+              <label
+                htmlFor="telegram"
+                className="block text-sm font-medium mb-2 flex items-center gap-2"
+              >
                 <Send className="w-4 h-4" />
                 {t('contacts.telegram', 'Telegram')}
               </label>
@@ -143,13 +139,16 @@ export const ContactManagement: React.FC = () => {
                 id="telegram"
                 type="text"
                 value={contactInfo.telegram || ''}
-                onChange={(e) => handleChange('telegram', e.target.value)}
+                onChange={e => handleChange('telegram', e.target.value)}
                 placeholder="@wearsearch"
               />
             </div>
 
             <div>
-              <label htmlFor="instagram" className="block text-sm font-medium mb-2 flex items-center gap-2">
+              <label
+                htmlFor="instagram"
+                className="block text-sm font-medium mb-2 flex items-center gap-2"
+              >
                 <Instagram className="w-4 h-4" />
                 {t('contacts.instagram', 'Instagram')}
               </label>
@@ -157,13 +156,16 @@ export const ContactManagement: React.FC = () => {
                 id="instagram"
                 type="text"
                 value={contactInfo.instagram || ''}
-                onChange={(e) => handleChange('instagram', e.target.value)}
+                onChange={e => handleChange('instagram', e.target.value)}
                 placeholder="@wearsearch"
               />
             </div>
 
             <div>
-              <label htmlFor="tiktok" className="block text-sm font-medium mb-2 flex items-center gap-2">
+              <label
+                htmlFor="tiktok"
+                className="block text-sm font-medium mb-2 flex items-center gap-2"
+              >
                 <Video className="w-4 h-4" />
                 {t('contacts.tiktok', 'TikTok')}
               </label>
@@ -171,13 +173,16 @@ export const ContactManagement: React.FC = () => {
                 id="tiktok"
                 type="text"
                 value={contactInfo.tiktok || ''}
-                onChange={(e) => handleChange('tiktok', e.target.value)}
+                onChange={e => handleChange('tiktok', e.target.value)}
                 placeholder="@wearsearch"
               />
             </div>
 
             <div>
-              <label htmlFor="email" className="block text-sm font-medium mb-2 flex items-center gap-2">
+              <label
+                htmlFor="email"
+                className="block text-sm font-medium mb-2 flex items-center gap-2"
+              >
                 <Mail className="w-4 h-4" />
                 {t('contacts.email', 'Електронна пошта')}
               </label>
@@ -185,13 +190,16 @@ export const ContactManagement: React.FC = () => {
                 id="email"
                 type="email"
                 value={contactInfo.email || ''}
-                onChange={(e) => handleChange('email', e.target.value)}
+                onChange={e => handleChange('email', e.target.value)}
                 placeholder="support@wearsearch.com"
               />
             </div>
 
             <div>
-              <label htmlFor="facebook" className="block text-sm font-medium mb-2 flex items-center gap-2">
+              <label
+                htmlFor="facebook"
+                className="block text-sm font-medium mb-2 flex items-center gap-2"
+              >
                 <Facebook className="w-4 h-4" />
                 {t('contacts.facebook', 'Facebook')}
               </label>
@@ -199,13 +207,16 @@ export const ContactManagement: React.FC = () => {
                 id="facebook"
                 type="text"
                 value={contactInfo.facebook || ''}
-                onChange={(e) => handleChange('facebook', e.target.value)}
+                onChange={e => handleChange('facebook', e.target.value)}
                 placeholder="wearsearch"
               />
             </div>
 
             <div>
-              <label htmlFor="twitter" className="block text-sm font-medium mb-2 flex items-center gap-2">
+              <label
+                htmlFor="twitter"
+                className="block text-sm font-medium mb-2 flex items-center gap-2"
+              >
                 <Twitter className="w-4 h-4" />
                 {t('contacts.twitter', 'Twitter / X')}
               </label>
@@ -213,7 +224,7 @@ export const ContactManagement: React.FC = () => {
                 id="twitter"
                 type="text"
                 value={contactInfo.twitter || ''}
-                onChange={(e) => handleChange('twitter', e.target.value)}
+                onChange={e => handleChange('twitter', e.target.value)}
                 placeholder="@wearsearch"
               />
             </div>
@@ -221,8 +232,8 @@ export const ContactManagement: React.FC = () => {
 
           <div className="mt-6 p-4 bg-blue-50 rounded-lg border border-blue-200">
             <p className="text-sm text-blue-800">
-              💡 <strong>Підказка:</strong> Ці контакти будуть відображатися на сторінці "Контакти" для користувачів. 
-              Переконайтеся, що всі посилання працюють правильно.
+              💡 <strong>Підказка:</strong> Ці контакти будуть відображатися на сторінці "Контакти"
+              для користувачів. Переконайтеся, що всі посилання працюють правильно.
             </p>
           </div>
         </CardContent>

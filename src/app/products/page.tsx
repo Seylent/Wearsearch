@@ -4,6 +4,7 @@ import { generateSearchMetadata } from '@/lib/seo/metadata-utils';
 import { shouldIndexPage } from '@/lib/seo/helpers';
 import { fetchBackendJson } from '@/lib/backendFetch';
 import { JsonLd, generateBreadcrumbSchema } from '@/lib/seo/structured-data';
+import { getServerLanguage } from '@/utils/languageStorage';
 
 // Components
 import { ProductsContent } from '@/components/ProductsContent';
@@ -33,13 +34,21 @@ export async function generateMetadata({
   // Якщо це SEO сторінка категорії - отримуємо дані з API
   if (shouldIndex && categoryType) {
     try {
-      const res = await fetchBackendJson<any>(`/categories/${categoryType}?lang=uk`, {
-        next: { revalidate: 3600 },
-      });
+      const lang = await getServerLanguage();
+      let res = await fetchBackendJson<any>(
+        `/pages/products?type=${encodeURIComponent(categoryType)}&lang=${encodeURIComponent(lang)}`,
+        { next: { revalidate: 3600 } }
+      );
+
+      if (!res) {
+        res = await fetchBackendJson<any>(`/categories/${categoryType}?lang=${lang}`, {
+          next: { revalidate: 3600 },
+        });
+      }
 
       if (res) {
         const data = res.data;
-        const category = data.category || data.data?.category || data;
+        const category = data.category || data.data?.category || data.item || data;
 
         return {
           title: category.seo_title || `${category.name} | Wearsearch`,

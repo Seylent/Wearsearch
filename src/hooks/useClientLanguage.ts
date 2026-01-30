@@ -13,6 +13,7 @@
 import { useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import { languageService } from '@/i18n';
+import { setLanguageCookie } from '@/utils/languageStorage';
 
 export const useClientLanguage = () => {
   const { i18n } = useTranslation();
@@ -31,6 +32,12 @@ export const useClientLanguage = () => {
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []); // Run once on mount - i18n is stable
+
+  useEffect(() => {
+    if (i18n.language) {
+      setLanguageCookie(i18n.language as 'uk' | 'en');
+    }
+  }, [i18n.language]);
 
   return { language: i18n.language };
 };

@@ -18,7 +18,13 @@ interface Product {
   name: string;
   image_url?: string;
   image?: string;
-  price: number;
+  price: number | string;
+  price_min?: number | string;
+  min_price?: number | string;
+  max_price?: number | string;
+  maxPrice?: number | string;
+  currency?: string;
+  saves_count?: number;
   brand?: string;
 }
 
@@ -29,6 +35,7 @@ interface SEOData {
 
 interface HomeContentClientProps {
   initialProducts: Product[];
+  initialPopularProducts?: Product[];
   banners?: Banner[];
   seoData?: SEOData | null;
   categories?: Array<{
@@ -42,16 +49,21 @@ interface HomeContentClientProps {
 
 export default function HomeContentClient({
   initialProducts,
+  initialPopularProducts = [],
   banners = [],
   seoData,
   categories = [],
 }: Readonly<HomeContentClientProps>) {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
+  const lang = i18n.language || 'uk';
   const { currency } = useCurrencyConversion();
   const [isMounted, setIsMounted] = useState(false);
   const [products, setProducts] = useState<Product[]>(initialProducts);
   const [productsCurrency, setProductsCurrency] = useState<'UAH' | 'USD'>('UAH');
   const [isLoading, setIsLoading] = useState(false);
+  const [popularProducts, setPopularProducts] = useState<Product[]>(initialPopularProducts);
+  const [popularCurrency, setPopularCurrency] = useState<'UAH' | 'USD'>('UAH');
+  const [heroSeo, setHeroSeo] = useState<SEOData | null>(seoData ?? null);
 
   const fallbackCategories = useMemo(
     () =>
@@ -65,12 +77,14 @@ export default function HomeContentClient({
   );
 
   const normalizedCategories = categories.length > 0 ? categories : fallbackCategories;
-  const seoContent = seoData?.content_text?.trim() || '';
+  const seoContent = heroSeo?.content_text?.trim() || '';
   const seoIsHtml = seoContent.includes('<');
   const categoryCards = normalizedCategories.map(category => {
     const slug = (category.slug || category.name).toLowerCase();
     const normalizedSlug = slug.replace(/\s+/g, '-');
     const nameKey = (category.name || '').toLowerCase().replace(/\s+/g, '-');
+    const fallbackName = category.name || getCategoryDisplayName(normalizedSlug);
+    const displayName = t(`productTypes.${normalizedSlug}`, { defaultValue: fallbackName });
     const imageMap: Record<string, string> = {
       jackets: '/home/category-jackets.webp',
       puffer: '/home/category-jackets.webp',
@@ -101,6 +115,7 @@ export default function HomeContentClient({
       imageMap[normalizedSlug] || imageMap[nameKey] || imageMap[slug] || imageMap[category.name];
     return {
       ...category,
+      name: displayName,
       imageUrl: localImage || category.imageUrl,
     };
   });
@@ -108,6 +123,10 @@ export default function HomeContentClient({
   useEffect(() => {
     setIsMounted(true);
   }, []);
+
+  useEffect(() => {
+    setHeroSeo(seoData ?? null);
+  }, [seoData]);
 
   useEffect(() => {
     // Always fetch with current currency to ensure correct prices
@@ -126,7 +145,9 @@ export default function HomeContentClient({
       try {
         // Use the same v1 endpoint shape as the rest of the app.
         // Next rewrites proxy this to backend: http://localhost:3000
-        const response = await fetch(`/api/v1/pages/home?currency=${currentCurrency}`);
+        const response = await fetch(
+          `/api/v1/pages/home?currency=${currentCurrency}&lang=${encodeURIComponent(lang)}`
+        );
 
         if (!response.ok) {
           console.error('Failed to fetch products with currency');
@@ -147,6 +168,11 @@ export default function HomeContentClient({
 
         const item = data?.item ?? data?.data ?? data;
         const inner = item?.data ?? item;
+
+        const seoFromApi = item?.seo ?? inner?.seo ?? data?.seo;
+        if (seoFromApi && typeof seoFromApi === 'object') {
+          setHeroSeo(seoFromApi as SEOData);
+        }
 
         const featured =
           inner?.featured_products ?? inner?.featuredProducts ?? inner?.products ?? inner?.items;
@@ -169,7 +195,45 @@ export default function HomeContentClient({
     };
 
     fetchProductsWithCurrency();
-  }, [currency, initialProducts]);
+  }, [currency, initialProducts, lang]);
+
+  useEffect(() => {
+    const fetchPopularSaved = async () => {
+      const currentCurrency = currency || 'UAH';
+      if (currentCurrency === 'UAH' && initialPopularProducts.length > 0) {
+        setPopularProducts(initialPopularProducts.slice(0, 5));
+        setPopularCurrency('UAH');
+        return;
+      }
+
+      try {
+        const response = await fetch(
+          `/api/v1/products/popular-saved?limit=5&currency=${encodeURIComponent(currentCurrency)}`
+        );
+        if (!response.ok) {
+          setPopularProducts(initialPopularProducts.slice(0, 5));
+          setPopularCurrency(currentCurrency === 'USD' ? 'USD' : 'UAH');
+          return;
+        }
+
+        const data = await response.json();
+        const items = data?.items ?? data?.products ?? data?.data?.products ?? data;
+        if (Array.isArray(items)) {
+          setPopularProducts(items.slice(0, 5));
+          setPopularCurrency(currentCurrency === 'USD' ? 'USD' : 'UAH');
+        } else {
+          setPopularProducts(initialPopularProducts.slice(0, 5));
+          setPopularCurrency(currentCurrency === 'USD' ? 'USD' : 'UAH');
+        }
+      } catch (error) {
+        console.error('Error fetching popular saved products:', error);
+        setPopularProducts(initialPopularProducts.slice(0, 5));
+        setPopularCurrency(currentCurrency === 'USD' ? 'USD' : 'UAH');
+      }
+    };
+
+    fetchPopularSaved();
+  }, [currency, initialPopularProducts]);
 
   const hasProducts = products.length > 0;
 
@@ -181,7 +245,22 @@ export default function HomeContentClient({
     <div className="min-h-screen bg-black text-white" suppressHydrationWarning>
       <main id="main-content">
         {/* Hero Section */}
-        <HomeHero h1Title={seoData?.h1_title} contentText={seoData?.content_text} />
+        <HomeHero
+          h1Title={heroSeo?.h1_title}
+          contentText={
+            heroSeo?.content_text ??
+            t('home.heroSubtitle', 'Compare fashion prices across trusted stores')
+          }
+          heroTitleLines={[
+            t('home.heroTitleLine1', 'Wearsearch'),
+            t('home.heroTitleLine2', 'Compare fashion prices'),
+            t('home.heroTitleLine3', 'in one place'),
+          ]}
+          primaryCtaLabel={t('home.heroCtaBrowse', 'Browse categories')}
+          primaryCtaHref="#categories-section"
+          secondaryCtaLabel={t('home.heroCtaSell', 'Sell clothes')}
+          secondaryCtaHref="/contacts"
+        />
 
         {banners.length > 0 && (
           <section className="py-6 sm:py-8 bg-black">
@@ -190,6 +269,72 @@ export default function HomeContentClient({
             </div>
           </section>
         )}
+
+        <section className="py-10 sm:py-14 bg-white text-foreground dark:bg-black border-y border-border">
+          <div className="container mx-auto px-4 sm:px-6">
+            <header className="flex items-end justify-between gap-4 mb-6 sm:mb-8">
+              <div>
+                <div className="inline-flex items-center gap-2 mb-2">
+                  <div
+                    className="w-1.5 h-1.5 rounded-full bg-muted-foreground"
+                    aria-hidden="true"
+                  />
+                  <span className="text-[10px] sm:text-xs text-muted-foreground uppercase tracking-wider">
+                    {t('home.howItWorksLabel', 'How it works')}
+                  </span>
+                </div>
+                <h2 className="font-display text-2xl sm:text-3xl md:text-4xl font-bold">
+                  {t('home.howItWorksTitle', 'Find your fit in three steps')}
+                </h2>
+                <p className="text-sm sm:text-base text-muted-foreground mt-2">
+                  {t('home.howItWorksHint', 'Search, compare, and buy with confidence')}
+                </p>
+              </div>
+            </header>
+
+            <div className="grid gap-4 sm:gap-6 md:grid-cols-3">
+              {[
+                {
+                  step: '01',
+                  title: t('home.howItWorksStep1Title', 'Explore products'),
+                  text: t(
+                    'home.howItWorksStep1Text',
+                    'Browse categories or search for the exact item you want.'
+                  ),
+                },
+                {
+                  step: '02',
+                  title: t('home.howItWorksStep2Title', 'Compare prices'),
+                  text: t(
+                    'home.howItWorksStep2Text',
+                    'See offers from multiple stores in one place.'
+                  ),
+                },
+                {
+                  step: '03',
+                  title: t('home.howItWorksStep3Title', 'Buy from the seller'),
+                  text: t(
+                    'home.howItWorksStep3Text',
+                    'Go directly to the store and place your order.'
+                  ),
+                },
+              ].map(card => (
+                <div
+                  key={card.step}
+                  className="rounded-2xl border border-border bg-white/90 dark:bg-black/80 p-5 sm:p-6"
+                >
+                  <div className="text-xs text-muted-foreground uppercase tracking-wider mb-3">
+                    {card.step}
+                  </div>
+                  <h3 className="text-lg sm:text-xl font-semibold text-foreground mb-2">
+                    {card.title}
+                  </h3>
+                  <p className="text-sm text-muted-foreground leading-relaxed">{card.text}</p>
+                </div>
+              ))}
+            </div>
+          </div>
+        </section>
 
         <section className="py-12 sm:py-16 bg-white text-foreground dark:bg-black border-y border-border">
           <div className="container mx-auto px-4 sm:px-6">
@@ -263,7 +408,10 @@ export default function HomeContentClient({
           </div>
         </section>
 
-        <section className="py-10 sm:py-16 bg-white text-foreground dark:bg-black border-b border-border">
+        <section
+          id="categories-section"
+          className="py-10 sm:py-16 bg-white text-foreground dark:bg-black border-b border-border"
+        >
           <div className="container mx-auto px-4 sm:px-6">
             <header className="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-4 mb-6">
               <div>
@@ -316,13 +464,69 @@ export default function HomeContentClient({
           </div>
         </section>
 
+        <section className="py-12 sm:py-16 bg-black border-b border-white/5">
+          <div className="container mx-auto px-4 sm:px-6">
+            <header className="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-4 sm:gap-6 mb-6">
+              <div>
+                <div className="inline-flex items-center gap-2 mb-2 sm:mb-3">
+                  <div className="w-1.5 h-1.5 rounded-full bg-foreground" aria-hidden="true" />
+                  <span className="text-[10px] sm:text-xs text-white/60 uppercase tracking-wider">
+                    {t('home.topSavedLabel', 'Top saved')}
+                  </span>
+                </div>
+                <h2 className="font-display text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-bold text-white">
+                  {t('home.topSavedTitle', 'Most saved right now')}
+                </h2>
+                <p className="text-sm sm:text-base text-white/70 mt-1 sm:mt-2">
+                  {t('home.topSavedHint', 'The top 5 picks loved by the community')}
+                </p>
+              </div>
+              <Link
+                href="/products?sort=popular"
+                className="text-sm text-white/60 hover:text-white transition inline-flex items-center gap-2"
+              >
+                {t('home.viewAllPopular', 'View all')}
+                <ArrowUpRight className="h-4 w-4" />
+              </Link>
+            </header>
+
+            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3 sm:gap-4">
+              {popularProducts.length > 0 ? (
+                popularProducts
+                  .slice(0, 5)
+                  .map(product => (
+                    <ProductCard
+                      key={product.id}
+                      id={product.id}
+                      name={product.name}
+                      image={product.image_url || product.image || ''}
+                      price={product.price}
+                      minPrice={product.price_min ?? product.min_price}
+                      maxPrice={product.max_price ?? product.maxPrice}
+                      brand={product.brand}
+                      priceCurrency={
+                        product.currency === 'USD' || product.currency === 'UAH'
+                          ? product.currency
+                          : popularCurrency
+                      }
+                    />
+                  ))
+              ) : (
+                <div className="col-span-full text-center py-10 text-white/60">
+                  {t('home.topSavedEmpty', 'No popular products yet')}
+                </div>
+              )}
+            </div>
+          </div>
+        </section>
+
         {/* New Arrivals Section */}
         <section id="products-section" className="py-12 sm:py-16 md:py-20 bg-black">
           <div className="container mx-auto px-4 sm:px-6">
             <header className="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-4 sm:gap-6 mb-6 sm:mb-10">
               <div>
                 <div className="inline-flex items-center gap-2 mb-2 sm:mb-3">
-                  <div className="w-1.5 h-1.5 rounded-full bg-white" aria-hidden="true" />
+                  <div className="w-1.5 h-1.5 rounded-full bg-foreground" aria-hidden="true" />
                   <span className="text-[10px] sm:text-xs text-white/60 uppercase tracking-wider">
                     {t('home.justIn', 'Just In')}
                   </span>
@@ -354,8 +558,14 @@ export default function HomeContentClient({
                       name={product.name}
                       image={product.image_url || product.image || ''}
                       price={product.price}
+                      minPrice={product.price_min ?? product.min_price}
+                      maxPrice={product.max_price ?? product.maxPrice}
                       brand={product.brand}
-                      priceCurrency={productsCurrency}
+                      priceCurrency={
+                        product.currency === 'USD' || product.currency === 'UAH'
+                          ? product.currency
+                          : productsCurrency
+                      }
                     />
                   ))
               ) : (

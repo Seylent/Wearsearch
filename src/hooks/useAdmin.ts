@@ -27,7 +27,7 @@ export const useAdmin = () => {
   const router = useRouter();
   const searchParams = useSearchParams();
   const { toast } = useToast();
-  const { isAuthenticated, isAdmin } = useAuth();
+  const { isAuthenticated, canAccessAdminPanel } = useAuth();
 
   // Dashboard data
   const [dashboardData, setDashboardData] = useState<{
@@ -180,11 +180,11 @@ export const useAdmin = () => {
 
   // Initialize dashboard
   useEffect(() => {
-    if (isAuthenticated && isAdmin) {
+    if (isAuthenticated && canAccessAdminPanel) {
       loadDashboard();
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [isAuthenticated, isAdmin]);
+  }, [isAuthenticated, canAccessAdminPanel]);
 
   // Derived data
   const products = useMemo(() => {

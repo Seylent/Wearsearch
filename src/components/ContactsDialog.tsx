@@ -1,7 +1,7 @@
 ﻿'use client';
 
-import { useState, useEffect } from "react";
-import { useTranslation } from "react-i18next";
+import { useState, useEffect } from 'react';
+import { useTranslation } from 'react-i18next';
 import {
   Dialog,
   DialogContent,
@@ -9,8 +9,9 @@ import {
   DialogHeader,
   DialogTitle,
   DialogTrigger,
-} from "@/components/ui/dialog";
-import { Send, Instagram, Mail, Video } from "lucide-react";
+} from '@/components/ui/dialog';
+import { Send, Instagram, Mail, Video } from 'lucide-react';
+import api from '@/services/api';
 
 interface ContactInfo {
   telegram?: string;
@@ -24,28 +25,51 @@ interface ContactsDialogProps {
   asFooterLink?: boolean;
 }
 
-export const ContactsDialog: React.FC<ContactsDialogProps> = ({ contacts, asFooterLink = false }) => {
+export const ContactsDialog: React.FC<ContactsDialogProps> = ({
+  contacts,
+  asFooterLink = false,
+}) => {
   const { t } = useTranslation();
   const [activeContacts, setActiveContacts] = useState<ContactInfo>({
-    telegram: "@wearsearch",
-    instagram: "@wearsearch",
-    tiktok: "@wearsearch",
-    email: "support@wearsearch.com"
+    telegram: '@wearsearch',
+    instagram: '@wearsearch',
+    tiktok: '@wearsearch',
+    email: 'support@wearsearch.com',
   });
 
   useEffect(() => {
-    // Load contacts from localStorage
-    const savedContacts = localStorage.getItem('site_contacts');
-    if (savedContacts) {
+    const loadContacts = async () => {
       try {
-        const parsedContacts = JSON.parse(savedContacts);
-        setActiveContacts(parsedContacts);
+        const response = await api.get('/contacts', {
+          headers: { 'Cache-Control': 'no-cache' },
+        });
+        const payload = response.data?.data ?? response.data?.item ?? response.data;
+        if (payload && typeof payload === 'object') {
+          setActiveContacts(payload as ContactInfo);
+          localStorage.setItem('site_contacts', JSON.stringify(payload));
+          return;
+        }
       } catch {
-        // Silently fail
+        // Fallback to localStorage
       }
-    } else if (contacts) {
-      setActiveContacts(contacts);
-    }
+
+      const savedContacts = localStorage.getItem('site_contacts');
+      if (savedContacts) {
+        try {
+          const parsedContacts = JSON.parse(savedContacts);
+          setActiveContacts(parsedContacts);
+          return;
+        } catch {
+          // Silently fail
+        }
+      }
+
+      if (contacts) {
+        setActiveContacts(contacts);
+      }
+    };
+
+    void loadContacts();
   }, [contacts]);
 
   return (
@@ -66,9 +90,11 @@ export const ContactsDialog: React.FC<ContactsDialogProps> = ({ contacts, asFoot
       </DialogTrigger>
       <DialogContent className="w-[95vw] max-w-md bg-black/95 border-white/20 backdrop-blur-2xl shadow-[0_0_50px_rgba(255,255,255,0.1)] max-h-[90vh] overflow-y-auto p-4 sm:p-6">
         <DialogHeader>
-          <DialogTitle className="text-xl sm:text-2xl font-display text-white drop-shadow-[0_0_15px_rgba(255,255,255,0.5)]">{t('footer.contactUs')}</DialogTitle>
+          <DialogTitle className="text-xl sm:text-2xl font-display text-white drop-shadow-[0_0_15px_rgba(255,255,255,0.5)]">
+            {t('footer.contactUs')}
+          </DialogTitle>
           <DialogDescription className="text-white/60">
-            {t('footer.contactDescription', 'Зв\'яжіться з нами будь-яким зручним способом')}
+            {t('footer.contactDescription', "Зв'яжіться з нами будь-яким зручним способом")}
           </DialogDescription>
         </DialogHeader>
         <div className="space-y-3 sm:space-y-4 py-2 sm:py-4">
@@ -83,8 +109,12 @@ export const ContactsDialog: React.FC<ContactsDialogProps> = ({ contacts, asFoot
                 <Send className="w-5 h-5 sm:w-6 sm:h-6 text-white drop-shadow-[0_0_8px_rgba(255,255,255,0.6)]" />
               </div>
               <div className="flex-1 min-w-0">
-                <h3 className="font-semibold text-white mb-0.5 sm:mb-1 text-sm sm:text-base drop-shadow-[0_0_10px_rgba(255,255,255,0.3)]">{t('contacts.telegram')}</h3>
-                <p className="text-xs sm:text-sm text-white/70 truncate">{activeContacts.telegram}</p>
+                <h3 className="font-semibold text-white mb-0.5 sm:mb-1 text-sm sm:text-base drop-shadow-[0_0_10px_rgba(255,255,255,0.3)]">
+                  {t('contacts.telegram')}
+                </h3>
+                <p className="text-xs sm:text-sm text-white/70 truncate">
+                  {activeContacts.telegram}
+                </p>
               </div>
             </a>
           )}
@@ -100,8 +130,12 @@ export const ContactsDialog: React.FC<ContactsDialogProps> = ({ contacts, asFoot
                 <Instagram className="w-5 h-5 sm:w-6 sm:h-6 text-white drop-shadow-[0_0_8px_rgba(255,255,255,0.6)]" />
               </div>
               <div className="flex-1 min-w-0">
-                <h3 className="font-semibold text-white mb-0.5 sm:mb-1 text-sm sm:text-base drop-shadow-[0_0_10px_rgba(255,255,255,0.3)]">{t('contacts.instagram')}</h3>
-                <p className="text-xs sm:text-sm text-white/70 truncate">{activeContacts.instagram}</p>
+                <h3 className="font-semibold text-white mb-0.5 sm:mb-1 text-sm sm:text-base drop-shadow-[0_0_10px_rgba(255,255,255,0.3)]">
+                  {t('contacts.instagram')}
+                </h3>
+                <p className="text-xs sm:text-sm text-white/70 truncate">
+                  {activeContacts.instagram}
+                </p>
               </div>
             </a>
           )}
@@ -117,7 +151,9 @@ export const ContactsDialog: React.FC<ContactsDialogProps> = ({ contacts, asFoot
                 <Video className="w-5 h-5 sm:w-6 sm:h-6 text-white drop-shadow-[0_0_8px_rgba(255,255,255,0.6)]" />
               </div>
               <div className="flex-1 min-w-0">
-                <h3 className="font-semibold text-white mb-0.5 sm:mb-1 text-sm sm:text-base drop-shadow-[0_0_10px_rgba(255,255,255,0.3)]">{t('contacts.tiktok')}</h3>
+                <h3 className="font-semibold text-white mb-0.5 sm:mb-1 text-sm sm:text-base drop-shadow-[0_0_10px_rgba(255,255,255,0.3)]">
+                  {t('contacts.tiktok')}
+                </h3>
                 <p className="text-xs sm:text-sm text-white/70 truncate">{activeContacts.tiktok}</p>
               </div>
             </a>
@@ -132,7 +168,9 @@ export const ContactsDialog: React.FC<ContactsDialogProps> = ({ contacts, asFoot
                 <Mail className="w-5 h-5 sm:w-6 sm:h-6 text-white drop-shadow-[0_0_8px_rgba(255,255,255,0.6)]" />
               </div>
               <div className="flex-1 min-w-0">
-                <h3 className="font-semibold text-white mb-0.5 sm:mb-1 text-sm sm:text-base drop-shadow-[0_0_10px_rgba(255,255,255,0.3)]">{t('contacts.email')}</h3>
+                <h3 className="font-semibold text-white mb-0.5 sm:mb-1 text-sm sm:text-base drop-shadow-[0_0_10px_rgba(255,255,255,0.3)]">
+                  {t('contacts.email')}
+                </h3>
                 <p className="text-xs sm:text-sm text-white/70 truncate">{activeContacts.email}</p>
               </div>
             </a>

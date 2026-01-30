@@ -97,17 +97,21 @@ export const useHomepageData = (currency: string = 'UAH', options?: QueryOptions
 
         try {
           const [productsRes, statsRes] = await Promise.all([
-            api.get('/products/popular', { params: { limit: 12, currency } }),
+            api.get('/products/popular-saved', { params: { limit: 12, currency } }),
             api
               .get('/statistics')
               .catch(() => ({ data: { total_products: 0, total_stores: 0, total_brands: 0 } })),
           ]);
 
           const productsData = productsRes.data;
+          const productsItems =
+            getArray(productsData, 'items') ??
+            getArray(productsData, 'products') ??
+            (Array.isArray(productsData) ? productsData : []);
           const statsData = statsRes.data;
 
           return {
-            products: productsData.products || productsData || [],
+            products: productsItems,
             brands: [],
             statistics: statsData.stats ||
               statsData || { total_products: 0, total_stores: 0, total_brands: 0 },

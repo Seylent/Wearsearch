@@ -22,17 +22,15 @@ export const Breadcrumbs: React.FC<BreadcrumbsProps> = ({ items = [], className 
 
   return (
     <nav aria-label="Breadcrumb" className={cn('text-xs sm:text-sm', className)}>
-      <div className="flex flex-wrap items-baseline gap-2 text-foreground/60 leading-none">
+      <div className="flex flex-wrap items-center gap-2 text-foreground/60 leading-none">
         <Link
           href="/"
           className="inline-flex items-center leading-none hover:text-foreground transition-colors"
         >
-          <Home className="w-4 h-4 -translate-y-[1px]" />
+          <Home className="w-4 h-4" />
         </Link>
 
-        <span className="inline-flex items-center text-foreground/30 leading-none -translate-y-[1px]">
-          /
-        </span>
+        <span className="inline-flex items-center text-foreground/30 leading-none">/</span>
 
         {items.map((item, index) => {
           const isLast = index === items.length - 1;
@@ -58,9 +56,7 @@ export const Breadcrumbs: React.FC<BreadcrumbsProps> = ({ items = [], className 
               )}
 
               {!isLast && (
-                <span className="inline-flex items-center text-foreground/30 leading-none -translate-y-[1px]">
-                  /
-                </span>
+                <span className="inline-flex items-center text-foreground/30 leading-none">/</span>
               )}
             </React.Fragment>
           );

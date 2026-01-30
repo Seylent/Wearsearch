@@ -94,7 +94,7 @@ export function HomeContent({ products, seoData, isLoading }: Readonly<HomeConte
             <header className="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-4 sm:gap-6 mb-6 sm:mb-10">
               <div>
                 <div className="inline-flex items-center gap-2 mb-2 sm:mb-3">
-                  <div className="w-1.5 h-1.5 rounded-full bg-white" aria-hidden="true" />
+                  <div className="w-1.5 h-1.5 rounded-full bg-foreground" aria-hidden="true" />
                   <span className="text-[10px] sm:text-xs text-white/60 uppercase tracking-wider">
                     {t('home.justIn')}
                   </span>
@@ -120,6 +120,13 @@ export function HomeContent({ products, seoData, isLoading }: Readonly<HomeConte
                     name={product.name}
                     image={product.image_url || product.image}
                     price={product.price}
+                    minPrice={product.price_min ?? product.min_price}
+                    maxPrice={product.max_price ?? product.maxPrice}
+                    priceCurrency={
+                      product.currency === 'USD' || product.currency === 'UAH'
+                        ? product.currency
+                        : undefined
+                    }
                     brand={product.brand}
                   />
                 ))}

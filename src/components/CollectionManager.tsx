@@ -279,9 +279,16 @@ const CollectionItem: React.FC<CollectionItemProps> = ({
   const { t } = useTranslation();
 
   return (
-    <button
-      type="button"
+    <div
+      role="button"
+      tabIndex={0}
       onClick={() => onSelect?.(collection.id)}
+      onKeyDown={event => {
+        if (event.key === 'Enter' || event.key === ' ') {
+          event.preventDefault();
+          onSelect?.(collection.id);
+        }
+      }}
       className={cn(
         'w-full flex items-center gap-3 p-3 rounded-xl border transition-colors group text-left',
         isActive
@@ -359,7 +366,7 @@ const CollectionItem: React.FC<CollectionItemProps> = ({
           <ChevronRight className="w-4 h-4 text-muted-foreground" />
         </>
       )}
-    </button>
+    </div>
   );
 };
 

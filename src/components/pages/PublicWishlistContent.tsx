@@ -4,7 +4,7 @@ import { useEffect, useMemo, useState } from 'react';
 import Link from 'next/link';
 import { useTranslation } from 'react-i18next';
 import { getPublicWishlist, type PublicWishlist } from '@/services/wishlistService';
-import { useCurrencyConversion } from '@/hooks/useCurrencyConversion';
+import { useCurrency } from '@/contexts/CurrencyContext';
 import { cn } from '@/lib/utils';
 
 interface PublicWishlistContentProps {
@@ -21,16 +21,35 @@ const getNumber = (value: unknown): number | undefined => {
   return undefined;
 };
 
+const normalizeCurrency = (value: unknown): 'USD' | 'UAH' =>
+  typeof value === 'string' && value.toUpperCase() === 'USD' ? 'USD' : 'UAH';
+
+const formatPriceValue = (price: number, currency: 'USD' | 'UAH'): string => {
+  const symbol = currency === 'USD' ? '$' : '₴';
+  return currency === 'USD' ? `${symbol}${price.toFixed(2)}` : `${price.toFixed(0)} ${symbol}`;
+};
+
+const formatPriceRangeValue = (
+  minPrice: number,
+  maxPrice: number,
+  currency: 'USD' | 'UAH'
+): string => {
+  const symbol = currency === 'USD' ? '$' : '₴';
+  return currency === 'USD'
+    ? `${symbol}${minPrice.toFixed(2)} - ${symbol}${maxPrice.toFixed(2)}`
+    : `${minPrice.toFixed(0)} ${symbol} - ${maxPrice.toFixed(0)} ${symbol}`;
+};
+
 export default function PublicWishlistContent({ shareId, className }: PublicWishlistContentProps) {
   const { t } = useTranslation();
-  const { formatPrice } = useCurrencyConversion();
+  const { currency } = useCurrency();
   const [data, setData] = useState<PublicWishlist | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
     let isMounted = true;
     setIsLoading(true);
-    getPublicWishlist(shareId)
+    getPublicWishlist(shareId, currency)
       .then(result => {
         if (isMounted) setData(result);
       })
@@ -44,7 +63,7 @@ export default function PublicWishlistContent({ shareId, className }: PublicWish
     return () => {
       isMounted = false;
     };
-  }, [shareId]);
+  }, [shareId, currency]);
 
   const items = useMemo(() => data?.items ?? [], [data]);
 
@@ -70,7 +89,18 @@ export default function PublicWishlistContent({ shareId, className }: PublicWish
         ) : items.length > 0 ? (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
             {items.map(item => {
-              const price = getNumber(item.price);
+              const minPrice = getNumber(item.price) ?? getNumber(item.price_min);
+              const maxPrice = getNumber(item.max_price);
+              const itemCurrency = normalizeCurrency(item.currency);
+              const hasRange =
+                minPrice !== undefined && maxPrice !== undefined && maxPrice !== minPrice;
+
+              const priceLabel =
+                minPrice === undefined
+                  ? '—'
+                  : hasRange
+                    ? formatPriceRangeValue(minPrice, maxPrice, itemCurrency)
+                    : formatPriceValue(minPrice, itemCurrency);
               return (
                 <Link
                   key={item.id}
@@ -93,9 +123,7 @@ export default function PublicWishlistContent({ shareId, className }: PublicWish
                     {item.brand && (
                       <div className="text-xs text-muted-foreground mt-1">{item.brand}</div>
                     )}
-                    <div className="text-base font-semibold mt-3">
-                      {price !== undefined ? formatPrice(price) : '—'}
-                    </div>
+                    <div className="text-base font-semibold mt-3">{priceLabel}</div>
                   </div>
                 </Link>
               );

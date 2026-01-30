@@ -373,6 +373,14 @@ async function fetchCurrentUserInternal(): Promise<User> {
     const response = await api.get(ENDPOINTS.ME, {
       headers: { 'X-Skip-Retry': 'true' },
     });
+    const body = response.data as unknown;
+    if (isRecord(body)) {
+      const nestedUser = isRecord(body.user) ? (body.user as unknown as User) : undefined;
+      const nestedData = isRecord(body.data) ? (body.data as Record<string, unknown>) : undefined;
+      const nestedDataUser =
+        nestedData && isRecord(nestedData.user) ? (nestedData.user as unknown as User) : undefined;
+      return nestedUser ?? nestedDataUser ?? (body as unknown as User);
+    }
     return response.data;
   } catch (error) {
     const status = getErrorStatus(error);

@@ -13,6 +13,7 @@ import {
 } from '@/lib/seo/structured-data';
 import { SEOTextSection } from '@/components/seo/SEOTextSection';
 import { fetchBackendJson } from '@/lib/backendFetch';
+import { getServerLanguage } from '@/utils/languageStorage';
 
 interface CategoryPageProps {
   params: {
@@ -25,7 +26,7 @@ export async function generateMetadata({ params }: CategoryPageProps): Promise<M
   const { slug } = params;
 
   try {
-    const lang = 'uk'; // або отримати з headers/cookies
+    const lang = await getServerLanguage();
     const res = await fetchBackendJson<any>(`/categories/${slug}?lang=${lang}`, {
       next: { revalidate: 3600 },
     });
@@ -84,8 +85,9 @@ export default async function CategoryPage({ params }: Readonly<CategoryPageProp
   const { slug } = params;
 
   try {
+    const lang = await getServerLanguage();
     // Отримуємо дані категорії
-    const categoryRes = await fetchBackendJson<any>(`/categories/${slug}?lang=uk`, {
+    const categoryRes = await fetchBackendJson<any>(`/categories/${slug}?lang=${lang}`, {
       next: { revalidate: 3600 },
     });
 

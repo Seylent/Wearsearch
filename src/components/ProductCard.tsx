@@ -59,10 +59,11 @@ const ProductCard: React.FC<ProductCardProps> = memo(
     description,
     description_en,
     description_ua,
+    priceCurrency,
     priority = false,
   }) => {
     const { t } = useTranslation();
-    const { formatPrice } = useCurrencyConversion();
+    const { currency, formatPrice } = useCurrencyConversion();
 
     const toNumber = (value?: string | number): number | null => {
       if (value === undefined || value === null) return null;
@@ -75,6 +76,20 @@ const ProductCard: React.FC<ProductCardProps> = memo(
     if (!id || !name) {
       return null;
     }
+
+    const resolveCurrency = (value?: CurrencyCode | string): CurrencyCode => {
+      if (value === 'USD' || value === 'UAH') return value;
+      return currency;
+    };
+
+    const formatWithCurrency = (value: number, override?: CurrencyCode | string) => {
+      const active = resolveCurrency(override);
+      if (override && active !== currency) {
+        const symbol = active === 'USD' ? '$' : '₴';
+        return active === 'USD' ? `${symbol}${value.toFixed(2)}` : `${value.toFixed(0)} ${symbol}`;
+      }
+      return formatPrice(value);
+    };
 
     // Backend sends prices in correct currency via ?currency=UAH/USD
     // Just use the values as-is, no conversion needed
@@ -147,10 +162,7 @@ const ProductCard: React.FC<ProductCardProps> = memo(
               alt={name}
               fill
               sizes="(max-width: 640px) 50vw, (max-width: 768px) 33vw, (max-width: 1024px) 25vw, 20vw"
-              className="object-cover transition-transform duration-500 md:group-hover:scale-105 filter grayscale md:group-hover:grayscale-0"
-              style={{
-                filter: 'grayscale(100%) contrast(1.1) brightness(1.05)',
-              }}
+              className="object-cover transition-transform duration-500 md:group-hover:scale-105"
               loading={priority ? undefined : 'lazy'}
               quality={75}
               priority={priority}
@@ -214,11 +226,12 @@ const ProductCard: React.FC<ProductCardProps> = memo(
             <div className="mt-2">
               {showPriceRange ? (
                 <p className="font-display text-sm sm:text-base font-bold text-foreground dark:text-white">
-                  {formatPrice(displayMinPrice ?? 0)} - {formatPrice(displayMaxPrice ?? 0)}
+                  {formatWithCurrency(displayMinPrice ?? 0, priceCurrency)} -
+                  {formatWithCurrency(displayMaxPrice ?? 0, priceCurrency)}
                 </p>
               ) : displayMinPrice !== null ? (
                 <p className="font-display text-sm sm:text-base font-bold text-foreground dark:text-white">
-                  {t('common.from')} {formatPrice(displayMinPrice)}
+                  {t('common.from')} {formatWithCurrency(displayMinPrice, priceCurrency)}
                 </p>
               ) : (
                 <p className="font-display text-sm sm:text-base font-bold text-foreground/50 dark:text-white/50">

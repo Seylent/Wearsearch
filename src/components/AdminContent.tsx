@@ -5,20 +5,35 @@
 
 'use client';
 
-import { lazy, Suspense } from "react";
-import { useTranslation } from "react-i18next";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { ShieldCheck, Plus, Package, Store, Tag, Mail, ImageIcon } from "lucide-react";
-import { useAuth } from "@/features/auth/hooks/useAuth";
-import { useSEO } from "@/hooks/useSEO";
-import { useAdmin } from "@/hooks/useAdmin";
+import { lazy, Suspense } from 'react';
+import { useTranslation } from 'react-i18next';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { ShieldCheck, Plus, Package, Store, Tag, Mail, ImageIcon, Users } from 'lucide-react';
+import { useAuth } from '@/features/auth/hooks/useAuth';
+import { useSEO } from '@/hooks/useSEO';
+import { useAdmin } from '@/hooks/useAdmin';
 
-const AddProductForm = lazy(() => import("@/components/admin/AddProductForm").then(m => ({ default: m.AddProductForm })));
-const ProductList = lazy(() => import("@/components/admin/ProductList").then(m => ({ default: m.ProductList })));
-const StoreManagement = lazy(() => import("@/components/admin/StoreManagement").then(m => ({ default: m.StoreManagement })));
-const BrandManagement = lazy(() => import("@/components/admin/BrandManagement").then(m => ({ default: m.BrandManagement })));
-const ContactManagement = lazy(() => import("@/components/admin/ContactManagement").then(m => ({ default: m.ContactManagement })));
-const BannerManager = lazy(() => import("@/components/admin/BannerManager").then(m => ({ default: m.BannerManager })));
+const AddProductForm = lazy(() =>
+  import('@/components/admin/AddProductForm').then(m => ({ default: m.AddProductForm }))
+);
+const ProductList = lazy(() =>
+  import('@/components/admin/ProductList').then(m => ({ default: m.ProductList }))
+);
+const StoreManagement = lazy(() =>
+  import('@/components/admin/StoreManagement').then(m => ({ default: m.StoreManagement }))
+);
+const BrandManagement = lazy(() =>
+  import('@/components/admin/BrandManagement').then(m => ({ default: m.BrandManagement }))
+);
+const ContactManagement = lazy(() =>
+  import('@/components/admin/ContactManagement').then(m => ({ default: m.ContactManagement }))
+);
+const BannerManager = lazy(() =>
+  import('@/components/admin/BannerManager').then(m => ({ default: m.BannerManager }))
+);
+const UserRoleManagement = lazy(() =>
+  import('@/components/admin/UserRoleManagement').then(m => ({ default: m.UserRoleManagement }))
+);
 
 const AdminTabSkeleton = () => (
   <div className="space-y-6 animate-pulse">
@@ -29,27 +44,27 @@ const AdminTabSkeleton = () => (
 
 const AdminContent = () => {
   const { t } = useTranslation();
-  const { isAuthenticated, isAdmin } = useAuth();
+  const { isAuthenticated, canAccessAdminPanel } = useAuth();
   const admin = useAdmin();
 
   const products = (admin.products || []) as Array<Record<string, unknown>>;
   const stores = (admin.stores || []) as Array<Record<string, unknown>>;
   const brands = (admin.brands || []) as Array<Record<string, unknown>>;
-  const storeOptions = stores.map((store) => ({
+  const storeOptions = stores.map(store => ({
     id: String(store.id ?? ''),
     name: String(store.name ?? 'Unknown'),
   }));
-  const brandOptions = brands.map((brand) => ({
+  const brandOptions = brands.map(brand => ({
     id: String(brand.id ?? ''),
     name: String(brand.name ?? 'Unknown'),
   }));
-  const storeManagementStores = storeOptions.map((store) => ({
+  const storeManagementStores = storeOptions.map(store => ({
     id: Number(store.id) || 0,
     name: store.name,
     domain: '',
     is_active: true,
   }));
-  const brandManagementBrands = brands.map((brand) => ({
+  const brandManagementBrands = brands.map(brand => ({
     id: String(brand.id ?? ''),
     name: String(brand.name ?? 'Unknown'),
     is_active: typeof brand.is_active === 'boolean' ? brand.is_active : true,
@@ -73,7 +88,7 @@ const AdminContent = () => {
     );
   }
 
-  if (!isAdmin) {
+  if (!canAccessAdminPanel) {
     return (
       <div className="min-h-screen bg-black text-white flex items-center justify-center">
         <div className="text-center">
@@ -92,7 +107,9 @@ const AdminContent = () => {
         <div className="container mx-auto px-4 md:px-6 relative z-10 text-center">
           <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full border border-border/50 bg-card/30 backdrop-blur-sm mb-4 lg:mb-8">
             <ShieldCheck className="w-4 h-4" />
-            <span className="text-xs text-foreground tracking-wider uppercase font-medium">{t('admin.title')}</span>
+            <span className="text-xs text-foreground tracking-wider uppercase font-medium">
+              {t('admin.title')}
+            </span>
           </div>
           <h1 className="font-display text-4xl sm:text-5xl font-bold mb-3">
             {t('admin.dashboard')}
@@ -106,14 +123,14 @@ const AdminContent = () => {
       {/* Admin Tabs */}
       <section className="py-6 md:py-12 overflow-visible">
         <div className="container mx-auto px-4 md:px-6 overflow-visible">
-          <Tabs 
-            defaultValue="add-product" 
-            className="max-w-6xl mx-auto overflow-visible" 
-            value={admin.activeTab} 
+          <Tabs
+            defaultValue="add-product"
+            className="max-w-6xl mx-auto overflow-visible"
+            value={admin.activeTab}
             onValueChange={admin.setActiveTab}
           >
-            <TabsList className="flex w-full overflow-x-auto md:grid md:grid-cols-6 bg-card/40 border border-border/50 backdrop-blur-sm mb-4 md:mb-8 p-1 rounded-xl gap-1">
-              <TabsTrigger 
+            <TabsList className="flex w-full overflow-x-auto md:grid md:grid-cols-7 bg-card/40 border border-border/50 backdrop-blur-sm mb-4 md:mb-8 p-1 rounded-xl gap-1">
+              <TabsTrigger
                 value="add-product"
                 className="flex-shrink-0 data-[state=active]:bg-foreground data-[state=active]:text-background rounded-lg transition-all text-xs md:text-sm px-3 py-2.5 min-h-[44px]"
               >
@@ -121,15 +138,17 @@ const AdminContent = () => {
                 <span className="hidden md:inline ml-1">{t('admin.addProduct')}</span>
                 <span className="md:hidden ml-1">{t('admin.add')}</span>
               </TabsTrigger>
-              <TabsTrigger 
+              <TabsTrigger
                 value="manage-products"
                 className="flex-shrink-0 data-[state=active]:bg-foreground data-[state=active]:text-background rounded-lg transition-all text-xs md:text-sm px-3 py-2.5 min-h-[44px]"
               >
                 <Package className="w-4 h-4 md:mr-2" />
-                <span className="hidden md:inline ml-1">{t('common.products')} ({products.length})</span>
+                <span className="hidden md:inline ml-1">
+                  {t('common.products')} ({products.length})
+                </span>
                 <span className="md:hidden ml-1">{t('admin.list')}</span>
               </TabsTrigger>
-              <TabsTrigger 
+              <TabsTrigger
                 value="stores"
                 className="flex-shrink-0 data-[state=active]:bg-foreground data-[state=active]:text-background rounded-lg transition-all text-xs md:text-sm px-3 py-2.5 min-h-[44px]"
               >
@@ -137,7 +156,7 @@ const AdminContent = () => {
                 <span className="hidden md:inline ml-1">{t('admin.stores')}</span>
                 <span className="md:hidden ml-1">{t('admin.stores')}</span>
               </TabsTrigger>
-              <TabsTrigger 
+              <TabsTrigger
                 value="brands"
                 className="flex-shrink-0 data-[state=active]:bg-foreground data-[state=active]:text-background rounded-lg transition-all text-xs md:text-sm px-3 py-2.5 min-h-[44px]"
               >
@@ -145,7 +164,7 @@ const AdminContent = () => {
                 <span className="hidden md:inline ml-1">{t('admin.brands')}</span>
                 <span className="md:hidden ml-1">Brands</span>
               </TabsTrigger>
-              <TabsTrigger 
+              <TabsTrigger
                 value="banners"
                 className="flex-shrink-0 data-[state=active]:bg-foreground data-[state=active]:text-background rounded-lg transition-all text-xs md:text-sm px-3 py-2.5 min-h-[44px]"
               >
@@ -153,7 +172,7 @@ const AdminContent = () => {
                 <span className="hidden md:inline ml-1">Банери</span>
                 <span className="md:hidden ml-1">Банери</span>
               </TabsTrigger>
-              <TabsTrigger 
+              <TabsTrigger
                 value="contacts"
                 className="flex-shrink-0 data-[state=active]:bg-foreground data-[state=active]:text-background rounded-lg transition-all text-xs md:text-sm px-3 py-2.5 min-h-[44px]"
               >
@@ -161,82 +180,82 @@ const AdminContent = () => {
                 <span className="hidden md:inline ml-1">{t('admin.contacts')}</span>
                 <span className="md:hidden ml-1">Contact</span>
               </TabsTrigger>
+              <TabsTrigger
+                value="user-roles"
+                className="flex-shrink-0 data-[state=active]:bg-foreground data-[state=active]:text-background rounded-lg transition-all text-xs md:text-sm px-3 py-2.5 min-h-[44px]"
+              >
+                <Users className="w-4 h-4 md:mr-2" />
+                <span className="hidden md:inline ml-1">{t('admin.rolesTitle')}</span>
+                <span className="md:hidden ml-1">{t('admin.rolesShort', 'Roles')}</span>
+              </TabsTrigger>
             </TabsList>
 
             {/* ADD/EDIT PRODUCT TAB */}
             <TabsContent value="add-product" className="space-y-4 md:space-y-8 overflow-visible">
               <Suspense fallback={<AdminTabSkeleton />}>
                 <AddProductForm
-                // Form data
-                editingProductId={admin.editingProductId}
-                productName={admin.productName}
-                productCategory={admin.productCategory}
-                productColor={admin.productColor}
-                productGender={admin.productGender}
-                productBrandId={admin.productBrandId}
-                productDescription={admin.productDescription}
-                productImageUrl={admin.productImageUrl}
-                productImages={admin.productImages}
-                primaryImageIndex={admin.primaryImageIndex}
-                publishAt={admin.publishAt}
-                unpublishAt={admin.unpublishAt}
-                productStatus={admin.productStatus}
-                
-                // Store management
-                selectedStores={admin.selectedStores}
-                currentStore={admin.currentStore}
-                currentStorePrice={admin.currentStorePrice}
-                currentStoreSizes={admin.currentStoreSizes}
-                currentSizeInput={admin.currentSizeInput}
-                
-                // Templates
-                savedTemplates={admin.savedTemplates}
-                showTemplates={admin.showTemplates}
-                
-                // Data
-                stores={storeOptions}
-                brands={brandOptions}
-                
-                // Handlers
-                onProductNameChange={admin.setProductName}
-                onProductCategoryChange={admin.setProductCategory}
-                onProductColorChange={admin.setProductColor}
-                onProductGenderChange={admin.setProductGender}
-                onProductBrandIdChange={admin.setProductBrandId}
-                onProductDescriptionChange={admin.setProductDescription}
-                onProductImageUrlChange={admin.setProductImageUrl}
-                onProductImagesChange={admin.setProductImages}
-                onPrimaryImageIndexChange={admin.setPrimaryImageIndex}
-                onPublishAtChange={admin.setPublishAt}
-                onUnpublishAtChange={admin.setUnpublishAt}
-                onProductStatusChange={admin.setProductStatus}
-                
-                // Store handlers
-                onCurrentStoreChange={admin.setCurrentStore}
-                onCurrentStorePriceChange={admin.setCurrentStorePrice}
-                onCurrentSizeInputChange={admin.setCurrentSizeInput}
-                onAddSize={admin.addSize}
-                onRemoveSize={admin.removeSize}
-                onAddStore={admin.addStore}
-                onRemoveStore={admin.removeStore}
-                onUpdateStorePrice={admin.updateStorePrice}
-                onAddStoreSize={admin.addStoreSize}
-                onRemoveStoreSize={admin.removeStoreSize}
-                
-                // Template handlers
-                onSaveAsTemplate={admin.saveAsTemplate}
-                onLoadTemplate={admin.loadTemplate}
-                onDeleteTemplate={admin.deleteTemplate}
-                onToggleTemplates={() => admin.setShowTemplates(!admin.showTemplates)}
-                
-                // Submit
-                onSubmit={admin.handleProductSubmit}
-                submitting={admin.submitting}
-                
-                // Translation
-                autoTranslateDescription={admin.autoTranslateDescription}
-                onAutoTranslateDescriptionChange={admin.setAutoTranslateDescription}
-              />
+                  // Form data
+                  editingProductId={admin.editingProductId}
+                  productName={admin.productName}
+                  productCategory={admin.productCategory}
+                  productColor={admin.productColor}
+                  productGender={admin.productGender}
+                  productBrandId={admin.productBrandId}
+                  productDescription={admin.productDescription}
+                  productImageUrl={admin.productImageUrl}
+                  productImages={admin.productImages}
+                  primaryImageIndex={admin.primaryImageIndex}
+                  publishAt={admin.publishAt}
+                  unpublishAt={admin.unpublishAt}
+                  productStatus={admin.productStatus}
+                  // Store management
+                  selectedStores={admin.selectedStores}
+                  currentStore={admin.currentStore}
+                  currentStorePrice={admin.currentStorePrice}
+                  currentStoreSizes={admin.currentStoreSizes}
+                  currentSizeInput={admin.currentSizeInput}
+                  // Templates
+                  savedTemplates={admin.savedTemplates}
+                  showTemplates={admin.showTemplates}
+                  // Data
+                  stores={storeOptions}
+                  brands={brandOptions}
+                  // Handlers
+                  onProductNameChange={admin.setProductName}
+                  onProductCategoryChange={admin.setProductCategory}
+                  onProductColorChange={admin.setProductColor}
+                  onProductGenderChange={admin.setProductGender}
+                  onProductBrandIdChange={admin.setProductBrandId}
+                  onProductDescriptionChange={admin.setProductDescription}
+                  onProductImageUrlChange={admin.setProductImageUrl}
+                  onProductImagesChange={admin.setProductImages}
+                  onPrimaryImageIndexChange={admin.setPrimaryImageIndex}
+                  onPublishAtChange={admin.setPublishAt}
+                  onUnpublishAtChange={admin.setUnpublishAt}
+                  onProductStatusChange={admin.setProductStatus}
+                  // Store handlers
+                  onCurrentStoreChange={admin.setCurrentStore}
+                  onCurrentStorePriceChange={admin.setCurrentStorePrice}
+                  onCurrentSizeInputChange={admin.setCurrentSizeInput}
+                  onAddSize={admin.addSize}
+                  onRemoveSize={admin.removeSize}
+                  onAddStore={admin.addStore}
+                  onRemoveStore={admin.removeStore}
+                  onUpdateStorePrice={admin.updateStorePrice}
+                  onAddStoreSize={admin.addStoreSize}
+                  onRemoveStoreSize={admin.removeStoreSize}
+                  // Template handlers
+                  onSaveAsTemplate={admin.saveAsTemplate}
+                  onLoadTemplate={admin.loadTemplate}
+                  onDeleteTemplate={admin.deleteTemplate}
+                  onToggleTemplates={() => admin.setShowTemplates(!admin.showTemplates)}
+                  // Submit
+                  onSubmit={admin.handleProductSubmit}
+                  submitting={admin.submitting}
+                  // Translation
+                  autoTranslateDescription={admin.autoTranslateDescription}
+                  onAutoTranslateDescriptionChange={admin.setAutoTranslateDescription}
+                />
               </Suspense>
             </TabsContent>
 
@@ -244,46 +263,46 @@ const AdminContent = () => {
             <TabsContent value="manage-products" className="space-y-6 overflow-visible">
               <Suspense fallback={<AdminTabSkeleton />}>
                 <ProductList
-                products={products}
-                searchProducts={admin.searchProducts}
-                onSearchProductsChange={admin.setSearchProducts}
-                viewMode={admin.viewMode}
-                onViewModeChange={admin.setViewMode}
-                isSelectMode={admin.isSelectMode}
-                selectedProductIds={admin.selectedProductIds}
-                onToggleSelectMode={admin.toggleSelectMode}
-                onToggleProductSelection={admin.toggleProductSelection}
-                onSelectAllProducts={admin.selectAllProducts}
-                onEditProduct={(product) => {
-                  // Load product for editing and switch to add-product tab
-                  const id = String((product as Record<string, unknown>)?.id ?? '');
-                  if (id) {
-                    admin.setEditingProductId(id);
-                  }
-                  admin.setActiveTab("add-product");
-                }}
-                onDeleteProduct={(product) => {
-                  // Product deletion handled by ProductManagement component internally
-                  console.log('Delete product:', product);
-                }}
-                onBulkDelete={() => {
-                  // Bulk deletion to be implemented when batch API endpoint is available
-                  console.log('Bulk delete:', admin.selectedProductIds);
-                }}
-                onExportToCSV={() => {
-                  // CSV export to be implemented when export service is ready
-                  console.log('Export CSV');
-                }}
-                onExportToJSON={() => {
-                  // JSON export to be implemented when export service is ready
-                  console.log('Export JSON');
-                }}
-                onDownloadTemplate={() => {
-                  // Template download to be implemented when template service is ready
-                  console.log('Download template');
-                }}
-                loadingExport={admin.loadingExport}
-              />
+                  products={products}
+                  searchProducts={admin.searchProducts}
+                  onSearchProductsChange={admin.setSearchProducts}
+                  viewMode={admin.viewMode}
+                  onViewModeChange={admin.setViewMode}
+                  isSelectMode={admin.isSelectMode}
+                  selectedProductIds={admin.selectedProductIds}
+                  onToggleSelectMode={admin.toggleSelectMode}
+                  onToggleProductSelection={admin.toggleProductSelection}
+                  onSelectAllProducts={admin.selectAllProducts}
+                  onEditProduct={product => {
+                    // Load product for editing and switch to add-product tab
+                    const id = String((product as Record<string, unknown>)?.id ?? '');
+                    if (id) {
+                      admin.setEditingProductId(id);
+                    }
+                    admin.setActiveTab('add-product');
+                  }}
+                  onDeleteProduct={product => {
+                    // Product deletion handled by ProductManagement component internally
+                    console.log('Delete product:', product);
+                  }}
+                  onBulkDelete={() => {
+                    // Bulk deletion to be implemented when batch API endpoint is available
+                    console.log('Bulk delete:', admin.selectedProductIds);
+                  }}
+                  onExportToCSV={() => {
+                    // CSV export to be implemented when export service is ready
+                    console.log('Export CSV');
+                  }}
+                  onExportToJSON={() => {
+                    // JSON export to be implemented when export service is ready
+                    console.log('Export JSON');
+                  }}
+                  onDownloadTemplate={() => {
+                    // Template download to be implemented when template service is ready
+                    console.log('Download template');
+                  }}
+                  loadingExport={admin.loadingExport}
+                />
               </Suspense>
             </TabsContent>
 
@@ -291,21 +310,21 @@ const AdminContent = () => {
             <TabsContent value="stores" className="space-y-8 overflow-visible">
               <Suspense fallback={<AdminTabSkeleton />}>
                 <StoreManagement
-                stores={storeManagementStores}
-                onStoreCreate={async (storeData) => {
-                  // Store creation handled by StoreManagement component with API integration
-                  console.log('Create store:', storeData);
-                }}
-                onStoreUpdate={async (id, storeData) => {
-                  // Store update handled by StoreManagement component with API integration
-                  console.log('Update store:', id, storeData);
-                }}
-                onStoreDelete={async (id) => {
-                  // Store deletion handled by StoreManagement component with API integration
-                  console.log('Delete store:', id);
-                }}
-                loading={admin.isLoadingDashboard}
-              />
+                  stores={storeManagementStores}
+                  onStoreCreate={async storeData => {
+                    // Store creation handled by StoreManagement component with API integration
+                    console.log('Create store:', storeData);
+                  }}
+                  onStoreUpdate={async (id, storeData) => {
+                    // Store update handled by StoreManagement component with API integration
+                    console.log('Update store:', id, storeData);
+                  }}
+                  onStoreDelete={async id => {
+                    // Store deletion handled by StoreManagement component with API integration
+                    console.log('Delete store:', id);
+                  }}
+                  loading={admin.isLoadingDashboard}
+                />
               </Suspense>
             </TabsContent>
 
@@ -313,21 +332,21 @@ const AdminContent = () => {
             <TabsContent value="brands" className="space-y-6">
               <Suspense fallback={<AdminTabSkeleton />}>
                 <BrandManagement
-                brands={brandManagementBrands}
-                onBrandCreate={async (brandData) => {
-                  // Brand creation handled by BrandManagement component with API integration
-                  console.log('Create brand:', brandData);
-                }}
-                onBrandUpdate={async (id, brandData) => {
-                  // Brand update handled by BrandManagement component with API integration
-                  console.log('Update brand:', id, brandData);
-                }}
-                onBrandDelete={async (id) => {
-                  // Brand deletion handled by BrandManagement component with API integration
-                  console.log('Delete brand:', id);
-                }}
-                loading={admin.isLoadingDashboard}
-              />
+                  brands={brandManagementBrands}
+                  onBrandCreate={async brandData => {
+                    // Brand creation handled by BrandManagement component with API integration
+                    console.log('Create brand:', brandData);
+                  }}
+                  onBrandUpdate={async (id, brandData) => {
+                    // Brand update handled by BrandManagement component with API integration
+                    console.log('Update brand:', id, brandData);
+                  }}
+                  onBrandDelete={async id => {
+                    // Brand deletion handled by BrandManagement component with API integration
+                    console.log('Delete brand:', id);
+                  }}
+                  loading={admin.isLoadingDashboard}
+                />
               </Suspense>
             </TabsContent>
 
@@ -342,6 +361,13 @@ const AdminContent = () => {
             <TabsContent value="contacts" className="space-y-6">
               <Suspense fallback={<AdminTabSkeleton />}>
                 <ContactManagement />
+              </Suspense>
+            </TabsContent>
+
+            {/* USER ROLES TAB */}
+            <TabsContent value="user-roles" className="space-y-6">
+              <Suspense fallback={<AdminTabSkeleton />}>
+                <UserRoleManagement />
               </Suspense>
             </TabsContent>
           </Tabs>

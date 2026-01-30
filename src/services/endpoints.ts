@@ -19,6 +19,7 @@ export const ENDPOINTS = {
     LIST: '/items',
     DETAIL: (id: string | number) => `/items/${id}`,
     STORES: (id: string | number) => `/items/${id}/stores`,
+    POPULAR_SAVED: '/products/popular-saved',
     CREATE: '/admin/items',
     UPDATE: (id: string | number) => `/admin/items/${id}`,
     DELETE: (id: string | number) => `/admin/items/${id}`,
@@ -63,7 +64,10 @@ export const ENDPOINTS = {
   STORES: {
     LIST: '/admin/stores',
     DETAIL: (id: string | number) => `/stores/${id}`,
-    PRODUCTS: (id: string | number, params?: { category?: string; page?: number; limit?: number }) => {
+    PRODUCTS: (
+      id: string | number,
+      params?: { category?: string; page?: number; limit?: number }
+    ) => {
       const baseUrl = `/stores/${id}/products`;
       const searchParams = new URLSearchParams();
       if (params?.category) searchParams.append('category', params.category);

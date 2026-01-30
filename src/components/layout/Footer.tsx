@@ -1,5 +1,6 @@
 'use client';
 
+import Image from 'next/image';
 import Link from 'next/link';
 import { useTranslation } from 'react-i18next';
 
@@ -22,14 +23,21 @@ const Footer = () => {
           {/* Links */}
           <div>
             <div className="mb-6 max-w-md">
-              <h4 className="font-display font-semibold mb-3 text-sm tracking-wider uppercase text-white">
-                {t('footer.styleNotesTitle', 'Style notes')}
-              </h4>
-              <p className="text-sm text-muted-foreground leading-relaxed">
-                {t(
-                  'footer.styleNotesBody',
-                  'Discover new drops, seasonal edits, and timeless staples. We focus on fit, fabric, and longevity so every choice feels intentional.'
-                )}
+              <Link
+                href="/"
+                className="inline-flex items-center gap-3 text-white hover:text-foreground transition-colors"
+                aria-label={t('aria.navigateToHomepage')}
+              >
+                <Image
+                  src="/WEARSEARCH.png"
+                  alt="Wearsearch"
+                  width={140}
+                  height={32}
+                  className="h-8 w-auto"
+                />
+              </Link>
+              <p className="text-sm text-muted-foreground leading-relaxed mt-3">
+                {t('footer.brandDescription', '© 2026 wearsearch. Створено для зручних покупок.')}
               </p>
             </div>
             <h4 className="font-display font-semibold mb-5 text-sm tracking-wider uppercase text-white">

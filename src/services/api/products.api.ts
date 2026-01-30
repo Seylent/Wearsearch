@@ -40,6 +40,11 @@ export interface ProductFilters {
   sort?: string;
 }
 
+export interface PopularSavedOptions {
+  limit?: number;
+  noCache?: boolean;
+}
+
 export const productsApi = {
   /**
    * Get all products with optional filters
@@ -55,9 +60,7 @@ export const productsApi = {
         return {
           products: items as Product[],
           total:
-            toOptionalNumber(meta?.totalItems) ??
-            toOptionalNumber(meta?.total) ??
-            items.length,
+            toOptionalNumber(meta?.totalItems) ?? toOptionalNumber(meta?.total) ?? items.length,
           page: toOptionalNumber(meta?.currentPage) ?? 1,
           limit: toOptionalNumber(meta?.itemsPerPage) ?? items.length,
         } as ProductsResponse;
@@ -127,6 +130,28 @@ export const productsApi = {
       return response.data;
     } catch (error) {
       console.error(`[Products API] Failed to fetch products for category ${category}:`, error);
+      throw error;
+    }
+  },
+
+  /**
+   * Get top products by saves (wishlist + favorites)
+   */
+  getPopularSaved: async (options: PopularSavedOptions = {}): Promise<Product[]> => {
+    try {
+      const params: Record<string, string | number> = {};
+      if (options.limit) params.limit = options.limit;
+      if (options.noCache) params.no_cache = 1;
+
+      const response = await api.get('/products/popular-saved', { params });
+      const body: unknown = response.data;
+      const items = getArray(body, 'items');
+      if (items) return items as Product[];
+      if (Array.isArray(body)) return body as Product[];
+      const products = getArray(body, 'products');
+      return products ? (products as Product[]) : [];
+    } catch (error) {
+      console.error('[Products API] Failed to fetch popular saved products:', error);
       throw error;
     }
   },

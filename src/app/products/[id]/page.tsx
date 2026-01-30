@@ -4,6 +4,7 @@ import ProductDetail from '@/components/ProductDetail';
 import { generateProductMetadata } from '@/lib/seo/metadata-utils';
 import { fetchBackendJson } from '@/lib/backendFetch';
 import { generateBreadcrumbStructuredData, generateProductStructuredData } from '@/hooks/useSEO';
+import { getServerLanguage } from '@/utils/languageStorage';
 
 // Types
 interface PageProps {
@@ -15,7 +16,8 @@ interface PageProps {
 // Generate metadata for SEO
 export async function generateMetadata({ params }: PageProps): Promise<Metadata> {
   try {
-    const res = await fetchBackendJson<any>(`/products/${params.id}`, {
+    const lang = await getServerLanguage();
+    const res = await fetchBackendJson<any>(`/products/${params.id}?lang=${lang}`, {
       next: { revalidate: 3600 },
     });
 
@@ -110,7 +112,8 @@ export default async function ProductDetailPage({ params }: PageProps) {
   let breadcrumbData: Record<string, unknown> | null = null;
 
   try {
-    const res = await fetchBackendJson<any>(`/products/${params.id}`, {
+    const lang = await getServerLanguage();
+    const res = await fetchBackendJson<any>(`/products/${params.id}?lang=${lang}`, {
       next: { revalidate: 3600 },
     });
     const payload = res?.data;

@@ -168,6 +168,48 @@ function computeGridClass(columns: number): string {
   return 'grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-6';
 }
 
+type GenderCopy = {
+  title: string;
+  description: string;
+};
+
+function getGenderCopy(gender: string | null, t: TFunction): GenderCopy | null {
+  if (!gender) return null;
+  const normalized = gender.toLowerCase();
+
+  if (normalized === 'men' || normalized === 'male') {
+    return {
+      title: t('products.genderTitleMen', "Men's clothing"),
+      description: t(
+        'products.genderDescriptionMen',
+        "Browse the latest men's styles, essentials, and new drops."
+      ),
+    };
+  }
+
+  if (normalized === 'women' || normalized === 'female') {
+    return {
+      title: t('products.genderTitleWomen', "Women's clothing"),
+      description: t(
+        'products.genderDescriptionWomen',
+        "Discover women's fashion picks, seasonal edits, and best sellers."
+      ),
+    };
+  }
+
+  if (normalized === 'unisex') {
+    return {
+      title: t('products.genderTitleUnisex', 'Unisex clothing'),
+      description: t(
+        'products.genderDescriptionUnisex',
+        'Explore unisex essentials with inclusive fits and versatile styles.'
+      ),
+    };
+  }
+
+  return null;
+}
+
 function getMaxPriceLimit(currency: string): number {
   return currency === 'USD' ? 2000 : 50000;
 }
@@ -241,6 +283,15 @@ function renderProductsMainContent(args: {
               name={product.name}
               image={product.image_url || product.image || ''}
               price={product.price}
+              minPrice={product.price_min ?? product.min_price}
+              maxPrice={product.max_price ?? product.maxPrice}
+              priceCurrency={
+                product.currency === 'USD' || product.currency === 'UAH'
+                  ? product.currency
+                  : product.price_currency === 'USD' || product.price_currency === 'UAH'
+                    ? product.price_currency
+                    : undefined
+              }
               brand={product.brand}
             />
           ))}
@@ -553,7 +604,7 @@ function FiltersDialogContent(props: FiltersDialogProps) {
             }}
             className="mb-2 text-xs text-muted-foreground hover:text-foreground h-7"
           >
-            Clear: {filters.selectedBrand}
+            {t('filters.clearBrand', { brand: filters.selectedBrand })}
           </Button>
         )}
         <Input
@@ -640,6 +691,7 @@ export function ProductsContent() {
   const [seoData, setSeoData] = useState<SEOData | null>(null);
   const typeParam = searchParams?.get('type') || '';
   const colorParam = searchParams?.get('color') || '';
+  const genderParam = searchParams?.get('gender');
   const storeIdParam = searchParams?.get('store_id') || '';
 
   // Debounce SEO params to reduce API calls
@@ -822,8 +874,10 @@ export function ProductsContent() {
     (filters.priceMax !== null && filters.priceMax < maxPriceLimit);
 
   const defaultHeading = storeIdParam ? t('products.storeTitle') : t('products.heading');
-  const pageHeading = seoData?.h1_title ?? defaultHeading;
-  const pageDescription = seoData?.content_text ?? t('products.subheading');
+  const genderCopy = getGenderCopy(genderParam, t);
+  const pageHeading = seoData?.h1_title ?? genderCopy?.title ?? defaultHeading;
+  const pageDescription =
+    seoData?.content_text ?? genderCopy?.description ?? t('products.subheading');
 
   const mainContent = renderProductsMainContent({
     t,
