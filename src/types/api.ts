@@ -20,7 +20,7 @@ export interface Brand extends BaseEntity {
   products_count?: number;
 }
 
-// Store interface  
+// Store interface
 export interface Store extends BaseEntity {
   name: string;
   domain: string;
@@ -147,7 +147,14 @@ export interface User extends BaseEntity {
   first_name?: string;
   last_name?: string;
   avatar_url?: string;
-  role: 'user' | 'admin' | 'moderator';
+  role:
+    | 'user'
+    | 'admin'
+    | 'moderator'
+    | 'store_owner'
+    | 'store_manager'
+    | 'brand_owner'
+    | 'manager';
   is_active: boolean;
   last_login?: string;
   preferences?: {

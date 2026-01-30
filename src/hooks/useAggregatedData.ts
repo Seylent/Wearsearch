@@ -150,6 +150,12 @@ interface ProductFilters {
   color?: string | string[];
   gender?: string | string[];
   brandId?: string | string[];
+  material?: string | string[];
+  technology?: string | string[];
+  size?: string | string[];
+  material_id?: string | string[];
+  technology_id?: string | string[];
+  size_id?: string | string[];
   minPrice?: string;
   maxPrice?: string;
   sort?: string;
@@ -198,6 +204,12 @@ const buildV1ProductsParams = (filters: ProductFilters): URLSearchParams => {
   appendMany('color', filters.color);
   appendMany('gender', filters.gender);
   appendMany('brandId', filters.brandId);
+  appendMany('material', filters.material);
+  appendMany('technology', filters.technology);
+  appendMany('size', filters.size);
+  appendMany('material_id', filters.material_id);
+  appendMany('technology_id', filters.technology_id);
+  appendMany('size_id', filters.size_id);
 
   return params;
 };
@@ -216,6 +228,7 @@ export const useProductsPageData = (filters: ProductFilters = {}, options?: Quer
         const meta = getRecord(body, 'meta') ?? {};
         const facets = getRecord(body, 'facets') ?? {};
         const currency = getRecord(body, 'currency');
+        const seo = getRecord(body, 'seo') ?? getRecord(body, 'seo_data') ?? getRecord(meta, 'seo');
 
         const page = asNumber(meta.page, filters.page ?? 1);
         const limit = asNumber(meta.limit, filters.limit ?? 24);
@@ -238,7 +251,7 @@ export const useProductsPageData = (filters: ProductFilters = {}, options?: Quer
         const facetsBrands = facets.brands;
         const brands = Array.isArray(facetsBrands) ? facetsBrands : [];
 
-        return { products: items, brands, pagination, facets, currency };
+        return { products: items, brands, pagination, facets, currency, seo };
       } catch (_error: unknown) {
         // Fallback to individual calls
         if (process.env.NODE_ENV !== 'production') {

@@ -155,6 +155,7 @@
   },
   "admin": {
     "title": "Admin",
+    "storeOwnerPanelDescription": "Manage your store products",
     "addNewProduct": "Add New Product",
     "addProduct": "Add Product",
     "add": "Add",

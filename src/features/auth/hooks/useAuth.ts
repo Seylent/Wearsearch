@@ -99,8 +99,27 @@ export const useAuth = () => {
     retryDelay: attemptIndex => Math.min(2000 * 2 ** attemptIndex, 60000),
   });
 
-  const isAdmin = user?.role === 'admin';
-  const canAccessAdminPanel = user?.role === 'admin' || user?.role === 'store_owner';
+  const role = user?.role;
+  const isAdmin = role === 'admin';
+  const isStoreOwner = role === 'store_owner';
+  const isStoreManager = role === 'store_manager' || role === 'manager';
+  const isBrandOwner = role === 'brand_owner';
+  const isModerator = role === 'moderator';
+  const canAccessAdminPanel =
+    isAdmin || isStoreOwner || isStoreManager || isBrandOwner || isModerator;
+
+  const permissions = {
+    canManageProducts: isAdmin,
+    canManageStores: isAdmin,
+    canManageBrands: isAdmin,
+    canManageBanners: isAdmin,
+    canManageContacts: isAdmin,
+    canManageUserRoles: isAdmin,
+    canManageBrandPermissions: isAdmin || isBrandOwner,
+    canManageBrandOfficialStore: isAdmin || isBrandOwner,
+    canManageStoreManagers: isAdmin || isStoreOwner,
+    canManageStoreProducts: isAdmin || isStoreOwner || isStoreManager,
+  };
 
   // Manual refresh function
   const checkAuth = useCallback(async () => {
@@ -150,6 +169,7 @@ export const useAuth = () => {
     user: user || null,
     isAdmin,
     canAccessAdminPanel,
+    permissions,
     isLoading,
     isAuthenticated: !!user,
     checkAuth,

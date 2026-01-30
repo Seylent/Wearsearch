@@ -23,11 +23,14 @@ const getErrorMessage = (error: unknown): string => {
   return 'Unknown error';
 };
 
+const isUuid = (value: string): boolean =>
+  /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(value);
+
 export const useAdmin = () => {
   const router = useRouter();
   const searchParams = useSearchParams();
   const { toast } = useToast();
-  const { isAuthenticated, canAccessAdminPanel } = useAuth();
+  const { isAuthenticated, canAccessAdminPanel, isAdmin } = useAuth();
 
   // Dashboard data
   const [dashboardData, setDashboardData] = useState<{
@@ -47,6 +50,9 @@ export const useAdmin = () => {
   const [productGender, setProductGender] = useState('');
   const [productBrandId, setProductBrandId] = useState('');
   const [productDescription, setProductDescription] = useState('');
+  const [productMaterialIds, setProductMaterialIds] = useState<string[]>([]);
+  const [productTechnologyIds, setProductTechnologyIds] = useState<string[]>([]);
+  const [productSizeIds, setProductSizeIds] = useState<string[]>([]);
   const [productImageUrl, setProductImageUrl] = useState('');
   const [productImages, setProductImages] = useState<string[]>([]);
   const [primaryImageIndex, setPrimaryImageIndex] = useState<number>(0);
@@ -180,11 +186,15 @@ export const useAdmin = () => {
 
   // Initialize dashboard
   useEffect(() => {
-    if (isAuthenticated && canAccessAdminPanel) {
+    if (isAuthenticated && canAccessAdminPanel && isAdmin) {
       loadDashboard();
+      return;
+    }
+    if (isAuthenticated && canAccessAdminPanel && !isAdmin) {
+      setIsLoadingDashboard(false);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [isAuthenticated, canAccessAdminPanel]);
+  }, [isAuthenticated, canAccessAdminPanel, isAdmin]);
 
   // Derived data
   const products = useMemo(() => {
@@ -252,6 +262,29 @@ export const useAdmin = () => {
       return null;
     };
 
+    const extractIdList = (value: unknown): string[] => {
+      if (!Array.isArray(value)) return [];
+      return value
+        .map(item => {
+          if (typeof item === 'string' || typeof item === 'number') return String(item);
+          if (isRecord(item)) {
+            const idCandidate =
+              item.id ??
+              item.uuid ??
+              item.slug ??
+              item.value ??
+              item.material_id ??
+              item.technology_id ??
+              item.size_id;
+            return typeof idCandidate === 'string' || typeof idCandidate === 'number'
+              ? String(idCandidate)
+              : '';
+          }
+          return '';
+        })
+        .filter(Boolean);
+    };
+
     const base = products.find((p: { id: string }) => p.id === editingProductId) as
       | Record<string, unknown>
       | undefined;
@@ -260,7 +293,9 @@ export const useAdmin = () => {
     // Fill basic fields from dashboard list item
     console.log('Loading product for edit:', base);
     setProductName((base.name as string) || '');
-    setProductCategory((base.type as string) || '');
+    setProductCategory(
+      (base.category_slug as string) || (base.category as string) || (base.type as string) || ''
+    );
     setProductColor((base.color as string) || '');
     setProductGender((base.gender as string) || 'unisex');
     setProductBrandId((base.brand_id as string) || '');
@@ -269,6 +304,25 @@ export const useAdmin = () => {
         (base.description as string) ||
         (base.description_en as string) ||
         ''
+    );
+    setProductMaterialIds(
+      extractIdList(
+        (base.materials as unknown) ??
+          (base.material_ids as unknown) ??
+          (base.materialIds as unknown)
+      )
+    );
+    setProductTechnologyIds(
+      extractIdList(
+        (base.technologies as unknown) ??
+          (base.technology_ids as unknown) ??
+          (base.technologyIds as unknown)
+      )
+    );
+    setProductSizeIds(
+      extractIdList(
+        (base.sizes as unknown) ?? (base.size_ids as unknown) ?? (base.sizeIds as unknown)
+      )
     );
     setProductImageUrl((base.image_url as string) || '');
 
@@ -307,9 +361,35 @@ export const useAdmin = () => {
 
           if (!cancelled && product) {
             if (!base.type && typeof product.type === 'string') setProductCategory(product.type);
+            if (!base.category && typeof product.category === 'string')
+              setProductCategory(product.category);
+            if (!base.category_slug && typeof product.category_slug === 'string')
+              setProductCategory(product.category_slug);
             if (!base.color && typeof product.color === 'string') setProductColor(product.color);
             if (!base.gender && typeof product.gender === 'string')
               setProductGender(product.gender);
+
+            setProductMaterialIds(
+              extractIdList(
+                (product.materials as unknown) ??
+                  (product.material_ids as unknown) ??
+                  (product.materialIds as unknown)
+              )
+            );
+            setProductTechnologyIds(
+              extractIdList(
+                (product.technologies as unknown) ??
+                  (product.technology_ids as unknown) ??
+                  (product.technologyIds as unknown)
+              )
+            );
+            setProductSizeIds(
+              extractIdList(
+                (product.sizes as unknown) ??
+                  (product.size_ids as unknown) ??
+                  (product.sizeIds as unknown)
+              )
+            );
 
             if (!base.description && !base.description_uk && !base.description_en) {
               const fallbackDescription =
@@ -490,6 +570,9 @@ export const useAdmin = () => {
     setProductGender('');
     setProductBrandId('');
     setProductDescription('');
+    setProductMaterialIds([]);
+    setProductTechnologyIds([]);
+    setProductSizeIds([]);
     setProductImageUrl('');
     setProductImages([]);
     setPrimaryImageIndex(0);
@@ -563,6 +646,25 @@ export const useAdmin = () => {
           })),
         };
 
+        const categoryValue = productCategory.trim();
+        if (categoryValue) {
+          if (isUuid(categoryValue)) {
+            productData.category_id = categoryValue;
+          } else {
+            productData.category_slug = categoryValue;
+          }
+        }
+
+        if (productMaterialIds.length > 0) {
+          productData.material_ids = productMaterialIds;
+        }
+        if (productTechnologyIds.length > 0) {
+          productData.technology_ids = productTechnologyIds;
+        }
+        if (productSizeIds.length > 0) {
+          productData.size_ids = productSizeIds;
+        }
+
         // Add description - backend expects description_uk and optionally description_en
         if (finalDescriptionUk) {
           productData.description = finalDescriptionUk;
@@ -615,6 +717,9 @@ export const useAdmin = () => {
       productGender,
       productBrandId,
       productDescription,
+      productMaterialIds,
+      productTechnologyIds,
+      productSizeIds,
       productImageUrl,
       productStatus,
       publishAt,
@@ -789,6 +894,12 @@ export const useAdmin = () => {
     setProductBrandId,
     productDescription,
     setProductDescription,
+    productMaterialIds,
+    setProductMaterialIds,
+    productTechnologyIds,
+    setProductTechnologyIds,
+    productSizeIds,
+    setProductSizeIds,
     productImageUrl,
     setProductImageUrl,
     productImages,

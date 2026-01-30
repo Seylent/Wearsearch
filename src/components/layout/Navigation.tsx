@@ -34,7 +34,7 @@ const Navigation: React.FC = () => {
   }, []);
 
   // Use centralized auth hook — лише після mount
-  const { user, isAdmin } = useAuth();
+  const { user, canAccessAdminPanel } = useAuth();
 
   // Use navigation state hook
   const nav = useNavigationState();
@@ -101,7 +101,7 @@ const Navigation: React.FC = () => {
           >
             {t('nav.contacts')}
           </Link>
-          {isMounted && isAdmin && (
+          {isMounted && canAccessAdminPanel && (
             <Link
               href="/admin"
               className={`px-3 py-1 text-sm font-medium transition-all duration-300 rounded-full ${
@@ -229,7 +229,7 @@ const Navigation: React.FC = () => {
             >
               {t('nav.contacts')}
             </button>
-            {isMounted && isAdmin && (
+            {isMounted && canAccessAdminPanel && (
               <Link
                 href="/admin"
                 onClick={nav.closeMobileMenu}

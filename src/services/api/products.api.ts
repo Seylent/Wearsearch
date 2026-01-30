@@ -37,6 +37,12 @@ export interface ProductFilters {
   search?: string;
   color?: string;
   category?: string;
+  material?: string | string[];
+  technology?: string | string[];
+  size?: string | string[];
+  material_id?: string | string[];
+  technology_id?: string | string[];
+  size_id?: string | string[];
   sort?: string;
 }
 

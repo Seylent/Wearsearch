@@ -14,6 +14,7 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { useAuth } from '@/features/auth/hooks/useAuth';
 
 interface UserData {
   id: string;
@@ -28,6 +29,7 @@ export function UserProfileMenu() {
   const router = useRouter();
   const { t } = useTranslation();
   const [user, setUser] = useState<UserData | null>(null);
+  const { user: authUser, canAccessAdminPanel, isAdmin } = useAuth();
 
   useEffect(() => {
     loadUser();
@@ -77,7 +79,15 @@ export function UserProfileMenu() {
 
   const displayName = user.display_name || user.username || user.email.split('@')[0];
   const initials = displayName.slice(0, 2).toUpperCase();
-  const isAdmin = user.role === 'admin';
+  const effectiveRole = (authUser?.role || user.role) ?? 'user';
+  const effectiveCanAccessAdminPanel =
+    canAccessAdminPanel ||
+    effectiveRole === 'admin' ||
+    effectiveRole === 'store_owner' ||
+    effectiveRole === 'store_manager' ||
+    effectiveRole === 'brand_owner' ||
+    effectiveRole === 'moderator' ||
+    effectiveRole === 'manager';
 
   return (
     <DropdownMenu modal={false}>
@@ -91,7 +101,7 @@ export function UserProfileMenu() {
           </Avatar>
           <div className="hidden md:flex flex-col items-start">
             <span className="text-sm font-semibold text-foreground">{displayName}</span>
-            {isAdmin && (
+            {effectiveCanAccessAdminPanel && (
               <span className="text-[10px] uppercase tracking-wider text-muted-foreground flex items-center gap-1">
                 <Shield className="h-2.5 w-2.5" />
                 {t('nav.admin')}
@@ -118,7 +128,7 @@ export function UserProfileMenu() {
             <div className="flex flex-col flex-1 min-w-0">
               <p className="text-sm font-semibold text-foreground truncate">{displayName}</p>
               <p className="text-xs text-muted-foreground truncate">{user.email}</p>
-              {isAdmin && (
+              {effectiveCanAccessAdminPanel && (
                 <span className="text-[10px] text-primary flex items-center gap-1 mt-0.5">
                   <Shield className="h-2.5 w-2.5" />
                   {t('nav.admin')}
@@ -154,7 +164,7 @@ export function UserProfileMenu() {
           <span className="text-base font-medium">{t('nav.wishlists')}</span>
         </DropdownMenuItem>
 
-        {isAdmin && (
+        {effectiveCanAccessAdminPanel && (
           <DropdownMenuItem
             onClick={() => router.push('/admin')}
             className="cursor-pointer rounded-lg px-4 py-3 min-h-[44px] touch-manipulation"

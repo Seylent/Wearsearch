@@ -7,13 +7,21 @@
 
 import React, { useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
-import { Plus, Search, Edit3, Trash2, Tag } from "lucide-react";
-import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Badge } from '@/components/ui/badge';
+import { Switch } from '@/components/ui/switch';
+import { Plus, Search, Edit3, Trash2, Tag } from 'lucide-react';
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from '@/components/ui/dialog';
 
 interface Brand {
   id: string;
@@ -22,6 +30,7 @@ interface Brand {
   website?: string;
   logo_url?: string;
   is_active: boolean;
+  is_closed?: boolean;
   products_count?: number;
   created_at?: string;
 }
@@ -52,6 +61,7 @@ export const BrandManagement: React.FC<BrandManagementProps> = ({
     website: '',
     logo_url: '',
     is_active: true,
+    is_closed: false,
   });
 
   // Reset form
@@ -62,6 +72,7 @@ export const BrandManagement: React.FC<BrandManagementProps> = ({
       website: '',
       logo_url: '',
       is_active: true,
+      is_closed: false,
     });
     setEditingBrand(null);
   };
@@ -75,6 +86,7 @@ export const BrandManagement: React.FC<BrandManagementProps> = ({
       website: brand.website || '',
       logo_url: brand.logo_url || '',
       is_active: brand.is_active,
+      is_closed: brand.is_closed ?? false,
     });
     setIsAddDialogOpen(true);
   };
@@ -82,7 +94,7 @@ export const BrandManagement: React.FC<BrandManagementProps> = ({
   // Handle form submission
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     if (!formData.name.trim()) {
       return;
     }
@@ -94,7 +106,7 @@ export const BrandManagement: React.FC<BrandManagementProps> = ({
       } else {
         await onBrandCreate(formData);
       }
-      
+
       setIsAddDialogOpen(false);
       resetForm();
     } catch (error) {
@@ -107,7 +119,7 @@ export const BrandManagement: React.FC<BrandManagementProps> = ({
   // Handle delete
   const handleDelete = async (id: string) => {
     if (!confirm(t('admin.confirmDeleteBrand'))) return;
-    
+
     setSubmitting(true);
     try {
       await onBrandDelete(id);
@@ -120,9 +132,10 @@ export const BrandManagement: React.FC<BrandManagementProps> = ({
 
   // Filtered brands
   const filteredBrands = searchTerm
-    ? brands.filter(brand => 
-        brand.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        brand.description?.toLowerCase().includes(searchTerm.toLowerCase())
+    ? brands.filter(
+        brand =>
+          brand.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+          brand.description?.toLowerCase().includes(searchTerm.toLowerCase())
       )
     : brands;
 
@@ -133,7 +146,7 @@ export const BrandManagement: React.FC<BrandManagementProps> = ({
           <Tag className="w-6 h-6" />
           {t('admin.brandManagement')}
         </h2>
-        
+
         <Dialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen} modal={false}>
           <DialogTrigger asChild>
             <Button onClick={resetForm} className="flex items-center gap-2">
@@ -143,11 +156,11 @@ export const BrandManagement: React.FC<BrandManagementProps> = ({
           </DialogTrigger>
           <DialogContent className="max-w-md">
             <DialogHeader>
-              <DialogTitle>
-                {editingBrand ? t('admin.editBrand') : t('admin.addBrand')}
-              </DialogTitle>
+              <DialogTitle>{editingBrand ? t('admin.editBrand') : t('admin.addBrand')}</DialogTitle>
               <DialogDescription>
-                {editingBrand ? t('admin.editBrandDescription', 'Edit brand information') : t('admin.addBrandDescription', 'Add a new brand to the system')}
+                {editingBrand
+                  ? t('admin.editBrandDescription', 'Edit brand information')
+                  : t('admin.addBrandDescription', 'Add a new brand to the system')}
               </DialogDescription>
             </DialogHeader>
             <form onSubmit={handleSubmit} className="space-y-4">
@@ -156,15 +169,33 @@ export const BrandManagement: React.FC<BrandManagementProps> = ({
                 <Input
                   id="name"
                   value={formData.name}
-                  onChange={(e) => setFormData(prev => ({ ...prev, name: e.target.value }))}
+                  onChange={e => setFormData(prev => ({ ...prev, name: e.target.value }))}
                   placeholder={t('admin.enterBrandName')}
                   required
                 />
               </div>
-              
+
+              <div className="flex items-center justify-between rounded-lg border border-border/50 p-3">
+                <div>
+                  <Label htmlFor="is_closed" className="text-sm font-medium">
+                    {t('admin.brandClosedLabel', 'Closed brand')}
+                  </Label>
+                  <p className="text-xs text-muted-foreground">
+                    {t('admin.brandClosedHint', 'Only approved stores can sell products')}
+                  </p>
+                </div>
+                <Switch
+                  id="is_closed"
+                  checked={formData.is_closed}
+                  onCheckedChange={checked =>
+                    setFormData(prev => ({ ...prev, is_closed: checked }))
+                  }
+                />
+              </div>
+
               <div className="flex justify-end gap-2">
-                <Button 
-                  type="button" 
+                <Button
+                  type="button"
                   variant="outline"
                   onClick={() => {
                     setIsAddDialogOpen(false);
@@ -174,11 +205,11 @@ export const BrandManagement: React.FC<BrandManagementProps> = ({
                   {t('common.cancel')}
                 </Button>
                 <Button type="submit" disabled={submitting}>
-                {(() => {
-                  if (submitting) return t('common.saving');
-                  if (editingBrand) return t('common.save');
-                  return t('common.create');
-                })()}
+                  {(() => {
+                    if (submitting) return t('common.saving');
+                    if (editingBrand) return t('common.save');
+                    return t('common.create');
+                  })()}
                 </Button>
               </div>
             </form>
@@ -192,7 +223,7 @@ export const BrandManagement: React.FC<BrandManagementProps> = ({
         <Input
           placeholder={t('admin.searchBrands')}
           value={searchTerm}
-          onChange={(e) => setSearchTerm(e.target.value)}
+          onChange={e => setSearchTerm(e.target.value)}
           className="pl-10"
         />
       </div>
@@ -207,7 +238,7 @@ export const BrandManagement: React.FC<BrandManagementProps> = ({
               </div>
             );
           }
-          
+
           if (filteredBrands.length === 0) {
             return (
               <div className="text-center py-12">
@@ -217,17 +248,15 @@ export const BrandManagement: React.FC<BrandManagementProps> = ({
               </div>
             );
           }
-          
-          return filteredBrands.map((brand) => (
+
+          return filteredBrands.map(brand => (
             <Card key={brand.id} className="bg-card/40 border-border/50">
               <CardHeader className="pb-3">
                 <div className="flex items-start justify-between">
                   <CardTitle className="text-lg flex items-center gap-2">
                     <Tag className="w-5 h-5" />
                     {brand.name}
-                    {!brand.is_active && (
-                      <Badge variant="secondary">{t('admin.inactive')}</Badge>
-                    )}
+                    {!brand.is_active && <Badge variant="secondary">{t('admin.inactive')}</Badge>}
                   </CardTitle>
                   <div className="flex gap-2">
                     <Button
@@ -254,15 +283,15 @@ export const BrandManagement: React.FC<BrandManagementProps> = ({
                 {brand.description && (
                   <p className="text-sm text-muted-foreground mb-3">{brand.description}</p>
                 )}
-                
+
                 <div className="flex items-center justify-between text-sm">
                   <span className="text-muted-foreground">
                     {brand.products_count || 0} {t('common.products')}
                   </span>
                   {brand.website && (
-                    <a 
-                      href={brand.website} 
-                      target="_blank" 
+                    <a
+                      href={brand.website}
+                      target="_blank"
                       rel="noopener noreferrer"
                       className="text-primary hover:underline"
                     >

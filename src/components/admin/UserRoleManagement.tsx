@@ -15,18 +15,29 @@ import {
 } from '@/components/ui/select';
 import api from '@/services/api';
 
-type UserRole = 'user' | 'admin' | 'moderator' | 'store_owner';
+type UserRole = 'user' | 'admin' | 'moderator' | 'store_owner' | 'store_manager' | 'brand_owner';
 type StoreOption = { id: string; name: string };
+type BrandOption = { id: string; name: string };
 
-const roles: UserRole[] = ['user', 'admin', 'moderator', 'store_owner'];
+const roles: UserRole[] = [
+  'user',
+  'admin',
+  'moderator',
+  'store_owner',
+  'store_manager',
+  'brand_owner',
+];
 
 export const UserRoleManagement = () => {
   const { t } = useTranslation();
   const [email, setEmail] = useState('');
   const [role, setRole] = useState<UserRole>('user');
   const [storeId, setStoreId] = useState('');
+  const [brandId, setBrandId] = useState('');
   const [stores, setStores] = useState<StoreOption[]>([]);
+  const [brands, setBrands] = useState<BrandOption[]>([]);
   const [storesLoading, setStoresLoading] = useState(false);
+  const [brandsLoading, setBrandsLoading] = useState(false);
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -41,7 +52,7 @@ export const UserRoleManagement = () => {
   );
 
   useEffect(() => {
-    if (role !== 'store_owner') return;
+    if (role !== 'store_owner' && role !== 'store_manager') return;
     let isMounted = true;
 
     const fetchStores = async () => {
@@ -72,6 +83,38 @@ export const UserRoleManagement = () => {
     };
   }, [role]);
 
+  useEffect(() => {
+    if (role !== 'brand_owner') return;
+    let isMounted = true;
+
+    const fetchBrands = async () => {
+      setBrandsLoading(true);
+      try {
+        const response = await api.get('/brands');
+        const payload = response.data?.data ?? response.data?.items ?? response.data;
+        const items = Array.isArray(payload?.items) ? payload.items : payload;
+        if (Array.isArray(items)) {
+          const normalized = items
+            .map((item: any) => ({
+              id: String(item?.id ?? ''),
+              name: String(item?.name ?? ''),
+            }))
+            .filter(item => item.id && item.name);
+          if (isMounted) setBrands(normalized);
+        }
+      } catch {
+        if (isMounted) setBrands([]);
+      } finally {
+        if (isMounted) setBrandsLoading(false);
+      }
+    };
+
+    fetchBrands();
+    return () => {
+      isMounted = false;
+    };
+  }, [role]);
+
   const handleSubmit = async (event: React.FormEvent) => {
     event.preventDefault();
     setMessage(null);
@@ -87,8 +130,13 @@ export const UserRoleManagement = () => {
       return;
     }
 
-    if (role === 'store_owner' && !storeId) {
-      setError(t('admin.rolesStoreRequired', 'Store is required for store_owner'));
+    if ((role === 'store_owner' || role === 'store_manager') && !storeId) {
+      setError(t('admin.rolesStoreRequired', 'Store is required for store roles'));
+      return;
+    }
+
+    if (role === 'brand_owner' && !brandId) {
+      setError(t('admin.rolesBrandRequired', 'Brand is required for brand_owner'));
       return;
     }
 
@@ -98,8 +146,11 @@ export const UserRoleManagement = () => {
         email: email.trim(),
         role,
       };
-      if (role === 'store_owner') {
+      if (role === 'store_owner' || role === 'store_manager') {
         payload.store_id = storeId;
+      }
+      if (role === 'brand_owner') {
+        payload.brand_id = brandId;
       }
 
       const response = await api.post('/admin/users/role', payload);
@@ -146,7 +197,8 @@ export const UserRoleManagement = () => {
               value={role}
               onValueChange={value => {
                 setRole(value as UserRole);
-                if (value !== 'store_owner') setStoreId('');
+                if (value !== 'store_owner' && value !== 'store_manager') setStoreId('');
+                if (value !== 'brand_owner') setBrandId('');
               }}
             >
               <SelectTrigger>
@@ -161,11 +213,14 @@ export const UserRoleManagement = () => {
               </SelectContent>
             </Select>
             <p className="text-xs text-muted-foreground">
-              {t('admin.rolesStoreOwnerHint', 'store_owner — can manage store products')}
+              {t(
+                'admin.rolesStoreOwnerHint',
+                'store_owner/store_manager — can manage store products'
+              )}
             </p>
           </div>
 
-          {role === 'store_owner' && (
+          {(role === 'store_owner' || role === 'store_manager') && (
             <div className="space-y-2">
               <Label>{t('admin.rolesStoreLabel', 'Store')}</Label>
               <Select value={storeId} onValueChange={value => setStoreId(String(value))}>
@@ -185,6 +240,34 @@ export const UserRoleManagement = () => {
                     stores.map(store => (
                       <SelectItem key={store.id} value={store.id}>
                         {store.name}
+                      </SelectItem>
+                    ))
+                  )}
+                </SelectContent>
+              </Select>
+            </div>
+          )}
+
+          {role === 'brand_owner' && (
+            <div className="space-y-2">
+              <Label>{t('admin.rolesBrandLabel', 'Brand')}</Label>
+              <Select value={brandId} onValueChange={value => setBrandId(String(value))}>
+                <SelectTrigger>
+                  <SelectValue placeholder={t('admin.rolesBrandPlaceholder', 'Select brand')} />
+                </SelectTrigger>
+                <SelectContent>
+                  {brandsLoading ? (
+                    <SelectItem value="loading" disabled>
+                      {t('common.loading', 'Loading...')}
+                    </SelectItem>
+                  ) : brands.length === 0 ? (
+                    <SelectItem value="empty" disabled>
+                      {t('admin.rolesBrandEmpty', 'No brands available')}
+                    </SelectItem>
+                  ) : (
+                    brands.map(brand => (
+                      <SelectItem key={brand.id} value={brand.id}>
+                        {brand.name}
                       </SelectItem>
                     ))
                   )}

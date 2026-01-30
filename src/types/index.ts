@@ -9,7 +9,16 @@ export interface User {
   email: string;
   username?: string;
   display_name?: string;
-  role?: 'user' | 'admin' | 'moderator' | 'store_owner';
+  role?:
+    | 'user'
+    | 'admin'
+    | 'moderator'
+    | 'store_owner'
+    | 'store_manager'
+    | 'brand_owner'
+    | 'manager';
+  store_id?: string;
+  brand_id?: string;
   created_at?: string;
   updated_at?: string;
 }
@@ -70,6 +79,9 @@ export interface Product {
   image?: string;
   image_url?: string;
   images?: string[] | null;
+  materials?: Array<{ id?: string; slug?: string; name?: string } | string>;
+  technologies?: Array<{ id?: string; slug?: string; name?: string } | string>;
+  sizes?: Array<{ id?: string; slug?: string; label?: string; group?: string } | string>;
   gender?: string;
   created_at?: string;
   updated_at?: string;
@@ -121,6 +133,7 @@ export interface Brand {
   description?: string;
   logo?: string;
   website?: string;
+  is_closed?: boolean;
   created_at?: string;
   updated_at?: string;
 }

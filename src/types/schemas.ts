@@ -13,10 +13,13 @@ export const ProductSchema = z.object({
   name: z.string(),
   brand: z.string().optional().nullable(),
   brand_id: z.string().optional().nullable(),
-  brands: z.object({
-    id: z.string(),
-    name: z.string(),
-  }).optional().nullable(),
+  brands: z
+    .object({
+      id: z.string(),
+      name: z.string(),
+    })
+    .optional()
+    .nullable(),
   category: z.string().optional().nullable(),
   type: z.string().optional().nullable(), // Legacy field
   color: z.string().optional().nullable(),
@@ -116,7 +119,11 @@ export const UserSchema = z.object({
   email: z.string().email(),
   username: z.string().optional().nullable(),
   display_name: z.string().optional().nullable(),
-  role: z.enum(['user', 'admin']).optional(),
+  role: z
+    .enum(['user', 'admin', 'moderator', 'store_owner', 'store_manager', 'brand_owner', 'manager'])
+    .optional(),
+  store_id: z.string().optional().nullable(),
+  brand_id: z.string().optional().nullable(),
   created_at: z.string().optional().nullable(),
   updated_at: z.string().optional().nullable(),
 });
@@ -124,10 +131,12 @@ export const UserSchema = z.object({
 export const AuthResponseSchema = z.object({
   success: z.boolean(),
   message: z.string().optional(),
-  data: z.object({
-    user: UserSchema,
-    token: z.string(),
-  }).optional(),
+  data: z
+    .object({
+      user: UserSchema,
+      token: z.string(),
+    })
+    .optional(),
   user: UserSchema.optional(),
   token: z.string().optional(),
 });

@@ -64,6 +64,21 @@ function getNestedString(value: unknown): string | null {
   return null;
 }
 
+function normalizeTaxonomyList(value: unknown): string[] {
+  const normalizeArray = (items: unknown[]): string[] =>
+    items.map(item => getNestedString(item)).filter((item): item is string => Boolean(item));
+
+  if (Array.isArray(value)) return normalizeArray(value);
+  if (isRecord(value)) {
+    const nested =
+      (Array.isArray(value.items) ? value.items : null) ??
+      (Array.isArray(value.data) ? value.data : null) ??
+      (Array.isArray(value.values) ? value.values : null);
+    if (nested) return normalizeArray(nested);
+  }
+  return [];
+}
+
 type DetailData = {
   product?: unknown;
   stores?: unknown;
@@ -139,6 +154,13 @@ const normalizeProductRecord = (raw: unknown): Product | null => {
     getNestedString(raw.gender) ||
     getNestedString(raw.gender_info);
 
+  const rawMaterials = (raw.materials as unknown) ?? raw.material_list ?? raw.material;
+  const rawTechnologies = (raw.technologies as unknown) ?? raw.technology_list ?? raw.technology;
+  const rawSizes = (raw.sizes as unknown) ?? raw.size_list ?? raw.available_sizes;
+  const materials = normalizeTaxonomyList(rawMaterials);
+  const technologies = normalizeTaxonomyList(rawTechnologies);
+  const sizes = normalizeTaxonomyList(rawSizes);
+
   return {
     ...raw,
     id,
@@ -159,6 +181,9 @@ const normalizeProductRecord = (raw: unknown): Product | null => {
     description_en: typeof raw.description_en === 'string' ? raw.description_en : undefined,
     color: rawColor ?? undefined,
     gender: rawGender ?? undefined,
+    materials: materials.length > 0 ? materials : undefined,
+    technologies: technologies.length > 0 ? technologies : undefined,
+    sizes: sizes.length > 0 ? sizes : undefined,
   } as Product;
 };
 
@@ -171,9 +196,9 @@ const ProductDetail = () => {
   const { formatPrice } = useCurrencyConversion();
   const { currency: activeCurrency, exchangeRate } = useCurrency();
   const { currency } = useCurrency();
-  const { isAuthenticated, isAdmin: authIsAdmin } = useAuth();
+  const { isAuthenticated, permissions } = useAuth();
   const selectedImage = 0; // Currently always showing first image
-  const isAdmin = isAuthenticated && authIsAdmin;
+  const canManageProducts = isAuthenticated && permissions.canManageProducts;
   const [isLightboxOpen, setIsLightboxOpen] = useState(false);
 
   // Dynamic SEO from API
@@ -448,6 +473,16 @@ const ProductDetail = () => {
 
   const { i18n } = useTranslation();
 
+  const materialLabels = useMemo(
+    () => normalizeTaxonomyList(product?.materials),
+    [product?.materials]
+  );
+  const technologyLabels = useMemo(
+    () => normalizeTaxonomyList(product?.technologies),
+    [product?.technologies]
+  );
+  const sizeLabels = useMemo(() => normalizeTaxonomyList(product?.sizes), [product?.sizes]);
+
   const descriptionText = useMemo(() => {
     const lang = i18n.language || 'uk';
     const isEnglish = lang.startsWith('en');
@@ -615,7 +650,7 @@ const ProductDetail = () => {
             {t('common.back')}
           </Button>
 
-          {isAdmin && (
+          {canManageProducts && (
             <Button
               variant="outline"
               onClick={() => router.push(`/admin?editProduct=${id}`)}
@@ -752,6 +787,60 @@ const ProductDetail = () => {
                     </span>
                   </div>
                 )}
+                {materialLabels.length > 0 && (
+                  <div className="flex items-start gap-2 sm:gap-3">
+                    <Tag className="w-4 h-4 sm:w-5 sm:h-5 text-muted-foreground flex-shrink-0" />
+                    <span className="text-xs sm:text-sm text-muted-foreground">
+                      {t('products.materials', 'Materials')}:
+                    </span>
+                    <div className="flex flex-wrap gap-2">
+                      {materialLabels.map(label => (
+                        <span
+                          key={`material-${label}`}
+                          className="text-xs sm:text-sm px-2 py-1 rounded-full bg-foreground/5"
+                        >
+                          {label}
+                        </span>
+                      ))}
+                    </div>
+                  </div>
+                )}
+                {technologyLabels.length > 0 && (
+                  <div className="flex items-start gap-2 sm:gap-3">
+                    <Tag className="w-4 h-4 sm:w-5 sm:h-5 text-muted-foreground flex-shrink-0" />
+                    <span className="text-xs sm:text-sm text-muted-foreground">
+                      {t('products.technologies', 'Technologies')}:
+                    </span>
+                    <div className="flex flex-wrap gap-2">
+                      {technologyLabels.map(label => (
+                        <span
+                          key={`technology-${label}`}
+                          className="text-xs sm:text-sm px-2 py-1 rounded-full bg-foreground/5"
+                        >
+                          {label}
+                        </span>
+                      ))}
+                    </div>
+                  </div>
+                )}
+                {sizeLabels.length > 0 && (
+                  <div className="flex items-start gap-2 sm:gap-3">
+                    <Tag className="w-4 h-4 sm:w-5 sm:h-5 text-muted-foreground flex-shrink-0" />
+                    <span className="text-xs sm:text-sm text-muted-foreground">
+                      {t('products.sizes', 'Sizes')}:
+                    </span>
+                    <div className="flex flex-wrap gap-2">
+                      {sizeLabels.map(label => (
+                        <span
+                          key={`size-${label}`}
+                          className="text-xs sm:text-sm px-2 py-1 rounded-full bg-foreground/5"
+                        >
+                          {label}
+                        </span>
+                      ))}
+                    </div>
+                  </div>
+                )}
               </div>
 
               {/* Description */}
@@ -784,7 +873,7 @@ const ProductDetail = () => {
               setIsFilterOpen={setIsFilterOpen}
               filterButtonRef={filterButtonRef}
               filterDropdownRef={filterDropdownRef}
-              isAdmin={isAdmin}
+              isAdmin={canManageProducts}
               t={t}
               formatPrice={formatPrice}
             />

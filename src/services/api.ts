@@ -317,6 +317,7 @@ const PUBLIC_ENDPOINT_PATTERNS: Array<string | RegExp> = [
   '/items',
   '/brands',
   '/categories',
+  '/catalog/',
   '/stores',
   '/search',
   '/seo/',

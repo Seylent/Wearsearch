@@ -35,6 +35,9 @@ export interface Product {
   stores?: Store[];
   color: string;
   type: string;
+  materials?: Array<{ id?: string; slug?: string; name?: string } | string>;
+  technologies?: Array<{ id?: string; slug?: string; name?: string } | string>;
+  sizes?: Array<{ id?: string; slug?: string; label?: string; group?: string } | string>;
   saves_count?: number;
   brand_id?: number;
   brand?: string;
@@ -89,7 +92,7 @@ export const productService = {
       });
       return response.data;
     } catch (error) {
-      throw new Error(handleApiError(error));
+      throw new Error(handleApiError(error).message);
     }
   },
 
@@ -102,7 +105,7 @@ export const productService = {
       const candidate = unwrapItemEnvelope(response.data);
       return candidate as Product;
     } catch (error) {
-      throw new Error(handleApiError(error));
+      throw new Error(handleApiError(error).message);
     }
   },
 
@@ -123,7 +126,7 @@ export const productService = {
       if (data) return data;
       return [];
     } catch (error) {
-      throw new Error(handleApiError(error));
+      throw new Error(handleApiError(error).message);
     }
   },
 
@@ -137,7 +140,7 @@ export const productService = {
       });
       return response.data;
     } catch (error) {
-      throw new Error(handleApiError(error));
+      throw new Error(handleApiError(error).message);
     }
   },
 
@@ -157,7 +160,7 @@ export const productService = {
       );
       return response.data;
     } catch (error) {
-      throw new Error(handleApiError(error));
+      throw new Error(handleApiError(error).message);
     }
   },
 
@@ -169,7 +172,7 @@ export const productService = {
       const response: AxiosResponse<string[]> = await api.get(ENDPOINTS.PRODUCTS.CATEGORIES);
       return response.data;
     } catch (error) {
-      throw new Error(handleApiError(error));
+      throw new Error(handleApiError(error).message);
     }
   },
 
@@ -192,7 +195,7 @@ export const productService = {
       const products = getArrayProp(body, 'products');
       return products ? (products as Product[]) : [];
     } catch (error) {
-      throw new Error(handleApiError(error));
+      throw new Error(handleApiError(error).message);
     }
   },
 
@@ -208,7 +211,7 @@ export const productService = {
       const candidate = unwrapItemEnvelope(response.data);
       return candidate as Product;
     } catch (error) {
-      throw new Error(handleApiError(error));
+      throw new Error(handleApiError(error).message);
     }
   },
 
@@ -224,7 +227,7 @@ export const productService = {
       const candidate = unwrapItemEnvelope(response.data);
       return candidate as Product;
     } catch (error) {
-      throw new Error(handleApiError(error));
+      throw new Error(handleApiError(error).message);
     }
   },
 
@@ -238,7 +241,7 @@ export const productService = {
       );
       return response.data;
     } catch (error) {
-      throw new Error(handleApiError(error));
+      throw new Error(handleApiError(error).message);
     }
   },
 };

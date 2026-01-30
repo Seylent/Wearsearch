@@ -17,6 +17,7 @@ import { Combobox } from '@/components/ui/combobox';
 import { Plus, Edit, BookTemplate, X } from 'lucide-react';
 import { ImageUploader } from '@/components/ImageUploader';
 import { getCategoryTranslation } from '@/utils/translations';
+import { useCatalogFilters } from '@/hooks/useCatalogFilters';
 
 interface AddProductFormProps {
   // Form data
@@ -27,6 +28,9 @@ interface AddProductFormProps {
   productGender: string;
   productBrandId: string;
   productDescription: string;
+  productMaterialIds: string[];
+  productTechnologyIds: string[];
+  productSizeIds: string[];
   productImageUrl: string;
   productImages: string[];
   primaryImageIndex: number;
@@ -61,6 +65,9 @@ interface AddProductFormProps {
   onProductGenderChange: (value: string) => void;
   onProductBrandIdChange: (value: string) => void;
   onProductDescriptionChange: (value: string) => void;
+  onProductMaterialIdsChange: (value: string[]) => void;
+  onProductTechnologyIdsChange: (value: string[]) => void;
+  onProductSizeIdsChange: (value: string[]) => void;
   onProductImageUrlChange: (value: string) => void;
   onProductImagesChange: (images: string[]) => void;
   onPrimaryImageIndexChange: (index: number) => void;
@@ -104,6 +111,9 @@ export const AddProductForm: React.FC<AddProductFormProps> = ({
   productGender,
   productBrandId,
   productDescription,
+  productMaterialIds,
+  productTechnologyIds,
+  productSizeIds,
   productImageUrl: _productImageUrl,
   productImages,
   primaryImageIndex,
@@ -136,6 +146,9 @@ export const AddProductForm: React.FC<AddProductFormProps> = ({
   onProductGenderChange,
   onProductBrandIdChange,
   onProductDescriptionChange,
+  onProductMaterialIdsChange,
+  onProductTechnologyIdsChange,
+  onProductSizeIdsChange,
   onProductImageUrlChange,
   onProductImagesChange,
   onPrimaryImageIndexChange,
@@ -171,6 +184,7 @@ export const AddProductForm: React.FC<AddProductFormProps> = ({
   const { t } = useTranslation();
   const isMounted = useClientOnly();
   const [storeSizeInputs, setStoreSizeInputs] = useState<Record<string, string>>({});
+  const { data: catalogFilters } = useCatalogFilters();
   const isUpdating = !!editingProductId;
   let submitText: string;
   if (submitting) {
@@ -189,6 +203,16 @@ export const AddProductForm: React.FC<AddProductFormProps> = ({
     if (!value) return;
     onAddStoreSize(index, value);
     setStoreSizeInputs(prev => ({ ...prev, [storeId]: '' }));
+  };
+
+  const toggleSelection = (current: string[], id: string, onChange: (value: string[]) => void) => {
+    const normalized = id.trim();
+    if (!normalized) return;
+    onChange(
+      current.includes(normalized)
+        ? current.filter(item => item !== normalized)
+        : [...current, normalized]
+    );
   };
 
   // Завантаження категорій з backend
@@ -216,6 +240,10 @@ export const AddProductForm: React.FC<AddProductFormProps> = ({
     value: cat.slug || cat.id || cat.name.toLowerCase(),
     label: cat.name,
   }));
+
+  const materials = catalogFilters?.materials ?? [];
+  const technologies = catalogFilters?.technologies ?? [];
+  const sizes = catalogFilters?.sizes ?? [];
 
   const COLORS = [
     { value: 'red', label: t('colors.red') },
@@ -347,6 +375,104 @@ export const AddProductForm: React.FC<AddProductFormProps> = ({
                 className="bg-card/50 border-border/50"
               />
             </div>
+
+            {!!materials.length && (
+              <div className="space-y-2">
+                <Label>{t('products.materials', 'Materials')}</Label>
+                <div className="max-h-32 overflow-y-auto space-y-2 rounded-lg border border-border/40 bg-card/30 p-3">
+                  {materials.map(material => {
+                    const materialId = material.id || material.slug || material.name;
+                    const materialSelected =
+                      productMaterialIds.includes(materialId) ||
+                      (material.id ? productMaterialIds.includes(material.id) : false) ||
+                      (material.slug ? productMaterialIds.includes(material.slug) : false);
+                    return (
+                      <div key={materialId} className="flex items-center gap-2">
+                        <Checkbox
+                          id={`material-${materialId}`}
+                          checked={materialSelected}
+                          onCheckedChange={() =>
+                            toggleSelection(
+                              productMaterialIds,
+                              materialId,
+                              onProductMaterialIdsChange
+                            )
+                          }
+                        />
+                        <Label htmlFor={`material-${materialId}`} className="text-sm font-normal">
+                          {material.name}
+                        </Label>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+            )}
+
+            {!!technologies.length && (
+              <div className="space-y-2">
+                <Label>{t('products.technologies', 'Technologies')}</Label>
+                <div className="max-h-32 overflow-y-auto space-y-2 rounded-lg border border-border/40 bg-card/30 p-3">
+                  {technologies.map(technology => {
+                    const technologyId = technology.id || technology.slug || technology.name;
+                    const technologySelected =
+                      productTechnologyIds.includes(technologyId) ||
+                      (technology.id ? productTechnologyIds.includes(technology.id) : false) ||
+                      (technology.slug ? productTechnologyIds.includes(technology.slug) : false);
+                    return (
+                      <div key={technologyId} className="flex items-center gap-2">
+                        <Checkbox
+                          id={`technology-${technologyId}`}
+                          checked={technologySelected}
+                          onCheckedChange={() =>
+                            toggleSelection(
+                              productTechnologyIds,
+                              technologyId,
+                              onProductTechnologyIdsChange
+                            )
+                          }
+                        />
+                        <Label
+                          htmlFor={`technology-${technologyId}`}
+                          className="text-sm font-normal"
+                        >
+                          {technology.name}
+                        </Label>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+            )}
+
+            {!!sizes.length && (
+              <div className="space-y-2">
+                <Label>{t('products.sizes', 'Sizes')}</Label>
+                <div className="max-h-32 overflow-y-auto space-y-2 rounded-lg border border-border/40 bg-card/30 p-3">
+                  {sizes.map(size => {
+                    const sizeId = size.id || size.slug || size.label;
+                    const sizeSelected =
+                      productSizeIds.includes(sizeId) ||
+                      (size.id ? productSizeIds.includes(size.id) : false) ||
+                      (size.slug ? productSizeIds.includes(size.slug) : false);
+                    return (
+                      <div key={sizeId} className="flex items-center gap-2">
+                        <Checkbox
+                          id={`size-${sizeId}`}
+                          checked={sizeSelected}
+                          onCheckedChange={() =>
+                            toggleSelection(productSizeIds, sizeId, onProductSizeIdsChange)
+                          }
+                        />
+                        <Label htmlFor={`size-${sizeId}`} className="text-sm font-normal">
+                          {size.label}
+                        </Label>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+            )}
           </div>
 
           {/* Right Column */}

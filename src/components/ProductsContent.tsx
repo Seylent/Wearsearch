@@ -47,6 +47,7 @@ import {
 import { useStoreProducts } from '@/hooks/useApi';
 import { useProductsPageData } from '@/hooks/useAggregatedData';
 import { useDebounce } from '@/hooks/useDebounce';
+import { useCatalogFilters } from '@/hooks/useCatalogFilters';
 import {
   useProductFilters,
   useProductSort,
@@ -156,6 +157,9 @@ function buildApiFilters(args: {
     color: filters.selectedColors?.length ? filters.selectedColors : undefined,
     gender: filters.selectedGenders?.length ? filters.selectedGenders : undefined,
     brandId: filters.selectedBrand ? [filters.selectedBrand] : undefined,
+    material: filters.selectedMaterials?.length ? filters.selectedMaterials : undefined,
+    technology: filters.selectedTechnologies?.length ? filters.selectedTechnologies : undefined,
+    size: filters.selectedSizes?.length ? filters.selectedSizes : undefined,
     sort: sortBy === 'default' ? undefined : sortBy,
     currency,
   };
@@ -213,6 +217,14 @@ function getGenderCopy(gender: string | null, t: TFunction): GenderCopy | null {
 function getMaxPriceLimit(currency: string): number {
   return currency === 'USD' ? 2000 : 50000;
 }
+
+const SIZE_GROUP_BY_CATEGORY: Record<string, string> = {
+  outerwear: 'tops',
+  tops: 'tops',
+  bottoms: 'bottoms',
+  footwear: 'footwear',
+  accessories: 'accessories',
+};
 
 function safeReload(): void {
   globalThis.location?.reload();
@@ -430,10 +442,23 @@ type FiltersDialogProps = Readonly<{
   setShowAllColors: (v: boolean) => void;
   visibleCategories: string[];
   categories: string[];
+  categoryLabels: Record<string, string>;
   showAllCategories: boolean;
   setShowAllCategories: (v: boolean) => void;
   COMPACT_LIMIT: number;
   genders: string[];
+  materials: Array<{ id?: string; slug: string; name: string }>;
+  visibleMaterials: Array<{ id?: string; slug: string; name: string }>;
+  showAllMaterials: boolean;
+  setShowAllMaterials: (v: boolean) => void;
+  technologies: Array<{ id?: string; slug: string; name: string }>;
+  visibleTechnologies: Array<{ id?: string; slug: string; name: string }>;
+  showAllTechnologies: boolean;
+  setShowAllTechnologies: (v: boolean) => void;
+  sizes: Array<{ id?: string; slug: string; label: string; group?: string }>;
+  visibleSizes: Array<{ id?: string; slug: string; label: string; group?: string }>;
+  showAllSizes: boolean;
+  setShowAllSizes: (v: boolean) => void;
   filters: ReturnType<typeof useProductFilters>;
   brands: Array<{ id: string; name: string; slug?: string }>;
   brandSearchQuery: string;
@@ -453,10 +478,23 @@ function FiltersDialogContent(props: FiltersDialogProps) {
     setShowAllColors,
     visibleCategories,
     categories,
+    categoryLabels,
     showAllCategories,
     setShowAllCategories,
     COMPACT_LIMIT,
     genders,
+    materials,
+    visibleMaterials,
+    showAllMaterials,
+    setShowAllMaterials,
+    technologies,
+    visibleTechnologies,
+    showAllTechnologies,
+    setShowAllTechnologies,
+    sizes,
+    visibleSizes,
+    showAllSizes,
+    setShowAllSizes,
     filters,
     brands,
     brandSearchQuery,
@@ -540,7 +578,7 @@ function FiltersDialogContent(props: FiltersDialogProps) {
                 htmlFor={`filter-category-${category}`}
                 className="text-xs cursor-pointer active:text-foreground/80 transition-colors capitalize flex-1"
               >
-                {getCategoryTranslation(category)}
+                {categoryLabels[category] || getCategoryTranslation(category)}
               </Label>
             </div>
           ))}
@@ -558,6 +596,141 @@ function FiltersDialogContent(props: FiltersDialogProps) {
               : t('common.showAll', {
                   count: categories.length,
                   defaultValue: `Show all (${categories.length})`,
+                })}
+          </button>
+        )}
+      </div>
+
+      <div>
+        <h3 className="font-semibold mb-2 text-sm uppercase tracking-widest text-muted-foreground">
+          {t('products.materials', 'Materials')}
+        </h3>
+        <div className="grid grid-cols-2 gap-1">
+          {visibleMaterials.map(material => (
+            <div
+              key={material.slug || material.id}
+              className="flex items-center gap-2 py-1.5 min-h-[36px] touch-manipulation"
+            >
+              <Checkbox
+                id={`filter-material-${material.slug || material.id}`}
+                checked={filters.selectedMaterials.includes(material.slug || material.id || '')}
+                onCheckedChange={() =>
+                  filters.toggleMaterial(material.slug || material.id || material.name)
+                }
+                className="min-w-[18px] min-h-[18px] h-[18px] w-[18px]"
+              />
+              <Label
+                htmlFor={`filter-material-${material.slug || material.id}`}
+                className="text-xs cursor-pointer active:text-foreground/80 transition-colors capitalize flex-1"
+              >
+                {material.name}
+              </Label>
+            </div>
+          ))}
+        </div>
+        {materials.length > COMPACT_LIMIT && (
+          <button
+            onClick={() => setShowAllMaterials(!showAllMaterials)}
+            className="mt-2 text-xs text-primary hover:text-primary/80 transition-colors flex items-center gap-1"
+          >
+            <ChevronDown
+              className={`w-3 h-3 transition-transform ${showAllMaterials ? 'rotate-180' : ''}`}
+            />
+            {showAllMaterials
+              ? t('common.showLess', 'Show less')
+              : t('common.showAll', {
+                  count: materials.length,
+                  defaultValue: `Show all (${materials.length})`,
+                })}
+          </button>
+        )}
+      </div>
+
+      <div>
+        <h3 className="font-semibold mb-2 text-sm uppercase tracking-widest text-muted-foreground">
+          {t('products.technologies', 'Technologies')}
+        </h3>
+        <div className="grid grid-cols-2 gap-1">
+          {visibleTechnologies.map(technology => (
+            <div
+              key={technology.slug || technology.id}
+              className="flex items-center gap-2 py-1.5 min-h-[36px] touch-manipulation"
+            >
+              <Checkbox
+                id={`filter-technology-${technology.slug || technology.id}`}
+                checked={filters.selectedTechnologies.includes(
+                  technology.slug || technology.id || ''
+                )}
+                onCheckedChange={() =>
+                  filters.toggleTechnology(technology.slug || technology.id || technology.name)
+                }
+                className="min-w-[18px] min-h-[18px] h-[18px] w-[18px]"
+              />
+              <Label
+                htmlFor={`filter-technology-${technology.slug || technology.id}`}
+                className="text-xs cursor-pointer active:text-foreground/80 transition-colors capitalize flex-1"
+              >
+                {technology.name}
+              </Label>
+            </div>
+          ))}
+        </div>
+        {technologies.length > COMPACT_LIMIT && (
+          <button
+            onClick={() => setShowAllTechnologies(!showAllTechnologies)}
+            className="mt-2 text-xs text-primary hover:text-primary/80 transition-colors flex items-center gap-1"
+          >
+            <ChevronDown
+              className={`w-3 h-3 transition-transform ${showAllTechnologies ? 'rotate-180' : ''}`}
+            />
+            {showAllTechnologies
+              ? t('common.showLess', 'Show less')
+              : t('common.showAll', {
+                  count: technologies.length,
+                  defaultValue: `Show all (${technologies.length})`,
+                })}
+          </button>
+        )}
+      </div>
+
+      <div>
+        <h3 className="font-semibold mb-2 text-sm uppercase tracking-widest text-muted-foreground">
+          {t('products.sizes', 'Sizes')}
+        </h3>
+        <div className="grid grid-cols-3 gap-1">
+          {visibleSizes.map(size => (
+            <div
+              key={size.slug || size.id}
+              className="flex items-center gap-2 py-1.5 min-h-[36px] touch-manipulation"
+            >
+              <Checkbox
+                id={`filter-size-${size.slug || size.id}`}
+                checked={filters.selectedSizes.includes(size.slug || size.id || '')}
+                onCheckedChange={() => filters.toggleSize(size.slug || size.id || size.label)}
+                className="min-w-[18px] min-h-[18px] h-[18px] w-[18px]"
+              />
+              <Label
+                htmlFor={`filter-size-${size.slug || size.id}`}
+                className="text-xs cursor-pointer active:text-foreground/80 transition-colors flex-1"
+              >
+                {size.label}
+              </Label>
+            </div>
+          ))}
+        </div>
+        {sizes.length > COMPACT_LIMIT && (
+          <button
+            onClick={() => setShowAllSizes(!showAllSizes)}
+            className="mt-2 text-xs text-primary hover:text-primary/80 transition-colors flex items-center gap-1"
+          >
+            <ChevronDown
+              className={`w-3 h-3 transition-transform ${showAllSizes ? 'rotate-180' : ''}`}
+            />
+            {showAllSizes
+              ? t('common.showLess', 'Show less')
+              : t('common.showAll', {
+                  count: sizes.length,
+                  defaultValue: `Show all (${sizes.length})`,
                 })}
           </button>
         )}
@@ -691,16 +864,28 @@ export function ProductsContent() {
   const [seoData, setSeoData] = useState<SEOData | null>(null);
   const typeParam = searchParams?.get('type') || '';
   const colorParam = searchParams?.get('color') || '';
+  const materialParam = searchParams?.get('material') || '';
+  const technologyParam = searchParams?.get('technology') || '';
+  const sizeParam = searchParams?.get('size') || '';
   const genderParam = searchParams?.get('gender');
   const storeIdParam = searchParams?.get('store_id') || '';
 
   // Debounce SEO params to reduce API calls
   const debouncedTypeParam = useDebounce(typeParam, 500);
   const debouncedColorParam = useDebounce(colorParam, 500);
+  const debouncedMaterialParam = useDebounce(materialParam, 500);
+  const debouncedTechnologyParam = useDebounce(technologyParam, 500);
+  const debouncedSizeParam = useDebounce(sizeParam, 500);
 
   // Fetch dynamic SEO data when filters change (with debounce)
   useEffect(() => {
-    if (!debouncedTypeParam && !debouncedColorParam) {
+    if (
+      !debouncedTypeParam &&
+      !debouncedColorParam &&
+      !debouncedMaterialParam &&
+      !debouncedTechnologyParam &&
+      !debouncedSizeParam
+    ) {
       setSeoData(null);
       return;
     }
@@ -724,7 +909,13 @@ export function ProductsContent() {
     };
 
     fetchSEO();
-  }, [debouncedTypeParam, debouncedColorParam]);
+  }, [
+    debouncedTypeParam,
+    debouncedColorParam,
+    debouncedMaterialParam,
+    debouncedTechnologyParam,
+    debouncedSizeParam,
+  ]);
 
   useEffect(() => {
     if (seoData) {
@@ -737,6 +928,7 @@ export function ProductsContent() {
   const sort = useProductSort([] as Product[]);
   const layout = useGridLayout(6);
   const [brandSearchQuery, setBrandSearchQuery] = useState('');
+  const { data: catalogFilters } = useCatalogFilters();
 
   // Debounce search query
   const debouncedSearch = useDebounce(filters.searchQuery, 300);
@@ -759,15 +951,80 @@ export function ProductsContent() {
     'Cream',
   ];
   const genders = ['men', 'women', 'unisex'];
-  const categories = [...PRODUCT_CATEGORIES];
+
+  const catalogCategories = useMemo(() => catalogFilters?.categories ?? [], [catalogFilters]);
+  const categoryOptions = useMemo(() => {
+    if (catalogCategories.length > 0) {
+      const childCategories = catalogCategories.filter(category => category.parent_id);
+      const source = childCategories.length > 0 ? childCategories : catalogCategories;
+      return source.map(category => ({
+        id: category.id,
+        slug: category.slug,
+        name: category.name,
+        parent_id: category.parent_id ?? null,
+      }));
+    }
+    return PRODUCT_CATEGORIES.map(slug => ({
+      slug,
+      name: getCategoryTranslation(slug),
+    }));
+  }, [catalogCategories]);
+
+  const categoryLabels = useMemo(
+    () => Object.fromEntries(categoryOptions.map(category => [category.slug, category.name])),
+    [categoryOptions]
+  );
+
+  const categories = useMemo(
+    () => categoryOptions.map(category => category.slug),
+    [categoryOptions]
+  );
+
+  const materials = useMemo(() => catalogFilters?.materials ?? [], [catalogFilters]);
+  const technologies = useMemo(() => catalogFilters?.technologies ?? [], [catalogFilters]);
+  const catalogSizes = useMemo(() => catalogFilters?.sizes ?? [], [catalogFilters]);
+  const categoriesById = useMemo(
+    () => new Map(catalogCategories.map(category => [category.id, category])),
+    [catalogCategories]
+  );
+  const activeSizeGroups = useMemo(() => {
+    if (filters.selectedTypes.length === 0) return new Set<string>();
+    const groups = new Set<string>();
+    for (const slug of filters.selectedTypes) {
+      const category = catalogCategories.find(item => item.slug === slug);
+      const parent =
+        category?.parent_id && categoriesById.has(category.parent_id)
+          ? categoriesById.get(category.parent_id)
+          : category;
+      const groupSlug = parent?.slug || slug;
+      const mappedGroup = SIZE_GROUP_BY_CATEGORY[groupSlug] || groupSlug;
+      if (mappedGroup) groups.add(mappedGroup);
+    }
+    return groups;
+  }, [catalogCategories, categoriesById, filters.selectedTypes]);
+  const sizes = useMemo(() => {
+    if (catalogSizes.length === 0) return [];
+    if (activeSizeGroups.size === 0) return catalogSizes;
+    return catalogSizes.filter(size =>
+      size.group === 'universal' ? true : activeSizeGroups.has(size.group)
+    );
+  }, [catalogSizes, activeSizeGroups]);
 
   // Compact filter states - show only first N items
   const [showAllColors, setShowAllColors] = useState(false);
   const [showAllCategories, setShowAllCategories] = useState(false);
+  const [showAllMaterials, setShowAllMaterials] = useState(false);
+  const [showAllTechnologies, setShowAllTechnologies] = useState(false);
+  const [showAllSizes, setShowAllSizes] = useState(false);
   const COMPACT_LIMIT = 6;
 
   const visibleColors = showAllColors ? colors : colors.slice(0, COMPACT_LIMIT);
   const visibleCategories = showAllCategories ? categories : categories.slice(0, COMPACT_LIMIT);
+  const visibleMaterials = showAllMaterials ? materials : materials.slice(0, COMPACT_LIMIT);
+  const visibleTechnologies = showAllTechnologies
+    ? technologies
+    : technologies.slice(0, COMPACT_LIMIT);
+  const visibleSizes = showAllSizes ? sizes : sizes.slice(0, COMPACT_LIMIT);
 
   const itemsPerPage = 24;
 
@@ -809,6 +1066,19 @@ export function ProductsContent() {
     refetchOnWindowFocus: false,
     refetchOnMount: false,
   });
+
+  const pageSeo = useMemo(() => {
+    if (!pageData || typeof pageData !== 'object') return null;
+    const data = pageData as Record<string, unknown>;
+    const seo = data.seo;
+    return seo && typeof seo === 'object' ? (seo as SEOData) : null;
+  }, [pageData]);
+
+  useEffect(() => {
+    if (pageSeo) {
+      setSeoData(pageSeo);
+    }
+  }, [pageSeo]);
 
   // Use store-specific endpoint if store_id is present
   const storeProductsParams = useMemo(
@@ -868,6 +1138,9 @@ export function ProductsContent() {
   const isFilterActive =
     filters.selectedTypes.length > 0 ||
     filters.selectedColors.length > 0 ||
+    filters.selectedMaterials.length > 0 ||
+    filters.selectedTechnologies.length > 0 ||
+    filters.selectedSizes.length > 0 ||
     filters.selectedGenders.length > 0 ||
     Boolean(filters.selectedBrand) ||
     (filters.priceMin !== null && filters.priceMin > 0) ||
@@ -973,10 +1246,23 @@ export function ProductsContent() {
                         setShowAllColors={setShowAllColors}
                         visibleCategories={visibleCategories}
                         categories={categories}
+                        categoryLabels={categoryLabels}
                         showAllCategories={showAllCategories}
                         setShowAllCategories={setShowAllCategories}
                         COMPACT_LIMIT={COMPACT_LIMIT}
                         genders={genders}
+                        materials={materials}
+                        visibleMaterials={visibleMaterials}
+                        showAllMaterials={showAllMaterials}
+                        setShowAllMaterials={setShowAllMaterials}
+                        technologies={technologies}
+                        visibleTechnologies={visibleTechnologies}
+                        showAllTechnologies={showAllTechnologies}
+                        setShowAllTechnologies={setShowAllTechnologies}
+                        sizes={sizes}
+                        visibleSizes={visibleSizes}
+                        showAllSizes={showAllSizes}
+                        setShowAllSizes={setShowAllSizes}
                         filters={filters}
                         brands={brands}
                         brandSearchQuery={brandSearchQuery}

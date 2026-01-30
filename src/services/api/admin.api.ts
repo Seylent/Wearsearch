@@ -41,6 +41,7 @@ interface Brand {
   logo_url?: string;
   description?: string;
   website_url?: string;
+  is_closed?: boolean;
 }
 
 interface MetaData {
@@ -67,7 +68,7 @@ interface DashboardResponse {
 
 export const adminApi = {
   // ===== DASHBOARD =====
-  
+
   async getDashboard(options?: {
     productsPage?: number;
     productsLimit?: number;
@@ -89,7 +90,7 @@ export const adminApi = {
   },
 
   // ===== PRODUCTS =====
-  
+
   async getProducts() {
     const response = await api.get('/admin/products');
     return response.data;
@@ -116,7 +117,7 @@ export const adminApi = {
   },
 
   // ===== STORES =====
-  
+
   async getStores(search?: string) {
     const params = search ? `?search=${encodeURIComponent(search)}` : '';
     const response = await api.get(`/admin/stores${params}`);
@@ -139,7 +140,7 @@ export const adminApi = {
   },
 
   // ===== BRANDS =====
-  
+
   async getBrands(search?: string) {
     const params = search ? `?search=${encodeURIComponent(search)}` : '';
     const response = await api.get(`/brands${params}`);
@@ -162,7 +163,7 @@ export const adminApi = {
   },
 
   // ===== FILE UPLOAD =====
-  
+
   async uploadImage(file: File, folder: string = 'products'): Promise<string> {
     const formData = new FormData();
     formData.append('file', file);

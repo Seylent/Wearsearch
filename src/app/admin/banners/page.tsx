@@ -1,19 +1,32 @@
-/**
- * Admin Banners Page
- * Page for managing website banners
- */
+/* Admin banners page */
 
-import { Metadata } from 'next';
+'use client';
+
 import { BannerManager } from '@/components/admin/BannerManager';
-
-export const metadata: Metadata = {
-  title: 'Управління банерами - Адмін панель',
-  description: 'Створення та редагування банерів для головної сторінки',
-};
+import { useAuth } from '@/features/auth/hooks/useAuth';
 
 export default function AdminBannersPage() {
+  const { isAuthenticated, permissions } = useAuth();
+
+  if (!isAuthenticated) {
+    return null;
+  }
+
+  if (!permissions.canManageBanners) {
+    return (
+      <div className="min-h-screen bg-black text-white flex items-center justify-center">
+        <div className="text-center max-w-md px-6">
+          <p className="text-lg mb-2">Доступ заборонено</p>
+          <p className="text-sm text-muted-foreground">
+            У вашої ролі немає доступу до керування банерами.
+          </p>
+        </div>
+      </div>
+    );
+  }
+
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-black text-white">
       <div className="container mx-auto px-4 py-8">
         <BannerManager />
       </div>

@@ -155,6 +155,7 @@
   },
   "admin": {
     "title": "Адмін",
+    "storeOwnerPanelDescription": "Керуйте товарами вашого магазину",
     "addNewProduct": "Додати новий товар",
     "addProduct": "Додати товар",
     "add": "Додати",
