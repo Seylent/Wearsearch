@@ -143,15 +143,26 @@ export function FavoriteButton({
         const resp = await addFavorite.mutateAsync(productId);
         queryClient.invalidateQueries({ queryKey: ['favorites'] });
         triggerBurstAnimation();
-        const data: any = (resp && (resp as any).data) || resp || {};
-        const message = data?.message;
-        const fav = data?.favorite;
-        if (message) {
+        const data = (resp && (resp as { data?: unknown }).data) || resp || {};
+        const message =
+          data && typeof data === 'object' ? (data as { message?: unknown }).message : undefined;
+        const fav =
+          data && typeof data === 'object' ? (data as { favorite?: unknown }).favorite : undefined;
+        if (typeof message === 'string' && message) {
           toast({ title: 'Успішно', description: message });
-        } else if (fav) {
-          if (fav.id || fav.created_at) {
+        } else if (fav && typeof fav === 'object') {
+          const favorite = fav as {
+            id?: unknown;
+            created_at?: unknown;
+            product_id?: unknown;
+            added_at?: unknown;
+          };
+          if (favorite.id || favorite.created_at) {
             toast({ title: 'Успішно', description: 'Товар додано в обране' });
-          } else if (fav.product_id && (fav.added_at === null || fav.added_at === undefined)) {
+          } else if (
+            favorite.product_id &&
+            (favorite.added_at === null || favorite.added_at === undefined)
+          ) {
             toast({ title: 'Успішно', description: 'Товар вже додано до обраного' });
           } else {
             toast({ title: 'Успішно', description: 'Товар додано в обране' });
@@ -165,13 +176,18 @@ export function FavoriteButton({
       // If the product is already in favorites (idempotent), do not surface a destructive error
       const existingErrMsg = (() => {
         try {
-          const anyError: any = error;
-          return (
-            anyError?.response?.data?.error ??
-            anyError?.response?.data?.message ??
-            anyError?.message ??
-            ''
-          );
+          if (!error || typeof error !== 'object') return '';
+          const anyError = error as {
+            response?: { data?: { error?: unknown; message?: unknown } };
+            message?: unknown;
+          };
+          const apiError = anyError.response?.data?.error;
+          const apiMessage = anyError.response?.data?.message;
+          const message = anyError.message;
+          if (typeof apiError === 'string') return apiError;
+          if (typeof apiMessage === 'string') return apiMessage;
+          if (typeof message === 'string') return message;
+          return '';
         } catch {
           return '';
         }

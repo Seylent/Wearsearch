@@ -4,6 +4,7 @@
  */
 
 import { useState, useMemo } from 'react';
+import Image from 'next/image';
 import { useTranslation } from 'react-i18next';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -82,7 +83,6 @@ export const StoreManagement = ({
   onStoreCreate,
   onStoreUpdate,
   onStoreDelete,
-  loading: _loading = false,
 }: StoreManagementProps) => {
   const { t } = useTranslation();
 
@@ -350,9 +350,11 @@ export const StoreManagement = ({
                 <div className="flex items-start justify-between">
                   <div className="flex items-center gap-3">
                     {store.logo_url ? (
-                      <img
+                      <Image
                         src={store.logo_url}
                         alt={store.name}
+                        width={40}
+                        height={40}
                         className="w-10 h-10 rounded-lg object-cover"
                       />
                     ) : (

@@ -11,7 +11,6 @@ import {
   CollectionItemsResponse,
   CollectionItem,
   BaseProduct,
-  CurrencyInfo,
 } from '@/types/apiContracts';
 
 // Simple runtime guard for object shape

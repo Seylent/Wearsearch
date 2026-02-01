@@ -113,7 +113,7 @@ export function HomeContent({ products, seoData, isLoading }: Readonly<HomeConte
               <ProductGridSkeleton count={10} columns={6} />
             ) : (
               <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-3 sm:gap-4">
-                {products.slice(0, 10).map((product, _index) => (
+                {products.slice(0, 10).map(product => (
                   <ProductCard
                     key={product.id}
                     id={product.id}

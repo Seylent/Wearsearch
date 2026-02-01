@@ -683,10 +683,10 @@ export const useAdmin = () => {
 
         let result;
         if (editingProductId) {
-          result = await adminApi.updateProduct(editingProductId, productData as any);
+          result = await adminApi.updateProduct(editingProductId, productData);
           console.log('Product updated, response:', result);
         } else {
-          result = await adminApi.createProduct(productData as any);
+          result = await adminApi.createProduct(productData);
           console.log('Product created, response:', result);
         }
 
@@ -914,6 +914,7 @@ export const useAdmin = () => {
     currentStorePrice,
     setCurrentStorePrice,
     currentStoreSizes,
+    setCurrentStoreSizes,
     currentSizeInput,
     setCurrentSizeInput,
     addSize,

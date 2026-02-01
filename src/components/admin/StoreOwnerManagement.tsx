@@ -11,6 +11,9 @@ import { Textarea } from '@/components/ui/textarea';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 
+const isRecord = (value: unknown): value is Record<string, unknown> =>
+  typeof value === 'object' && value !== null;
+
 const parseSizes = (value: string) =>
   value
     .split(',')
@@ -53,12 +56,13 @@ export const StoreOwnerManagement = () => {
   const [error, setError] = useState<string | null>(null);
 
   const resolvedStoreId = useMemo(() => {
-    return storeId.trim() || String((user as any)?.store_id ?? '').trim();
+    const userStoreId = isRecord(user) ? user.store_id : undefined;
+    return storeId.trim() || String(userStoreId ?? '').trim();
   }, [storeId, user]);
 
   useEffect(() => {
-    if (!storeId && (user as any)?.store_id) {
-      setStoreId(String((user as any).store_id));
+    if (!storeId && isRecord(user) && user.store_id) {
+      setStoreId(String(user.store_id));
     }
   }, [user, storeId]);
 

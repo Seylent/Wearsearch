@@ -5,6 +5,7 @@
 
 import { Suspense } from 'react';
 import { Metadata } from 'next';
+import Image from 'next/image';
 import { notFound } from 'next/navigation';
 import {
   JsonLd,
@@ -13,6 +14,24 @@ import {
 } from '@/lib/seo/structured-data';
 import { SEOTextSection } from '@/components/seo/SEOTextSection';
 import { fetchBackendJson } from '@/lib/backendFetch';
+
+const isRecord = (value: unknown): value is Record<string, unknown> =>
+  typeof value === 'object' && value !== null;
+
+const getRecord = (value: unknown, key: string): Record<string, unknown> | undefined => {
+  if (!isRecord(value)) return undefined;
+  const nested = value[key];
+  return isRecord(nested) ? nested : undefined;
+};
+
+const getArray = (value: unknown, key: string): unknown[] | undefined => {
+  if (!isRecord(value)) return undefined;
+  const nested = value[key];
+  return Array.isArray(nested) ? nested : undefined;
+};
+
+const toOptionalString = (value: unknown): string | undefined =>
+  typeof value === 'string' ? value : undefined;
 
 interface BrandPageProps {
   params: {
@@ -26,7 +45,7 @@ export async function generateMetadata({ params }: BrandPageProps): Promise<Meta
 
   try {
     const lang = 'uk';
-    const res = await fetchBackendJson<any>(`/brands/${slug}?lang=${lang}`, {
+    const res = await fetchBackendJson<unknown>(`/brands/${slug}?lang=${lang}`, {
       next: { revalidate: 3600 },
     });
 
@@ -38,30 +57,40 @@ export async function generateMetadata({ params }: BrandPageProps): Promise<Meta
       };
     }
 
-    const data = res.data;
-    const brand = data.brand || data.data?.brand || data;
+    const data = isRecord(res) ? res.data : undefined;
+    const brand =
+      getRecord(data, 'brand') ?? getRecord(getRecord(data, 'data'), 'brand') ?? data ?? {};
     const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://wearsearch.com';
-    const canonicalUrl = brand.canonical_url || `${siteUrl}/brands/${slug}`;
+    const brandName = toOptionalString(isRecord(brand) ? brand.name : undefined) ?? 'Brand';
+    const brandSeoTitle = toOptionalString(isRecord(brand) ? brand.seo_title : undefined);
+    const brandSeoDescription = toOptionalString(
+      isRecord(brand) ? brand.seo_description : undefined
+    );
+    const brandDescription = toOptionalString(isRecord(brand) ? brand.description : undefined);
+    const brandLogoUrl = toOptionalString(isRecord(brand) ? brand.logo_url : undefined);
+    const canonicalUrl =
+      toOptionalString(isRecord(brand) ? brand.canonical_url : undefined) ||
+      `${siteUrl}/brands/${slug}`;
 
     return {
-      title: brand.seo_title || `${brand.name} | Wearsearch`,
-      description: brand.seo_description || brand.description,
+      title: brandSeoTitle || `${brandName} | Wearsearch`,
+      description: brandSeoDescription || brandDescription,
       alternates: {
         canonical: canonicalUrl,
       },
       openGraph: {
-        title: brand.seo_title || brand.name,
-        description: brand.seo_description || brand.description,
-        images: brand.logo_url ? [brand.logo_url] : [],
+        title: brandSeoTitle || brandName,
+        description: brandSeoDescription || brandDescription,
+        images: brandLogoUrl ? [brandLogoUrl] : [],
         type: 'website',
         siteName: 'Wearsearch',
         url: canonicalUrl,
       },
       twitter: {
         card: 'summary_large_image',
-        title: brand.seo_title || brand.name,
-        description: brand.seo_description || brand.description,
-        images: brand.logo_url ? [brand.logo_url] : [],
+        title: brandSeoTitle || brandName,
+        description: brandSeoDescription || brandDescription,
+        images: brandLogoUrl ? [brandLogoUrl] : [],
       },
       robots: {
         index: true,
@@ -84,7 +113,7 @@ export default async function BrandPage({ params }: Readonly<BrandPageProps>) {
 
   try {
     // Отримуємо дані бренду
-    const brandRes = await fetchBackendJson<any>(`/brands/${slug}?lang=uk`, {
+    const brandRes = await fetchBackendJson<unknown>(`/brands/${slug}?lang=uk`, {
       next: { revalidate: 3600 },
     });
 
@@ -100,21 +129,33 @@ export default async function BrandPage({ params }: Readonly<BrandPageProps>) {
       );
     }
 
-    const brandData = brandRes.data;
-    const brand = brandData.brand || brandData.data?.brand || brandData;
+    const brandData = isRecord(brandRes) ? brandRes.data : undefined;
+    const brand =
+      getRecord(brandData, 'brand') ??
+      getRecord(getRecord(brandData, 'data'), 'brand') ??
+      brandData ??
+      {};
+    const brandName = toOptionalString(isRecord(brand) ? brand.name : undefined) ?? 'Brand';
+    const brandDescription = toOptionalString(isRecord(brand) ? brand.description : undefined);
+    const brandLogoUrl = toOptionalString(isRecord(brand) ? brand.logo_url : undefined);
+    const brandSeoText = toOptionalString(isRecord(brand) ? brand.seo_text : undefined);
+    const brandSeoKeywords =
+      isRecord(brand) && Array.isArray(brand.seo_keywords)
+        ? (brand.seo_keywords as string[])
+        : undefined;
 
     // Отримуємо товари бренду
-    const productsRes = await fetchBackendJson<any>(`/products?brand=${slug}&limit=20`, {
+    const productsRes = await fetchBackendJson<unknown>(`/products?brand=${slug}&limit=20`, {
       next: { revalidate: 1800 },
     });
 
-    const productsPayload = productsRes?.data;
-    const products = Array.isArray(productsPayload)
-      ? productsPayload
-      : productsPayload?.products ||
-        productsPayload?.data?.products ||
-        productsPayload?.items ||
-        [];
+    const productsPayload = isRecord(productsRes) ? productsRes.data : undefined;
+    const products =
+      (getArray(productsPayload, 'products') ??
+        getArray(getRecord(productsPayload, 'data'), 'products') ??
+        getArray(productsPayload, 'items') ??
+        (Array.isArray(productsPayload) ? productsPayload : [])) ||
+      [];
 
     const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://wearsearch.com';
 
@@ -122,7 +163,10 @@ export default async function BrandPage({ params }: Readonly<BrandPageProps>) {
     const breadcrumbData = generateBreadcrumbSchema([
       { name: 'Головна', url: siteUrl },
       { name: 'Бренди', url: `${siteUrl}/brands` },
-      { name: brand.name, url: `${siteUrl}/brands/${slug}` },
+      {
+        name: toOptionalString(isRecord(brand) ? brand.name : undefined) || 'Brand',
+        url: `${siteUrl}/brands/${slug}`,
+      },
     ]);
 
     const itemListData = generateItemListSchema(
@@ -133,8 +177,13 @@ export default async function BrandPage({ params }: Readonly<BrandPageProps>) {
           url: item.canonical_url || `${siteUrl}/products/${item.slug || item.id}`,
         })),
       {
-        name: brand.seo_title || brand.name,
-        description: brand.seo_description || brand.description,
+        name:
+          toOptionalString(isRecord(brand) ? brand.seo_title : undefined) ||
+          toOptionalString(isRecord(brand) ? brand.name : undefined) ||
+          'Brand',
+        description:
+          toOptionalString(isRecord(brand) ? brand.seo_description : undefined) ||
+          toOptionalString(isRecord(brand) ? brand.description : undefined),
       }
     );
 
@@ -162,24 +211,26 @@ export default async function BrandPage({ params }: Readonly<BrandPageProps>) {
                     </a>
                   </li>
                   <li>/</li>
-                  <li className="text-white">{brand.name}</li>
+                  <li className="text-white">{brandName}</li>
                 </ol>
               </nav>
 
               {/* H1 */}
               <div className="flex items-center gap-6 mb-4">
-                {brand.logo_url && (
-                  <img
-                    src={brand.logo_url}
-                    alt={`${brand.name} logo`}
+                {brandLogoUrl && (
+                  <Image
+                    src={brandLogoUrl}
+                    alt={`${brandName} logo`}
+                    width={80}
+                    height={80}
                     className="w-20 h-20 object-contain bg-white rounded-lg p-2"
                   />
                 )}
-                <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold">{brand.name}</h1>
+                <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold">{brandName}</h1>
               </div>
 
-              {brand.description && (
-                <p className="text-xl text-gray-300 max-w-3xl">{brand.description}</p>
+              {brandDescription && (
+                <p className="text-xl text-gray-300 max-w-3xl">{brandDescription}</p>
               )}
             </div>
           </section>
@@ -187,7 +238,7 @@ export default async function BrandPage({ params }: Readonly<BrandPageProps>) {
           {/* H2 - Каталог продукції */}
           <section className="py-8 px-4">
             <div className="max-w-7xl mx-auto">
-              <h2 className="text-3xl font-bold mb-8">Вся продукція {brand.name}</h2>
+              <h2 className="text-3xl font-bold mb-8">Вся продукція {brandName}</h2>
 
               <Suspense
                 fallback={
@@ -207,9 +258,11 @@ export default async function BrandPage({ params }: Readonly<BrandPageProps>) {
                     }) => (
                       <div key={product.id} className="bg-zinc-900 rounded-lg p-4">
                         <a href={`/products/${product.id}`} className="block">
-                          <img
+                          <Image
                             src={product.image_url || '/placeholder.jpg'}
                             alt={product.name}
+                            width={384}
+                            height={192}
                             className="w-full h-48 object-cover rounded-lg mb-4"
                           />
                           <h3 className="font-semibold text-lg mb-2">{product.name}</h3>
@@ -225,29 +278,29 @@ export default async function BrandPage({ params }: Readonly<BrandPageProps>) {
           </section>
 
           {/* SEO-текст */}
-          {brand.seo_text ? (
+          {brandSeoText ? (
             <SEOTextSection
-              title={`Чому варто обрати ${brand.name}`}
-              content={brand.seo_text}
+              title={`Чому варто обрати ${brandName}`}
+              content={brandSeoText}
               keywords={
-                brand.seo_keywords || [
-                  `${brand.name} Україна`,
-                  `${brand.name} офіційний`,
-                  `${brand.name} ціна`,
-                  `купити ${brand.name}`,
+                brandSeoKeywords || [
+                  `${brandName} Україна`,
+                  `${brandName} офіційний`,
+                  `${brandName} ціна`,
+                  `купити ${brandName}`,
                 ]
               }
             />
           ) : (
             <SEOTextSection
-              title={`Чому варто обрати ${brand.name}`}
+              title={`Чому варто обрати ${brandName}`}
               content={`
                 <p class="mb-4">
-                  <strong>${brand.name}</strong> — це один з найпопулярніших брендів у світі моди та спорту.
-                  Продукція ${brand.name} поєднує в собі високу якість, інноваційні технології та стильний дизайн.
+                  <strong>${brandName}</strong> — це один з найпопулярніших брендів у світі моди та спорту.
+                  Продукція ${brandName} поєднує в собі високу якість, інноваційні технології та стильний дизайн.
                 </p>
                 <p class="mb-4">
-                  На Wearsearch ви можете знайти всю продукцію ${brand.name} та порівняти ціни від різних магазинів.
+                  На Wearsearch ви можете знайти всю продукцію ${brandName} та порівняти ціни від різних магазинів.
                   Це допоможе вам знайти найвигіднішу пропозицію та заощадити гроші.
                 </p>
                 <p>
@@ -256,10 +309,10 @@ export default async function BrandPage({ params }: Readonly<BrandPageProps>) {
                 </p>
               `}
               keywords={[
-                `${brand.name} Україна`,
-                `${brand.name} офіційний`,
-                `${brand.name} ціна`,
-                `купити ${brand.name}`,
+                `${brandName} Україна`,
+                `${brandName} офіційний`,
+                `${brandName} ціна`,
+                `купити ${brandName}`,
               ]}
             />
           )}
@@ -275,19 +328,19 @@ export default async function BrandPage({ params }: Readonly<BrandPageProps>) {
 // Генерація статичних параметрів для популярних брендів
 export async function generateStaticParams() {
   try {
-    const res = await fetchBackendJson<any>(`/brands?lang=uk`, { next: { revalidate: 86400 } });
+    const res = await fetchBackendJson<unknown>(`/brands?lang=uk`, { next: { revalidate: 86400 } });
     if (!res) return [];
 
-    const payload = res.data;
+    const payload = isRecord(res) ? res.data : undefined;
 
     const list: Array<{ id: number | string }> = Array.isArray(payload)
       ? payload
-      : Array.isArray(payload?.data)
-        ? payload.data
-        : Array.isArray(payload?.brands)
-          ? payload.brands
-          : Array.isArray(payload?.items)
-            ? payload.items
+      : Array.isArray(getArray(payload, 'data'))
+        ? (getArray(payload, 'data') as Array<{ id: number | string }>)
+        : Array.isArray(getArray(payload, 'brands'))
+          ? (getArray(payload, 'brands') as Array<{ id: number | string }>)
+          : Array.isArray(getArray(payload, 'items'))
+            ? (getArray(payload, 'items') as Array<{ id: number | string }>)
             : [];
 
     // Використовуємо id бренду як slug (згідно структури API)

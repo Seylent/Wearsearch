@@ -1,4 +1,5 @@
 import { useState, useRef } from 'react';
+import Image from 'next/image';
 import { useTranslation } from 'react-i18next';
 import { X, Image as ImageIcon } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -11,11 +12,7 @@ interface ImageUploaderProps {
   label?: string;
 }
 
-export const ImageUploader = ({
-  onImageUpload,
-  currentImage,
-  label: _label = 'Product Image',
-}: ImageUploaderProps) => {
+export const ImageUploader = ({ onImageUpload, currentImage, label }: ImageUploaderProps) => {
   const { t } = useTranslation();
   const [preview, setPreview] = useState<string>(currentImage || '');
   const [dragActive, setDragActive] = useState(false);
@@ -117,8 +114,14 @@ export const ImageUploader = ({
         onDrop={handleDrop}
       >
         {preview ? (
-          <div className="relative group">
-            <img src={preview} alt="Preview" className="w-full h-64 object-cover rounded-2xl" />
+          <div className="relative group w-full h-64">
+            <Image
+              src={preview}
+              alt="Preview"
+              fill
+              sizes="100vw"
+              className="object-cover rounded-2xl"
+            />
             <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity rounded-2xl flex items-center justify-center gap-2">
               <Button type="button" variant="secondary" size="sm" onClick={handleClick}>
                 {t('imageUploader.change')}
@@ -133,7 +136,7 @@ export const ImageUploader = ({
             type="button"
             className="p-12 text-center w-full hover:bg-muted/50 transition-colors rounded-lg focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2"
             onClick={handleClick}
-            aria-label={t('aria.uploadImage')}
+            aria-label={label ?? t('aria.uploadImage')}
           >
             <div className="flex flex-col items-center gap-3">
               <div className="w-16 h-16 rounded-full bg-muted flex items-center justify-center">

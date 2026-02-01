@@ -42,11 +42,11 @@ class ErrorBoundary extends Component<Props, State> {
             <div className="w-16 h-16 rounded-full bg-destructive/10 flex items-center justify-center mx-auto">
               <AlertTriangle className="w-8 h-8 text-destructive" />
             </div>
-            
+
             <div className="space-y-2">
               <h2 className="text-2xl font-bold text-foreground">Something went wrong</h2>
               <p className="text-muted-foreground">
-                We're sorry, but something unexpected happened. Please try refreshing the page.
+                We&apos;re sorry, but something unexpected happened. Please try refreshing the page.
               </p>
             </div>
 
@@ -59,16 +59,10 @@ class ErrorBoundary extends Component<Props, State> {
             )}
 
             <div className="flex gap-4 justify-center">
-              <Button
-                onClick={() => globalThis.location.reload()}
-                variant="default"
-              >
+              <Button onClick={() => globalThis.location.reload()} variant="default">
                 Refresh Page
               </Button>
-              <Button
-                onClick={() => globalThis.location.href = '/'}
-                variant="outline"
-              >
+              <Button onClick={() => (globalThis.location.href = '/')} variant="outline">
                 Go Home
               </Button>
             </div>

@@ -4,6 +4,7 @@
  */
 
 import React from 'react';
+import Image from 'next/image';
 import Link from 'next/link';
 import { useTranslation } from 'react-i18next';
 import { Store, Bookmark, Trash2, ExternalLink } from 'lucide-react';
@@ -30,7 +31,7 @@ export const SavedStoresList: React.FC<SavedStoresListProps> = ({
       <div className={cn('animate-pulse', className)}>
         <div className="h-6 w-40 bg-white/10 rounded mb-4"></div>
         <div className="space-y-3">
-          {[1, 2, 3].map((i) => (
+          {[1, 2, 3].map(i => (
             <div key={i} className="h-20 bg-white/5 rounded-xl"></div>
           ))}
         </div>
@@ -57,12 +58,10 @@ export const SavedStoresList: React.FC<SavedStoresListProps> = ({
       <div className="flex items-center justify-between mb-4">
         <div className="flex items-center gap-2">
           <Bookmark className="w-5 h-5 text-white/60" />
-          <h2 className="font-display text-lg font-semibold">
-            {t('stores.savedStores')}
-          </h2>
+          <h2 className="font-display text-lg font-semibold">{t('stores.savedStores')}</h2>
           <span className="text-sm text-white/40">({count})</span>
         </div>
-        
+
         {showClearButton && count > 0 && (
           <Button
             variant="ghost"
@@ -77,16 +76,18 @@ export const SavedStoresList: React.FC<SavedStoresListProps> = ({
       </div>
 
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-        {displayStores.map((store) => (
+        {displayStores.map(store => (
           <div
             key={store.id}
             className="group relative p-4 rounded-xl bg-white/5 border border-white/10 hover:border-white/20 transition-all"
           >
             <div className="flex items-center gap-3">
               {store.logo_url ? (
-                <img
+                <Image
                   src={store.logo_url}
                   alt={store.name}
+                  width={48}
+                  height={48}
                   className="w-12 h-12 rounded-lg object-cover bg-white/5"
                 />
               ) : (
@@ -94,14 +95,14 @@ export const SavedStoresList: React.FC<SavedStoresListProps> = ({
                   <Store className="w-6 h-6 text-white/40" />
                 </div>
               )}
-              
+
               <div className="flex-1 min-w-0">
                 <h3 className="font-medium text-white truncate">{store.name}</h3>
                 <p className="text-xs text-white/40">
                   {new Date(store.savedAt).toLocaleDateString()}
                 </p>
               </div>
-              
+
               <div className="flex items-center gap-1">
                 <Link
                   href={`/products?store_id=${store.id}`}
@@ -109,7 +110,7 @@ export const SavedStoresList: React.FC<SavedStoresListProps> = ({
                 >
                   <ExternalLink className="w-4 h-4 text-white/60" />
                 </Link>
-                
+
                 <button
                   onClick={() => removeStore(store.id)}
                   className="p-2 rounded-lg hover:bg-red-500/20 transition-colors"

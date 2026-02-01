@@ -15,6 +15,25 @@ import {
 } from '@/components/ui/select';
 import api from '@/services/api';
 
+const isRecord = (value: unknown): value is Record<string, unknown> =>
+  typeof value === 'object' && value !== null;
+
+const getArray = (value: unknown, key: string): unknown[] | undefined => {
+  if (!isRecord(value)) return undefined;
+  const nested = value[key];
+  return Array.isArray(nested) ? nested : undefined;
+};
+
+const normalizeOptions = (items: unknown[]): Array<{ id: string; name: string }> =>
+  items
+    .map(item => {
+      if (!isRecord(item)) return null;
+      const id = String(item.id ?? '');
+      const name = String(item.name ?? '');
+      if (!id || !name) return null;
+      return { id, name };
+    })
+    .filter((item): item is { id: string; name: string } => !!item);
 type UserRole = 'user' | 'admin' | 'moderator' | 'store_owner' | 'store_manager' | 'brand_owner';
 type StoreOption = { id: string; name: string };
 type BrandOption = { id: string; name: string };
@@ -60,14 +79,9 @@ export const UserRoleManagement = () => {
       try {
         const response = await api.get('/admin/stores');
         const payload = response.data?.data ?? response.data?.items ?? response.data;
-        const items = Array.isArray(payload?.items) ? payload.items : payload;
-        if (Array.isArray(items)) {
-          const normalized = items
-            .map((item: any) => ({
-              id: String(item?.id ?? ''),
-              name: String(item?.name ?? ''),
-            }))
-            .filter(item => item.id && item.name);
+        const items = getArray(payload, 'items') ?? (Array.isArray(payload) ? payload : []);
+        if (items.length > 0) {
+          const normalized = normalizeOptions(items);
           if (isMounted) setStores(normalized);
         }
       } catch {
@@ -92,14 +106,9 @@ export const UserRoleManagement = () => {
       try {
         const response = await api.get('/brands');
         const payload = response.data?.data ?? response.data?.items ?? response.data;
-        const items = Array.isArray(payload?.items) ? payload.items : payload;
-        if (Array.isArray(items)) {
-          const normalized = items
-            .map((item: any) => ({
-              id: String(item?.id ?? ''),
-              name: String(item?.name ?? ''),
-            }))
-            .filter(item => item.id && item.name);
+        const items = getArray(payload, 'items') ?? (Array.isArray(payload) ? payload : []);
+        if (items.length > 0) {
+          const normalized = normalizeOptions(items);
           if (isMounted) setBrands(normalized);
         }
       } catch {
@@ -157,8 +166,8 @@ export const UserRoleManagement = () => {
 
       const responseBody = response.data ?? {};
       setMessage(responseBody.message || t('admin.rolesSaved', 'Role updated'));
-    } catch (err: any) {
-      const status = err?.response?.status;
+    } catch (err: unknown) {
+      const status = isRecord(err) && isRecord(err.response) ? err.response.status : undefined;
       if (status === 400) {
         setError(t('admin.rolesError400', 'Email or role is missing or invalid'));
       } else if (status === 404) {

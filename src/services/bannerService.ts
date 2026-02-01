@@ -4,13 +4,22 @@
  */
 
 import { apiBanners } from './api';
-import type {
-  Banner,
-  CreateBannerRequest,
-  BannerListResponse,
-  BannerResponse,
-  BannerAnalyticsResponse,
-} from '@/types/banner';
+import type { Banner, CreateBannerRequest, BannerAnalyticsResponse } from '@/types/banner';
+
+const isRecord = (value: unknown): value is Record<string, unknown> =>
+  typeof value === 'object' && value !== null;
+
+const getArray = (value: unknown, key: string): unknown[] | undefined => {
+  if (!isRecord(value)) return undefined;
+  const nested = value[key];
+  return Array.isArray(nested) ? nested : undefined;
+};
+
+const getRecord = (value: unknown, key: string): Record<string, unknown> | undefined => {
+  if (!isRecord(value)) return undefined;
+  const nested = value[key];
+  return isRecord(nested) ? nested : undefined;
+};
 
 export const bannerService = {
   /**
@@ -31,20 +40,15 @@ export const bannerService = {
 
     try {
       const response = await apiBanners.get(endpoint);
-      const payload = response.data as any;
+      const payload = response.data as unknown;
 
       // Supported response formats:
       // - { success, data: { banners: [...] } }
       // - { banners: [...] }
       // - [ ... ]
-      const banners =
-        (payload?.data?.banners && Array.isArray(payload.data.banners)
-          ? payload.data.banners
-          : payload?.banners && Array.isArray(payload.banners)
-            ? payload.banners
-            : Array.isArray(payload)
-              ? payload
-              : []) as Banner[];
+      const banners = (getArray(getRecord(payload, 'data'), 'banners') ??
+        getArray(payload, 'banners') ??
+        (Array.isArray(payload) ? payload : [])) as Banner[];
 
       return banners;
     } catch (error) {
@@ -58,8 +62,11 @@ export const bannerService = {
    */
   async getBanner(id: string): Promise<Banner> {
     const response = await apiBanners.get(`/banners/${id}`);
-    const payload = response.data as any;
-    const banner = (payload?.data?.banner ?? payload?.banner ?? payload?.data ?? payload) as Banner;
+    const payload = response.data as unknown;
+    const banner = (getRecord(getRecord(payload, 'data'), 'banner') ??
+      getRecord(payload, 'banner') ??
+      getRecord(payload, 'data') ??
+      payload) as Banner;
     return banner;
   },
 
@@ -68,8 +75,11 @@ export const bannerService = {
    */
   async createBanner(data: CreateBannerRequest): Promise<Banner> {
     const response = await apiBanners.post('/banners', data);
-    const payload = response.data as any;
-    const banner = (payload?.data?.banner ?? payload?.banner ?? payload?.data ?? payload) as Banner;
+    const payload = response.data as unknown;
+    const banner = (getRecord(getRecord(payload, 'data'), 'banner') ??
+      getRecord(payload, 'banner') ??
+      getRecord(payload, 'data') ??
+      payload) as Banner;
     return banner;
   },
 
@@ -78,8 +88,11 @@ export const bannerService = {
    */
   async updateBanner(id: string, data: Partial<CreateBannerRequest>): Promise<Banner> {
     const response = await apiBanners.put(`/banners/${id}`, data);
-    const payload = response.data as any;
-    const banner = (payload?.data?.banner ?? payload?.banner ?? payload?.data ?? payload) as Banner;
+    const payload = response.data as unknown;
+    const banner = (getRecord(getRecord(payload, 'data'), 'banner') ??
+      getRecord(payload, 'banner') ??
+      getRecord(payload, 'data') ??
+      payload) as Banner;
     return banner;
   },
 

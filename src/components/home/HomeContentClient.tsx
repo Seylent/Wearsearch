@@ -77,8 +77,6 @@ export default function HomeContentClient({
   );
 
   const normalizedCategories = categories.length > 0 ? categories : fallbackCategories;
-  const seoContent = heroSeo?.content_text?.trim() || '';
-  const seoIsHtml = seoContent.includes('<');
   const categoryCards = normalizedCategories.map(category => {
     const slug = (category.slug || category.name).toLowerCase();
     const normalizedSlug = slug.replace(/\s+/g, '-');

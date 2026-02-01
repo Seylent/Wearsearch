@@ -21,6 +21,9 @@ import { Search, User as UserIcon, Menu, X } from 'lucide-react';
 import { ThemeToggle } from '@/components/common/ThemeToggle';
 import { useEffect, useState } from 'react';
 
+const isRecord = (value: unknown): value is Record<string, unknown> =>
+  typeof value === 'object' && value !== null;
+
 const Navigation: React.FC = () => {
   const router = useRouter();
   const pathname = usePathname();
@@ -34,7 +37,8 @@ const Navigation: React.FC = () => {
   }, []);
 
   // Use centralized auth hook — лише після mount
-  const { user, canAccessAdminPanel } = useAuth();
+  const { user, canAccessStoreMenu, canAccessAdminPanel } = useAuth();
+  const userRole = isRecord(user) && typeof user.role === 'string' ? user.role : undefined;
 
   // Use navigation state hook
   const nav = useNavigationState();
@@ -101,6 +105,19 @@ const Navigation: React.FC = () => {
           >
             {t('nav.contacts')}
           </Link>
+          {isMounted && canAccessStoreMenu && (
+            <Link
+              href="/store-menu"
+              className={`px-3 py-1 text-sm font-medium transition-all duration-300 rounded-full ${
+                pathname === '/store-menu' || pathname.startsWith('/store-menu/')
+                  ? 'text-background bg-background/15 dark:text-white dark:bg-zinc-800/90'
+                  : 'text-background/70 hover:text-background hover:bg-background/10 dark:text-zinc-400 dark:hover:text-white dark:hover:bg-zinc-800/60'
+              }`}
+            >
+              {t('nav.storeMenu', 'Мій магазин')}
+            </Link>
+          )}
+
           {isMounted && canAccessAdminPanel && (
             <Link
               href="/admin"
@@ -182,68 +199,131 @@ const Navigation: React.FC = () => {
         </div>
       </nav>
 
-      {/* Mobile Menu */}
+      {/* Mobile Menu - Bottom Sheet */}
       {nav.mobileMenuOpen && (
-        <div
-          className="md:hidden fixed top-20 left-2 right-2 bg-foreground/95 text-background backdrop-blur-2xl rounded-2xl border border-background/20 shadow-2xl overflow-hidden z-40 dark:bg-zinc-900/95 dark:text-white dark:border-zinc-700/80"
-          role="menu"
-          aria-label={t('aria.mainNavigation')}
-        >
-          <div className="flex flex-col">
-            {navLinks.map(link => (
-              <Link
-                key={link.name}
-                href={link.href}
-                onClick={nav.closeMobileMenu}
-                className={`px-6 py-4 min-h-[52px] text-base font-medium transition-all duration-150 border-b border-background/10 touch-manipulation active:scale-[0.98] dark:border-zinc-800/50 ${
-                  pathname === link.href
-                    ? 'text-background bg-background/10 dark:text-white dark:bg-zinc-800/60'
-                    : 'text-background/70 active:text-background active:bg-background/10 dark:text-zinc-300 dark:active:text-white dark:active:bg-zinc-800/30'
-                }`}
-              >
-                {link.name}
-              </Link>
-            ))}
-
-            {/* Currency Switch in mobile menu */}
-            <div className="px-6 py-3 border-b border-background/10 dark:border-zinc-800/50">
-              <CurrencySwitch
-                variant="ghost"
-                size="default"
-                showExchangeRate={false}
-                layout="row"
-                className="w-full justify-start h-10 text-background/70 hover:text-background hover:bg-background/10 dark:text-zinc-300 dark:hover:text-white dark:hover:bg-zinc-800/30"
-                containerClassName="items-center w-full"
-              />
+        <>
+          {/* Backdrop */}
+          <div
+            className="md:hidden fixed inset-0 bg-black/50 z-40"
+            onClick={nav.closeMobileMenu}
+            aria-hidden="true"
+          />
+          {/* Bottom Sheet Menu - slides up from bottom, stops below navbar */}
+          <div
+            className="md:hidden fixed bottom-0 left-0 right-0 top-[420px] bg-background text-foreground backdrop-blur-2xl rounded-t-3xl border-t border-border shadow-[0_-10px_40px_rgba(0,0,0,0.3)] overflow-hidden z-50 dark:bg-zinc-900 dark:text-white dark:border-zinc-700/80 animate-slide-up"
+            role="menu"
+            aria-label={t('aria.mainNavigation')}
+          >
+            {/* Handle bar */}
+            <div className="flex justify-center pt-3 pb-1">
+              <div className="w-12 h-1.5 bg-foreground/20 rounded-full dark:bg-zinc-700" />
             </div>
-
-            <button
-              className="px-6 py-3 text-base font-medium transition-all duration-300 text-background/70 active:text-background active:bg-background/10 text-left border-b border-background/10 dark:text-zinc-300 dark:active:text-white dark:active:bg-zinc-800/30 dark:border-zinc-800/50"
-              onClick={() => {
-                nav.closeMobileMenu();
-                // Trigger ContactsDialog - we need to open it programmatically
-                document
-                  .querySelector('[data-contacts-trigger]')
-                  ?.dispatchEvent(new MouseEvent('click', { bubbles: true }));
-              }}
-            >
-              {t('nav.contacts')}
-            </button>
-            {isMounted && canAccessAdminPanel && (
-              <Link
-                href="/admin"
-                onClick={nav.closeMobileMenu}
-                className={`px-6 py-3 text-base font-medium transition-all duration-300 ${
-                  pathname === '/admin'
-                    ? 'text-background bg-background/10 dark:text-white dark:bg-zinc-800/60'
-                    : 'text-background/70 active:text-background active:bg-background/10 dark:text-zinc-300 dark:active:text-white dark:active:bg-zinc-800/30'
-                }`}
-              >
-                {t('nav.admin')}
-              </Link>
+            {/* User info header if logged in */}
+            {isMounted && user && (
+              <div className="px-6 py-4 border-b border-border/50 dark:border-zinc-800/50">
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 rounded-full bg-foreground/10 flex items-center justify-center dark:bg-zinc-800">
+                    <UserIcon className="w-5 h-5 text-foreground/70 dark:text-zinc-400" />
+                  </div>
+                  <div className="flex flex-col">
+                    <span className="font-medium text-sm">{user.email || 'User'}</span>
+                    <span className="text-xs text-foreground/50 dark:text-zinc-500">
+                      {userRole || 'Buyer'}
+                    </span>
+                  </div>
+                </div>
+              </div>
             )}
+
+            <div className="flex flex-col max-h-[70vh] overflow-y-auto">
+              {navLinks.map(link => (
+                <Link
+                  key={link.name}
+                  href={link.href}
+                  onClick={nav.closeMobileMenu}
+                  className={`px-6 py-4 min-h-[56px] text-base font-medium transition-all duration-150 border-b border-border/30 touch-manipulation active:scale-[0.98] dark:border-zinc-800/50 flex items-center gap-3 ${
+                    pathname === link.href
+                      ? 'text-foreground bg-foreground/5 dark:text-white dark:bg-zinc-800/60'
+                      : 'text-foreground/70 active:text-foreground active:bg-foreground/5 dark:text-zinc-300 dark:active:text-white dark:active:bg-zinc-800/30'
+                  }`}
+                >
+                  {link.name}
+                </Link>
+              ))}
+
+              {/* Currency Switch in mobile menu */}
+              <div className="px-6 py-4 border-b border-border/30 dark:border-zinc-800/50">
+                <div className="flex items-center justify-between">
+                  <span className="text-base font-medium text-foreground/70 dark:text-zinc-300">
+                    {t('common.currency', 'Currency')}
+                  </span>
+                  <CurrencySwitch
+                    variant="ghost"
+                    size="default"
+                    showExchangeRate={false}
+                    layout="row"
+                    className="h-10 px-4 text-foreground/70 hover:text-foreground hover:bg-foreground/5 dark:text-zinc-300 dark:hover:text-white dark:hover:bg-zinc-800/30 rounded-full border border-border/50"
+                    containerClassName="items-center"
+                  />
+                </div>
+              </div>
+
+              <button
+                className="px-6 py-4 min-h-[56px] text-base font-medium transition-all duration-150 text-foreground/70 active:text-foreground active:bg-foreground/5 text-left border-b border-border/30 dark:text-zinc-300 dark:active:text-white dark:active:bg-zinc-800/30 dark:border-zinc-800/50 flex items-center gap-3"
+                onClick={() => {
+                  nav.closeMobileMenu();
+                  document
+                    .querySelector('[data-contacts-trigger]')
+                    ?.dispatchEvent(new MouseEvent('click', { bubbles: true }));
+                }}
+              >
+                {t('nav.contacts')}
+              </button>
+
+              {isMounted && canAccessStoreMenu && (
+                <Link
+                  href="/store-menu"
+                  onClick={nav.closeMobileMenu}
+                  className={`px-6 py-4 min-h-[56px] text-base font-medium transition-all duration-150 border-b border-border/30 dark:border-zinc-800/50 flex items-center gap-3 ${
+                    pathname === '/store-menu' || pathname.startsWith('/store-menu/')
+                      ? 'text-foreground bg-foreground/5 dark:text-white dark:bg-zinc-800/60'
+                      : 'text-foreground/70 active:text-foreground active:bg-foreground/5 dark:text-zinc-300 dark:active:text-white dark:active:bg-zinc-800/30'
+                  }`}
+                >
+                  {t('nav.storeMenu', 'Мій магазин')}
+                </Link>
+              )}
+
+              {isMounted && canAccessAdminPanel && (
+                <Link
+                  href="/admin"
+                  onClick={nav.closeMobileMenu}
+                  className={`px-6 py-4 min-h-[56px] text-base font-medium transition-all duration-150 border-b border-border/30 dark:border-zinc-800/50 flex items-center gap-3 ${
+                    pathname === '/admin'
+                      ? 'text-foreground bg-foreground/5 dark:text-white dark:bg-zinc-800/60'
+                      : 'text-foreground/70 active:text-foreground active:bg-foreground/5 dark:text-zinc-300 dark:active:text-white dark:active:bg-zinc-800/30'
+                  }`}
+                >
+                  {t('nav.admin')}
+                </Link>
+              )}
+
+              {/* Sign Out button if logged in */}
+              {isMounted && user && (
+                <button
+                  className="px-6 py-4 min-h-[56px] text-base font-medium transition-all duration-150 text-destructive/80 active:text-destructive active:bg-destructive/5 text-left flex items-center gap-3"
+                  onClick={() => {
+                    nav.closeMobileMenu();
+                    // Trigger sign out
+                    router.push('/auth');
+                  }}
+                >
+                  {t('auth.signOut', 'Sign Out')}
+                </button>
+              )}
+            </div>
           </div>
-        </div>
+        </>
       )}
 
       {/* Search Dropdown */}

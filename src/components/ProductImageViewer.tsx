@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
+import NextImage from 'next/image';
 import { X, ChevronLeft, ChevronRight, ZoomIn } from 'lucide-react';
 
 interface ProductImageViewerProps {
@@ -214,13 +215,14 @@ export const ProductImageViewer = ({
               touchAction: 'none',
             }}
           >
-            <img
+            <NextImage
               src={currentImage}
               alt={alt}
-              className="max-h-[70vh] max-w-[92vw] sm:max-w-[80vw] object-contain select-none"
+              fill
+              sizes="(max-width: 768px) 92vw, 80vw"
+              className="object-contain select-none"
               draggable={false}
-              decoding="async"
-              loading="eager"
+              priority
               style={{
                 transform: `scale(${zoom})`,
                 transition: 'transform 160ms ease',
@@ -250,13 +252,14 @@ export const ProductImageViewer = ({
                 }`}
                 aria-label={`Open image ${index + 1}`}
               >
-                <img
+                <NextImage
                   src={image}
                   alt={alt}
+                  width={80}
+                  height={80}
                   className="h-full w-full object-cover"
                   draggable={false}
                   loading="lazy"
-                  decoding="async"
                 />
               </button>
             ))}

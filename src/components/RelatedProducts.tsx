@@ -7,6 +7,7 @@
 
 import { memo, useRef } from 'react';
 import Link from 'next/link';
+import Image from 'next/image';
 import { useTranslation } from 'react-i18next';
 import { Sparkles } from 'lucide-react';
 import { useRelatedProducts } from '@/hooks/useApi';
@@ -46,7 +47,7 @@ export const RelatedProducts = memo(
     const isVisible = useLazyLoad(sectionRef, { rootMargin: '400px', freezeOnceVisible: true });
 
     const hasProvidedProducts = Array.isArray(products);
-    const { data, isLoading, error: _error } = useRelatedProducts(productId);
+    const { data, isLoading } = useRelatedProducts(productId);
 
     let resolvedProducts: unknown[];
     if (hasProvidedProducts) {
@@ -112,10 +113,12 @@ export const RelatedProducts = memo(
             return [
               <Link key={id} href={`/product/${id}`} className="group block">
                 <div className="relative rounded-2xl overflow-hidden bg-muted aspect-square mb-3 transition-transform md:group-hover:scale-105">
-                  <img
+                  <Image
                     src={convertS3UrlToHttps(image)}
                     alt={title}
-                    className="w-full h-full object-cover"
+                    fill
+                    sizes="(max-width: 768px) 50vw, 20vw"
+                    className="object-cover"
                     loading="lazy"
                   />
                 </div>

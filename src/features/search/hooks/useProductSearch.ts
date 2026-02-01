@@ -5,11 +5,10 @@
  */
 
 import { useState, useEffect, useMemo } from 'react';
-import { useProductsPageData } from '@/hooks/useAggregatedData';
-import { useQuery } from '@tanstack/react-query';
-import { storeService, type Store } from '@/services/storeService';
+import { useProductsPageData, useStoresPageData } from '@/hooks/useAggregatedData';
 
-const isRecord = (value: unknown): value is Record<string, unknown> => typeof value === 'object' && value !== null;
+const isRecord = (value: unknown): value is Record<string, unknown> =>
+  typeof value === 'object' && value !== null;
 
 const toOptionalString = (value: unknown): string | undefined => {
   if (typeof value === 'string') return value;
@@ -74,50 +73,26 @@ export const useProductSearch = () => {
     refetchOnMount: false, // Don't refetch on mount
   });
 
-  // Search stores in parallel with better caching
-  const { data: storesData, isLoading: isLoadingStores, error: storesError } = useQuery<Store[]>({
-    queryKey: ['stores-search', debouncedQuery],
-    queryFn: async () => {
-      try {
-        const allStores = await storeService.getAllStores();
-        const normalizedQuery = debouncedQuery.toLowerCase().trim();
-        
-        // Filter stores by name (more flexible matching)
-        const filtered = allStores.filter(store => {
-          const storeName = store.name.toLowerCase().trim();
-          // Remove spaces and special characters for better matching
-          const normalizedStoreName = storeName.replaceAll(/[^a-z0-9]/g, '');
-          const normalizedQueryComparable = normalizedQuery.replaceAll(/[^a-z0-9]/g, '');
-          
-          const match = storeName.includes(normalizedQuery) || normalizedStoreName.includes(normalizedQueryComparable);
-          
-          if (match) {
-            console.log('[Search] ✓ Match found:', store.name, '| normalized:', normalizedStoreName);
-          }
-          
-          return match;
-        }).slice(0, 3); // Limit to 3 stores
-        
-        return filtered;
-      } catch (error) {
-        console.error('[Search] Error fetching stores:', error);
-        throw error;
-      }
-    },
-    enabled: hasQuery,
-    staleTime: 5 * 60 * 1000, // 5 minutes for stores
-    gcTime: 15 * 60 * 1000, // 15 minutes cache
-    refetchOnWindowFocus: false,
-    refetchOnMount: false,
-  });
-  
-  // Log query errors
-  if (storesError) {
-    console.error('[Search] Stores query error:', storesError);
-  }
+  const storeSearchParams = useMemo(
+    () => ({ page: 1, limit: 3, search: debouncedQuery }),
+    [debouncedQuery]
+  );
+
+  // Search stores via server-side filtering to avoid fetching full catalog
+  const { data: storesPageData, isLoading: isLoadingStores } = useStoresPageData(
+    storeSearchParams,
+    {
+      enabled: hasQuery,
+      staleTime: 5 * 60 * 1000, // 5 minutes for stores
+      gcTime: 15 * 60 * 1000, // 15 minutes cache
+      refetchOnWindowFocus: false,
+      refetchOnMount: false,
+    }
+  );
 
   const serverResults = useMemo(() => {
-    const items: unknown[] = Array.isArray(pageData?.products) ? pageData.products : [];
+    const productsData = isRecord(pageData) ? pageData.products : undefined;
+    const items: unknown[] = Array.isArray(productsData) ? productsData : [];
 
     return items
       .map((product): SearchResult | null => {
@@ -146,12 +121,15 @@ export const useProductSearch = () => {
   }, [pageData]);
 
   const storeResults = useMemo(() => {
-    if (!storesData) return [];
-    
+    const storesData = isRecord(storesPageData) ? storesPageData.stores : undefined;
+    if (!Array.isArray(storesData)) return [];
+
     return storesData
       .map((store): SearchResult | null => {
-        const id = String(store.id);
-        const name = store.name;
+        if (!isRecord(store)) return null;
+
+        const id = toStringOrEmpty(store.id);
+        const name = toStringOrEmpty(store.name);
         if (!id || !name) return null;
 
         const logoUrl = toOptionalString(store.logo_url);
@@ -167,7 +145,7 @@ export const useProductSearch = () => {
         };
       })
       .filter((item): item is SearchResult => item !== null);
-  }, [storesData]);
+  }, [storesPageData]);
 
   // Combine results: stores first, then products
   const finalResults = useMemo(() => {

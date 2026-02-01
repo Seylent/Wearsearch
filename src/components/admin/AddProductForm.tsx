@@ -114,11 +114,9 @@ export const AddProductForm: React.FC<AddProductFormProps> = ({
   productMaterialIds,
   productTechnologyIds,
   productSizeIds,
-  productImageUrl: _productImageUrl,
   productImages,
   primaryImageIndex,
   publishAt,
-  unpublishAt,
   productStatus,
 
   // Store data
@@ -152,9 +150,6 @@ export const AddProductForm: React.FC<AddProductFormProps> = ({
   onProductImageUrlChange,
   onProductImagesChange,
   onPrimaryImageIndexChange,
-  onPublishAtChange,
-  onUnpublishAtChange,
-  onProductStatusChange,
 
   // Store handlers
   onCurrentStoreChange,

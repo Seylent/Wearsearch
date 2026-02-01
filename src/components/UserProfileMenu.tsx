@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
-import { User, Heart, LogOut, Settings, Shield, FolderHeart } from 'lucide-react';
+import { User, Heart, LogOut, Settings, Shield, FolderHeart, Store } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { isAuthenticated, clearAuth } from '@/utils/authStorage';
 import {
@@ -29,7 +29,7 @@ export function UserProfileMenu() {
   const router = useRouter();
   const { t } = useTranslation();
   const [user, setUser] = useState<UserData | null>(null);
-  const { user: authUser, canAccessAdminPanel, isAdmin } = useAuth();
+  const { user: authUser, canAccessStoreMenu, canAccessAdminPanel } = useAuth();
 
   useEffect(() => {
     loadUser();
@@ -80,14 +80,17 @@ export function UserProfileMenu() {
   const displayName = user.display_name || user.username || user.email.split('@')[0];
   const initials = displayName.slice(0, 2).toUpperCase();
   const effectiveRole = (authUser?.role || user.role) ?? 'user';
-  const effectiveCanAccessAdminPanel =
-    canAccessAdminPanel ||
-    effectiveRole === 'admin' ||
+
+  // Determine access based on roles
+  const effectiveCanAccessStoreMenu =
+    canAccessStoreMenu ||
     effectiveRole === 'store_owner' ||
     effectiveRole === 'store_manager' ||
     effectiveRole === 'brand_owner' ||
-    effectiveRole === 'moderator' ||
     effectiveRole === 'manager';
+
+  const effectiveCanAccessAdminPanel =
+    canAccessAdminPanel || effectiveRole === 'admin' || effectiveRole === 'moderator';
 
   return (
     <DropdownMenu modal={false}>
@@ -101,6 +104,12 @@ export function UserProfileMenu() {
           </Avatar>
           <div className="hidden md:flex flex-col items-start">
             <span className="text-sm font-semibold text-foreground">{displayName}</span>
+            {effectiveCanAccessStoreMenu && (
+              <span className="text-[10px] uppercase tracking-wider text-muted-foreground flex items-center gap-1">
+                <Store className="h-2.5 w-2.5" />
+                {t('nav.storeMenu', 'Мій магазин')}
+              </span>
+            )}
             {effectiveCanAccessAdminPanel && (
               <span className="text-[10px] uppercase tracking-wider text-muted-foreground flex items-center gap-1">
                 <Shield className="h-2.5 w-2.5" />
@@ -128,6 +137,12 @@ export function UserProfileMenu() {
             <div className="flex flex-col flex-1 min-w-0">
               <p className="text-sm font-semibold text-foreground truncate">{displayName}</p>
               <p className="text-xs text-muted-foreground truncate">{user.email}</p>
+              {effectiveCanAccessStoreMenu && (
+                <span className="text-[10px] text-primary flex items-center gap-1 mt-0.5">
+                  <Store className="h-2.5 w-2.5" />
+                  {t('nav.storeMenu', 'Мій магазин')}
+                </span>
+              )}
               {effectiveCanAccessAdminPanel && (
                 <span className="text-[10px] text-primary flex items-center gap-1 mt-0.5">
                   <Shield className="h-2.5 w-2.5" />
@@ -163,6 +178,16 @@ export function UserProfileMenu() {
           <FolderHeart className="h-5 w-5 mr-3" />
           <span className="text-base font-medium">{t('nav.wishlists')}</span>
         </DropdownMenuItem>
+
+        {effectiveCanAccessStoreMenu && (
+          <DropdownMenuItem
+            onClick={() => router.push('/store-menu')}
+            className="cursor-pointer rounded-lg px-4 py-3 min-h-[44px] touch-manipulation"
+          >
+            <Store className="h-5 w-5 mr-3" />
+            <span className="text-base font-medium">{t('nav.storeMenu', 'Мій магазин')}</span>
+          </DropdownMenuItem>
+        )}
 
         {effectiveCanAccessAdminPanel && (
           <DropdownMenuItem

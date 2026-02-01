@@ -6,6 +6,18 @@ import { fetchBackendJson } from '@/lib/backendFetch';
 import { JsonLd, generateBreadcrumbSchema } from '@/lib/seo/structured-data';
 import { getServerLanguage } from '@/utils/languageStorage';
 
+const isRecord = (value: unknown): value is Record<string, unknown> =>
+  typeof value === 'object' && value !== null;
+
+const getRecord = (value: unknown, key: string): Record<string, unknown> | undefined => {
+  if (!isRecord(value)) return undefined;
+  const nested = value[key];
+  return isRecord(nested) ? nested : undefined;
+};
+
+const toOptionalString = (value: unknown): string | undefined =>
+  typeof value === 'string' ? value : undefined;
+
 // Components
 import { ProductsContent } from '@/components/ProductsContent';
 
@@ -35,34 +47,53 @@ export async function generateMetadata({
   if (shouldIndex && categoryType) {
     try {
       const lang = await getServerLanguage();
-      let res = await fetchBackendJson<any>(
+      let res = await fetchBackendJson<unknown>(
         `/pages/products?type=${encodeURIComponent(categoryType)}&lang=${encodeURIComponent(lang)}`,
         { next: { revalidate: 3600 } }
       );
 
       if (!res) {
-        res = await fetchBackendJson<any>(`/categories/${categoryType}?lang=${lang}`, {
+        res = await fetchBackendJson<unknown>(`/categories/${categoryType}?lang=${lang}`, {
           next: { revalidate: 3600 },
         });
       }
 
       if (res) {
-        const data = res.data;
-        const category = data.category || data.data?.category || data.item || data;
+        const data = isRecord(res) ? res.data : undefined;
+        const category =
+          getRecord(data, 'category') ??
+          getRecord(getRecord(data, 'data'), 'category') ??
+          getRecord(data, 'item') ??
+          data ??
+          {};
+        const categoryName =
+          toOptionalString(isRecord(category) ? category.name : undefined) ?? 'Категорія';
+        const categorySeoTitle = toOptionalString(
+          isRecord(category) ? category.seo_title : undefined
+        );
+        const categorySeoDescription = toOptionalString(
+          isRecord(category) ? category.seo_description : undefined
+        );
+        const categoryDescription = toOptionalString(
+          isRecord(category) ? category.description : undefined
+        );
+        const canonicalUrl = toOptionalString(
+          isRecord(category) ? category.canonical_url : undefined
+        );
 
         return {
-          title: category.seo_title || `${category.name} | Wearsearch`,
-          description: category.seo_description || category.description,
+          title: categorySeoTitle || `${categoryName} | Wearsearch`,
+          description: categorySeoDescription || categoryDescription,
           alternates: {
-            canonical: category.canonical_url,
+            canonical: canonicalUrl,
           },
           robots: {
             index: true,
             follow: true,
           },
           openGraph: {
-            title: category.seo_title || category.name,
-            description: category.seo_description || category.description,
+            title: categorySeoTitle || categoryName,
+            description: categorySeoDescription || categoryDescription,
             type: 'website',
           },
         };

@@ -1,9 +1,9 @@
 /**
  * Server Actions for Contact Form
- * 
+ *
  * Next.js Server Actions provide a secure way to handle form submissions
  * directly on the server without needing API routes.
- * 
+ *
  * Benefits:
  * - Better security (server-side execution)
  * - Automatic CSRF protection
@@ -27,7 +27,7 @@ export async function submitContactForm(formData: FormData) {
 
   // Basic validation
   if (!name || !email || !message) {
-    throw new Error('Всі обов\'язкові поля мають бути заповнені');
+    throw new Error("Всі обов'язкові поля мають бути заповнені");
   }
 
   // Email validation
@@ -37,7 +37,7 @@ export async function submitContactForm(formData: FormData) {
   }
 
   try {
-    const res = await fetchBackendJson<any>(
+    const res = await fetchBackendJson<unknown>(
       '/contacts',
       {
         method: 'POST',
@@ -61,10 +61,9 @@ export async function submitContactForm(formData: FormData) {
 
     // Revalidate the contacts page
     revalidatePath('/contacts');
-    
+
     // Redirect to success page or show success message
     redirect('/contacts?success=true');
-
   } catch (error) {
     console.error('Contact form submission error:', error);
     throw new Error('Не вдалося відправити повідомлення. Спробуйте пізніше.');
@@ -78,7 +77,7 @@ export async function subscribeNewsletter(formData: FormData) {
   const email = formData.get('email') as string;
 
   if (!email) {
-    throw new Error('Email обов\'язковий для підписки');
+    throw new Error("Email обов'язковий для підписки");
   }
 
   const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -87,7 +86,7 @@ export async function subscribeNewsletter(formData: FormData) {
   }
 
   try {
-    const res = await fetchBackendJson<any>(
+    const res = await fetchBackendJson<unknown>(
       '/newsletter/subscribe',
       {
         method: 'POST',
@@ -108,7 +107,6 @@ export async function subscribeNewsletter(formData: FormData) {
     }
 
     return { success: true, message: 'Успішно підписано на розсилку!' };
-
   } catch (error) {
     console.error('Newsletter subscription error:', error);
     throw new Error('Не вдалося підписатись на розсилку. Спробуйте пізніше.');

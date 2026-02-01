@@ -131,7 +131,9 @@ export function BannerForm({
           <select
             id="banner-target-type"
             value={formData.target_type}
-            onChange={e => handleChange('target_type', e.target.value as any)}
+            onChange={e =>
+              handleChange('target_type', e.target.value as CreateBannerRequest['target_type'])
+            }
             className="w-full px-2.5 md:px-3 py-1.5 md:py-2 text-sm md:text-base bg-background/60 border border-border/60 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
           >
             <option value="all">Усі сторінки</option>

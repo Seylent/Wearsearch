@@ -4,6 +4,30 @@
 import type { Product } from '@/types';
 import { fetchBackendJson } from '@/lib/backendFetch';
 
+const isRecord = (value: unknown): value is Record<string, unknown> =>
+  typeof value === 'object' && value !== null;
+
+const getRecord = (value: unknown, key: string): Record<string, unknown> | undefined => {
+  if (!isRecord(value)) return undefined;
+  const nested = value[key];
+  return isRecord(nested) ? nested : undefined;
+};
+
+const getArray = (value: unknown, key: string): unknown[] | undefined => {
+  if (!isRecord(value)) return undefined;
+  const nested = value[key];
+  return Array.isArray(nested) ? nested : undefined;
+};
+
+const toNumber = (value: unknown, fallback: number): number => {
+  if (typeof value === 'number' && Number.isFinite(value)) return value;
+  if (typeof value === 'string') {
+    const parsed = Number(value);
+    return Number.isFinite(parsed) ? parsed : fallback;
+  }
+  return fallback;
+};
+
 export interface ProductsAPIResponse {
   products: Product[];
   total: number;
@@ -29,7 +53,7 @@ export async function getProductsData(params?: {
   store?: string;
 }): Promise<ProductsAPIResponse> {
   const searchParams = new URLSearchParams();
-  
+
   if (params?.page) searchParams.set('page', params.page.toString());
   if (params?.category) searchParams.set('category', params.category);
   if (params?.brand) searchParams.set('brand', params.brand);
@@ -44,35 +68,41 @@ export async function getProductsData(params?: {
   try {
     // Try BFF endpoint first
     try {
-      const res = await fetchBackendJson<any>(`/pages/products?${searchParams.toString()}`, {
+      const res = await fetchBackendJson<unknown>(`/pages/products?${searchParams.toString()}`, {
         next: { revalidate: 60 },
         headers: { 'Content-Type': 'application/json' },
       });
 
       if (res) {
-        const data = res.data;
+        const data = isRecord(res) ? res.data : undefined;
+        const items = (getArray(data, 'items') ?? []) as Product[];
+        const meta = getRecord(data, 'meta') ?? {};
         // BFF returns: { items: Product[], meta: { page, totalPages, totalItems, hasNext, hasPrev } }
         return {
-          products: data.items || [],
-          total: data.meta?.totalItems || 0,
+          products: items,
+          total: toNumber(meta.totalItems, 0),
           pagination: {
-            page: data.meta?.page || 1,
-            totalPages: data.meta?.totalPages || 1,
-            hasNext: data.meta?.hasNext || false,
-            hasPrev: data.meta?.hasPrev || false,
-            totalItems: data.meta?.totalItems || 0,
+            page: toNumber(meta.page, 1),
+            totalPages: toNumber(meta.totalPages, 1),
+            hasNext: typeof meta.hasNext === 'boolean' ? meta.hasNext : false,
+            hasPrev: typeof meta.hasPrev === 'boolean' ? meta.hasPrev : false,
+            totalItems: toNumber(meta.totalItems, 0),
           },
         };
       }
-    } catch (_bffError) {
+    } catch {
       console.log('BFF endpoint not available, trying fallback');
     }
-    
+
     // Fallback to direct products endpoint
-    const fallback = await fetchBackendJson<any>(`/products?${searchParams.toString()}`, {
-      next: { revalidate: 60 },
-      headers: { 'Content-Type': 'application/json' },
-    }, { preferV1: false });
+    const fallback = await fetchBackendJson<unknown>(
+      `/products?${searchParams.toString()}`,
+      {
+        next: { revalidate: 60 },
+        headers: { 'Content-Type': 'application/json' },
+      },
+      { preferV1: false }
+    );
 
     if (!fallback) {
       return {
@@ -82,17 +112,25 @@ export async function getProductsData(params?: {
       };
     }
 
-    const data = fallback.data;
-    
+    const data = isRecord(fallback) ? fallback.data : undefined;
+    const items = (getArray(data, 'items') ??
+      getArray(data, 'products') ??
+      (Array.isArray(data) ? data : [])) as Product[];
+    const meta = getRecord(data, 'meta') ?? {};
+    const total = toNumber(
+      meta.totalItems,
+      toNumber((data as { total?: unknown } | undefined)?.total, 0)
+    );
+
     return {
-      products: data.items || data.products || data || [],
-      total: data.meta?.totalItems || data.total || 0,
+      products: items,
+      total,
       pagination: {
-        page: data.meta?.page || 1,
-        totalPages: data.meta?.totalPages || 1,
-        hasNext: data.meta?.hasNext || false,
-        hasPrev: data.meta?.hasPrev || false,
-        totalItems: data.meta?.totalItems || 0,
+        page: toNumber(meta.page, 1),
+        totalPages: toNumber(meta.totalPages, 1),
+        hasNext: typeof meta.hasNext === 'boolean' ? meta.hasNext : false,
+        hasPrev: typeof meta.hasPrev === 'boolean' ? meta.hasPrev : false,
+        totalItems: toNumber(meta.totalItems, 0),
       },
     };
   } catch (error) {

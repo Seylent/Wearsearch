@@ -3,6 +3,24 @@ import { fetchBackendJson } from '@/lib/backendFetch';
 
 const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || 'https://wearsearch.com';
 
+const isRecord = (value: unknown): value is Record<string, unknown> =>
+  typeof value === 'object' && value !== null;
+
+const getArray = (value: unknown, key: string): unknown[] | undefined => {
+  if (!isRecord(value)) return undefined;
+  const nested = value[key];
+  return Array.isArray(nested) ? nested : undefined;
+};
+
+const getRecord = (value: unknown, key: string): Record<string, unknown> | undefined => {
+  if (!isRecord(value)) return undefined;
+  const nested = value[key];
+  return isRecord(nested) ? nested : undefined;
+};
+
+const toOptionalString = (value: unknown): string | undefined =>
+  typeof value === 'string' ? value : undefined;
+
 /**
  * Генерує sitemap згідно SEO-ТЗ
  * Використовує дані з бекенду (GET /api/v1/sitemap.xml не потрібен, робимо самі)
@@ -50,19 +68,26 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     // Отримуємо категорії
     let categories: MetadataRoute.Sitemap = [];
     try {
-      const res = await fetchBackendJson<any>(`/categories?lang=uk`, {
+      const res = await fetchBackendJson<unknown>(`/categories?lang=uk`, {
         next: { revalidate: 3600 },
       });
-      const payload = res?.data;
-      const categoriesArray = payload?.categories || payload?.data || payload;
-      categories = (Array.isArray(categoriesArray) ? categoriesArray : []).map(
-        (category: { canonical_url?: string; slug: string; updated_at?: string }) => ({
-          url: category.canonical_url || `${SITE_URL}/products?type=${category.slug}`,
-          lastModified: category.updated_at ? new Date(category.updated_at) : currentDate,
+      const payload = isRecord(res) ? res.data : undefined;
+      const categoriesArray =
+        getArray(payload, 'categories') ??
+        getArray(payload, 'data') ??
+        (Array.isArray(payload) ? payload : []);
+      categories = categoriesArray.map(category => {
+        const record = isRecord(category) ? category : {};
+        const slug = toOptionalString(record.slug) || '';
+        const canonicalUrl = toOptionalString(record.canonical_url);
+        const updatedAt = toOptionalString(record.updated_at);
+        return {
+          url: canonicalUrl || `${SITE_URL}/products?type=${slug}`,
+          lastModified: updatedAt ? new Date(updatedAt) : currentDate,
           changeFrequency: 'daily' as const,
           priority: 0.8,
-        })
-      );
+        };
+      });
     } catch (error) {
       console.error('Error fetching categories for sitemap:', error);
     }
@@ -70,17 +95,27 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     // Отримуємо бренди
     let brands: MetadataRoute.Sitemap = [];
     try {
-      const res = await fetchBackendJson<any>(`/brands?lang=uk`, { next: { revalidate: 3600 } });
-      const payload = res?.data;
-      const brandsArray = payload?.data || payload?.brands || payload;
-      brands = (Array.isArray(brandsArray) ? brandsArray : []).map(
-        (brand: { canonical_url?: string; slug?: string; id: string; updated_at?: string }) => ({
-          url: brand.canonical_url || `${SITE_URL}/brands/${brand.slug || brand.id}`,
-          lastModified: brand.updated_at ? new Date(brand.updated_at) : currentDate,
+      const res = await fetchBackendJson<unknown>(`/brands?lang=uk`, {
+        next: { revalidate: 3600 },
+      });
+      const payload = isRecord(res) ? res.data : undefined;
+      const brandsArray =
+        getArray(payload, 'data') ??
+        getArray(payload, 'brands') ??
+        (Array.isArray(payload) ? payload : []);
+      brands = brandsArray.map(brand => {
+        const record = isRecord(brand) ? brand : {};
+        const slug = toOptionalString(record.slug);
+        const id = toOptionalString(record.id);
+        const canonicalUrl = toOptionalString(record.canonical_url);
+        const updatedAt = toOptionalString(record.updated_at);
+        return {
+          url: canonicalUrl || `${SITE_URL}/brands/${slug || id || ''}`,
+          lastModified: updatedAt ? new Date(updatedAt) : currentDate,
           changeFrequency: 'weekly' as const,
           priority: 0.7,
-        })
-      );
+        };
+      });
     } catch (error) {
       console.error('Error fetching brands for sitemap:', error);
     }
@@ -88,20 +123,28 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     // Отримуємо популярні продукти (для SEO)
     let products: MetadataRoute.Sitemap = [];
     try {
-      const res = await fetchBackendJson<any>(`/products/popular-saved?limit=100&lang=uk`, {
+      const res = await fetchBackendJson<unknown>(`/products/popular-saved?limit=100&lang=uk`, {
         next: { revalidate: 3600 },
       });
-      const payload = res?.data;
+      const payload = isRecord(res) ? res.data : undefined;
       const productsArray =
-        payload?.items || payload?.products || payload?.data?.products || payload;
-      products = (Array.isArray(productsArray) ? productsArray : []).map(
-        (product: { canonical_url?: string; slug?: string; id: string; updated_at?: string }) => ({
-          url: product.canonical_url || `${SITE_URL}/products/${product.slug || product.id}`,
-          lastModified: product.updated_at ? new Date(product.updated_at) : currentDate,
+        getArray(payload, 'items') ??
+        getArray(payload, 'products') ??
+        getArray(getRecord(payload, 'data'), 'products') ??
+        (Array.isArray(payload) ? payload : []);
+      products = productsArray.map(product => {
+        const record = isRecord(product) ? product : {};
+        const slug = toOptionalString(record.slug);
+        const id = toOptionalString(record.id);
+        const canonicalUrl = toOptionalString(record.canonical_url);
+        const updatedAt = toOptionalString(record.updated_at);
+        return {
+          url: canonicalUrl || `${SITE_URL}/products/${slug || id || ''}`,
+          lastModified: updatedAt ? new Date(updatedAt) : currentDate,
           changeFrequency: 'weekly' as const,
           priority: 0.6,
-        })
-      );
+        };
+      });
     } catch (error) {
       console.error('Error fetching products for sitemap:', error);
     }

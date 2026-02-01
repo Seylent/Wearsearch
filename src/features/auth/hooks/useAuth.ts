@@ -46,11 +46,7 @@ export const useAuth = () => {
   const hasToken = isMounted ? !!getAuth() : false;
 
   // Use React Query for caching and preventing duplicate requests
-  const {
-    data: user,
-    isLoading,
-    error: _error,
-  } = useQuery<User | null, unknown>({
+  const { data: user, isLoading } = useQuery<User | null, unknown>({
     queryKey: AUTH_QUERY_KEY,
     queryFn: async () => {
       try {
@@ -105,8 +101,11 @@ export const useAuth = () => {
   const isStoreManager = role === 'store_manager' || role === 'manager';
   const isBrandOwner = role === 'brand_owner';
   const isModerator = role === 'moderator';
-  const canAccessAdminPanel =
-    isAdmin || isStoreOwner || isStoreManager || isBrandOwner || isModerator;
+
+  // Navigation visibility based on roles
+  const canAccessStoreMenu = isStoreOwner || isStoreManager || isBrandOwner;
+  const canAccessAdminPanel = isAdmin || isModerator;
+  const canAccessAnyPanel = canAccessStoreMenu || canAccessAdminPanel;
 
   const permissions = {
     canManageProducts: isAdmin,
@@ -167,8 +166,15 @@ export const useAuth = () => {
 
   return {
     user: user || null,
+    role,
     isAdmin,
+    isBrandOwner,
+    isStoreOwner,
+    isStoreManager,
+    isModerator,
+    canAccessStoreMenu,
     canAccessAdminPanel,
+    canAccessAnyPanel,
     permissions,
     isLoading,
     isAuthenticated: !!user,

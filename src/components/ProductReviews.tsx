@@ -7,6 +7,7 @@ import React, { useState, useMemo, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Star, ThumbsUp, MessageSquare, User, Send, Loader2 } from 'lucide-react';
+import Image from 'next/image';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { Progress } from '@/components/ui/progress';
@@ -87,11 +88,7 @@ const ProductReviews: React.FC<ProductReviewsProps> = ({ productId, className })
   const isLoggedIn = useIsAuthenticated();
 
   // Fetch reviews from API
-  const {
-    data,
-    isLoading,
-    error: _error,
-  } = useQuery({
+  const { data, isLoading } = useQuery({
     queryKey: ['reviews', productId, sortBy],
     queryFn: () => reviewsService.getProductReviews(productId, { sort: sortBy, limit: 20 }),
     staleTime: 1000 * 60 * 5, // 5 minutes
@@ -427,9 +424,11 @@ const ReviewCard: React.FC<ReviewCardProps> = ({ review }) => {
         <div className="flex items-center gap-3">
           <div className="w-10 h-10 rounded-full bg-white/10 flex items-center justify-center">
             {review.userAvatar ? (
-              <img
+              <Image
                 src={review.userAvatar}
                 alt={review.userName}
+                width={40}
+                height={40}
                 className="w-full h-full rounded-full object-cover"
               />
             ) : (

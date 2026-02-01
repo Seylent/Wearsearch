@@ -6,6 +6,7 @@
 import React from 'react';
 import { useTranslation } from 'react-i18next';
 import Link from 'next/link';
+import Image from 'next/image';
 import { Sparkles, TrendingUp, Heart, Eye, Loader2 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useRecommendations } from '@/hooks/useRecommendations';
@@ -84,10 +85,12 @@ const PersonalizedRecommendations: React.FC<PersonalizedRecommendationsProps> = 
               className="group block"
             >
               <div className="relative aspect-square rounded-lg overflow-hidden bg-white/5 border border-white/10 transition-all group-hover:border-white/30">
-                <img
+                <Image
                   src={imageUrl}
                   alt={product.name}
-                  className="w-full h-full object-cover transition-transform group-hover:scale-105"
+                  fill
+                  sizes="(max-width: 768px) 50vw, 25vw"
+                  className="object-cover transition-transform group-hover:scale-105"
                   loading="lazy"
                 />
 

@@ -30,7 +30,7 @@ const RecentlyViewedProducts: React.FC<RecentlyViewedProductsProps> = ({
   excludeProductId,
 }) => {
   const { t } = useTranslation();
-  const { items, removeItem, clearAll, count: _count, refreshPrices } = useRecentlyViewed();
+  const { items, removeItem, clearAll, refreshPrices } = useRecentlyViewed();
   const { currency } = useCurrency();
 
   React.useEffect(() => {

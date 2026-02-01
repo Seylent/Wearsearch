@@ -194,7 +194,6 @@ const ProductDetail = () => {
   const router = useRouter();
   const { t } = useTranslation();
   const { formatPrice } = useCurrencyConversion();
-  const { currency: activeCurrency, exchangeRate } = useCurrency();
   const { currency } = useCurrency();
   const { isAuthenticated, permissions } = useAuth();
   const selectedImage = 0; // Currently always showing first image
@@ -455,7 +454,7 @@ const ProductDetail = () => {
     });
 
     return normalized;
-  }, [storesData, product]);
+  }, [storesData]);
 
   const relatedProducts = useMemo(() => {
     if (!isRecord(detailData)) return undefined;

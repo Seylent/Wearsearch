@@ -39,7 +39,7 @@ export function translateErrorCode(errorCode: string | undefined | null): string
     if (process.env.NODE_ENV !== 'production') {
       console.warn(`Missing error code translation: ${errorCode}`);
     }
-    
+
     // Return formatted error code as fallback
     return `Error: ${errorCode.replace(/_/g, ' ')}`;
   }
@@ -65,7 +65,7 @@ export function translateSuccessCode(successCode: string | undefined | null): st
     if (process.env.NODE_ENV !== 'production') {
       console.warn(`Missing success code translation: ${successCode}`);
     }
-    
+
     // Return generic success message as fallback
     return i18n.t('common.success');
   }
@@ -197,7 +197,8 @@ export function getErrorMessage(error: unknown): string {
 export function getSuccessMessage(response: unknown): string {
   // Try to get success code first
   const data = getRecord(response, 'data');
-  const successCode = (data ? getString(data, 'success_code') : undefined) ?? getString(response, 'success_code');
+  const successCode =
+    (data ? getString(data, 'success_code') : undefined) ?? getString(response, 'success_code');
   if (successCode) {
     return translateSuccessCode(successCode);
   }
@@ -215,7 +216,9 @@ export function getSuccessMessage(response: unknown): string {
 /**
  * Type guard to check if error has error_code
  */
-export function hasErrorCode(error: unknown): error is { response: { data: { error_code: string } } } {
+export function hasErrorCode(
+  error: unknown
+): error is { response: { data: { error_code: string } } } {
   const response = getRecord(error, 'response');
   const data = response ? getRecord(response, 'data') : undefined;
   return typeof (data ? data.error_code : undefined) === 'string';
@@ -226,10 +229,13 @@ export function hasErrorCode(error: unknown): error is { response: { data: { err
  */
 export function hasSuccessCode(response: unknown): response is { data: { success_code: string } } {
   const data = getRecord(response, 'data');
-  return typeof (data ? data.success_code : undefined) === 'string' || typeof getString(response, 'success_code') === 'string';
+  return (
+    typeof (data ? data.success_code : undefined) === 'string' ||
+    typeof getString(response, 'success_code') === 'string'
+  );
 }
 
-export default {
+const errorTranslation = {
   translateErrorCode,
   translateSuccessCode,
   translateProductType,
@@ -240,3 +246,5 @@ export default {
   hasErrorCode,
   hasSuccessCode,
 };
+
+export default errorTranslation;

@@ -6,6 +6,30 @@ import type { Banner } from '@/types/banner';
 import { fetchBackendJson } from '@/lib/backendFetch';
 import { getServerLanguage } from '@/utils/languageStorage';
 
+const isRecord = (value: unknown): value is Record<string, unknown> =>
+  typeof value === 'object' && value !== null;
+
+const getRecord = (value: unknown, key: string): Record<string, unknown> | undefined => {
+  if (!isRecord(value)) return undefined;
+  const nested = value[key];
+  return isRecord(nested) ? nested : undefined;
+};
+
+const getArray = (value: unknown, key: string): unknown[] | undefined => {
+  if (!isRecord(value)) return undefined;
+  const nested = value[key];
+  return Array.isArray(nested) ? nested : undefined;
+};
+
+const toNumber = (value: unknown, fallback: number = 0): number => {
+  if (typeof value === 'number' && Number.isFinite(value)) return value;
+  if (typeof value === 'string') {
+    const parsed = Number(value);
+    return Number.isFinite(parsed) ? parsed : fallback;
+  }
+  return fallback;
+};
+
 // Extended SEO interface for homepage
 interface ExtendedSEOData {
   title?: string;
@@ -48,37 +72,31 @@ export async function getHomepageData(): Promise<HomepageAPIResponse> {
 
     // Try BFF endpoint first (single request for all data)
     try {
-      const bff = await fetchBackendJson<any>(`/pages/home?lang=${encodeURIComponent(lang)}`, {
+      const bff = await fetchBackendJson<unknown>(`/pages/home?lang=${encodeURIComponent(lang)}`, {
         next: { revalidate: 1800 },
       });
 
       if (bff) {
-        const response = bff.data;
+        const response = isRecord(bff) ? bff.data : undefined;
         console.log('✅ BFF homepage data received');
 
         // BFF returns: { success: true, data: { products, brands, statistics, banners } }
-        const data = response.data || response;
-        const products = data.products || [];
-        const categories = data.categories || [];
-        let banners = data.banners || [];
-        const stats = data.statistics || data.stats || {};
+        const data = getRecord(response, 'data') ?? (isRecord(response) ? response : undefined);
+        const products = (getArray(data, 'products') ?? []) as Product[];
+        const categories = (getArray(data, 'categories') ??
+          []) as HomepageAPIResponse['categories'];
+        let banners = (getArray(data, 'banners') ?? []) as Banner[];
+        const stats = getRecord(data, 'statistics') ?? getRecord(data, 'stats') ?? {};
 
         if (!Array.isArray(banners) || banners.length === 0) {
-          const bannersRes = await fetchBackendJson<any>(`/banners`, {
+          const bannersRes = await fetchBackendJson<unknown>(`/banners`, {
             next: { revalidate: 600 },
           });
-          const bannersPayload = bannersRes?.data;
-          const fetchedBanners = (
-            bannersPayload?.data?.banners && Array.isArray(bannersPayload.data.banners)
-              ? bannersPayload.data.banners
-              : bannersPayload?.banners && Array.isArray(bannersPayload.banners)
-                ? bannersPayload.banners
-                : bannersPayload?.items && Array.isArray(bannersPayload.items)
-                  ? bannersPayload.items
-                  : Array.isArray(bannersPayload)
-                    ? bannersPayload
-                    : []
-          ) as Banner[];
+          const bannersPayload = isRecord(bannersRes) ? bannersRes.data : undefined;
+          const fetchedBanners = (getArray(getRecord(bannersPayload, 'data'), 'banners') ??
+            getArray(bannersPayload, 'banners') ??
+            getArray(bannersPayload, 'items') ??
+            (Array.isArray(bannersPayload) ? bannersPayload : [])) as Banner[];
           banners = fetchedBanners;
         }
 
@@ -90,18 +108,18 @@ export async function getHomepageData(): Promise<HomepageAPIResponse> {
         // Fetch SEO data separately
         let seoData: ExtendedSEOData | null = null;
         try {
-          const seoRes = await fetchBackendJson<any>(
+          const seoRes = await fetchBackendJson<unknown>(
             `/seo/home/home?lang=${encodeURIComponent(lang)}`,
             {
               next: { revalidate: 86400 },
             }
           );
           if (seoRes) {
-            const seoResponse = seoRes.data;
-            seoData = seoResponse.item || seoResponse;
+            const seoResponse = isRecord(seoRes) ? seoRes.data : undefined;
+            seoData = (getRecord(seoResponse, 'item') ?? seoResponse) as ExtendedSEOData | null;
             console.log('📝 SEO data loaded:', seoData?.h1_title || 'No title');
           }
-        } catch (_seoError: unknown) {
+        } catch {
           console.log('⚠️ SEO data not available');
         }
 
@@ -113,13 +131,13 @@ export async function getHomepageData(): Promise<HomepageAPIResponse> {
           banners,
           seoData,
           stats: {
-            totalProducts: stats.total_products || 0,
-            totalBrands: stats.total_brands || 0,
-            totalCategories: stats.total_categories || 0,
+            totalProducts: toNumber(stats.total_products, 0),
+            totalBrands: toNumber(stats.total_brands, 0),
+            totalCategories: toNumber(stats.total_categories, 0),
           },
         };
       }
-    } catch (_bffError) {
+    } catch {
       if (process.env.NODE_ENV === 'development') {
         console.log('⚠️ BFF endpoint not available, falling back to individual calls');
       }
@@ -127,32 +145,33 @@ export async function getHomepageData(): Promise<HomepageAPIResponse> {
 
     // Fallback: Parallel requests for better performance
     const [productsRes, categoriesRes, statsRes, bannersRes] = await Promise.all([
-      fetchBackendJson<any>(`/products/popular-saved?limit=12&lang=${encodeURIComponent(lang)}`, {
-        next: { revalidate: 3600 },
-      }),
-      fetchBackendJson<any>(`/categories?limit=12&lang=${encodeURIComponent(lang)}`, {
+      fetchBackendJson<unknown>(
+        `/products/popular-saved?limit=12&lang=${encodeURIComponent(lang)}`,
+        {
+          next: { revalidate: 3600 },
+        }
+      ),
+      fetchBackendJson<unknown>(`/categories?limit=12&lang=${encodeURIComponent(lang)}`, {
         next: { revalidate: 7200 },
       }),
-      fetchBackendJson<any>(`/statistics`, { next: { revalidate: 3600 } }),
-      fetchBackendJson<any>(`/banners`, { next: { revalidate: 600 } }),
+      fetchBackendJson<unknown>(`/statistics`, { next: { revalidate: 3600 } }),
+      fetchBackendJson<unknown>(`/banners`, { next: { revalidate: 600 } }),
     ]);
 
     // Process results with fallbacks
-    const productsPayload = productsRes?.data;
-    const products: Product[] = (productsPayload?.items ||
-      productsPayload?.products ||
-      productsPayload?.data?.products ||
-      productsPayload ||
-      []) as Product[];
+    const productsPayload = isRecord(productsRes) ? productsRes.data : undefined;
+    const products: Product[] = (getArray(productsPayload, 'items') ??
+      getArray(productsPayload, 'products') ??
+      getArray(getRecord(productsPayload, 'data'), 'products') ??
+      (Array.isArray(productsPayload) ? productsPayload : [])) as Product[];
 
     console.log('✅ Products loaded:', products.length);
 
-    const categoriesPayload = categoriesRes?.data;
-    const categories = (categoriesPayload?.categories ||
-      categoriesPayload?.data?.categories ||
-      categoriesPayload?.items ||
-      categoriesPayload ||
-      []) as Array<{
+    const categoriesPayload = isRecord(categoriesRes) ? categoriesRes.data : undefined;
+    const categories = (getArray(categoriesPayload, 'categories') ??
+      getArray(getRecord(categoriesPayload, 'data'), 'categories') ??
+      getArray(categoriesPayload, 'items') ??
+      (Array.isArray(categoriesPayload) ? categoriesPayload : [])) as Array<{
       id: string;
       name: string;
       slug: string;
@@ -160,26 +179,23 @@ export async function getHomepageData(): Promise<HomepageAPIResponse> {
       productCount: number;
     }>;
 
-    const statsPayload = statsRes?.data;
-    const stats = (statsPayload?.stats ||
-      statsPayload || { totalProducts: 0, totalBrands: 0, totalCategories: 0 }) as {
+    const statsPayload = isRecord(statsRes) ? statsRes.data : undefined;
+    const stats = (getRecord(statsPayload, 'stats') ??
+      (isRecord(statsPayload) ? statsPayload : undefined) ?? {
+        totalProducts: 0,
+        totalBrands: 0,
+        totalCategories: 0,
+      }) as {
       totalProducts: number;
       totalBrands: number;
       totalCategories: number;
     };
 
-    const bannersPayload = bannersRes?.data;
-    const banners = (
-      bannersPayload?.data?.banners && Array.isArray(bannersPayload.data.banners)
-        ? bannersPayload.data.banners
-        : bannersPayload?.banners && Array.isArray(bannersPayload.banners)
-          ? bannersPayload.banners
-          : bannersPayload?.items && Array.isArray(bannersPayload.items)
-            ? bannersPayload.items
-            : Array.isArray(bannersPayload)
-              ? bannersPayload
-              : []
-    ) as Banner[];
+    const bannersPayload = isRecord(bannersRes) ? bannersRes.data : undefined;
+    const banners = (getArray(getRecord(bannersPayload, 'data'), 'banners') ??
+      getArray(bannersPayload, 'banners') ??
+      getArray(bannersPayload, 'items') ??
+      (Array.isArray(bannersPayload) ? bannersPayload : [])) as Banner[];
 
     // If no products loaded, log warning
     if (products.length === 0) {

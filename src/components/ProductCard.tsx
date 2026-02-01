@@ -53,7 +53,6 @@ const ProductCard: React.FC<ProductCardProps> = memo(
     minPrice,
     maxPrice,
     storeCount,
-    category: _category,
     brand,
     isNew,
     description,

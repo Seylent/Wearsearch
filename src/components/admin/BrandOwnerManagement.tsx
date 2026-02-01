@@ -15,20 +15,32 @@ type BrandPermission = {
   brand_id?: string;
 };
 
-const normalizePermissions = (payload: any, brandId: string): BrandPermission[] => {
-  const items = Array.isArray(payload?.items)
-    ? payload.items
-    : Array.isArray(payload)
-      ? payload
-      : [];
+const isRecord = (value: unknown): value is Record<string, unknown> =>
+  typeof value === 'object' && value !== null;
 
-  return items
-    .map((item: any) => ({
-      store_id: String(item?.store_id ?? item?.storeId ?? item?.id ?? ''),
-      status: item?.status ? String(item.status) : undefined,
-      brand_id: String(item?.brand_id ?? item?.brandId ?? brandId),
-    }))
-    .filter(item => item.store_id);
+const getArray = (value: unknown, key: string): unknown[] | undefined => {
+  if (!isRecord(value)) return undefined;
+  const nested = value[key];
+  return Array.isArray(nested) ? nested : undefined;
+};
+
+const normalizePermissions = (payload: unknown, brandId: string): BrandPermission[] => {
+  const items = getArray(payload, 'items') ?? (Array.isArray(payload) ? payload : []);
+
+  const normalized: BrandPermission[] = [];
+
+  items.forEach(item => {
+    if (!isRecord(item)) return;
+    const storeId = String(item.store_id ?? item.storeId ?? item.id ?? '');
+    if (!storeId) return;
+    normalized.push({
+      store_id: storeId,
+      status: item.status ? String(item.status) : undefined,
+      brand_id: String(item.brand_id ?? item.brandId ?? brandId),
+    });
+  });
+
+  return normalized;
 };
 
 export const BrandOwnerManagement = () => {
@@ -43,12 +55,13 @@ export const BrandOwnerManagement = () => {
   const [error, setError] = useState<string | null>(null);
 
   const resolvedBrandId = useMemo(() => {
-    return brandId.trim() || String((user as any)?.brand_id ?? '').trim();
+    const userBrandId = isRecord(user) ? user.brand_id : undefined;
+    return brandId.trim() || String(userBrandId ?? '').trim();
   }, [brandId, user]);
 
   useEffect(() => {
-    if (!brandId && (user as any)?.brand_id) {
-      setBrandId(String((user as any).brand_id));
+    if (!brandId && isRecord(user) && user.brand_id) {
+      setBrandId(String(user.brand_id));
     }
   }, [user, brandId]);
 

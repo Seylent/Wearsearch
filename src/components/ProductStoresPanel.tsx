@@ -1,6 +1,7 @@
 'use client';
 
 import React from 'react';
+import Image from 'next/image';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { SaveStoreButton } from '@/components/SaveStoreButton';
@@ -221,9 +222,11 @@ const ProductStoresPanel: React.FC<ProductStoresPanelProps> = ({
                       <div className="flex items-start gap-3 mb-3">
                         {store.logo_url && (
                           <div className="w-12 h-12 rounded-lg overflow-hidden bg-white/5 flex-shrink-0">
-                            <img
+                            <Image
                               src={store.logo_url}
                               alt={store.name}
+                              width={48}
+                              height={48}
                               className="w-full h-full object-cover"
                               loading="lazy"
                             />

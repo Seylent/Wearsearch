@@ -8,6 +8,7 @@
 import React from 'react';
 import { useTranslation } from 'react-i18next';
 import Link from 'next/link';
+import Image from 'next/image';
 import { Sparkles, Loader2 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useSimilarProducts } from '@/hooks/useRecommendations';
@@ -19,11 +20,7 @@ interface SimilarProductsProps {
   className?: string;
 }
 
-const SimilarProducts: React.FC<SimilarProductsProps> = ({
-  productId,
-  limit = 6,
-  className,
-}) => {
+const SimilarProducts: React.FC<SimilarProductsProps> = ({ productId, limit = 6, className }) => {
   const { t } = useTranslation();
   const { formatPrice } = useCurrencyConversion();
   const { similarProducts, isLoading } = useSimilarProducts(productId, limit);
@@ -60,23 +57,21 @@ const SimilarProducts: React.FC<SimilarProductsProps> = ({
       </div>
 
       <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-6 gap-4">
-        {similarProducts.map((product) => {
+        {similarProducts.map(product => {
           const imageUrl = product.image || product.image_url || '/placeholder.png';
 
           return (
-            <Link
-              key={product.id}
-              href={`/product/${product.id}`}
-              className="group block"
-            >
+            <Link key={product.id} href={`/product/${product.id}`} className="group block">
               <div className="relative aspect-square rounded-lg overflow-hidden bg-white/5 border border-white/10 transition-all group-hover:border-white/30">
-                <img
+                <Image
                   src={imageUrl}
                   alt={product.name}
-                  className="w-full h-full object-cover transition-transform group-hover:scale-105"
+                  fill
+                  sizes="(max-width: 768px) 50vw, 20vw"
+                  className="object-cover transition-transform group-hover:scale-105"
                   loading="lazy"
                 />
-                
+
                 {/* Similarity score */}
                 {product.similarityScore && product.similarityScore > 0.7 && (
                   <div className="absolute top-2 right-2 px-2 py-1 rounded-full bg-blue-500/80 backdrop-blur-sm">

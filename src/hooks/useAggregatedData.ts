@@ -116,7 +116,7 @@ export const useHomepageData = (currency: string = 'UAH', options?: QueryOptions
             statistics: statsData.stats ||
               statsData || { total_products: 0, total_stores: 0, total_brands: 0 },
           };
-        } catch (_error: unknown) {
+        } catch {
           return {
             products: [],
             brands: [],
@@ -252,7 +252,7 @@ export const useProductsPageData = (filters: ProductFilters = {}, options?: Quer
         const brands = Array.isArray(facetsBrands) ? facetsBrands : [];
 
         return { products: items, brands, pagination, facets, currency, seo };
-      } catch (_error: unknown) {
+      } catch {
         // Fallback to individual calls
         if (process.env.NODE_ENV !== 'production') {
           console.log('[Products Page] Using fallback endpoints');

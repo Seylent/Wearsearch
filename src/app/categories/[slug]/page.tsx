@@ -5,6 +5,7 @@
 
 import { Suspense } from 'react';
 import { Metadata } from 'next';
+import Image from 'next/image';
 import { notFound } from 'next/navigation';
 import {
   JsonLd,
@@ -14,6 +15,24 @@ import {
 import { SEOTextSection } from '@/components/seo/SEOTextSection';
 import { fetchBackendJson } from '@/lib/backendFetch';
 import { getServerLanguage } from '@/utils/languageStorage';
+
+const isRecord = (value: unknown): value is Record<string, unknown> =>
+  typeof value === 'object' && value !== null;
+
+const getRecord = (value: unknown, key: string): Record<string, unknown> | undefined => {
+  if (!isRecord(value)) return undefined;
+  const nested = value[key];
+  return isRecord(nested) ? nested : undefined;
+};
+
+const getArray = (value: unknown, key: string): unknown[] | undefined => {
+  if (!isRecord(value)) return undefined;
+  const nested = value[key];
+  return Array.isArray(nested) ? nested : undefined;
+};
+
+const toOptionalString = (value: unknown): string | undefined =>
+  typeof value === 'string' ? value : undefined;
 
 interface CategoryPageProps {
   params: {
@@ -27,7 +46,7 @@ export async function generateMetadata({ params }: CategoryPageProps): Promise<M
 
   try {
     const lang = await getServerLanguage();
-    const res = await fetchBackendJson<any>(`/categories/${slug}?lang=${lang}`, {
+    const res = await fetchBackendJson<unknown>(`/categories/${slug}?lang=${lang}`, {
       next: { revalidate: 3600 },
     });
 
@@ -39,31 +58,44 @@ export async function generateMetadata({ params }: CategoryPageProps): Promise<M
       };
     }
 
-    const data = res.data;
-    const category = data.category || data.data?.category || data;
+    const data = isRecord(res) ? res.data : undefined;
+    const category =
+      getRecord(data, 'category') ?? getRecord(getRecord(data, 'data'), 'category') ?? data ?? {};
     const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://wearsearch.com';
-    const canonicalUrl = category.canonical_url || `${siteUrl}/categories/${slug}`;
+    const categoryName =
+      toOptionalString(isRecord(category) ? category.name : undefined) ?? 'Категорія';
+    const categorySeoTitle = toOptionalString(isRecord(category) ? category.seo_title : undefined);
+    const categorySeoDescription = toOptionalString(
+      isRecord(category) ? category.seo_description : undefined
+    );
+    const categoryDescription = toOptionalString(
+      isRecord(category) ? category.description : undefined
+    );
+    const categoryImageUrl = toOptionalString(isRecord(category) ? category.image_url : undefined);
+    const canonicalUrl =
+      toOptionalString(isRecord(category) ? category.canonical_url : undefined) ||
+      `${siteUrl}/categories/${slug}`;
 
     // Використовуємо SEO дані з бекенду
     return {
-      title: category.seo_title || `${category.name} | Wearsearch`,
-      description: category.seo_description || category.description,
+      title: categorySeoTitle || `${categoryName} | Wearsearch`,
+      description: categorySeoDescription || categoryDescription,
       alternates: {
         canonical: canonicalUrl,
       },
       openGraph: {
-        title: category.seo_title || category.name,
-        description: category.seo_description || category.description,
-        images: category.image_url ? [category.image_url] : [],
+        title: categorySeoTitle || categoryName,
+        description: categorySeoDescription || categoryDescription,
+        images: categoryImageUrl ? [categoryImageUrl] : [],
         type: 'website',
         siteName: 'Wearsearch',
         url: canonicalUrl,
       },
       twitter: {
         card: 'summary_large_image',
-        title: category.seo_title || category.name,
-        description: category.seo_description || category.description,
-        images: category.image_url ? [category.image_url] : [],
+        title: categorySeoTitle || categoryName,
+        description: categorySeoDescription || categoryDescription,
+        images: categoryImageUrl ? [categoryImageUrl] : [],
       },
       robots: {
         index: true,
@@ -87,7 +119,7 @@ export default async function CategoryPage({ params }: Readonly<CategoryPageProp
   try {
     const lang = await getServerLanguage();
     // Отримуємо дані категорії
-    const categoryRes = await fetchBackendJson<any>(`/categories/${slug}?lang=${lang}`, {
+    const categoryRes = await fetchBackendJson<unknown>(`/categories/${slug}?lang=${lang}`, {
       next: { revalidate: 3600 },
     });
 
@@ -103,21 +135,35 @@ export default async function CategoryPage({ params }: Readonly<CategoryPageProp
       );
     }
 
-    const categoryData = categoryRes.data;
-    const category = categoryData.category || categoryData.data?.category || categoryData;
+    const categoryData = isRecord(categoryRes) ? categoryRes.data : undefined;
+    const category =
+      getRecord(categoryData, 'category') ??
+      getRecord(getRecord(categoryData, 'data'), 'category') ??
+      categoryData ??
+      {};
+    const categoryName =
+      toOptionalString(isRecord(category) ? category.name : undefined) ?? 'Категорія';
+    const categoryDescription = toOptionalString(
+      isRecord(category) ? category.description : undefined
+    );
+    const categorySeoText = toOptionalString(isRecord(category) ? category.seo_text : undefined);
+    const categorySeoKeywords =
+      isRecord(category) && Array.isArray(category.seo_keywords)
+        ? (category.seo_keywords as string[])
+        : [];
 
     // Отримуємо товари категорії
-    const productsRes = await fetchBackendJson<any>(`/products?category=${slug}&limit=20`, {
+    const productsRes = await fetchBackendJson<unknown>(`/products?category=${slug}&limit=20`, {
       next: { revalidate: 1800 },
     });
 
-    const productsPayload = productsRes?.data;
-    const products = Array.isArray(productsPayload)
-      ? productsPayload
-      : productsPayload?.products ||
-        productsPayload?.data?.products ||
-        productsPayload?.items ||
-        [];
+    const productsPayload = isRecord(productsRes) ? productsRes.data : undefined;
+    const products =
+      (getArray(productsPayload, 'products') ??
+        getArray(getRecord(productsPayload, 'data'), 'products') ??
+        getArray(productsPayload, 'items') ??
+        (Array.isArray(productsPayload) ? productsPayload : [])) ||
+      [];
 
     const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://wearsearch.com';
 
@@ -125,7 +171,7 @@ export default async function CategoryPage({ params }: Readonly<CategoryPageProp
     const breadcrumbData = generateBreadcrumbSchema([
       { name: 'Головна', url: siteUrl },
       { name: 'Категорії', url: `${siteUrl}/categories` },
-      { name: category.name, url: `${siteUrl}/categories/${slug}` },
+      { name: categoryName, url: `${siteUrl}/categories/${slug}` },
     ]);
 
     const itemListData = generateItemListSchema(
@@ -136,8 +182,10 @@ export default async function CategoryPage({ params }: Readonly<CategoryPageProp
           url: item.canonical_url || `${siteUrl}/products/${item.slug || item.id}`,
         })),
       {
-        name: category.seo_title || category.name,
-        description: category.seo_description || category.description,
+        name: toOptionalString(isRecord(category) ? category.seo_title : undefined) || categoryName,
+        description:
+          toOptionalString(isRecord(category) ? category.seo_description : undefined) ||
+          toOptionalString(isRecord(category) ? category.description : undefined),
       }
     );
 
@@ -166,15 +214,15 @@ export default async function CategoryPage({ params }: Readonly<CategoryPageProp
                     </a>
                   </li>
                   <li>/</li>
-                  <li className="text-white">{category.name}</li>
+                  <li className="text-white">{categoryName}</li>
                 </ol>
               </nav>
 
               {/* H1 - один на сторінку */}
-              <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold mb-4">{category.name}</h1>
+              <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold mb-4">{categoryName}</h1>
 
-              {category.description && (
-                <p className="text-xl text-gray-300 max-w-3xl">{category.description}</p>
+              {categoryDescription && (
+                <p className="text-xl text-gray-300 max-w-3xl">{categoryDescription}</p>
               )}
             </div>
           </section>
@@ -183,7 +231,7 @@ export default async function CategoryPage({ params }: Readonly<CategoryPageProp
           <section className="py-8 px-4">
             <div className="max-w-7xl mx-auto">
               <h2 className="text-3xl font-bold mb-8">
-                Порівняння цін на {category.name.toLowerCase()}
+                Порівняння цін на {categoryName.toLowerCase()}
               </h2>
 
               {/* Тут буде компонент з товарами */}
@@ -206,9 +254,11 @@ export default async function CategoryPage({ params }: Readonly<CategoryPageProp
                       <div key={product.id} className="bg-zinc-900 rounded-lg p-4">
                         {/* Карточка товару */}
                         <a href={`/products/${product.id}`} className="block">
-                          <img
+                          <Image
                             src={product.image_url || '/placeholder.jpg'}
                             alt={product.name}
+                            width={384}
+                            height={192}
                             className="w-full h-48 object-cover rounded-lg mb-4"
                           />
                           <h3 className="font-semibold text-lg mb-2">{product.name}</h3>
@@ -228,7 +278,7 @@ export default async function CategoryPage({ params }: Readonly<CategoryPageProp
             <section className="py-8 px-4">
               <div className="max-w-7xl mx-auto">
                 <h2 className="text-3xl font-bold mb-6">
-                  Популярні моделі {category.name.toLowerCase()}
+                  Популярні моделі {categoryName.toLowerCase()}
                 </h2>
 
                 {/* Підкатегорії як H3 */}
@@ -248,11 +298,11 @@ export default async function CategoryPage({ params }: Readonly<CategoryPageProp
           )}
 
           {/* SEO-текст ПІД списком товарів (згідно ТЗ) */}
-          {category.seo_text && (
+          {categorySeoText && (
             <SEOTextSection
-              title={`Все про ${category.name.toLowerCase()}`}
-              content={category.seo_text}
-              keywords={category.seo_keywords || []}
+              title={`Все про ${categoryName.toLowerCase()}`}
+              content={categorySeoText}
+              keywords={categorySeoKeywords}
             />
           )}
         </div>
@@ -267,19 +317,21 @@ export default async function CategoryPage({ params }: Readonly<CategoryPageProp
 // Генерація статичних параметрів для популярних категорій
 export async function generateStaticParams() {
   try {
-    const res = await fetchBackendJson<any>(`/categories?lang=uk`, { next: { revalidate: 86400 } });
+    const res = await fetchBackendJson<unknown>(`/categories?lang=uk`, {
+      next: { revalidate: 86400 },
+    });
     if (!res) return [];
 
-    const payload = res.data;
+    const payload = isRecord(res) ? res.data : undefined;
 
     const list: Array<{ slug: string }> = Array.isArray(payload)
       ? payload
-      : Array.isArray(payload?.categories)
-        ? payload.categories
-        : Array.isArray(payload?.data)
-          ? payload.data
-          : Array.isArray(payload?.items)
-            ? payload.items
+      : Array.isArray(getArray(payload, 'categories'))
+        ? (getArray(payload, 'categories') as Array<{ slug: string }>)
+        : Array.isArray(getArray(payload, 'data'))
+          ? (getArray(payload, 'data') as Array<{ slug: string }>)
+          : Array.isArray(getArray(payload, 'items'))
+            ? (getArray(payload, 'items') as Array<{ slug: string }>)
             : [];
 
     return list

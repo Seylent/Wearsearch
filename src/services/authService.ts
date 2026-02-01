@@ -322,7 +322,7 @@ export const authService = {
   /**
    * Sync guest favorites after login/register
    */
-  async syncGuestFavorites(_token: string): Promise<void> {
+  async syncGuestFavorites(): Promise<void> {
     try {
       // Get only valid UUID favorites
       const guestFavorites = getValidGuestFavorites();

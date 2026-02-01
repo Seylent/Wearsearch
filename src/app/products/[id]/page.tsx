@@ -6,6 +6,27 @@ import { fetchBackendJson } from '@/lib/backendFetch';
 import { generateBreadcrumbStructuredData, generateProductStructuredData } from '@/hooks/useSEO';
 import { getServerLanguage } from '@/utils/languageStorage';
 
+const isRecord = (value: unknown): value is Record<string, unknown> =>
+  typeof value === 'object' && value !== null;
+
+const getRecord = (value: unknown, key: string): Record<string, unknown> | undefined => {
+  if (!isRecord(value)) return undefined;
+  const nested = value[key];
+  return isRecord(nested) ? nested : undefined;
+};
+
+const toOptionalString = (value: unknown): string | undefined =>
+  typeof value === 'string' ? value : undefined;
+
+const toOptionalNumber = (value: unknown): number | undefined => {
+  if (typeof value === 'number' && Number.isFinite(value)) return value;
+  if (typeof value === 'string') {
+    const parsed = Number(value);
+    return Number.isFinite(parsed) ? parsed : undefined;
+  }
+  return undefined;
+};
+
 // Types
 interface PageProps {
   params: {
@@ -17,7 +38,7 @@ interface PageProps {
 export async function generateMetadata({ params }: PageProps): Promise<Metadata> {
   try {
     const lang = await getServerLanguage();
-    const res = await fetchBackendJson<any>(`/products/${params.id}?lang=${lang}`, {
+    const res = await fetchBackendJson<unknown>(`/products/${params.id}?lang=${lang}`, {
       next: { revalidate: 3600 },
     });
 
@@ -32,9 +53,13 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
       };
     }
 
-    const payload = res.data;
+    const payload = isRecord(res) ? res.data : undefined;
     const product =
-      payload?.product || payload?.item || payload?.data?.product || payload?.data?.item || payload;
+      getRecord(payload, 'product') ??
+      getRecord(payload, 'item') ??
+      getRecord(getRecord(payload, 'data'), 'product') ??
+      getRecord(getRecord(payload, 'data'), 'item') ??
+      payload;
 
     if (!product) {
       return {
@@ -48,49 +73,74 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
     }
 
     const canonicalUrl =
-      product.canonical_url ||
+      toOptionalString(isRecord(product) ? product.canonical_url : undefined) ||
       `${process.env.NEXT_PUBLIC_SITE_URL || 'https://wearsearch.com'}/products/${params.id}`;
 
-    const metadata = generateProductMetadata(product.name, product.brand, {
-      description: product.seo_description || product.description,
-      imageUrl: product.image_url,
-      price: product.price,
-      currency: product.currency || 'UAH',
+    const productName = toOptionalString(isRecord(product) ? product.name : undefined) ?? 'Product';
+    const productBrand = toOptionalString(isRecord(product) ? product.brand : undefined) ?? '';
+    const productDescription =
+      toOptionalString(isRecord(product) ? product.seo_description : undefined) ||
+      toOptionalString(isRecord(product) ? product.description : undefined);
+    const productImageUrl = toOptionalString(isRecord(product) ? product.image_url : undefined);
+    const productPrice = toOptionalNumber(isRecord(product) ? product.price : undefined);
+    const productCurrency =
+      toOptionalString(isRecord(product) ? product.currency : undefined) || 'UAH';
+    const productCategory =
+      toOptionalString(isRecord(product) ? product.category : undefined) ||
+      toOptionalString(isRecord(product) ? product.type : undefined);
+    const productKeywords =
+      isRecord(product) && Array.isArray(product.keywords) && product.keywords.length > 0
+        ? product.keywords
+            .map(item => (typeof item === 'string' ? item : ''))
+            .filter((value): value is string => value.length > 0)
+        : [
+            productBrand,
+            productName,
+            productCategory,
+            'ціна',
+            'порівняння',
+            'купити онлайн',
+          ].filter(Boolean);
+
+    const productPriceString =
+      typeof productPrice === 'number' && Number.isFinite(productPrice)
+        ? String(productPrice)
+        : undefined;
+
+    const metadata = generateProductMetadata(productName, productBrand, {
+      description: productDescription,
+      imageUrl: productImageUrl,
+      price: productPriceString,
+      currency: productCurrency,
       canonicalUrl,
-      keywords:
-        product.keywords && Array.isArray(product.keywords) && product.keywords.length > 0
-          ? product.keywords
-          : [
-              product.brand,
-              product.name,
-              product.category,
-              'ціна',
-              'порівняння',
-              'купити онлайн',
-            ].filter(Boolean),
+      keywords: productKeywords,
     });
 
     return {
       ...metadata,
-      title: product.seo_title || metadata.title,
+      title: toOptionalString(isRecord(product) ? product.seo_title : undefined) || metadata.title,
       openGraph: {
         ...metadata.openGraph,
-        title: product.seo_title || metadata.openGraph?.title,
-        description: product.seo_description || metadata.openGraph?.description,
+        title:
+          toOptionalString(isRecord(product) ? product.seo_title : undefined) ||
+          metadata.openGraph?.title,
+        description: productDescription || metadata.openGraph?.description,
         ...(canonicalUrl ? { url: canonicalUrl } : {}),
-        ...(product.price
+        ...(typeof productPrice === 'number'
           ? {
               price: {
-                amount: String(product.price),
-                currency: product.currency || 'UAH',
+                amount: String(productPrice),
+                currency: productCurrency,
               },
             }
           : {}),
       },
       twitter: {
         ...metadata.twitter,
-        title: product.seo_title || metadata.twitter?.title,
-        description: product.seo_description || metadata.twitter?.description,
+        title:
+          toOptionalString(isRecord(product) ? product.seo_title : undefined) ||
+          metadata.twitter?.title,
+        description: productDescription || metadata.twitter?.description,
       },
     };
   } catch (error) {
@@ -113,23 +163,31 @@ export default async function ProductDetailPage({ params }: PageProps) {
 
   try {
     const lang = await getServerLanguage();
-    const res = await fetchBackendJson<any>(`/products/${params.id}?lang=${lang}`, {
+    const res = await fetchBackendJson<unknown>(`/products/${params.id}?lang=${lang}`, {
       next: { revalidate: 3600 },
     });
-    const payload = res?.data;
+    const payload = isRecord(res) ? res.data : undefined;
     const product =
-      payload?.product || payload?.item || payload?.data?.product || payload?.data?.item || payload;
+      getRecord(payload, 'product') ??
+      getRecord(payload, 'item') ??
+      getRecord(getRecord(payload, 'data'), 'product') ??
+      getRecord(getRecord(payload, 'data'), 'item') ??
+      payload;
 
     if (product) {
       structuredData = generateProductStructuredData({
-        id: String(product.id ?? params.id),
-        name: String(product.name ?? ''),
-        description: product.seo_description || product.description,
-        image_url: product.image_url,
-        price: product.price,
-        currency: product.currency || 'UAH',
-        brand: product.brand,
-        category: product.category || product.type,
+        id: String(isRecord(product) ? (product.id ?? params.id) : params.id),
+        name: String(isRecord(product) ? (product.name ?? '') : ''),
+        description:
+          toOptionalString(isRecord(product) ? product.seo_description : undefined) ||
+          toOptionalString(isRecord(product) ? product.description : undefined),
+        image_url: toOptionalString(isRecord(product) ? product.image_url : undefined),
+        price: toOptionalNumber(isRecord(product) ? product.price : undefined),
+        currency: toOptionalString(isRecord(product) ? product.currency : undefined) || 'UAH',
+        brand: toOptionalString(isRecord(product) ? product.brand : undefined),
+        category:
+          toOptionalString(isRecord(product) ? product.category : undefined) ||
+          toOptionalString(isRecord(product) ? product.type : undefined),
       });
 
       const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://wearsearch.com';
@@ -137,10 +195,18 @@ export default async function ProductDetailPage({ params }: PageProps) {
         [
           { name: 'Wearsearch', url: siteUrl },
           { name: 'Products', url: `${siteUrl}/products` },
-          product.type
-            ? { name: String(product.type), url: `${siteUrl}/products?type=${product.type}` }
+          toOptionalString(isRecord(product) ? product.type : undefined)
+            ? {
+                name: String(toOptionalString(isRecord(product) ? product.type : undefined)),
+                url: `${siteUrl}/products?type=${toOptionalString(isRecord(product) ? product.type : undefined)}`,
+              }
             : null,
-          { name: String(product.name ?? 'Product'), url: `${siteUrl}/products/${params.id}` },
+          {
+            name: String(
+              toOptionalString(isRecord(product) ? product.name : undefined) ?? 'Product'
+            ),
+            url: `${siteUrl}/products/${params.id}`,
+          },
         ].filter(Boolean) as Array<{ name: string; url: string }>
       );
     }

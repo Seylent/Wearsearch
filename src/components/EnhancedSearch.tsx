@@ -78,10 +78,10 @@ const EnhancedSearch: React.FC<EnhancedSearchProps> = ({
     (e: React.KeyboardEvent) => {
       if (e.key === 'ArrowDown') {
         e.preventDefault();
-        setSelectedIndex((prev) => Math.min(prev + 1, suggestions.length - 1));
+        setSelectedIndex(prev => Math.min(prev + 1, suggestions.length - 1));
       } else if (e.key === 'ArrowUp') {
         e.preventDefault();
-        setSelectedIndex((prev) => Math.max(prev - 1, -1));
+        setSelectedIndex(prev => Math.max(prev - 1, -1));
       } else if (e.key === 'Enter') {
         e.preventDefault();
         if (selectedIndex >= 0 && suggestions[selectedIndex]) {
@@ -107,7 +107,7 @@ const EnhancedSearch: React.FC<EnhancedSearchProps> = ({
     inputRef.current?.focus();
   }, []);
 
-  const isHistoryItem = (item: string) => history.some((h) => h.query === item);
+  const isHistoryItem = (item: string) => history.some(h => h.query === item);
 
   return (
     <div ref={containerRef} className={cn('relative', className)}>
@@ -121,7 +121,7 @@ const EnhancedSearch: React.FC<EnhancedSearchProps> = ({
           ref={inputRef}
           type="text"
           value={query}
-          onChange={(e) => setQuery(e.target.value)}
+          onChange={e => setQuery(e.target.value)}
           onFocus={handleFocus}
           onKeyDown={handleKeyDown}
           placeholder={placeholder || t('search.placeholder', 'Search products, brands...')}
@@ -204,7 +204,7 @@ const EnhancedSearch: React.FC<EnhancedSearchProps> = ({
                 {t('search.popular', 'Popular')}
               </span>
               <div className="flex flex-wrap gap-2 px-2">
-                {popularQueries.slice(0, 6).map((query) => (
+                {popularQueries.slice(0, 6).map(query => (
                   <button
                     key={`popular-${query}`}
                     onClick={() => handleSearch(query)}
@@ -226,7 +226,8 @@ const EnhancedSearch: React.FC<EnhancedSearchProps> = ({
                 className="w-full flex items-center justify-between px-3 py-2 rounded-lg text-white/80 hover:bg-white/5 transition-colors"
               >
                 <span>
-                  {t('search.searchFor', 'Search for')} "<span className="font-medium">{query}</span>"
+                  {t('search.searchFor', 'Search for')} &quot;
+                  <span className="font-medium">{query}</span>&quot;
                 </span>
                 <ArrowRight className="w-4 h-4" />
               </button>
@@ -267,7 +268,9 @@ const SuggestionItem: React.FC<SuggestionItemProps> = ({
     return (
       <>
         {query.slice(0, index)}
-        <span className="font-semibold text-white">{query.slice(index, index + highlight.length)}</span>
+        <span className="font-semibold text-white">
+          {query.slice(index, index + highlight.length)}
+        </span>
         {query.slice(index + highlight.length)}
       </>
     );
@@ -294,7 +297,7 @@ const SuggestionItem: React.FC<SuggestionItemProps> = ({
 
       {onRemove && (
         <button
-          onClick={(e) => {
+          onClick={e => {
             e.stopPropagation();
             onRemove();
           }}

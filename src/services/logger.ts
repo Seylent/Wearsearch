@@ -97,10 +97,12 @@ class ErrorLogger {
           ? error.message
           : 'API request failed';
 
-    const statusCode = isRecord(response) && typeof response.status === 'number' ? response.status : undefined;
+    const statusCode =
+      isRecord(response) && typeof response.status === 'number' ? response.status : undefined;
 
-    const errorForLog: Error | string = error instanceof Error || typeof error === 'string' ? error : message;
-    
+    const errorForLog: Error | string =
+      error instanceof Error || typeof error === 'string' ? error : message;
+
     this.error(errorForLog, {
       ...context,
       action: 'API_REQUEST',
@@ -169,7 +171,7 @@ class ErrorLogger {
    * Send error to remote logging service
    * Example integration points: Sentry, LogRocket, DataDog, etc.
    */
-  private sendToRemoteService(_logEntry: LoggedError): void {
+  private sendToRemoteService(): void {
     // Example Sentry integration:
     // if (window.Sentry) {
     //   window.Sentry.captureException(new Error(logEntry.message), {
@@ -179,7 +181,6 @@ class ErrorLogger {
     //     level: logEntry.level,
     //   });
     // }
-
     // Example custom API integration:
     // fetch('/api/logs', {
     //   method: 'POST',
@@ -195,17 +196,15 @@ class ErrorLogger {
 export const logger = new ErrorLogger();
 
 // Convenience methods
-export const logError = (error: Error | string, context?: ErrorContext) => 
+export const logError = (error: Error | string, context?: ErrorContext) =>
   logger.error(error, context);
 
-export const logWarn = (message: string, context?: ErrorContext) => 
-  logger.warn(message, context);
+export const logWarn = (message: string, context?: ErrorContext) => logger.warn(message, context);
 
-export const logInfo = (message: string, context?: ErrorContext) => 
-  logger.info(message, context);
+export const logInfo = (message: string, context?: ErrorContext) => logger.info(message, context);
 
-export const logApiError = (error: unknown, endpoint: string, context?: ErrorContext) => 
+export const logApiError = (error: unknown, endpoint: string, context?: ErrorContext) =>
   logger.apiError(error, endpoint, context);
 
-export const logAuthError = (error: Error | string, action: string) => 
+export const logAuthError = (error: Error | string, action: string) =>
   logger.authError(error, action);

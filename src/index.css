@@ -942,3 +942,15 @@ select:focus-visible {
 .animate-slide-in-top {
   animation: slide-in-from-top 0.5s ease-out;
 }
+
+/* Safe area utilities for mobile devices (iPhone notch support) */
+@layer utilities {
+  .h-safe-area-inset-bottom {
+    height: env(safe-area-inset-bottom, 0px);
+    min-height: 20px;
+  }
+
+  .pb-safe {
+    padding-bottom: env(safe-area-inset-bottom, 20px);
+  }
+}

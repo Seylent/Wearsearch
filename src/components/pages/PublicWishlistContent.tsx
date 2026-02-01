@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo, useState } from 'react';
 import Link from 'next/link';
+import Image from 'next/image';
 import { useTranslation } from 'react-i18next';
 import { getPublicWishlist, type PublicWishlist } from '@/services/wishlistService';
 import { useCurrency } from '@/contexts/CurrencyContext';
@@ -109,10 +110,12 @@ export default function PublicWishlistContent({ shareId, className }: PublicWish
                 >
                   <div className="relative aspect-[4/5] bg-muted/30">
                     {item.image_url && (
-                      <img
+                      <Image
                         src={item.image_url}
                         alt={item.name || 'Product'}
-                        className="h-full w-full object-cover transition duration-300 group-hover:scale-[1.02]"
+                        fill
+                        sizes="(max-width: 768px) 50vw, 25vw"
+                        className="object-cover transition duration-300 group-hover:scale-[1.02]"
                       />
                     )}
                   </div>

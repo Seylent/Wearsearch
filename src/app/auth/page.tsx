@@ -17,7 +17,7 @@ export default function AuthPage() {
   const { toast } = useToast();
   const [isLogin, setIsLogin] = useState(true);
   const [isLoading, setIsLoading] = useState(false);
-  
+
   // Form state
   const [formData, setFormData] = useState({
     email: '',
@@ -44,21 +44,21 @@ export default function AuthPage() {
     if (response.data?.success) {
       localStorage.setItem('access_token', response.data.access_token);
       localStorage.setItem('refresh_token', response.data.refresh_token);
-      
+
       if (response.data.user) {
         localStorage.setItem('user', JSON.stringify(response.data.user));
       }
-      
+
       // 🚨 Dispatch login event to update auth state across app
       if (globalThis.window !== undefined) {
         globalThis.window.dispatchEvent(new Event('auth:login'));
       }
-      
+
       toast({
         title: t('auth.loginSuccess', 'Успішний вхід'),
         description: t('auth.welcomeBack', 'Ласкаво просимо назад!'),
       });
-      
+
       // Small delay to allow state to update before navigation
       setTimeout(() => {
         router.push('/');
@@ -115,15 +115,19 @@ export default function AuthPage() {
         // Already handled in handleSignup
         return;
       }
-      
+
       const apiError = error as { response?: { data?: { message?: string } }; message?: string };
       const message = apiError?.response?.data?.message || apiError?.message;
       toast({
         variant: 'destructive',
-        title: isLogin ? t('auth.loginError', 'Помилка входу') : t('auth.signupError', 'Помилка реєстрації'),
-        description: message || (isLogin 
-          ? t('auth.invalidCredentials', 'Невірний email/нікнейм або пароль')
-          : t('auth.signupFailed', 'Не вдалося зареєструватися')),
+        title: isLogin
+          ? t('auth.loginError', 'Помилка входу')
+          : t('auth.signupError', 'Помилка реєстрації'),
+        description:
+          message ||
+          (isLogin
+            ? t('auth.invalidCredentials', 'Невірний email/нікнейм або пароль')
+            : t('auth.signupFailed', 'Не вдалося зареєструватися')),
       });
     } finally {
       setIsLoading(false);
@@ -138,7 +142,7 @@ export default function AuthPage() {
         <div className="absolute inset-0 z-0">
           <NeonAbstractions />
         </div>
-        
+
         {/* Background Effects */}
         <div className="absolute inset-0 opacity-30 z-[1]">
           <div className="absolute top-1/4 left-1/4 w-96 h-96 bg-white/5 rounded-full blur-3xl" />
@@ -149,8 +153,8 @@ export default function AuthPage() {
           {/* Auth Card */}
           <div className="backdrop-blur-xl bg-card/40 border border-border/50 rounded-2xl p-8 shadow-2xl">
             {/* Back button */}
-            <Button 
-              variant="ghost" 
+            <Button
+              variant="ghost"
               onClick={() => router.push('/')}
               className="mb-6 -ml-2 text-muted-foreground hover:text-foreground"
             >
@@ -167,8 +171,8 @@ export default function AuthPage() {
                 {isLogin ? t('auth.login', 'Вхід') : t('auth.signup', 'Реєстрація')}
               </h1>
               <p className="text-muted-foreground">
-                {isLogin 
-                  ? t('auth.loginSubtitle', 'Увійдіть у свій акаунт') 
+                {isLogin
+                  ? t('auth.loginSubtitle', 'Увійдіть у свій акаунт')
                   : t('auth.signupSubtitle', 'Створіть новий акаунт')}
               </p>
             </div>
@@ -178,7 +182,7 @@ export default function AuthPage() {
               {!isLogin && (
                 <div className="space-y-2">
                   <Label htmlFor="display_name" className="text-sm font-medium">
-                    {t('auth.displayName', 'Ім\'я для відображення')}
+                    {t('auth.displayName', "Ім'я для відображення")}
                   </Label>
                   <div className="relative">
                     <User className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
@@ -187,7 +191,7 @@ export default function AuthPage() {
                       type="text"
                       value={formData.display_name}
                       onChange={handleInputChange}
-                      placeholder={t('auth.displayNamePlaceholder', 'Ваше ім\'я')}
+                      placeholder={t('auth.displayNamePlaceholder', "Ваше ім'я")}
                       className="pl-10 bg-white/5 border-white/10 focus:border-white/20 h-12"
                       maxLength={50}
                     />
@@ -198,7 +202,8 @@ export default function AuthPage() {
               {!isLogin && (
                 <div className="space-y-2">
                   <Label htmlFor="username" className="text-sm font-medium">
-                    {t('auth.username', 'Нікнейм')} <span className="text-xs text-muted-foreground">(необов'язково)</span>
+                    {t('auth.username', 'Нікнейм')}{' '}
+                    <span className="text-xs text-muted-foreground">(необов&apos;язково)</span>
                   </Label>
                   <div className="relative">
                     <User className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
@@ -217,21 +222,23 @@ export default function AuthPage() {
               )}
 
               <div className="space-y-2">
-                <Label htmlFor={isLogin ? "identifier" : "email"} className="text-sm font-medium">
-                  {isLogin 
-                    ? t('auth.emailOrUsername', 'Email або нікнейм') 
+                <Label htmlFor={isLogin ? 'identifier' : 'email'} className="text-sm font-medium">
+                  {isLogin
+                    ? t('auth.emailOrUsername', 'Email або нікнейм')
                     : t('auth.email', 'Email')}
                 </Label>
                 <div className="relative">
                   <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
                   <Input
-                    id={isLogin ? "identifier" : "email"}
-                    type={isLogin ? "text" : "email"}
+                    id={isLogin ? 'identifier' : 'email'}
+                    type={isLogin ? 'text' : 'email'}
                     value={isLogin ? formData.identifier : formData.email}
                     onChange={handleInputChange}
-                    placeholder={isLogin 
-                      ? t('auth.emailOrUsernamePlaceholder', 'your@email.com або username')
-                      : "your@email.com"}
+                    placeholder={
+                      isLogin
+                        ? t('auth.emailOrUsernamePlaceholder', 'your@email.com або username')
+                        : 'your@email.com'
+                    }
                     className="pl-10 bg-white/5 border-white/10 focus:border-white/20 h-12"
                     required
                   />
@@ -293,8 +300,8 @@ export default function AuthPage() {
                 </div>
               )}
 
-              <Button 
-                type="submit" 
+              <Button
+                type="submit"
                 disabled={isLoading}
                 className="w-full h-12 text-base font-medium bg-white text-black hover:bg-white/90 disabled:opacity-50"
               >
@@ -303,11 +310,15 @@ export default function AuthPage() {
                     return (
                       <>
                         <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                        {isLogin ? t('auth.signingIn', 'Входимо...') : t('auth.signingUp', 'Реєструємо...')}
+                        {isLogin
+                          ? t('auth.signingIn', 'Входимо...')
+                          : t('auth.signingUp', 'Реєструємо...')}
                       </>
                     );
                   }
-                  return isLogin ? t('auth.loginButton', 'Увійти') : t('auth.signupButton', 'Зареєструватися');
+                  return isLogin
+                    ? t('auth.loginButton', 'Увійти')
+                    : t('auth.signupButton', 'Зареєструватися');
                 })()}
               </Button>
             </form>
@@ -319,7 +330,7 @@ export default function AuthPage() {
                 onClick={() => setIsLogin(!isLogin)}
                 className="text-sm text-muted-foreground hover:text-foreground transition-colors"
               >
-                {isLogin 
+                {isLogin
                   ? t('auth.noAccount', 'Немає акаунту?') + ' '
                   : t('auth.haveAccount', 'Вже є акаунт?') + ' '}
                 <span className="font-medium text-foreground">
@@ -331,11 +342,11 @@ export default function AuthPage() {
 
           {/* Footer note */}
           <p className="mt-6 text-center text-xs text-muted-foreground">
-            {t('auth.terms', 'Входячи, ви погоджуєтесь з')} {' '}
+            {t('auth.terms', 'Входячи, ви погоджуєтесь з')}{' '}
             <button className="underline hover:text-foreground transition-colors">
               {t('auth.termsLink', 'Умовами використання')}
-            </button>
-            {' '}{t('auth.and', 'та')}{' '}
+            </button>{' '}
+            {t('auth.and', 'та')}{' '}
             <button className="underline hover:text-foreground transition-colors">
               {t('auth.privacyLink', 'Політикою конфіденційності')}
             </button>

@@ -73,9 +73,9 @@ export default function WishlistsContent({ className }: { className?: string }) 
     retry: false,
     refetchOnWindowFocus: false,
   });
-  const mappedItems = useMemo(() => {
-    if (!collectionItems) return [] as any[];
-    if (Array.isArray(collectionItems)) return collectionItems as any[];
+  const mappedItems = useMemo<unknown[]>(() => {
+    if (!collectionItems) return [];
+    if (Array.isArray(collectionItems)) return collectionItems;
     const { items } = mapCollectionItemsResponse(collectionItems, currency);
     return items ?? [];
   }, [collectionItems, currency]);
@@ -154,7 +154,7 @@ export default function WishlistsContent({ className }: { className?: string }) 
               <div className="text-center py-12 text-muted-foreground">Loading...</div>
             ) : mappedItems && mappedItems.length > 0 ? (
               <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
-                {mappedItems.map((item: any, index: number) => {
+                {mappedItems.map((item, index) => {
                   const itemRecord = isRecord(item) ? item : {};
                   const productRecord = isRecord(itemRecord.product)
                     ? itemRecord.product
@@ -200,6 +200,10 @@ export default function WishlistsContent({ className }: { className?: string }) 
                       : typeof productRecord?.currency === 'string'
                         ? productRecord.currency
                         : undefined;
+                  const priceCurrency =
+                    productCurrency === 'USD' || productCurrency === 'UAH'
+                      ? productCurrency
+                      : undefined;
 
                   return (
                     <ProductCard
@@ -211,7 +215,7 @@ export default function WishlistsContent({ className }: { className?: string }) 
                       maxPrice={maxPrice}
                       price={price}
                       brand={productBrand}
-                      priceCurrency={productCurrency as any}
+                      priceCurrency={priceCurrency}
                     />
                   );
                 })}

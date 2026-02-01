@@ -6,6 +6,7 @@
 'use client';
 
 import { useRef, useState, useEffect } from 'react';
+import Image from 'next/image';
 
 interface LazyImageProps extends React.ImgHTMLAttributes<HTMLImageElement> {
   src: string;
@@ -22,11 +23,26 @@ export function LazyImage({
   rootMargin = '200px',
   placeholder = 'data:image/svg+xml,%3Csvg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 400"%3E%3Crect fill="%23222" width="400" height="400"/%3E%3C/svg%3E',
   className = '',
+  width,
+  height,
+  loading,
   ...props
 }: LazyImageProps) {
-  const imgRef = useRef<HTMLImageElement>(null);
+  const imgRef = useRef<HTMLSpanElement>(null);
   const [isLoaded, setIsLoaded] = useState(false);
   const [isInView, setIsInView] = useState(false);
+
+  const getSize = (value: string | number | undefined, fallback: number): number => {
+    if (typeof value === 'number' && Number.isFinite(value)) return value;
+    if (typeof value === 'string') {
+      const parsed = Number.parseInt(value, 10);
+      return Number.isFinite(parsed) ? parsed : fallback;
+    }
+    return fallback;
+  };
+
+  const widthValue = getSize(width, 400);
+  const heightValue = getSize(height, 400);
 
   useEffect(() => {
     const img = imgRef.current;
@@ -53,15 +69,17 @@ export function LazyImage({
   }, [threshold, rootMargin]);
 
   return (
-    <img
-      ref={imgRef}
-      src={isInView ? src : placeholder}
-      alt={alt}
-      className={`${className} ${isLoaded ? 'opacity-100' : 'opacity-0'} transition-opacity duration-300`}
-      onLoad={() => setIsLoaded(true)}
-      loading="lazy"
-      decoding="async"
-      {...props}
-    />
+    <span ref={imgRef} style={{ display: 'inline-block', width: widthValue, height: heightValue }}>
+      <Image
+        src={isInView ? src : placeholder}
+        alt={alt}
+        width={widthValue}
+        height={heightValue}
+        loading={loading ?? 'lazy'}
+        className={`${className} ${isLoaded ? 'opacity-100' : 'opacity-0'} transition-opacity duration-300`}
+        onLoad={() => setIsLoaded(true)}
+        {...props}
+      />
+    </span>
   );
 }

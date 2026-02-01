@@ -3,6 +3,7 @@
 import { useState, useMemo, useEffect } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useTranslation } from 'react-i18next';
+import Image from 'next/image';
 import { NeonAbstractions } from '@/components/NeonAbstractions';
 import { NoStoresFound, ErrorState } from '@/components/common/EmptyState';
 import { StoreGridSkeleton } from '@/components/common/SkeletonLoader';
@@ -14,11 +15,7 @@ import { SaveStoreButton } from '@/components/SaveStoreButton';
 
 import type { PaginationInfo } from '@/types';
 
-interface StoresContentProps {
-  storeId?: string;
-}
-
-const StoresContent: React.FC<StoresContentProps> = ({ storeId: _storeId }) => {
+const StoresContent: React.FC = () => {
   const router = useRouter();
   const searchParams = useSearchParams();
   const { t } = useTranslation();
@@ -111,10 +108,6 @@ const StoresContent: React.FC<StoresContentProps> = ({ storeId: _storeId }) => {
   }, [storesData]);
 
   const filteredStores = stores;
-
-  const _handlePageChange = (newPage: number) => {
-    setCurrentPage(newPage);
-  };
 
   return (
     <div className="min-h-screen bg-background text-foreground font-sans">
@@ -244,12 +237,13 @@ const StoresContent: React.FC<StoresContentProps> = ({ storeId: _storeId }) => {
                               {/* Store Logo */}
                               {store.logo_url && (
                                 <div className="w-16 h-16 rounded-xl overflow-hidden bg-white/5 flex-shrink-0 border border-border/50">
-                                  <img
+                                  <Image
                                     src={store.logo_url}
                                     alt={store.name}
+                                    width={64}
+                                    height={64}
                                     className="w-full h-full object-cover"
                                     loading="lazy"
-                                    decoding="async"
                                   />
                                 </div>
                               )}

@@ -6,6 +6,7 @@
 'use client';
 
 import React from 'react';
+import Image from 'next/image';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Checkbox } from '@/components/ui/checkbox';
@@ -96,10 +97,6 @@ export const ProductList: React.FC<ProductListProps> = ({
   onEditProduct,
   onDeleteProduct,
   onBulkDelete,
-  onExportToCSV,
-  onExportToJSON,
-  onDownloadTemplate,
-  loadingExport,
 }) => {
   const { t } = useTranslation();
 
@@ -218,9 +215,11 @@ export const ProductList: React.FC<ProductListProps> = ({
 
                       <div className="w-12 h-12 rounded-lg overflow-hidden bg-muted flex-shrink-0">
                         {product.image ? (
-                          <img
+                          <Image
                             src={product.image}
                             alt={product.name}
+                            width={48}
+                            height={48}
                             className="w-full h-full object-cover"
                           />
                         ) : (
@@ -320,9 +319,11 @@ export const ProductList: React.FC<ProductListProps> = ({
                         <div className="flex items-center gap-3">
                           <div className="w-10 h-10 rounded-lg overflow-hidden bg-muted flex-shrink-0">
                             {product.image ? (
-                              <img
+                              <Image
                                 src={product.image}
                                 alt={product.name}
+                                width={40}
+                                height={40}
                                 className="w-full h-full object-cover"
                               />
                             ) : (
