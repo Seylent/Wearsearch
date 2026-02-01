@@ -1,4 +1,4 @@
-﻿'use client';
+'use client';
 
 import { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -40,7 +40,7 @@ export const ContactsDialog: React.FC<ContactsDialogProps> = ({
   useEffect(() => {
     const loadContacts = async () => {
       try {
-        const response = await api.get('/contacts', {
+        const response = await api.get('/api/v1/contacts', {
           headers: { 'Cache-Control': 'no-cache' },
         });
         const payload = response.data?.data ?? response.data?.item ?? response.data;

@@ -5,6 +5,7 @@ import type { Product } from '@/types';
 import type { Banner } from '@/types/banner';
 import { fetchBackendJson } from '@/lib/backendFetch';
 import { getServerLanguage } from '@/utils/languageStorage';
+import { logError, logInfo, logWarn } from '@/services/logger';
 
 const isRecord = (value: unknown): value is Record<string, unknown> =>
   typeof value === 'object' && value !== null;
@@ -78,7 +79,10 @@ export async function getHomepageData(): Promise<HomepageAPIResponse> {
 
       if (bff) {
         const response = isRecord(bff) ? bff.data : undefined;
-        console.log('✅ BFF homepage data received');
+        logInfo('BFF homepage data received', {
+          component: 'getHomepageData',
+          action: 'BFF_SUCCESS',
+        });
 
         // BFF returns: { success: true, data: { products, brands, statistics, banners } }
         const data = getRecord(response, 'data') ?? (isRecord(response) ? response : undefined);
@@ -101,8 +105,14 @@ export async function getHomepageData(): Promise<HomepageAPIResponse> {
         }
 
         if (process.env.NODE_ENV === 'development') {
-          console.log('📦 Products loaded:', products.length);
-          console.log('🎨 Banners loaded:', banners.length);
+          logInfo(`Products loaded: ${products.length}`, {
+            component: 'getHomepageData',
+            action: 'BFF_PRODUCTS',
+          });
+          logInfo(`Banners loaded: ${banners.length}`, {
+            component: 'getHomepageData',
+            action: 'BFF_BANNERS',
+          });
         }
 
         // Fetch SEO data separately
@@ -117,10 +127,16 @@ export async function getHomepageData(): Promise<HomepageAPIResponse> {
           if (seoRes) {
             const seoResponse = isRecord(seoRes) ? seoRes.data : undefined;
             seoData = (getRecord(seoResponse, 'item') ?? seoResponse) as ExtendedSEOData | null;
-            console.log('📝 SEO data loaded:', seoData?.h1_title || 'No title');
+            logInfo(`SEO data loaded: ${seoData?.h1_title || 'No title'}`, {
+              component: 'getHomepageData',
+              action: 'SEO_LOADED',
+            });
           }
         } catch {
-          console.log('⚠️ SEO data not available');
+          logWarn('SEO data not available', {
+            component: 'getHomepageData',
+            action: 'SEO_MISSING',
+          });
         }
 
         return {
@@ -139,7 +155,10 @@ export async function getHomepageData(): Promise<HomepageAPIResponse> {
       }
     } catch {
       if (process.env.NODE_ENV === 'development') {
-        console.log('⚠️ BFF endpoint not available, falling back to individual calls');
+        logWarn('BFF endpoint not available, falling back to individual calls', {
+          component: 'getHomepageData',
+          action: 'BFF_FALLBACK',
+        });
       }
     }
 
@@ -165,7 +184,10 @@ export async function getHomepageData(): Promise<HomepageAPIResponse> {
       getArray(getRecord(productsPayload, 'data'), 'products') ??
       (Array.isArray(productsPayload) ? productsPayload : [])) as Product[];
 
-    console.log('✅ Products loaded:', products.length);
+    logInfo(`Products loaded: ${products.length}`, {
+      component: 'getHomepageData',
+      action: 'FALLBACK_PRODUCTS',
+    });
 
     const categoriesPayload = isRecord(categoriesRes) ? categoriesRes.data : undefined;
     const categories = (getArray(categoriesPayload, 'categories') ??
@@ -199,7 +221,10 @@ export async function getHomepageData(): Promise<HomepageAPIResponse> {
 
     // If no products loaded, log warning
     if (products.length === 0) {
-      console.warn('⚠️ No products loaded from API. Check backend connection.');
+      logWarn('No products loaded from API. Check backend connection.', {
+        component: 'getHomepageData',
+        action: 'NO_PRODUCTS',
+      });
     }
 
     return {
@@ -212,7 +237,11 @@ export async function getHomepageData(): Promise<HomepageAPIResponse> {
       stats,
     };
   } catch (error) {
-    console.error('Error fetching homepage data:', error);
+    logError('Error fetching homepage data', {
+      component: 'getHomepageData',
+      action: 'FETCH_ERROR',
+      metadata: { error },
+    });
 
     // Return empty data as fallback
     return {

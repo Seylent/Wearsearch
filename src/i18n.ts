@@ -2,6 +2,7 @@ import i18n from 'i18next';
 import { initReactI18next } from 'react-i18next';
 import enTranslations from './locales/en.json';
 import ukTranslations from './locales/uk.json';
+import { logError, logInfo, logWarn } from '@/services/logger';
 
 /**
  * Supported languages configuration
@@ -36,7 +37,11 @@ export const languageService = {
         }
       }
     } catch (error) {
-      console.warn('Failed to read language from localStorage:', error);
+      logWarn('Failed to read language from localStorage', {
+        component: 'i18n',
+        action: 'GET_LANGUAGE',
+        metadata: { error },
+      });
     }
     return LANGUAGE_CONFIG.DEFAULT;
   },
@@ -47,7 +52,10 @@ export const languageService = {
   setLanguage(language: SupportedLanguage): void {
     try {
       if (!LANGUAGE_CONFIG.SUPPORTED.includes(language)) {
-        console.warn(`Invalid language: ${language}. Using default.`);
+        logWarn(`Invalid language: ${language}. Using default.`, {
+          component: 'i18n',
+          action: 'SET_LANGUAGE',
+        });
         language = LANGUAGE_CONFIG.DEFAULT;
       }
       localStorage.setItem(LANGUAGE_CONFIG.STORAGE_KEY, language);
@@ -59,7 +67,11 @@ export const languageService = {
         document.cookie = `${LANGUAGE_CONFIG.STORAGE_KEY}=${encodeURIComponent(language)}; Path=/; Max-Age=${maxAge}; SameSite=Lax`;
       }
     } catch (error) {
-      console.error('Failed to save language to localStorage:', error);
+      logError('Failed to save language to localStorage', {
+        component: 'i18n',
+        action: 'SET_LANGUAGE',
+        metadata: { error },
+      });
     }
   },
 
@@ -109,7 +121,10 @@ if (!i18n.isInitialized) {
     missingKeyHandler: (lngs, ns, key, fallbackValue) => {
       // Only log in development and use debug level to reduce noise
       if (process.env.NODE_ENV !== 'production') {
-        console.debug(`[i18n] Missing key: "${key}" (${lngs.join(', ')}) -> "${fallbackValue}"`);
+        logWarn(`[i18n] Missing key: "${key}" (${lngs.join(', ')}) -> "${fallbackValue}"`, {
+          component: 'i18n',
+          action: 'MISSING_KEY',
+        });
       }
     },
 
@@ -134,7 +149,10 @@ if (!i18n.isInitialized) {
 
     // Log language change in development
     if (process.env.NODE_ENV !== 'production') {
-      console.log(`Language changed to: ${lng}`);
+      logInfo(`Language changed to: ${lng}`, {
+        component: 'i18n',
+        action: 'LANGUAGE_CHANGED',
+      });
     }
   });
 }

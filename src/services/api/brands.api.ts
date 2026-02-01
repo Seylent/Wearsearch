@@ -12,7 +12,7 @@ export const brandsApi = {
    */
   getAll: async (): Promise<BrandsResponse> => {
     try {
-      const response = await api.get('/brands');
+      const response = await api.get('/api/v1/brands');
       return response.data;
     } catch (error) {
       console.error('[Brands API] Failed to fetch brands:', error);
@@ -25,7 +25,7 @@ export const brandsApi = {
    */
   getById: async (id: string): Promise<Brand> => {
     try {
-      const response = await api.get(`/brands/${id}`);
+      const response = await api.get(`/api/v1/brands/${id}`);
       return response.data;
     } catch (error) {
       console.error(`[Brands API] Failed to fetch brand ${id}:`, error);
@@ -38,7 +38,7 @@ export const brandsApi = {
    */
   getProducts: async (brandId: string): Promise<Product[]> => {
     try {
-      const response = await api.get(`/brands/${brandId}/products`);
+      const response = await api.get(`/api/v1/brands/${brandId}/products`);
       return response.data;
     } catch (error) {
       console.error(`[Brands API] Failed to fetch products for brand ${brandId}:`, error);
@@ -51,7 +51,7 @@ export const brandsApi = {
    */
   create: async (brandData: Partial<Brand>): Promise<Brand> => {
     try {
-      const response = await api.post('/brands', brandData);
+      const response = await api.post('/api/v1/brands', brandData);
       return response.data;
     } catch (error) {
       console.error('[Brands API] Failed to create brand:', error);
@@ -64,7 +64,7 @@ export const brandsApi = {
    */
   update: async (id: string, brandData: Partial<Brand>): Promise<Brand> => {
     try {
-      const response = await api.put(`/brands/${id}`, brandData);
+      const response = await api.put(`/api/v1/brands/${id}`, brandData);
       return response.data;
     } catch (error) {
       console.error(`[Brands API] Failed to update brand ${id}:`, error);
@@ -77,7 +77,7 @@ export const brandsApi = {
    */
   delete: async (id: string): Promise<void> => {
     try {
-      await api.delete(`/brands/${id}`);
+      await api.delete(`/api/v1/brands/${id}`);
     } catch (error) {
       console.error(`[Brands API] Failed to delete brand ${id}:`, error);
       throw error;

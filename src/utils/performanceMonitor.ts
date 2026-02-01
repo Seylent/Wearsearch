@@ -14,9 +14,14 @@
  * 🔥 CLIENT-ONLY MODULE - DO NOT IMPORT ON SERVER
  */
 
+import { logInfo, logWarn } from '@/services/logger';
+
 // Runtime guard
 if (typeof window === 'undefined') {
-  console.warn('performanceMonitor.ts is client-only, avoid server imports');
+  logWarn('performanceMonitor.ts is client-only, avoid server imports', {
+    component: 'performanceMonitor',
+    action: 'SERVER_IMPORT',
+  });
 }
 
 // Performance thresholds
@@ -118,7 +123,10 @@ class PerformanceMonitor {
       });
       clsObserver.observe({ entryTypes: ['layout-shift'] });
     } catch {
-      console.warn('CLS observer not supported');
+      logWarn('CLS observer not supported', {
+        component: 'performanceMonitor',
+        action: 'CLS_UNSUPPORTED',
+      });
     }
   }
 
@@ -126,9 +134,12 @@ class PerformanceMonitor {
    * Log metric with color coding
    */
   private logMetric(name: string, value: number, threshold: number) {
-    const status = value <= threshold ? '✅ GOOD' : '⚠️ NEEDS IMPROVEMENT';
-    const color = value <= threshold ? 'color: green' : 'color: orange';
-    console.log(`%c[Performance] ${name}: ${value.toFixed(2)}ms ${status}`, color);
+    const status = value <= threshold ? 'GOOD' : 'NEEDS_IMPROVEMENT';
+    logInfo(`[Performance] ${name}: ${value.toFixed(2)}ms ${status}`, {
+      component: 'performanceMonitor',
+      action: 'METRIC',
+      metadata: { name, value, threshold, status },
+    });
   }
 
   /**
@@ -152,12 +163,12 @@ class PerformanceMonitor {
     this.metrics.networkRequests = resources.length;
 
     const status = resources.length <= 60 ? '✅ GOOD' : '⚠️ TOO MANY';
-    const color = resources.length <= 60 ? 'color: green' : 'color: red';
 
-    console.log(
-      `%c[Performance] Network Requests: ${resources.length} ${status} (Target: ≤60)`,
-      color
-    );
+    logInfo(`[Performance] Network Requests: ${resources.length} ${status} (Target: ≤60)`, {
+      component: 'performanceMonitor',
+      action: 'NETWORK_REQUESTS',
+      metadata: { count: resources.length, status },
+    });
 
     return resources.length;
   }
@@ -190,14 +201,22 @@ class PerformanceMonitor {
 
     const jsSizeKB = (jsSize / 1024).toFixed(2);
     const jsStatus = jsSize < 200 * 1024 ? '✅ GOOD' : '⚠️ TOO LARGE';
-    const jsColor = jsSize < 200 * 1024 ? 'color: green' : 'color: red';
 
-    console.log(
-      `%c[Performance] JavaScript: ${jsSizeKB} KB ${jsStatus} (Target: <200 KB)`,
-      jsColor
-    );
-    console.log(`[Performance] CSS: ${(cssSize / 1024).toFixed(2)} KB`);
-    console.log(`[Performance] Images: ${(imageSize / 1024).toFixed(2)} KB`);
+    logInfo(`[Performance] JavaScript: ${jsSizeKB} KB ${jsStatus} (Target: <200 KB)`, {
+      component: 'performanceMonitor',
+      action: 'BUNDLE_JS',
+      metadata: { jsSize, jsStatus },
+    });
+    logInfo(`[Performance] CSS: ${(cssSize / 1024).toFixed(2)} KB`, {
+      component: 'performanceMonitor',
+      action: 'BUNDLE_CSS',
+      metadata: { cssSize },
+    });
+    logInfo(`[Performance] Images: ${(imageSize / 1024).toFixed(2)} KB`, {
+      component: 'performanceMonitor',
+      action: 'BUNDLE_IMAGES',
+      metadata: { imageSize },
+    });
   }
 
   /**
@@ -208,9 +227,11 @@ class PerformanceMonitor {
     this.countNetworkRequests();
     this.calculateBundleSizes();
 
-    console.group('📊 Performance Report');
-    console.table(this.metrics);
-    console.groupEnd();
+    logInfo('Performance Report', {
+      component: 'performanceMonitor',
+      action: 'REPORT',
+      metadata: { metrics: this.metrics },
+    });
 
     return { ...this.metrics };
   }
@@ -228,10 +249,16 @@ class PerformanceMonitor {
     const allGoalsMet = Object.values(goals).every(Boolean);
 
     if (allGoalsMet) {
-      console.log('%c✅ All performance goals met!', 'color: green; font-weight: bold');
+      logInfo('All performance goals met', {
+        component: 'performanceMonitor',
+        action: 'GOALS_OK',
+      });
     } else {
-      console.log('%c⚠️ Some performance goals not met', 'color: orange; font-weight: bold');
-      console.table(goals);
+      logWarn('Some performance goals not met', {
+        component: 'performanceMonitor',
+        action: 'GOALS_FAIL',
+        metadata: { goals },
+      });
     }
 
     return allGoalsMet;

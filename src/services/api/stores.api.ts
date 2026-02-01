@@ -18,7 +18,7 @@ export const storesApi = {
    */
   getAll: async (): Promise<StoresResponse> => {
     try {
-      const response = await api.get('/stores');
+      const response = await api.get('/api/v1/stores');
       return response.data;
     } catch (error) {
       console.error('[Stores API] Failed to fetch stores:', error);
@@ -31,7 +31,7 @@ export const storesApi = {
    */
   getById: async (id: string): Promise<Store> => {
     try {
-      const response = await api.get(`/stores/${id}`);
+      const response = await api.get(`/api/v1/stores/${id}`);
       return response.data;
     } catch (error) {
       console.error(`[Stores API] Failed to fetch store ${id}:`, error);
@@ -46,7 +46,7 @@ export const storesApi = {
    */
   getProducts: async (storeId: string, params?: StoreProductsParams): Promise<ProductsResponse> => {
     try {
-      const response = await api.get(`/stores/${storeId}/products`, { params });
+      const response = await api.get(`/api/v1/stores/${storeId}/products`, { params });
       return response.data;
     } catch (error) {
       console.error(`[Stores API] Failed to fetch products for store ${storeId}:`, error);
@@ -59,7 +59,7 @@ export const storesApi = {
    */
   create: async (storeData: Partial<Store>): Promise<Store> => {
     try {
-      const response = await api.post('/admin/stores', storeData);
+      const response = await api.post('/api/v1/admin/stores', storeData);
       return response.data;
     } catch (error) {
       console.error('[Stores API] Failed to create store:', error);
@@ -72,7 +72,7 @@ export const storesApi = {
    */
   update: async (id: string, storeData: Partial<Store>): Promise<Store> => {
     try {
-      const response = await api.put(`/admin/stores/${id}`, storeData);
+      const response = await api.put(`/api/v1/admin/stores/${id}`, storeData);
       return response.data;
     } catch (error) {
       console.error(`[Stores API] Failed to update store ${id}:`, error);
@@ -85,7 +85,7 @@ export const storesApi = {
    */
   delete: async (id: string): Promise<void> => {
     try {
-      await api.delete(`/admin/stores/${id}`);
+      await api.delete(`/api/v1/admin/stores/${id}`);
     } catch (error) {
       console.error(`[Stores API] Failed to delete store ${id}:`, error);
       throw error;

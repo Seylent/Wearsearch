@@ -70,7 +70,7 @@ export const collectionsService = {
    */
   async getCollections(): Promise<Collection[]> {
     try {
-      const response = await api.get('/users/me/collections', {
+      const response = await api.get('/api/v1/users/me/collections', {
         headers: { 'X-Skip-Retry': 'true' },
       });
       const body: unknown = response.data;
@@ -114,7 +114,7 @@ export const collectionsService = {
     description?: string;
   }): Promise<Collection> {
     try {
-      const response = await api.post('/users/me/collections', data);
+      const response = await api.post('/api/v1/users/me/collections', data);
       const body: unknown = response.data;
       const dataRecord = getRecord(body, 'data');
       const payload =
@@ -145,7 +145,7 @@ export const collectionsService = {
     }
   ): Promise<Collection> {
     try {
-      const response = await api.put(`/users/me/collections/${collectionId}`, data);
+      const response = await api.put(`/api/v1/users/me/collections/${collectionId}`, data);
       const body: unknown = response.data;
       const dataRecord = getRecord(body, 'data');
       const payload =
@@ -169,7 +169,7 @@ export const collectionsService = {
    */
   async deleteCollection(collectionId: string): Promise<void> {
     try {
-      await api.delete(`/users/me/collections/${collectionId}`);
+      await api.delete(`/api/v1/users/me/collections/${collectionId}`);
     } catch (error) {
       const apiError = handleApiError(error);
       if (apiError.status === 404) {
@@ -189,7 +189,7 @@ export const collectionsService = {
    */
   async getCollectionItems(collectionId: string, currency?: string): Promise<CollectionItem[]> {
     try {
-      const response = await api.get(`/users/me/collections/${collectionId}/items`, {
+      const response = await api.get(`/api/v1/users/me/collections/${collectionId}/items`, {
         headers: { 'X-Skip-Retry': 'true' },
         params: currency ? { currency } : undefined,
       });
@@ -219,7 +219,7 @@ export const collectionsService = {
     notes?: string
   ): Promise<CollectionItem> {
     try {
-      const response = await api.post(`/users/me/collections/${collectionId}/items`, {
+      const response = await api.post(`/api/v1/users/me/collections/${collectionId}/items`, {
         product_id: productId,
         productId,
         collection_id: collectionId,
@@ -254,7 +254,7 @@ export const collectionsService = {
    */
   async removeFromCollection(collectionId: string, productId: string | number): Promise<void> {
     try {
-      await api.delete(`/users/me/collections/${collectionId}/items/${productId}`);
+      await api.delete(`/api/v1/users/me/collections/${collectionId}/items/${productId}`);
     } catch (error) {
       const apiError = handleApiError(error);
       if (apiError.status === 404) {

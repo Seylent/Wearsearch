@@ -421,6 +421,8 @@
     "heroTitleLine2": "Compare fashion prices",
     "heroTitleLine3": "in one place",
     "heroSubtitle": "Compare fashion prices across trusted stores",
+    "heroTagline": "Fashion marketplace — discover products from brands and stores",
+    "heroDescription": "Wearsearch is a platform where brands and stores showcase their collections. Find clothing, footwear, and accessories in one place, compare prices, and save your favorite items.",
     "heroCtaBrowse": "Browse categories",
     "heroCtaSell": "Sell clothes",
     "howItWorksLabel": "How it works",
@@ -778,5 +780,15 @@
       "p1": "For questions related to these Terms, the user can contact us through the contact details specified on the website."
     },
     "lastUpdated": "Last updated: January 10, 2026"
+  },
+  "errorCodes": {
+    "UNKNOWN_ERROR": "An unexpected error occurred",
+    "AUTH_UNAUTHORIZED": "Authentication required. Please sign in.",
+    "FORBIDDEN": "Access denied. You don't have permission to perform this action.",
+    "ROLE_PERMISSION_DENIED": "Access denied. Please check if you are added as an owner or manager for this brand/store.",
+    "NOT_FOUND": "Resource not found",
+    "BAD_REQUEST": "Invalid request. Please check your input.",
+    "SERVER_ERROR": "Server error. Please try again later.",
+    "NETWORK_ERROR": "Network error. Please check your internet connection."
   }
 }

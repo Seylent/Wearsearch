@@ -1,4 +1,7 @@
+'use client';
+
 import Link from 'next/link';
+import { useTranslation } from 'react-i18next';
 import { ScrollButton } from './ScrollButton';
 
 interface HomeHeroProps {
@@ -20,9 +23,14 @@ export function HomeHero({
   secondaryCtaLabel,
   secondaryCtaHref,
 }: Readonly<HomeHeroProps>) {
+  const { t } = useTranslation();
   const fallbackTitleLines = heroTitleLines?.length
     ? heroTitleLines
-    : ['Discover', 'Exceptional', 'Fashion'];
+    : [
+        t('home.heroTitleLine1', 'Wearsearch'),
+        t('home.heroTitleLine2', 'Порівнюй ціни на одяг'),
+        t('home.heroTitleLine3', 'в одному місці'),
+      ];
   const showCtas =
     Boolean(primaryCtaLabel && primaryCtaHref) || Boolean(secondaryCtaLabel && secondaryCtaHref);
 
@@ -31,7 +39,13 @@ export function HomeHero({
       <div className="relative z-10 h-full flex flex-col justify-center md:justify-end">
         <div className="max-w-[1800px] mx-auto w-full px-6 md:px-12 lg:px-16 py-20 md:pb-32">
           <p className="text-[11px] sm:text-sm md:text-base uppercase tracking-[0.15em] sm:tracking-[0.2em] text-earth/70 mb-4 md:mb-6">
-            {contentText || "Curated collections from the world's most innovative designers"}
+            {contentText || t('home.heroTagline', 'Маркетплейс модного одягу та взуття')}
+          </p>
+          <p className="text-sm md:text-base text-earth/60 max-w-2xl mb-6 md:mb-8">
+            {t(
+              'home.heroDescription',
+              'Wearsearch — це платформа, де бренди та магазини розміщують свої колекції. Знаходьте одяг, взуття та аксесуари в одному місці, порівнюйте ціни та зберігайте улюблені товари.'
+            )}
           </p>
           <h1 className="font-serif text-4xl sm:text-5xl md:text-7xl lg:text-9xl text-earth leading-[0.95] sm:leading-[0.9] max-w-[20ch] sm:max-w-4xl">
             <span className="block">{h1Title || fallbackTitleLines[0]}</span>

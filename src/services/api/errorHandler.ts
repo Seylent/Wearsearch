@@ -49,6 +49,24 @@ export class ApiError extends Error {
   }
 
   /**
+   * Check if error is a role-based permission error (403)
+   * This happens when user is not added as owner/manager for brand/store
+   */
+  isRolePermissionError(): boolean {
+    return this.status === 403;
+  }
+
+  /**
+   * Get role-based error message for 403 errors
+   */
+  getRoleErrorMessage(): string {
+    if (this.status === 403) {
+      return 'Access denied. Please check if you are added as an owner or manager for this brand/store.';
+    }
+    return this.getUserMessage();
+  }
+
+  /**
    * Check if error is a not found error (404)
    */
   isNotFound(): boolean {

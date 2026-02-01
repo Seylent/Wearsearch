@@ -1,4 +1,5 @@
 import { api, handleApiError } from './api';
+import { logInfo } from './logger';
 import type { WishlistItem, WishlistResponse } from '@/types';
 
 const isRecord = (value: unknown): value is Record<string, unknown> =>
@@ -226,7 +227,7 @@ export interface WishlistMutationResult {
 
 export const getWishlist = async (): Promise<WishlistResponse> => {
   try {
-    const response = await api.get('/wishlist');
+    const response = await api.get('/api/v1/wishlist');
     return normalizeWishlistResponse(response.data);
   } catch (error) {
     throw handleApiError(error);
@@ -237,7 +238,7 @@ export const addWishlistItem = async (
   payload: AddWishlistItemPayload
 ): Promise<WishlistMutationResult> => {
   try {
-    const response = await api.post('/wishlist/items', payload);
+    const response = await api.post('/api/v1/wishlist/items', payload);
     return normalizeWishlistMutationResponse(response.data);
   } catch (error) {
     throw handleApiError(error);
@@ -249,7 +250,7 @@ export const updateWishlistItem = async (
   payload: UpdateWishlistItemPayload
 ): Promise<WishlistMutationResult> => {
   try {
-    const response = await api.patch(`/wishlist/items/${id}`, payload);
+    const response = await api.patch(`/api/v1/wishlist/items/${id}`, payload);
     return normalizeWishlistMutationResponse(response.data);
   } catch (error) {
     throw handleApiError(error);
@@ -258,7 +259,7 @@ export const updateWishlistItem = async (
 
 export const removeWishlistItem = async (id: string): Promise<WishlistMutationResult> => {
   try {
-    const response = await api.delete(`/wishlist/items/${id}`);
+    const response = await api.delete(`/api/v1/wishlist/items/${id}`);
     return normalizeWishlistMutationResponse(response.data);
   } catch (error) {
     throw handleApiError(error);
@@ -267,7 +268,7 @@ export const removeWishlistItem = async (id: string): Promise<WishlistMutationRe
 
 export const clearWishlist = async (): Promise<WishlistMutationResult> => {
   try {
-    const response = await api.post('/wishlist/clear');
+    const response = await api.post('/api/v1/wishlist/clear');
     return normalizeWishlistMutationResponse(response.data);
   } catch (error) {
     throw handleApiError(error);
@@ -277,7 +278,7 @@ export const clearWishlist = async (): Promise<WishlistMutationResult> => {
 // Get wishlist privacy settings
 export const getWishlistSettings = async (): Promise<WishlistSettings> => {
   try {
-    const response = await api.get('/wishlist/settings');
+    const response = await api.get('/api/v1/wishlist/settings');
     return response.data;
   } catch {
     // Default to private if API fails
@@ -287,7 +288,7 @@ export const getWishlistSettings = async (): Promise<WishlistSettings> => {
 
 // Update wishlist privacy settings
 export const updateWishlistSettings = async (isPublic: boolean): Promise<WishlistSettings> => {
-  const response = await api.put('/wishlist/settings', {
+  const response = await api.put('/api/v1/wishlist/settings', {
     is_public: isPublic,
   });
   return response.data;
@@ -295,7 +296,7 @@ export const updateWishlistSettings = async (isPublic: boolean): Promise<Wishlis
 
 // Generate/get share link
 export const getShareLink = async (): Promise<{ share_url: string; share_id: string }> => {
-  const response = await api.post('/wishlist/share');
+  const response = await api.post('/api/v1/wishlist/share');
   return response.data;
 };
 
@@ -304,18 +305,23 @@ export const getPublicWishlist = async (
   shareId: string,
   currency?: string
 ): Promise<PublicWishlist> => {
-  const response = await api.get(`/wishlist/public/${shareId}`, {
+  const response = await api.get(`/api/v1/wishlist/public/${shareId}`, {
     params: currency ? { currency } : undefined,
   });
   const data = response.data;
 
   // Debug logging - show full structure
   if (process.env.NODE_ENV !== 'production') {
-    console.log('📋 Public wishlist raw response:', JSON.stringify(data, null, 2));
-    console.log('📋 Raw data keys:', Object.keys(data));
-    if (data.items) console.log('📋 items array length:', data.items.length);
-    if (data.products) console.log('📋 products array length:', data.products.length);
-    if (data.favorites) console.log('📋 favorites array length:', data.favorites.length);
+    logInfo('Public wishlist raw response', {
+      component: 'wishlistService',
+      action: 'PUBLIC_WISHLIST_DEBUG',
+      metadata: {
+        keys: Object.keys(data),
+        itemsLength: Array.isArray(data.items) ? data.items.length : undefined,
+        productsLength: Array.isArray(data.products) ? data.products.length : undefined,
+        favoritesLength: Array.isArray(data.favorites) ? data.favorites.length : undefined,
+      },
+    });
   }
 
   // Handle different response formats from backend
@@ -378,7 +384,10 @@ export const getPublicWishlist = async (
   result.items_count = data.items_count ?? data.total ?? data.count ?? result.items.length;
 
   if (process.env.NODE_ENV !== 'production') {
-    console.log('📋 Parsed public wishlist:', result);
+    logInfo('Parsed public wishlist', {
+      component: 'wishlistService',
+      action: 'PUBLIC_WISHLIST_PARSED',
+    });
   }
 
   return result;

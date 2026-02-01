@@ -4,48 +4,61 @@
  */
 
 import { getValidGuestFavorites, clearGuestFavorites } from '@/services/guestFavorites';
+import { logError, logInfo, logWarn } from '@/services/logger';
+import { safeGetItem, safeRemoveItem, isBrowser, getMatchingKeys } from '@/utils/safeStorage';
 
 /**
  * Clean up localStorage from invalid data
  */
 export function cleanupLocalStorage(): void {
+  if (!isBrowser()) return;
+
   try {
     // Clean guest favorites with force cleanup
     clearGuestFavorites();
     const validFavorites = getValidGuestFavorites();
-    
+
     // Only log if there are favorites or if in development
     if (validFavorites.length > 0 || process.env.NODE_ENV === 'development') {
-      console.log(`✅ Cleaned guest favorites. Valid: ${validFavorites.length}`);
+      logInfo(`Cleaned guest favorites. Valid: ${validFavorites.length}`, {
+        component: 'localStorageCleanup',
+        action: 'CLEAN_FAVORITES',
+      });
     }
 
     // Clean up other potentially corrupted data
-    const keysToCheck = [
-      'user',
-      'wearsearch.auth',
-      'access_token',
-      'preferredCurrency'
-    ];
+    const keysToCheck = ['user', 'wearsearch.auth', 'access_token', 'preferredCurrency'];
 
     keysToCheck.forEach(key => {
       try {
-        const value = localStorage.getItem(key);
+        const value = safeGetItem<string>(key, null);
         if (value && key === 'user') {
           // Validate user data
           const parsed = JSON.parse(value);
           if (!parsed || typeof parsed !== 'object') {
-            localStorage.removeItem(key);
-            console.warn(`Removed invalid ${key} data`);
+            safeRemoveItem(key);
+            logWarn(`Removed invalid ${key} data`, {
+              component: 'localStorageCleanup',
+              action: 'REMOVE_INVALID',
+              metadata: { key },
+            });
           }
         }
       } catch (error) {
-        localStorage.removeItem(key);
-        console.warn(`Removed corrupted ${key} data:`, error);
+        safeRemoveItem(key);
+        logWarn(`Removed corrupted ${key} data`, {
+          component: 'localStorageCleanup',
+          action: 'REMOVE_CORRUPTED',
+          metadata: { key, error },
+        });
       }
     });
-
   } catch (error) {
-    console.error('Error during localStorage cleanup:', error);
+    logError('Error during localStorage cleanup', {
+      component: 'localStorageCleanup',
+      action: 'CLEANUP',
+      metadata: { error },
+    });
   }
 }
 
@@ -53,18 +66,18 @@ export function cleanupLocalStorage(): void {
  * Reset all localStorage data (for debugging)
  */
 export function resetLocalStorage(): void {
-  const keys = Object.keys(localStorage);
-  const wearsearchKeys = keys.filter(key => 
-    key.includes('wearsearch') || 
-    key.includes('guest') || 
-    key === 'user' || 
-    key === 'access_token' ||
-    key === 'preferredCurrency'
-  );
-  
-  wearsearchKeys.forEach(key => {
-    localStorage.removeItem(key);
+  if (!isBrowser()) return;
+
+  const wearsearchKeys = getMatchingKeys(/wearsearch|guest/);
+  const additionalKeys = ['user', 'access_token', 'preferredCurrency'];
+  const allKeys = [...new Set([...wearsearchKeys, ...additionalKeys])];
+
+  allKeys.forEach(key => {
+    safeRemoveItem(key);
   });
-  
-  console.log(`🧹 Reset ${wearsearchKeys.length} localStorage keys`);
+
+  logInfo(`Reset ${allKeys.length} localStorage keys`, {
+    component: 'localStorageCleanup',
+    action: 'RESET',
+  });
 }

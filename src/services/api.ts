@@ -10,6 +10,7 @@ import { handleApiError as createApiError, ApiError } from './api/errorHandler';
 import { retryWithBackoff } from '@/utils/retryWithBackoff';
 import type { ApiError as ApiErrorType } from '@/types';
 import { z } from 'zod';
+import { logError, logInfo, logWarn } from '@/services/logger';
 
 // Lightweight, SSR-friendly token retrieval
 const readAuthTokenFromStorage = (): string | null => {
@@ -83,9 +84,6 @@ const getRetryDelay = (retryCount: number, retryAfter?: number): number => {
   return Math.min(delay + jitter, RATE_LIMIT_CONFIG.maxDelay);
 };
 
-// Import AUTH_TOKEN_KEY for checking if user was logged in
-const AUTH_TOKEN_KEY = 'wearsearch.auth';
-
 /**
  * Handle rate limit errors (429) with retry logic
  */
@@ -99,16 +97,20 @@ async function handleRateLimitError(
   // Skip retry if requested (e.g., for auth endpoints)
   if (config.headers?.['X-Skip-Retry'] === 'true') {
     if (process.env.NODE_ENV !== 'production') {
-      console.log(`⛔ Skipping retry for ${config.url} (X-Skip-Retry header set)`);
+      logInfo(`Skipping retry for ${config.url} (X-Skip-Retry header set)`, {
+        component: 'api',
+        action: 'RATE_LIMIT_SKIP',
+      });
     }
     return null;
   }
 
   const retryCount = config.__rateLimitRetryCount || 0;
   if (retryCount >= RATE_LIMIT_CONFIG.maxRetries) {
-    console.warn(
-      `⚠️ Max retry attempts (${RATE_LIMIT_CONFIG.maxRetries}) reached for ${config.url}`
-    );
+    logWarn(`Max retry attempts (${RATE_LIMIT_CONFIG.maxRetries}) reached for ${config.url}`, {
+      component: 'api',
+      action: 'RATE_LIMIT_MAX',
+    });
     return null;
   }
 
@@ -117,8 +119,12 @@ async function handleRateLimitError(
   const delay = getRetryDelay(retryCount, retryAfterSeconds);
 
   if (process.env.NODE_ENV !== 'production') {
-    console.log(
-      `⏳ Rate limited (429). Retrying in ${Math.round(delay / 1000)}s (attempt ${retryCount + 1}/${RATE_LIMIT_CONFIG.maxRetries})`
+    logInfo(
+      `Rate limited (429). Retrying in ${Math.round(delay / 1000)}s (attempt ${retryCount + 1}/${RATE_LIMIT_CONFIG.maxRetries})`,
+      {
+        component: 'api',
+        action: 'RATE_LIMIT_RETRY',
+      }
     );
   }
 
@@ -142,7 +148,10 @@ async function handleLegacyFallback(
   if (!shouldFallback(config, error)) return null;
 
   if (process.env.NODE_ENV !== 'production') {
-    console.log(`🔄 Falling back to legacy API for ${config.url}`);
+    logInfo(`Falling back to legacy API for ${config.url}`, {
+      component: 'api',
+      action: 'LEGACY_FALLBACK',
+    });
   }
 
   config.__wearsearchTriedLegacy = true;
@@ -159,7 +168,10 @@ function handleAuthError(apiError: ApiError): void {
   const wasAuthenticated = isAuthenticated();
 
   if (wasAuthenticated && process.env.NODE_ENV !== 'production') {
-    console.warn('🔒 Authentication error - token may be expired');
+    logWarn('Authentication error - token may be expired', {
+      component: 'api',
+      action: 'AUTH_ERROR',
+    });
   }
 
   if (isCookieAuthMode() || wasAuthenticated) {
@@ -179,11 +191,15 @@ function logApiError(apiError: ApiError): void {
   // Don't log rate limit errors (handled separately)
   if (apiError.status === 429) return;
 
-  console.error('❌ API Error:', {
-    message: apiError.message,
-    status: apiError.status,
-    code: apiError.code,
-    url: apiError.config?.url,
+  logError('API Error', {
+    component: 'api',
+    action: 'API_ERROR',
+    metadata: {
+      message: apiError.message,
+      status: apiError.status,
+      code: apiError.code,
+      url: apiError.config?.url,
+    },
   });
 }
 
@@ -313,11 +329,17 @@ const attachInterceptors = (client: AxiosInstance, fallback?: FallbackConfig) =>
           !url.includes('/pages') &&
           !url.includes('/auth/me')
         ) {
-          console.log(`🔑 Auth token attached to ${config.method?.toUpperCase()} ${url}`);
+          logInfo(`Auth token attached to ${config.method?.toUpperCase()} ${url}`, {
+            component: 'api',
+            action: 'AUTH_TOKEN_ATTACHED',
+          });
         }
       } else if (!token && url && !isPublicEndpoint(url) && !url.includes('/auth/me')) {
         // Only warn for endpoints that likely require authentication
-        console.warn(`⚠️ No token available for ${config.method?.toUpperCase()} ${url}`);
+        logWarn(`No token available for ${config.method?.toUpperCase()} ${url}`, {
+          component: 'api',
+          action: 'NO_AUTH_TOKEN',
+        });
       }
 
       return config;
@@ -416,10 +438,14 @@ export const apiGet = async <T>(
       return schema.parse(response.data);
     } catch (error) {
       if (process.env.NODE_ENV !== 'production') {
-        console.error('API response validation failed:', {
-          url,
-          error: error instanceof z.ZodError ? error.errors : error,
-          data: response.data,
+        logError('API response validation failed', {
+          component: 'api',
+          action: 'RESPONSE_VALIDATION',
+          metadata: {
+            url,
+            error: error instanceof z.ZodError ? error.errors : error,
+            data: response.data,
+          },
         });
       }
       throw new ApiError('Invalid API response format', undefined, undefined, 'VALIDATION_ERROR');
@@ -442,9 +468,13 @@ export const apiPost = async <T>(
       return schema.parse(response.data);
     } catch (error) {
       if (process.env.NODE_ENV !== 'production') {
-        console.error('API response validation failed:', {
-          url,
-          error: error instanceof z.ZodError ? error.errors : error,
+        logError('API response validation failed', {
+          component: 'api',
+          action: 'RESPONSE_VALIDATION',
+          metadata: {
+            url,
+            error: error instanceof z.ZodError ? error.errors : error,
+          },
         });
       }
       throw new ApiError('Invalid API response format', undefined, undefined, 'VALIDATION_ERROR');
@@ -467,7 +497,11 @@ export const apiPut = async <T>(
       return schema.parse(response.data);
     } catch (error) {
       if (process.env.NODE_ENV !== 'production') {
-        console.error('API response validation failed:', { url, error });
+        logError('API response validation failed', {
+          component: 'api',
+          action: 'RESPONSE_VALIDATION',
+          metadata: { url, error },
+        });
       }
       throw new ApiError('Invalid API response format', undefined, undefined, 'VALIDATION_ERROR');
     }
@@ -489,7 +523,11 @@ export const apiPatch = async <T>(
       return schema.parse(response.data);
     } catch (error) {
       if (process.env.NODE_ENV !== 'production') {
-        console.error('API response validation failed:', { url, error });
+        logError('API response validation failed', {
+          component: 'api',
+          action: 'RESPONSE_VALIDATION',
+          metadata: { url, error },
+        });
       }
       throw new ApiError('Invalid API response format', undefined, undefined, 'VALIDATION_ERROR');
     }
@@ -510,7 +548,11 @@ export const apiDelete = async <T>(
       return schema.parse(response.data);
     } catch (error) {
       if (process.env.NODE_ENV !== 'production') {
-        console.error('API response validation failed:', { url, error });
+        logError('API response validation failed', {
+          component: 'api',
+          action: 'RESPONSE_VALIDATION',
+          metadata: { url, error },
+        });
       }
       throw new ApiError('Invalid API response format', undefined, undefined, 'VALIDATION_ERROR');
     }

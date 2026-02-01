@@ -85,34 +85,34 @@ export const adminApi = {
     if (options?.brandsPage) params.set('brandsPage', String(options.brandsPage));
     if (options?.brandsLimit) params.set('brandsLimit', String(options.brandsLimit));
 
-    const response = await api.get(`/admin/dashboard?${params}`);
+    const response = await api.get(`/api/v1/admin/dashboard?${params}`);
     return response.data;
   },
 
   // ===== PRODUCTS =====
 
   async getProducts() {
-    const response = await api.get('/admin/products');
+    const response = await api.get('/api/v1/admin/products');
     return response.data;
   },
 
   async getProduct(id: string) {
-    const response = await api.get(`/admin/products/${id}`);
+    const response = await api.get(`/api/v1/admin/products/${id}`);
     return response.data;
   },
 
   async createProduct(product: Record<string, unknown>) {
-    const response = await api.post('/admin/products', product);
+    const response = await api.post('/api/v1/admin/products', product);
     return response.data;
   },
 
   async updateProduct(id: string, product: Record<string, unknown>) {
-    const response = await api.put(`/admin/products/${id}`, product);
+    const response = await api.put(`/api/v1/admin/products/${id}`, product);
     return response.data;
   },
 
   async deleteProduct(id: string) {
-    const response = await api.delete(`/admin/products/${id}`);
+    const response = await api.delete(`/api/v1/admin/products/${id}`);
     return response.data;
   },
 
@@ -120,22 +120,22 @@ export const adminApi = {
 
   async getStores(search?: string) {
     const params = search ? `?search=${encodeURIComponent(search)}` : '';
-    const response = await api.get(`/admin/stores${params}`);
+    const response = await api.get(`/api/v1/admin/stores${params}`);
     return response.data;
   },
 
   async createStore(store: Store) {
-    const response = await api.post('/admin/stores', store);
+    const response = await api.post('/api/v1/admin/stores', store);
     return response.data;
   },
 
   async updateStore(id: string, store: Partial<Store>) {
-    const response = await api.put(`/admin/stores/${id}`, store);
+    const response = await api.put(`/api/v1/admin/stores/${id}`, store);
     return response.data;
   },
 
   async deleteStore(id: string) {
-    const response = await api.delete(`/admin/stores/${id}`);
+    const response = await api.delete(`/api/v1/admin/stores/${id}`);
     return response.data;
   },
 
@@ -143,22 +143,22 @@ export const adminApi = {
 
   async getBrands(search?: string) {
     const params = search ? `?search=${encodeURIComponent(search)}` : '';
-    const response = await api.get(`/brands${params}`);
+    const response = await api.get(`/api/v1/brands${params}`);
     return response.data;
   },
 
   async createBrand(brand: Brand) {
-    const response = await api.post('/brands', brand);
+    const response = await api.post('/api/v1/brands', brand);
     return response.data;
   },
 
   async updateBrand(id: string, brand: Partial<Brand>) {
-    const response = await api.put(`/brands/${id}`, brand);
+    const response = await api.put(`/api/v1/brands/${id}`, brand);
     return response.data;
   },
 
   async deleteBrand(id: string) {
-    const response = await api.delete(`/brands/${id}`);
+    const response = await api.delete(`/api/v1/brands/${id}`);
     return response.data;
   },
 
@@ -169,7 +169,7 @@ export const adminApi = {
     formData.append('file', file);
     formData.append('folder', folder);
 
-    const response = await api.post('/supabase-upload', formData, {
+    const response = await api.post('/api/v1/supabase-upload', formData, {
       headers: {
         'Content-Type': 'multipart/form-data',
       },

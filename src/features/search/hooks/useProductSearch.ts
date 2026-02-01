@@ -4,7 +4,7 @@
  * Supports searching both products and stores
  */
 
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect, useMemo, useCallback, useRef } from 'react';
 import { useProductsPageData, useStoresPageData } from '@/hooks/useAggregatedData';
 
 const isRecord = (value: unknown): value is Record<string, unknown> =>
@@ -41,18 +41,73 @@ export interface SearchResult {
   product_count?: number;
 }
 
+interface RateLimitState {
+  requests: number;
+  windowStart: number;
+  blocked: boolean;
+}
+
+const RATE_LIMIT = {
+  maxRequests: 10,
+  windowMs: 60000, // 1 minute
+};
+
 export const useProductSearch = () => {
   const [query, setQuery] = useState('');
   const [debouncedQuery, setDebouncedQuery] = useState('');
+  const [rateLimitError, setRateLimitError] = useState<string | null>(null);
+  const rateLimitRef = useRef<RateLimitState>({
+    requests: 0,
+    windowStart: Date.now(),
+    blocked: false,
+  });
+
+  // Rate limiting check
+  const checkRateLimit = useCallback((): boolean => {
+    const now = Date.now();
+    const state = rateLimitRef.current;
+
+    // Reset window if expired
+    if (now - state.windowStart > RATE_LIMIT.windowMs) {
+      state.requests = 0;
+      state.windowStart = now;
+      state.blocked = false;
+      setRateLimitError(null);
+    }
+
+    // Check if blocked
+    if (state.blocked) {
+      const remainingMs = RATE_LIMIT.windowMs - (now - state.windowStart);
+      const remainingSec = Math.ceil(remainingMs / 1000);
+      setRateLimitError(`Занадто багато запитів. Спробуйте через ${remainingSec} сек.`);
+      return false;
+    }
+
+    // Check limit
+    if (state.requests >= RATE_LIMIT.maxRequests) {
+      state.blocked = true;
+      const remainingMs = RATE_LIMIT.windowMs - (now - state.windowStart);
+      const remainingSec = Math.ceil(remainingMs / 1000);
+      setRateLimitError(`Ліміт пошуку перевищено. Спробуйте через ${remainingSec} сек.`);
+      return false;
+    }
+
+    state.requests++;
+    setRateLimitError(null);
+    return true;
+  }, []);
 
   // Debounce search query
   useEffect(() => {
     const timer = setTimeout(() => {
+      if (query.trim().length >= 2 && !checkRateLimit()) {
+        return;
+      }
       setDebouncedQuery(query);
     }, 300);
 
     return () => clearTimeout(timer);
-  }, [query]);
+  }, [query, checkRateLimit]);
 
   const hasQuery = debouncedQuery.trim().length >= 2;
   const apiFilters = useMemo(
@@ -164,5 +219,6 @@ export const useProductSearch = () => {
     hasQuery,
     hasResults,
     showNoResults,
+    rateLimitError,
   };
 };

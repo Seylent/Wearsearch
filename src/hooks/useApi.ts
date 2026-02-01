@@ -12,6 +12,7 @@ import {
 } from '@tanstack/react-query';
 import { api, apiLegacy } from '@/services/api';
 import { useIsAuthenticated } from '@/hooks/useIsAuthenticated';
+import { logInfo } from '@/services/logger';
 import type { Product, Brand, FavoritesResponse } from '@/types';
 
 // Helper type for optional query options
@@ -89,7 +90,7 @@ export const useProducts = (options?: QueryOptions) => {
     queryKey: queryKeys.products,
     queryFn: async () => {
       // v1 canonical lists are paginated; fetch first (max) page for general UI usage
-      const response = await api.get('/items', { params: { page: 1, limit: 100 } });
+      const response = await api.get('/api/v1/items', { params: { page: 1, limit: 100 } });
       const body: unknown = response.data;
       const items = getArray(body, 'items');
       const products = getArray(body, 'products');
@@ -110,7 +111,7 @@ export const useProduct = (id: string) => {
   return useQuery({
     queryKey: queryKeys.product(id),
     queryFn: async () => {
-      const response = await api.get(`/items/${id}`);
+      const response = await api.get(`/api/v1/items/${id}`);
       const body: unknown = response.data;
       if (!isRecord(body)) return body;
       return body.item ?? body.product ?? body;
@@ -125,7 +126,7 @@ export const useProductStores = (productId: string, options?: QueryOptions) => {
   return useQuery({
     queryKey: queryKeys.productStores(productId),
     queryFn: async () => {
-      const response = await api.get(`/items/${productId}/stores`);
+      const response = await api.get(`/api/v1/items/${productId}/stores`);
       const body: unknown = response.data;
       const items = getArray(body, 'items');
       const stores = getArray(body, 'stores');
@@ -147,7 +148,7 @@ export const useRelatedProducts = (productId: string) => {
     queryKey: queryKeys.relatedProducts(productId),
     queryFn: async () => {
       try {
-        const response = await api.get(`/products/${productId}/detail`);
+        const response = await api.get(`/api/v1/products/${productId}/detail`);
         const body: unknown = response.data;
         const payload =
           getRecord(body, 'data') ?? getRecord(body, 'item') ?? (isRecord(body) ? body : {});
@@ -158,7 +159,7 @@ export const useRelatedProducts = (productId: string) => {
           (payload as { related_products?: unknown }).related_products;
         return Array.isArray(related) ? related : [];
       } catch {
-        const response = await api.get(`/pages/product/${productId}`);
+        const response = await api.get(`/api/v1/pages/product/${productId}`);
         const body: unknown = response.data;
         const related = getRecord(body, 'item')?.relatedProducts;
         return Array.isArray(related) ? related : [];
@@ -175,7 +176,7 @@ export const useStores = (options?: QueryOptions) => {
   return useQuery({
     queryKey: queryKeys.stores,
     queryFn: async () => {
-      const response = await api.get('/stores');
+      const response = await api.get('/api/v1/stores');
       const body: unknown = response.data;
       const items = getArray(body, 'items');
       const stores = getArray(body, 'stores');
@@ -200,7 +201,7 @@ export const useStoreProducts = (
   return useQuery({
     queryKey: ['storeProducts', storeId, params],
     queryFn: async () => {
-      const response = await api.get(`/stores/${storeId}/products`, {
+      const response = await api.get(`/api/v1/stores/${storeId}/products`, {
         params: {
           ...(params?.category && { category: params.category }),
           ...(params?.page && { page: params.page }),
@@ -243,7 +244,7 @@ export const useStore = (id: string) => {
   return useQuery({
     queryKey: queryKeys.store(id),
     queryFn: async () => {
-      const response = await api.get(`/stores/${id}`);
+      const response = await api.get(`/api/v1/stores/${id}`);
       return response.data;
     },
     enabled: !!id,
@@ -256,7 +257,7 @@ export const useBrands = (options?: QueryOptions) => {
   return useQuery({
     queryKey: queryKeys.brands,
     queryFn: async () => {
-      const response = await api.get('/brands');
+      const response = await api.get('/api/v1/brands');
       const body: unknown = response.data;
       const items = getArray(body, 'items');
       const brands = getArray(body, 'brands');
@@ -282,7 +283,7 @@ export const useProductsByIds = (ids: Array<string | number>, options?: QueryOpt
       const uniqueIds = Array.from(new Set(normalizedIds));
       const results = await Promise.all(
         uniqueIds.map(async id => {
-          const res = await api.get(`/items/${id}`);
+          const res = await api.get(`/api/v1/items/${id}`);
           const body: unknown = res.data;
           if (!isRecord(body)) return body;
           return body.product ?? body;
@@ -302,7 +303,7 @@ export const useBrand = (id: string, options?: QueryOptions) => {
   return useQuery({
     queryKey: queryKeys.brand(id),
     queryFn: async () => {
-      const response = await api.get(`/brands/${id}`);
+      const response = await api.get(`/api/v1/brands/${id}`);
       return response.data;
     },
     enabled: !!id,
@@ -316,7 +317,7 @@ export const useCreateBrand = () => {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: async (brandData: Partial<Brand>) => {
-      const response = await api.post('/brands', brandData);
+      const response = await api.post('/api/v1/brands', brandData);
       return response.data;
     },
     onSuccess: () => {
@@ -329,7 +330,7 @@ export const useUpdateBrand = () => {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: async ({ id, data }: { id: string; data: Partial<Brand> }) => {
-      const response = await api.put(`/brands/${id}`, data);
+      const response = await api.put(`/api/v1/brands/${id}`, data);
       return response.data;
     },
     onSuccess: () => {
@@ -342,7 +343,7 @@ export const useDeleteBrand = () => {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: async (id: string) => {
-      const response = await api.delete(`/brands/${id}`);
+      const response = await api.delete(`/api/v1/brands/${id}`);
       return response.data;
     },
     onSuccess: () => {
@@ -357,12 +358,12 @@ export const useStats = () => {
     queryKey: queryKeys.stats,
     queryFn: async () => {
       try {
-        // Canonical v1: stats are part of /pages/home response.
-        const response = await api.get('/pages/home');
+        // v1: stats from /api/v1/statistics endpoint
+        const response = await api.get('/api/v1/statistics');
         const body: unknown = response.data;
         const item =
           getRecord(body, 'item') ?? getRecord(body, 'data') ?? (isRecord(body) ? body : undefined);
-        const statistics = item && isRecord(item.statistics) ? item.statistics : {};
+        const statistics = item && isRecord(item.statistics) ? item.statistics : (item ?? {});
 
         return {
           products: statistics.total_products || 0,
@@ -372,7 +373,6 @@ export const useStats = () => {
           total_reviews: statistics.total_reviews || 0,
         };
       } catch {
-        console.log('Stats endpoint not available, returning defaults');
         return { products: 0, stores: 0, brands: 0, satisfaction_rate: 0, total_reviews: 0 };
       }
     },
@@ -392,8 +392,10 @@ export const useFavorites = () => {
     queryKey: queryKeys.favorites,
     queryFn: async () => {
       try {
-        // Double check auth before making request
-        const response = await api.get('/users/me/favorites', { params: { page: 1, limit: 100 } });
+        // v1 endpoint: /api/v1/users/me/favorites
+        const response = await api.get('/api/v1/users/me/favorites', {
+          params: { page: 1, limit: 100 },
+        });
         const body: unknown = response.data;
         const payload =
           getRecord(body, 'data') ?? getRecord(body, 'item') ?? (isRecord(body) ? body : {});
@@ -409,9 +411,15 @@ export const useFavorites = () => {
         if (status === 401 || status === 404 || status === 429) {
           if (process.env.NODE_ENV !== 'production') {
             if (status === 429) {
-              console.log('⏳ Favorites: Rate limited. Backing off for 30s');
+              logInfo('Favorites rate limited. Backing off for 30s', {
+                component: 'useApi',
+                action: 'FAVORITES_RATE_LIMIT',
+              });
             } else if (status === 401) {
-              console.log('🔐 Favorites: Not authenticated');
+              logInfo('Favorites not authenticated', {
+                component: 'useApi',
+                action: 'FAVORITES_NO_AUTH',
+              });
             }
           }
           return { favorites: [], total: 0 };
@@ -449,7 +457,7 @@ export const useFavoritesPage = (
       query.set('page', String(params?.page ?? 1));
       query.set('limit', String(params?.limit ?? 24));
 
-      const response = await api.get('/users/me/favorites', { params: query });
+      const response = await api.get('/api/v1/users/me/favorites', { params: query });
       const body: unknown = response.data;
       const payload =
         getRecord(body, 'data') ?? getRecord(body, 'item') ?? (isRecord(body) ? body : {});
@@ -482,7 +490,7 @@ export const useContacts = () => {
   return useQuery({
     queryKey: queryKeys.contacts,
     queryFn: async () => {
-      const response = await api.get('/contacts');
+      const response = await api.get('/api/v1/contacts');
       return response.data;
     },
     staleTime: 30 * 60 * 1000,
@@ -590,13 +598,16 @@ export const useSyncGuestFavorites = () => {
 
   return useMutation({
     mutationFn: async (guestFavorites: string[]) => {
-      const response = await api.post('/favorites/sync', { guestFavorites });
+      const response = await api.post('/api/v1/favorites/sync', { guestFavorites });
       return response.data;
     },
     onSuccess: data => {
       // Invalidate favorites cache to refresh with merged data
       queryClient.invalidateQueries({ queryKey: queryKeys.favorites, refetchType: 'active' });
-      console.log(`✅ Synced ${data.added} favorites. Total: ${data.total}`);
+      logInfo(`Synced ${data.added} favorites. Total: ${data.total}`, {
+        component: 'useApi',
+        action: 'FAVORITES_SYNC',
+      });
       return data;
     },
     onError: (error: unknown) => {
@@ -633,7 +644,7 @@ export const useCreateProduct = () => {
 
   return useMutation({
     mutationFn: async (productData: unknown) => {
-      const response = await api.post('/admin/products', productData);
+      const response = await api.post('/api/v1/admin/products', productData);
       return response.data;
     },
     onSuccess: () => {
@@ -647,7 +658,7 @@ export const useUpdateProduct = () => {
 
   return useMutation({
     mutationFn: async ({ id, data }: { id: string; data: unknown }) => {
-      const response = await api.put(`/admin/products/${id}`, data);
+      const response = await api.put(`/api/v1/admin/products/${id}`, data);
       return response.data;
     },
     onSuccess: () => {
@@ -661,7 +672,7 @@ export const useDeleteProduct = () => {
 
   return useMutation({
     mutationFn: async (id: string) => {
-      const response = await api.delete(`/admin/products/${id}`);
+      const response = await api.delete(`/api/v1/admin/products/${id}`);
       return response.data;
     },
     onSuccess: () => {

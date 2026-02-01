@@ -6,6 +6,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useIsAuthenticated } from '@/hooks/useIsAuthenticated';
+import { safeGetItem, safeSetItem } from '@/utils/safeStorage';
 import collectionsService, {
   type Collection as ApiCollection,
   type CollectionItem as ApiCollectionItem,
@@ -42,48 +43,28 @@ const DEFAULT_COLLECTION_TEMPLATES = [
  * Get collections from localStorage (fallback for non-authenticated users)
  */
 const getStoredCollections = (): Collection[] => {
-  try {
-    const stored = localStorage.getItem(STORAGE_KEY);
-    if (!stored) return [];
-    return JSON.parse(stored);
-  } catch {
-    return [];
-  }
+  return safeGetItem<Collection[]>(STORAGE_KEY, []);
 };
 
 /**
  * Save collections to localStorage
  */
 const saveCollections = (collections: Collection[]): void => {
-  try {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(collections));
-  } catch {
-    console.warn('Failed to save collections');
-  }
+  safeSetItem(STORAGE_KEY, collections);
 };
 
 /**
  * Get collection items mapping from localStorage (for API users)
  */
 const getStoredItems = (): Record<string, CollectionItem[]> => {
-  try {
-    const stored = localStorage.getItem(ITEMS_STORAGE_KEY);
-    if (!stored) return {};
-    return JSON.parse(stored);
-  } catch {
-    return {};
-  }
+  return safeGetItem<Record<string, CollectionItem[]>>(ITEMS_STORAGE_KEY, {});
 };
 
 /**
  * Save collection items mapping to localStorage
  */
 const saveItems = (items: Record<string, CollectionItem[]>): void => {
-  try {
-    localStorage.setItem(ITEMS_STORAGE_KEY, JSON.stringify(items));
-  } catch {
-    console.warn('Failed to save collection items');
-  }
+  safeSetItem(ITEMS_STORAGE_KEY, items);
 };
 
 const toLocalCollectionItem = (item: ApiCollectionItem): CollectionItem => ({

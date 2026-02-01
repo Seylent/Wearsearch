@@ -14,6 +14,7 @@ import { useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import { languageService } from '@/i18n';
 import { setLanguageCookie } from '@/utils/languageStorage';
+import { logInfo } from '@/services/logger';
 
 export const useClientLanguage = () => {
   const { i18n } = useTranslation();
@@ -27,7 +28,10 @@ export const useClientLanguage = () => {
         : false;
 
     if (explicitPreference && i18n.language !== savedLanguage) {
-      console.log(`🌍 Syncing language: ${i18n.language} -> ${savedLanguage}`);
+      logInfo(`Syncing language: ${i18n.language} -> ${savedLanguage}`, {
+        component: 'useClientLanguage',
+        action: 'SYNC_LANGUAGE',
+      });
       i18n.changeLanguage(savedLanguage);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps

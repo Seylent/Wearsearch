@@ -129,7 +129,7 @@ function NewProductForm({ storeId }: { storeId: string }) {
 
   const handleSubmit = async () => {
     try {
-      const { isAllowed, isClosed, brandName } = getBrandAccess({
+      const { isAllowed, brandName } = getBrandAccess({
         brandId: formData.brand_id,
         brands,
         storeBrandId,

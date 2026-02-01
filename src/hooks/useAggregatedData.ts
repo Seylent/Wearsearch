@@ -6,6 +6,7 @@
 
 import { useQuery, UseQueryOptions, keepPreviousData } from '@tanstack/react-query';
 import { api } from '@/services/api';
+import { logInfo } from '@/services/logger';
 import { logApiError } from '@/services/logger';
 import i18n from '@/i18n';
 
@@ -55,12 +56,18 @@ export const useHomepageData = (currency: string = 'UAH', options?: QueryOptions
     queryKey: ['homepage-data', currency],
     queryFn: async () => {
       if (process.env.NODE_ENV === 'development') {
-        console.log('[API] Fetching homepage data...');
+        logInfo('Fetching homepage data', {
+          component: 'useAggregatedData',
+          action: 'HOMEPAGE_FETCH',
+        });
       }
       try {
-        const response = await api.get('/pages/home', { params: { currency } });
+        const response = await api.get('/api/v1/pages/home', { params: { currency } });
         if (process.env.NODE_ENV === 'development') {
-          console.log('[API] Homepage data received');
+          logInfo('Homepage data received', {
+            component: 'useAggregatedData',
+            action: 'HOMEPAGE_SUCCESS',
+          });
         }
 
         // BFF returns: { success: true, data: { products, brands, statistics } }
@@ -81,7 +88,10 @@ export const useHomepageData = (currency: string = 'UAH', options?: QueryOptions
         const status = (error as { response?: { status?: number } })?.response?.status;
         if (status === 429) {
           if (process.env.NODE_ENV === 'development') {
-            console.log('[Homepage] Rate limited, returning empty data');
+            logInfo('Homepage rate limited, returning empty data', {
+              component: 'useAggregatedData',
+              action: 'HOMEPAGE_RATE_LIMIT',
+            });
           }
           return {
             products: [],
@@ -92,14 +102,17 @@ export const useHomepageData = (currency: string = 'UAH', options?: QueryOptions
 
         // Fallback to individual calls
         if (process.env.NODE_ENV === 'development') {
-          console.log('[Homepage] Using fallback endpoints');
+          logInfo('Homepage using fallback endpoints', {
+            component: 'useAggregatedData',
+            action: 'HOMEPAGE_FALLBACK',
+          });
         }
 
         try {
           const [productsRes, statsRes] = await Promise.all([
-            api.get('/items', { params: { limit: 12, sort: 'newest', currency } }),
+            api.get('/api/v1/items', { params: { limit: 12, sort: 'newest', currency } }),
             api
-              .get('/statistics')
+              .get('/api/v1/statistics')
               .catch(() => ({ data: { total_products: 0, total_stores: 0, total_brands: 0 } })),
           ]);
 
@@ -221,7 +234,7 @@ export const useProductsPageData = (filters: ProductFilters = {}, options?: Quer
       try {
         // BFF: GET /api/pages/products -> { success, data: { items, meta, facets } }
         const params = buildV1ProductsParams(filters);
-        const response = await api.get('/pages/products', { params });
+        const response = await api.get('/api/v1/pages/products', { params });
 
         const body: unknown = response.data?.data || response.data;
         const items = getArray(body, 'items') ?? [];
@@ -255,12 +268,15 @@ export const useProductsPageData = (filters: ProductFilters = {}, options?: Quer
       } catch {
         // Fallback to individual calls
         if (process.env.NODE_ENV !== 'production') {
-          console.log('[Products Page] Using fallback endpoints');
+          logInfo('Products page using fallback endpoints', {
+            component: 'useAggregatedData',
+            action: 'PRODUCTS_FALLBACK',
+          });
         }
 
         const [productsRes, brandsRes] = await Promise.all([
-          api.get('/items', { params: buildV1ProductsParams(filters) }),
-          api.get('/brands').catch(() => ({ data: [] })),
+          api.get('/api/v1/items', { params: buildV1ProductsParams(filters) }),
+          api.get('/api/v1/brands').catch(() => ({ data: [] })),
         ]);
 
         const productsBody: unknown = productsRes.data;
@@ -332,7 +348,7 @@ export const useProductDetailData = (
   };
 
   const fetchProductDetailFallback = async (productId: string) => {
-    const productRes = await api.get(`/items/${productId}`, { params: { currency } });
+    const productRes = await api.get(`/api/v1/items/${productId}`, { params: { currency } });
     const productBody: unknown = productRes.data;
     const product = (isRecord(productBody) ? productBody.product : undefined) ?? productBody;
 
@@ -341,9 +357,9 @@ export const useProductDetailData = (
       typeof rawBrandId === 'string' || typeof rawBrandId === 'number' ? String(rawBrandId) : '';
 
     const [storesRes, brandRes] = await Promise.all([
-      api.get(`/items/${productId}/stores`),
+      api.get(`/api/v1/items/${productId}/stores`),
       brandId
-        ? api.get(`/brands/${brandId}`).catch(() => ({ data: null }))
+        ? api.get(`/api/v1/brands/${brandId}`).catch(() => ({ data: null }))
         : Promise.resolve({ data: null }),
     ]);
 
@@ -367,7 +383,7 @@ export const useProductDetailData = (
       try {
         const lang = i18n.language || 'en';
         const response = await api.get(
-          `/products/${productId}/detail?lang=${encodeURIComponent(lang)}&currency=${encodeURIComponent(
+          `/api/v1/products/${productId}/detail?lang=${encodeURIComponent(lang)}&currency=${encodeURIComponent(
             currency
           )}`
         );
@@ -433,7 +449,7 @@ export const useStoresPageData = (
         query.set('limit', String(params?.limit ?? 24));
         if (params?.search) query.set('search', params.search);
 
-        const response = await api.get('/pages/stores', { params: query });
+        const response = await api.get('/api/v1/pages/stores', { params: query });
         const body: unknown = response.data;
         const items = getArray(body, 'items') ?? [];
         const meta = getRecord(body, 'meta') ?? {};
@@ -463,7 +479,7 @@ export const useStoresPageData = (
           getErrorMessage(error)
         );
 
-        const response = await api.get('/stores');
+        const response = await api.get('/api/v1/stores');
         const body: unknown = response.data;
         const stores =
           getArray(body, 'items') ?? getArray(body, 'stores') ?? (Array.isArray(body) ? body : []);
@@ -512,7 +528,7 @@ export const useAdminDashboardData = (options?: QueryOptions) => {
     queryKey: ['admin-dashboard-data'],
     queryFn: async () => {
       // v1: GET /api/v1/admin/dashboard -> { products: {items, meta}, stores: {items, meta}, brands: {items, meta} }
-      const response = await api.get('/admin/dashboard');
+      const response = await api.get('/api/v1/admin/dashboard');
       return response.data;
     },
     staleTime: 2 * 60 * 1000, // 2 minutes
@@ -529,9 +545,9 @@ export const useAdminDashboardData = (options?: QueryOptions) => {
  *
  * @example
  * const { data, isLoading } = useBatchedRequests({
- *   products: () => api.get('/items'),
- *   brands: () => api.get('/brands'),
- *   custom: () => api.get('/custom-endpoint'),
+ *   products: () => api.get('/api/v1/items'),
+ *   brands: () => api.get('/api/v1/brands'),
+ *   custom: () => api.get('/api/v1/custom-endpoint'),
  * });
  */
 export const useBatchedRequests = (

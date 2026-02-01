@@ -6,6 +6,7 @@
 import { useState, useEffect, useCallback, useMemo } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useIsAuthenticated } from '@/hooks/useIsAuthenticated';
+import { safeGetItem, safeSetItem, safeRemoveItem } from '@/utils/safeStorage';
 import searchService from '@/services/searchService';
 
 const HISTORY_KEY = 'wearsearch_search_history';
@@ -20,24 +21,14 @@ export interface SearchHistoryItem {
  * Get search history from localStorage (fallback for guests)
  */
 const getStoredHistory = (): SearchHistoryItem[] => {
-  try {
-    const stored = localStorage.getItem(HISTORY_KEY);
-    if (!stored) return [];
-    return JSON.parse(stored);
-  } catch {
-    return [];
-  }
+  return safeGetItem<SearchHistoryItem[]>(HISTORY_KEY, []);
 };
 
 /**
  * Save search history to localStorage
  */
 const saveHistory = (items: SearchHistoryItem[]): void => {
-  try {
-    localStorage.setItem(HISTORY_KEY, JSON.stringify(items));
-  } catch {
-    console.warn('Failed to save search history');
-  }
+  safeSetItem(HISTORY_KEY, items);
 };
 
 /**
@@ -171,7 +162,7 @@ export const useSearchHistory = () => {
       clearMutation.mutate();
     } else {
       setLocalHistory([]);
-      localStorage.removeItem(HISTORY_KEY);
+      safeRemoveItem(HISTORY_KEY);
     }
   }, [isLoggedIn, clearMutation]);
 

@@ -41,6 +41,7 @@ interface SearchDropdownViewProps {
   onHistoryClick?: (query: string) => void;
   onRemoveHistory?: (query: string) => void;
   onClearHistory?: () => void;
+  rateLimitError?: string | null;
 }
 
 export const SearchDropdownView: React.FC<Readonly<SearchDropdownViewProps>> = React.memo(
@@ -60,6 +61,7 @@ export const SearchDropdownView: React.FC<Readonly<SearchDropdownViewProps>> = R
     onHistoryClick,
     onRemoveHistory,
     onClearHistory,
+    rateLimitError,
   }) => {
     const { t } = useTranslation();
     const reduceMotion = useReducedMotion();
@@ -97,6 +99,12 @@ export const SearchDropdownView: React.FC<Readonly<SearchDropdownViewProps>> = R
             onClear={() => onQueryChange('')}
             inputRef={inputRef}
           />
+
+          {rateLimitError && (
+            <div className="px-6 py-2 bg-destructive/10 border-y border-destructive/20">
+              <p className="text-sm text-destructive">{rateLimitError}</p>
+            </div>
+          )}
 
           <div className="grid grid-cols-1 lg:grid-cols-[1.1fr_2fr] gap-6 px-6 pb-6 pt-4 max-h-[70vh] overflow-y-auto">
             <div className="order-2 lg:order-1">

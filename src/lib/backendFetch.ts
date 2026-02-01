@@ -11,10 +11,10 @@
  * - A safe fetch that tries `/api/v1` first, then falls back to `/api`
  */
 
-// Use the standard RequestInit type.
+import { getApiUrl } from '@/config/api.config';
 
 export const getBackendOrigin = (): string => {
-  return process.env.NEXT_PUBLIC_API_URL || process.env.BACKEND_URL || 'http://localhost:3000';
+  return getApiUrl();
 };
 
 type FetchBackendOptions = {

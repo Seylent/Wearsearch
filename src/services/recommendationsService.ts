@@ -25,7 +25,7 @@ export const recommendationsService = {
    */
   async getRecommendations(limit: number = 10): Promise<RecommendedProduct[]> {
     try {
-      const response = await api.get(`/recommendations?limit=${limit}`);
+      const response = await api.get(`/api/v1/recommendations?limit=${limit}`);
       const recommendations = response.data.recommendations || response.data || [];
       return recommendations.map(transformRecommendation);
     } catch (error) {
@@ -37,9 +37,12 @@ export const recommendationsService = {
   /**
    * Get similar products for a given product
    */
-  async getSimilarProducts(productId: string | number, limit: number = 6): Promise<SimilarProduct[]> {
+  async getSimilarProducts(
+    productId: string | number,
+    limit: number = 6
+  ): Promise<SimilarProduct[]> {
     try {
-      const response = await api.get(`/items/${productId}/similar?limit=${limit}`);
+      const response = await api.get(`/api/v1/items/${productId}/similar?limit=${limit}`);
       const products = response.data.products || response.data || [];
       return products.map(transformSimilarProduct);
     } catch (error) {
@@ -53,12 +56,13 @@ export const recommendationsService = {
    */
   async trackInteraction(productId: string | number, type: InteractionType): Promise<void> {
     // Only track for authenticated users
-    const token = typeof globalThis.window !== 'undefined' ? localStorage.getItem('wearsearch.auth') : null;
+    const token =
+      typeof globalThis.window !== 'undefined' ? localStorage.getItem('wearsearch.auth') : null;
     if (!token) return;
-    
+
     // Silent fail - tracking is not critical and should not show errors to user
     try {
-      await api.post('/interactions', {
+      await api.post('/api/v1/interactions', {
         product_id: productId,
         type,
       });

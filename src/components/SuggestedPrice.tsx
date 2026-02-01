@@ -14,6 +14,8 @@ interface SuggestedPriceProps {
   currentPrice: number;
 }
 
+const SUGGESTED_PRICES_TABLE = 'suggested_prices' as const;
+
 export const SuggestedPrice = ({ productId, currentPrice }: SuggestedPriceProps) => {
   const { toast } = useToast();
   const [suggestedPrice, setSuggestedPrice] = useState<string>('');
@@ -31,14 +33,12 @@ export const SuggestedPrice = ({ productId, currentPrice }: SuggestedPriceProps)
   const isRecord = (value: unknown): value is Record<string, unknown> =>
     typeof value === 'object' && value !== null;
 
-  const SUGGESTED_PRICES_TABLE = 'suggested_prices';
-  const getSuggestedPricesQuery = () =>
-    (supabase as unknown as { from: (table: string) => any }).from(SUGGESTED_PRICES_TABLE);
+  const getSuggestedPricesQuery = () => supabase.from(SUGGESTED_PRICES_TABLE as never);
 
   const loadAverageSuggestedPrice = useCallback(async () => {
-    const { data, error } = await getSuggestedPricesQuery()
+    const { data, error } = (await getSuggestedPricesQuery()
       .select('suggested_price')
-      .eq('product_id', productId);
+      .eq('product_id', productId)) as { data: unknown[] | null; error: unknown };
 
     if (error) {
       // Table doesn't exist yet - fail silently
@@ -53,15 +53,15 @@ export const SuggestedPrice = ({ productId, currentPrice }: SuggestedPriceProps)
     const avg = prices.length > 0 ? prices.reduce((sum, p) => sum + p, 0) / prices.length : 0;
     setAveragePrice(Number(avg.toFixed(2)));
     setTotalSuggestions(prices.length);
-  }, [SUGGESTED_PRICES_TABLE, productId]);
+  }, [productId]);
 
   const loadUserSuggestion = useCallback(
     async (userId: string) => {
-      const { data, error } = await getSuggestedPricesQuery()
+      const { data, error } = (await getSuggestedPricesQuery()
         .select('suggested_price')
         .eq('product_id', productId)
         .eq('user_id', userId)
-        .maybeSingle();
+        .maybeSingle()) as { data: unknown; error: unknown };
 
       if (error) {
         // Table doesn't exist yet - fail silently
@@ -76,7 +76,7 @@ export const SuggestedPrice = ({ productId, currentPrice }: SuggestedPriceProps)
       setUserSuggestion(suggested);
       setSuggestedPrice(String(suggested));
     },
-    [SUGGESTED_PRICES_TABLE, productId]
+    [productId]
   );
 
   const checkAuthAndLoadPrices = useCallback(async () => {

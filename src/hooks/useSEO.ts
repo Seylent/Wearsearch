@@ -9,6 +9,7 @@
 
 import { useEffect } from 'react';
 import { usePathname } from 'next/navigation';
+import { logWarn } from '@/services/logger';
 
 interface SEOProps {
   title: string;
@@ -50,7 +51,11 @@ const updateMetaTag = (selector: string, attribute: string, content: string): vo
     }
     element.setAttribute('content', content);
   } catch (error) {
-    console.debug('Failed to update meta tag:', selector, error);
+    logWarn('Failed to update meta tag', {
+      component: 'useSEO',
+      action: 'UPDATE_META',
+      metadata: { selector, error },
+    });
   }
 };
 
@@ -119,7 +124,11 @@ const updateCanonicalLink = (canonicalUrl: string): void => {
     }
     linkCanonical.setAttribute('href', canonicalUrl);
   } catch (error) {
-    console.debug('Failed to update canonical link:', error);
+    logWarn('Failed to update canonical link', {
+      component: 'useSEO',
+      action: 'UPDATE_CANONICAL',
+      metadata: { error },
+    });
   }
 };
 
@@ -152,7 +161,11 @@ const updateStructuredData = (structuredData: object): void => {
     }
     script.textContent = JSON.stringify(structuredData);
   } catch (error) {
-    console.debug('Failed to update structured data:', error);
+    logWarn('Failed to update structured data', {
+      component: 'useSEO',
+      action: 'UPDATE_STRUCTURED_DATA',
+      metadata: { error },
+    });
   }
 };
 

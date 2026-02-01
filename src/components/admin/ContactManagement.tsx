@@ -53,7 +53,7 @@ export const ContactManagement: React.FC = () => {
       localStorage.setItem('site_contacts', JSON.stringify(contactInfo));
 
       try {
-        await api.put('/contacts', contactInfo, {
+        await api.put('/api/v1/contacts', contactInfo, {
           headers: { 'Content-Type': 'application/json' },
         });
       } catch (error) {

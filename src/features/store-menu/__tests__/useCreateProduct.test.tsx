@@ -48,7 +48,7 @@ describe('useCreateProduct', () => {
       });
     });
 
-    expect(api.post).toHaveBeenCalledWith('/store-menu/products', {
+    expect(api.post).toHaveBeenCalledWith('/api/v1/store-menu/products', {
       store_id: 'store-1',
       name: 'Sneakers',
       color: 'black',
@@ -90,7 +90,7 @@ describe('useCreateProduct', () => {
       });
     });
 
-    expect(api.post).toHaveBeenCalledWith('/store-menu/products', {
+    expect(api.post).toHaveBeenCalledWith('/api/v1/store-menu/products', {
       store_id: 'store-2',
       name: 'Jacket',
       color: 'navy',

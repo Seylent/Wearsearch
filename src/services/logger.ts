@@ -20,11 +20,13 @@ export interface LoggedError {
 
 class ErrorLogger {
   private isDevelopment: boolean;
+  private isTest: boolean;
   private logs: LoggedError[] = [];
   private maxLogs = 100; // Keep last 100 errors in memory
 
   constructor() {
-    this.isDevelopment = process.env.NODE_ENV !== 'production';
+    this.isDevelopment = process.env.NODE_ENV === 'development';
+    this.isTest = process.env.NODE_ENV === 'test';
   }
 
   /**
@@ -36,11 +38,15 @@ class ErrorLogger {
     this.trimLogs();
 
     // Console output
+    if (this.isTest) {
+      return;
+    }
+
     if (this.isDevelopment) {
-      console.group(`🔴 Error: ${logEntry.message}`);
-      if (context) console.log('Context:', context);
-      if (logEntry.stack) console.log('Stack:', logEntry.stack);
-      console.groupEnd();
+      console.error(`Error: ${logEntry.message}`, {
+        context,
+        stack: logEntry.stack,
+      });
     } else {
       console.error(logEntry.message, context);
     }
@@ -57,10 +63,12 @@ class ErrorLogger {
     this.logs.push(logEntry);
     this.trimLogs();
 
+    if (this.isTest) {
+      return;
+    }
+
     if (this.isDevelopment) {
-      console.group(`⚠️ Warning: ${message}`);
-      if (context) console.log('Context:', context);
-      console.groupEnd();
+      console.warn(`Warning: ${message}`, { context });
     } else {
       console.warn(message, context);
     }
@@ -74,8 +82,12 @@ class ErrorLogger {
     this.logs.push(logEntry);
     this.trimLogs();
 
+    if (this.isTest) {
+      return;
+    }
+
     if (this.isDevelopment) {
-      console.log(`ℹ️ ${message}`, context);
+      console.warn(`Info: ${message}`, { context });
     }
   }
 

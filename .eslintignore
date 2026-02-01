@@ -1,9 +1,0 @@
-node_modules
-.next
-out
-dist
-scripts
-src/components/AdminContentBackup.tsx
-src/components/__tests__/**
-src/**/__tests__/**
-src/test/**

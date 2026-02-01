@@ -5,6 +5,7 @@
 
 import { useState, useEffect, useCallback } from 'react';
 import { api } from '@/services/api';
+import { safeGetItem, safeSetItem, safeRemoveItem } from '@/utils/safeStorage';
 import type { Product } from '@/types';
 
 const STORAGE_KEY = 'wearsearch_recently_viewed';
@@ -26,25 +27,14 @@ export interface RecentlyViewedItem {
  * Get recently viewed products from localStorage
  */
 const getStoredItems = (): RecentlyViewedItem[] => {
-  try {
-    const stored = localStorage.getItem(STORAGE_KEY);
-    if (!stored) return [];
-    return JSON.parse(stored);
-  } catch {
-    return [];
-  }
+  return safeGetItem<RecentlyViewedItem[]>(STORAGE_KEY, []);
 };
 
 /**
  * Save recently viewed products to localStorage
  */
 const saveItems = (items: RecentlyViewedItem[]): void => {
-  try {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(items));
-  } catch {
-    // localStorage might be full or disabled
-    console.warn('Failed to save recently viewed items');
-  }
+  safeSetItem(STORAGE_KEY, items);
 };
 
 /**
@@ -150,7 +140,7 @@ export const useRecentlyViewed = () => {
    */
   const clearAll = useCallback(() => {
     setItems([]);
-    localStorage.removeItem(STORAGE_KEY);
+    safeRemoveItem(STORAGE_KEY);
   }, []);
 
   return {

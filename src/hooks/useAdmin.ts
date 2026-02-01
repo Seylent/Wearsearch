@@ -12,6 +12,7 @@ import { adminApi } from '@/services/api/admin.api';
 import { advancedApi } from '@/services/api/advanced.api';
 import { useAuth } from '@/features/auth/hooks/useAuth';
 import { api } from '@/services/api';
+import { logInfo } from '@/services/logger';
 
 const isRecord = (value: unknown): value is Record<string, unknown> =>
   typeof value === 'object' && value !== null;
@@ -291,7 +292,11 @@ export const useAdmin = () => {
     if (!base) return;
 
     // Fill basic fields from dashboard list item
-    console.log('Loading product for edit:', base);
+    logInfo('Loading product for edit', {
+      component: 'useAdmin',
+      action: 'LOAD_PRODUCT_EDIT',
+      metadata: { base },
+    });
     setProductName((base.name as string) || '');
     setProductCategory(
       (base.category_slug as string) || (base.category as string) || (base.type as string) || ''
@@ -350,7 +355,7 @@ export const useAdmin = () => {
 
       if (needsDetail) {
         try {
-          const detailRes = await api.get(`/products/${editingProductId}/detail`);
+          const detailRes = await api.get(`/api/v1/products/${editingProductId}/detail`);
           const body: unknown = detailRes.data;
           const payload =
             (isRecord(body) && isRecord(body.data) ? body.data : undefined) ??
@@ -412,7 +417,7 @@ export const useAdmin = () => {
 
       // Dashboard list often doesn't include stores. Fetch them from canonical endpoint.
       try {
-        const storesRes = await api.get(`/items/${editingProductId}/stores`);
+        const storesRes = await api.get(`/api/v1/items/${editingProductId}/stores`);
         const body: unknown = storesRes.data;
         const items =
           (Array.isArray(body)
@@ -602,7 +607,7 @@ export const useAdmin = () => {
 
         if (autoTranslateDescription && productDescription) {
           try {
-            const response = await fetch('/api/translate', {
+            const response = await fetch('/api/v1/translate', {
               method: 'POST',
               headers: { 'Content-Type': 'application/json' },
               body: JSON.stringify({
@@ -679,15 +684,27 @@ export const useAdmin = () => {
           productData.auto_translate_description = true;
         }
 
-        console.log('Sending product data to backend:', productData);
+        logInfo('Sending product data to backend', {
+          component: 'useAdmin',
+          action: 'SUBMIT_PRODUCT',
+          metadata: { productData },
+        });
 
         let result;
         if (editingProductId) {
           result = await adminApi.updateProduct(editingProductId, productData);
-          console.log('Product updated, response:', result);
+          logInfo('Product updated', {
+            component: 'useAdmin',
+            action: 'PRODUCT_UPDATED',
+            metadata: { result },
+          });
         } else {
           result = await adminApi.createProduct(productData);
-          console.log('Product created, response:', result);
+          logInfo('Product created', {
+            component: 'useAdmin',
+            action: 'PRODUCT_CREATED',
+            metadata: { result },
+          });
         }
 
         toast({

@@ -142,7 +142,8 @@ export function extractErrorCode(error: unknown): string | null {
       case 401:
         return 'AUTH_UNAUTHORIZED';
       case 403:
-        return 'FORBIDDEN';
+        // Check for role-based permission error from backend
+        return 'ROLE_PERMISSION_DENIED';
       case 404:
         return 'NOT_FOUND';
       case 400:

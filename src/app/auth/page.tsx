@@ -35,7 +35,7 @@ export default function AuthPage() {
   };
 
   const handleLogin = async () => {
-    const response = await api.post('/auth/login', {
+    const response = await api.post('/api/v1/auth/login', {
       identifier: formData.identifier,
       password: formData.password,
     });
@@ -75,7 +75,7 @@ export default function AuthPage() {
       throw new Error('Password mismatch');
     }
 
-    const response = await api.post('/auth/register', {
+    const response = await api.post('/api/v1/auth/register', {
       email: formData.email,
       password: formData.password,
       display_name: formData.display_name || undefined,

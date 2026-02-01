@@ -4,7 +4,7 @@
  */
 
 import { api } from '@/services/api';
-import { logError } from '@/services/logger';
+import { logError, logInfo } from '@/services/logger';
 
 function asError(value: unknown): Error {
   return value instanceof Error ? value : new Error(String(value));
@@ -20,20 +20,32 @@ const CACHE_DURATION = 5 * 60 * 1000; // 5 minutes
 export const getCachedData = <T>(key: string): T | null => {
   const cached = cache.get(key);
   if (cached && Date.now() - cached.timestamp < CACHE_DURATION) {
-    console.log(`[Cache HIT] ${key}`);
+    logInfo(`[Cache HIT] ${key}`, {
+      component: 'apiOptimizations',
+      action: 'CACHE_HIT',
+    });
     return cached.data as T;
   }
-  console.log(`[Cache MISS] ${key}`);
+  logInfo(`[Cache MISS] ${key}`, {
+    component: 'apiOptimizations',
+    action: 'CACHE_MISS',
+  });
   return null;
 };
 
 export const getCachedDataWithTtl = <T>(key: string, ttlMs: number = CACHE_DURATION): T | null => {
   const cached = cache.get(key);
   if (cached && Date.now() - cached.timestamp < ttlMs) {
-    console.log(`[Cache HIT] ${key}`);
+    logInfo(`[Cache HIT] ${key}`, {
+      component: 'apiOptimizations',
+      action: 'CACHE_HIT',
+    });
     return cached.data as T;
   }
-  console.log(`[Cache MISS] ${key}`);
+  logInfo(`[Cache MISS] ${key}`, {
+    component: 'apiOptimizations',
+    action: 'CACHE_MISS',
+  });
   return null;
 };
 
@@ -50,27 +62,36 @@ export const setCachedData = (key: string, data: unknown): void => {
 export const clearCache = (key?: string): void => {
   if (key) {
     cache.delete(key);
-    console.log(`[Cache CLEAR] ${key}`);
+    logInfo(`[Cache CLEAR] ${key}`, {
+      component: 'apiOptimizations',
+      action: 'CACHE_CLEAR',
+    });
   } else {
     cache.clear();
-    console.log('[Cache CLEAR] All cache cleared');
+    logInfo('[Cache CLEAR] All cache cleared', {
+      component: 'apiOptimizations',
+      action: 'CACHE_CLEAR_ALL',
+    });
   }
 };
 
 /**
  * Batch multiple API requests and execute them in parallel
  */
-export const batchRequests = async <T extends Record<string, unknown | null>>(
-  requests: { [K in keyof T]: () => Promise<T[K]> }
-): Promise<T> => {
-  console.log(`[Batch Request] Starting ${Object.keys(requests).length} parallel requests`);
+export const batchRequests = async <T extends Record<string, unknown | null>>(requests: {
+  [K in keyof T]: () => Promise<T[K]>;
+}): Promise<T> => {
+  logInfo(`Starting ${Object.keys(requests).length} parallel requests`, {
+    component: 'apiOptimizations',
+    action: 'BATCH_START',
+  });
   const startTime = performance.now();
 
   const entries = Object.entries(requests);
   const promises = entries.map(([key, fn]) =>
     (fn as () => Promise<unknown>)()
-      .then((result) => ({ key, result }))
-      .catch((error) => ({ key, error }))
+      .then(result => ({ key, result }))
+      .catch(error => ({ key, error }))
   );
 
   const results = await Promise.allSettled(promises);
@@ -93,7 +114,10 @@ export const batchRequests = async <T extends Record<string, unknown | null>>(
   });
 
   const endTime = performance.now();
-  console.log(`[Batch Request] Completed in ${(endTime - startTime).toFixed(2)}ms`);
+  logInfo(`Batch request completed in ${(endTime - startTime).toFixed(2)}ms`, {
+    component: 'apiOptimizations',
+    action: 'BATCH_COMPLETE',
+  });
 
   return data;
 };
@@ -157,23 +181,29 @@ export const throttle = <T extends (...args: unknown[]) => unknown>(
 /**
  * Prefetch data for better UX
  */
-export const prefetchData = async (
-  endpoint: string,
-  cacheKey?: string
-): Promise<void> => {
+export const prefetchData = async (endpoint: string, cacheKey?: string): Promise<void> => {
   const key = cacheKey || endpoint;
-  
+
   // Don't prefetch if already cached
   if (getCachedData(key)) {
-    console.log(`[Prefetch] Already cached: ${key}`);
+    logInfo(`[Prefetch] Already cached: ${key}`, {
+      component: 'apiOptimizations',
+      action: 'PREFETCH_SKIP',
+    });
     return;
   }
 
   try {
-    console.log(`[Prefetch] Loading: ${endpoint}`);
+    logInfo(`[Prefetch] Loading: ${endpoint}`, {
+      component: 'apiOptimizations',
+      action: 'PREFETCH_START',
+    });
     const response = await api.get(endpoint);
     setCachedData(key, response.data);
-    console.log(`[Prefetch] Cached: ${key}`);
+    logInfo(`[Prefetch] Cached: ${key}`, {
+      component: 'apiOptimizations',
+      action: 'PREFETCH_COMPLETE',
+    });
   } catch (error) {
     logError(asError(error), { component: 'prefetch', action: endpoint });
   }

@@ -13,7 +13,7 @@ import {
   setCookieSessionActive,
 } from '@/utils/authStorage';
 import { getValidGuestFavorites, clearGuestFavorites } from './guestFavorites';
-import { logAuthError } from './logger';
+import { logAuthError, logError, logInfo, logWarn } from './logger';
 import type { User, LoginCredentials, RegisterData, AuthResponse } from '@/types';
 
 function isRecord(value: unknown): value is Record<string, unknown> {
@@ -51,13 +51,13 @@ function getResponseData(error: unknown): Record<string, unknown> | undefined {
 }
 
 const ENDPOINTS = {
-  LOGIN: '/auth/login',
-  REGISTER: '/auth/register',
-  LOGOUT: '/auth/logout',
-  ME: '/auth/me', // GET for current user, PUT for profile update
-  FORGOT_PASSWORD: '/auth/forgot-password',
-  RESET_PASSWORD: '/auth/reset-password',
-  CHANGE_PASSWORD: '/auth/password',
+  LOGIN: '/api/v1/auth/login',
+  REGISTER: '/api/v1/auth/register',
+  LOGOUT: '/api/v1/auth/logout',
+  ME: '/api/v1/auth/me', // GET for current user
+  FORGOT_PASSWORD: '/api/v1/auth/forgot-password',
+  RESET_PASSWORD: '/api/v1/auth/reset-password',
+  CHANGE_PASSWORD: '/api/v1/auth/password',
 };
 
 const ENABLE_LEGACY_FALLBACK = process.env.NEXT_PUBLIC_ENABLE_LEGACY_FALLBACK === 'true';
@@ -72,13 +72,17 @@ export const authService = {
    */
   async login(credentials: LoginCredentials): Promise<AuthResponse> {
     try {
-      console.log('🔐 Attempting login...');
+      logInfo('Attempting login', { component: 'authService', action: 'LOGIN' });
       const response = await api.post(ENDPOINTS.LOGIN, credentials);
       const data = response.data;
-      console.log('✅ Login response received:', {
-        hasToken: !!(data.access_token || data.token),
-        hasUser: !!data.user,
-        userId: data.user?.id,
+      logInfo('Login response received', {
+        component: 'authService',
+        action: 'LOGIN_RESPONSE',
+        metadata: {
+          hasToken: !!(data.access_token || data.token),
+          hasUser: !!data.user,
+          userId: data.user?.id,
+        },
       });
 
       // Store auth token
@@ -88,22 +92,30 @@ export const authService = {
         const expiresIn = data.expires_in;
         const expiresAt = expiresIn ? Date.now() + expiresIn * 1000 : undefined;
 
-        console.log('💾 Storing auth data:', {
-          tokenLength: token.length,
-          tokenPreview: token.substring(0, 30) + '...',
-          userId,
-          expiresIn,
-          expiresAt: expiresAt ? new Date(expiresAt).toISOString() : 'no expiration',
+        logInfo('Storing auth data', {
+          component: 'authService',
+          action: 'STORE_AUTH',
+          metadata: {
+            tokenLength: token.length,
+            tokenPreview: token.substring(0, 30) + '...',
+            userId,
+            expiresIn,
+            expiresAt: expiresAt ? new Date(expiresAt).toISOString() : 'no expiration',
+          },
         });
 
         setAuth(token, userId, expiresAt);
 
         // Verify token was stored
         const storedToken = getAuth();
-        console.log('✅ Token verification:', {
-          stored: !!storedToken,
-          matches: storedToken === token,
-          storedPreview: storedToken ? storedToken.substring(0, 30) + '...' : 'none',
+        logInfo('Token verification', {
+          component: 'authService',
+          action: 'VERIFY_TOKEN',
+          metadata: {
+            stored: !!storedToken,
+            matches: storedToken === token,
+            storedPreview: storedToken ? storedToken.substring(0, 30) + '...' : 'none',
+          },
         });
 
         // Store user data for profile display
@@ -120,9 +132,15 @@ export const authService = {
         if (globalThis.window !== undefined) {
           globalThis.window.dispatchEvent(new Event('auth:login'));
         }
-        console.log('✅ Login completed successfully');
+        logInfo('Login completed successfully', {
+          component: 'authService',
+          action: 'LOGIN_SUCCESS',
+        });
       } else {
-        console.error('❌ No token received from login response');
+        logError('No token received from login response', {
+          component: 'authService',
+          action: 'LOGIN_NO_TOKEN',
+        });
         if (isCookieAuthMode()) {
           setCookieSessionActive(true);
           if (globalThis.window !== undefined) {
@@ -135,16 +153,27 @@ export const authService = {
     } catch (error) {
       if (ENABLE_LEGACY_FALLBACK && this.isNotFound(error)) {
         try {
-          console.warn('⚠️ v1 login route not found, falling back to legacy /api');
+          logWarn('v1 login route not found, falling back to legacy /api', {
+            component: 'authService',
+            action: 'LOGIN_FALLBACK',
+          });
           const legacyResponse = await apiLegacy.post(ENDPOINTS.LOGIN, credentials);
           return legacyResponse.data;
         } catch (legacyError) {
-          console.error('❌ Legacy login failed:', legacyError);
+          logError('Legacy login failed', {
+            component: 'authService',
+            action: 'LOGIN_FALLBACK_ERROR',
+            metadata: { legacyError },
+          });
           throw asError(legacyError);
         }
       }
 
-      console.error('❌ Login failed:', error);
+      logError('Login failed', {
+        component: 'authService',
+        action: 'LOGIN_ERROR',
+        metadata: { error },
+      });
       throw asError(error);
     }
   },
@@ -190,7 +219,10 @@ export const authService = {
     } catch (error) {
       if (ENABLE_LEGACY_FALLBACK && this.isNotFound(error)) {
         try {
-          console.warn('⚠️ v1 register route not found, falling back to legacy /api');
+          logWarn('v1 register route not found, falling back to legacy /api', {
+            component: 'authService',
+            action: 'REGISTER_FALLBACK',
+          });
           const legacyResponse = await apiLegacy.post(ENDPOINTS.REGISTER, registerData);
           return legacyResponse.data;
         } catch (legacyError) {
@@ -359,17 +391,26 @@ export const authService = {
 
       // Skip if no guest favorites
       if (guestFavorites.length === 0) {
-        console.log('ℹ️ No guest favorites to sync');
+        logInfo('No guest favorites to sync', {
+          component: 'authService',
+          action: 'SYNC_FAVORITES_SKIP',
+        });
         return;
       }
 
-      console.log(`🔄 Syncing ${guestFavorites.length} valid guest favorites...`);
+      logInfo(`Syncing ${guestFavorites.length} valid guest favorites`, {
+        component: 'authService',
+        action: 'SYNC_FAVORITES_START',
+      });
 
-      const response = await api.post('/favorites/sync', { guestFavorites });
+      const response = await api.post('/api/v1/favorites/sync', { guestFavorites });
       const result = response.data;
 
       if (result.success !== false) {
-        console.log(`✅ Synced ${result.added || 0} favorites. Total: ${result.total || 0}`);
+        logInfo(`Synced ${result.added || 0} favorites. Total: ${result.total || 0}`, {
+          component: 'authService',
+          action: 'SYNC_FAVORITES_SUCCESS',
+        });
 
         // Clear guest favorites after successful sync
         clearGuestFavorites();
@@ -381,7 +422,11 @@ export const authService = {
       const responseData = getResponseData(error);
       const details = responseData?.error;
       if (typeof details === 'string' && details.length > 0) {
-        console.error('Error details:', details);
+        logError('Sync favorites error details', {
+          component: 'authService',
+          action: 'SYNC_FAVORITES_ERROR',
+          metadata: { details },
+        });
       }
 
       // Keep guest favorites in localStorage for retry - don't clear on error
@@ -417,7 +462,10 @@ async function fetchCurrentUserInternal(): Promise<User> {
 
     // Don't throw on 429, just return error to let React Query handle it
     if (status === 429) {
-      console.log('⌛ Auth check rate limited, backing off');
+      logWarn('Auth check rate limited, backing off', {
+        component: 'authService',
+        action: 'RATE_LIMIT',
+      });
       throw new Error('Unauthorized');
     }
 

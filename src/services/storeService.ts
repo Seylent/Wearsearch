@@ -1,4 +1,5 @@
 import api, { handleApiError } from './api';
+import { logError, logInfo, logWarn } from './logger';
 import ENDPOINTS from './endpoints';
 import { AxiosResponse } from 'axios';
 
@@ -60,35 +61,57 @@ export const storeService = {
    */
   async getAllStores(): Promise<Store[]> {
     try {
-      console.log('[StoreService] Fetching all stores...');
+      logInfo('Fetching all stores', {
+        component: 'storeService',
+        action: 'FETCH_ALL',
+      });
       const response: AxiosResponse<
         Store[] | { success: boolean; data: Store[] } | { items: Store[] }
       > = await api.get(ENDPOINTS.STORES.LIST);
 
-      console.log('[StoreService] Response:', response.data);
+      logInfo('Stores response received', {
+        component: 'storeService',
+        action: 'FETCH_ALL_RESPONSE',
+      });
 
       const payload = response.data;
 
       if (Array.isArray(payload)) {
-        console.log('[StoreService] Returned array of stores:', payload.length);
+        logInfo(`Returned array of stores: ${payload.length}`, {
+          component: 'storeService',
+          action: 'FETCH_ALL_ARRAY',
+        });
         return payload;
       }
 
       // Check for items array format (FastAPI pagination format)
       if (hasItems(payload)) {
-        console.log('[StoreService] Returned items array:', payload.items.length);
+        logInfo(`Returned items array: ${payload.items.length}`, {
+          component: 'storeService',
+          action: 'FETCH_ALL_ITEMS',
+        });
         return payload.items;
       }
 
       if (hasSuccessData(payload)) {
-        console.log('[StoreService] Returned data.data stores:', payload.data.length);
+        logInfo(`Returned data stores: ${payload.data.length}`, {
+          component: 'storeService',
+          action: 'FETCH_ALL_DATA',
+        });
         return payload.data;
       }
 
-      console.warn('[StoreService] No stores found in response');
+      logWarn('No stores found in response', {
+        component: 'storeService',
+        action: 'FETCH_ALL_EMPTY',
+      });
       return [];
     } catch (error) {
-      console.error('[StoreService] Error fetching stores:', error);
+      logError('Error fetching stores', {
+        component: 'storeService',
+        action: 'FETCH_ALL_ERROR',
+        metadata: { error },
+      });
       const apiError = handleApiError(error);
       throw new Error(apiError.message);
     }

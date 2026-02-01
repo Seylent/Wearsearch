@@ -19,7 +19,7 @@ import type {
   UserContextResponse,
 } from '../types';
 
-const BASE_URL = '/store-menu';
+const BASE_URL = '/api/v1/store-menu';
 
 // Query keys
 export const storeMenuKeys = {

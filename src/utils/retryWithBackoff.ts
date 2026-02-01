@@ -2,6 +2,8 @@
  * Retry utility with exponential backoff
  */
 
+import { logInfo } from '@/services/logger';
+
 interface RetryOptions {
   maxAttempts?: number;
   initialDelay?: number;
@@ -51,7 +53,11 @@ export const retryWithBackoff = async <T>(
       }
 
       if (process.env.NODE_ENV === 'development') {
-        console.log(`Retry attempt ${attempt}/${maxAttempts} after ${delay}ms`);
+        logInfo(`Retry attempt ${attempt}/${maxAttempts} after ${delay}ms`, {
+          component: 'retryWithBackoff',
+          action: 'RETRY',
+          metadata: { attempt, maxAttempts, delay },
+        });
       }
 
       // Wait before retrying

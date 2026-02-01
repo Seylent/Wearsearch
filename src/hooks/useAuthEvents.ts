@@ -10,6 +10,7 @@ import { useRouter } from 'next/navigation';
 import { useQueryClient } from '@tanstack/react-query';
 import { useToast } from './use-toast';
 import { useTranslation } from 'react-i18next';
+import { logInfo } from '@/services/logger';
 
 interface AuthLogoutEventDetail {
   reason?: 'unauthorized' | 'forbidden' | 'manual' | 'expired';
@@ -20,7 +21,7 @@ export const useAuthEvents = () => {
   const queryClient = useQueryClient();
   const { toast } = useToast();
   const { t } = useTranslation();
-  
+
   useEffect(() => {
     /**
      * Handle logout event
@@ -28,15 +29,19 @@ export const useAuthEvents = () => {
     const handleLogout = (event: Event) => {
       const customEvent = event as CustomEvent<AuthLogoutEventDetail>;
       const reason = customEvent.detail?.reason || 'manual';
-      
-      console.log('🔴 Logout event received:', { 
-        reason, 
-        currentPath: globalThis.window.location.pathname 
+
+      logInfo('Logout event received', {
+        component: 'useAuthEvents',
+        action: 'LOGOUT_EVENT',
+        metadata: {
+          reason,
+          currentPath: globalThis.window.location.pathname,
+        },
       });
-      
+
       // Clear all cached data
       queryClient.clear();
-      
+
       // Show appropriate message
       if (reason === 'unauthorized' || reason === 'expired') {
         toast({
@@ -45,16 +50,22 @@ export const useAuthEvents = () => {
           variant: 'default',
         });
       }
-      
+
       // Navigate to auth page if not already there
       if (!globalThis.window.location.pathname.includes('/auth')) {
-        console.log('🔀 Redirecting to /auth page');
+        logInfo('Redirecting to /auth page', {
+          component: 'useAuthEvents',
+          action: 'REDIRECT_AUTH',
+        });
         router.replace('/auth');
       } else {
-        console.log('ℹ️ Already on /auth page, skipping redirect');
+        logInfo('Already on /auth page, skipping redirect', {
+          component: 'useAuthEvents',
+          action: 'SKIP_REDIRECT',
+        });
       }
     };
-    
+
     /**
      * Handle token refresh event
      */
@@ -65,11 +76,11 @@ export const useAuthEvents = () => {
         stale: true,
       });
     };
-    
+
     // Register event listeners
     globalThis.window.addEventListener('auth:logout', handleLogout);
     globalThis.window.addEventListener('auth:tokenRefreshed', handleTokenRefresh);
-    
+
     // Cleanup
     return () => {
       globalThis.window.removeEventListener('auth:logout', handleLogout);
@@ -82,9 +93,11 @@ export const useAuthEvents = () => {
  * Dispatch logout event
  */
 export const dispatchLogout = (reason?: AuthLogoutEventDetail['reason']) => {
-  globalThis.window.dispatchEvent(new CustomEvent('auth:logout', {
-    detail: { reason: reason || 'manual' }
-  }));
+  globalThis.window.dispatchEvent(
+    new CustomEvent('auth:logout', {
+      detail: { reason: reason || 'manual' },
+    })
+  );
 };
 
 /**

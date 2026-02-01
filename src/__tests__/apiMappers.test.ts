@@ -34,7 +34,7 @@ describe('API Mappers', () => {
       meta: { totalItems: 2 },
     };
 
-    const { items, meta } = mapFavoritesResponse(apiResp, 'USD');
+    const { items } = mapFavoritesResponse(apiResp, 'USD');
     expect(Array.isArray(items)).toBe(true);
     expect(items).toHaveLength(2);
     const first = items[0];
@@ -60,7 +60,7 @@ describe('API Mappers', () => {
       meta: { totalItems: 1 },
     };
 
-    const { collections, meta } = mapCollectionsResponse(apiResp as any);
+    const { collections, meta } = mapCollectionsResponse(apiResp as unknown);
     expect(Array.isArray(collections)).toBe(true);
     expect(collections[0]).toHaveProperty('id', 'c1');
     expect(meta).toBeDefined();

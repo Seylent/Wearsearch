@@ -3,7 +3,8 @@
  * Manages favorites in localStorage before user login
  */
 
-import { logError } from './logger';
+import { logWarn } from './logger';
+import { safeGetItem, safeSetItem, safeRemoveItem } from '@/utils/safeStorage';
 
 const GUEST_FAVORITES_KEY = 'guestFavorites';
 
@@ -33,10 +34,14 @@ function isValidUUID(id: string): boolean {
 export function addGuestFavorite(productId: string): void {
   // Only add valid UUIDs
   if (!isValidUUID(productId)) {
-    console.warn('Invalid product ID format:', productId);
+    logWarn('Invalid product ID format', {
+      component: 'guestFavorites',
+      action: 'ADD_FAVORITE',
+      metadata: { productId },
+    });
     return;
   }
-  
+
   const favorites = getGuestFavorites();
   if (!favorites.includes(productId)) {
     favorites.push(productId);
@@ -65,16 +70,8 @@ export function isGuestFavorite(productId: string): boolean {
  * Get all guest favorites
  */
 export function getGuestFavorites(): string[] {
-  try {
-    const stored = localStorage.getItem(GUEST_FAVORITES_KEY);
-    if (!stored) return [];
-    
-    const parsed = JSON.parse(stored);
-    return Array.isArray(parsed) ? parsed : [];
-  } catch (error) {
-    logError(error as Error, { component: 'guestFavorites', action: 'LOAD' });
-    return [];
-  }
+  const stored = safeGetItem<string[]>(GUEST_FAVORITES_KEY, []);
+  return Array.isArray(stored) ? stored : [];
 }
 
 /**
@@ -83,13 +80,16 @@ export function getGuestFavorites(): string[] {
 export function getValidGuestFavorites(): string[] {
   const allFavorites = getGuestFavorites();
   const validFavorites = allFavorites.filter(isValidUUID);
-  
+
   // Clean up invalid favorites from localStorage
   if (validFavorites.length !== allFavorites.length) {
-    console.warn(`Removed ${allFavorites.length - validFavorites.length} invalid favorite IDs`);
+    logWarn(`Removed ${allFavorites.length - validFavorites.length} invalid favorite IDs`, {
+      component: 'guestFavorites',
+      action: 'CLEAN_INVALID',
+    });
     saveGuestFavorites(validFavorites);
   }
-  
+
   return validFavorites;
 }
 
@@ -97,11 +97,7 @@ export function getValidGuestFavorites(): string[] {
  * Clear all guest favorites (after sync)
  */
 export function clearGuestFavorites(): void {
-  try {
-    localStorage.removeItem(GUEST_FAVORITES_KEY);
-  } catch (error) {
-    logError(error as Error, { component: 'guestFavorites', action: 'CLEAR' });
-  }
+  safeRemoveItem(GUEST_FAVORITES_KEY);
 }
 
 /**
@@ -115,11 +111,7 @@ export function getGuestFavoritesCount(): number {
  * Save guest favorites to localStorage
  */
 function saveGuestFavorites(favorites: string[]): void {
-  try {
-    localStorage.setItem(GUEST_FAVORITES_KEY, JSON.stringify(favorites));
-  } catch (error) {
-    logError(error as Error, { component: 'guestFavorites', action: 'SAVE' });
-  }
+  safeSetItem(GUEST_FAVORITES_KEY, favorites);
 }
 
 /**

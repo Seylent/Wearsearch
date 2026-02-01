@@ -57,7 +57,7 @@ export const productsApi = {
    */
   getAll: async (filters?: ProductFilters): Promise<ProductsResponse> => {
     try {
-      const response = await api.get('/items', { params: filters });
+      const response = await api.get('/api/v1/items', { params: filters });
       const body: unknown = response.data;
       // Canonical v1: { items, meta }. Legacy: { products, total }.
       const items = getArray(body, 'items');
@@ -84,7 +84,7 @@ export const productsApi = {
    */
   getById: async (id: string): Promise<Product> => {
     try {
-      const response = await api.get(`/items/${id}`);
+      const response = await api.get(`/api/v1/items/${id}`);
       const body: unknown = response.data;
       if (isRecord(body)) {
         return (body.item ?? body.product ?? body) as Product;
@@ -101,7 +101,7 @@ export const productsApi = {
    */
   getRelated: async (productId: string): Promise<Product[]> => {
     try {
-      const response = await api.get(`/pages/product/${productId}`);
+      const response = await api.get(`/api/v1/pages/product/${productId}`);
       const body: unknown = response.data;
       const item = getRecord(body, 'item');
       const related = item ? item.relatedProducts : undefined;
@@ -117,7 +117,7 @@ export const productsApi = {
    */
   search: async (query: string, filters?: ProductFilters): Promise<ProductsResponse> => {
     try {
-      const response = await api.get('/items/search', {
+      const response = await api.get('/api/v1/items/search', {
         params: { q: query, ...filters },
       });
       return response.data;
@@ -132,7 +132,7 @@ export const productsApi = {
    */
   getByCategory: async (category: string, filters?: ProductFilters): Promise<ProductsResponse> => {
     try {
-      const response = await api.get(`/items/category/${category}`, { params: filters });
+      const response = await api.get(`/api/v1/items/category/${category}`, { params: filters });
       return response.data;
     } catch (error) {
       console.error(`[Products API] Failed to fetch products for category ${category}:`, error);
@@ -149,7 +149,7 @@ export const productsApi = {
       if (options.limit) params.limit = options.limit;
       if (options.noCache) params.no_cache = 1;
 
-      const response = await api.get('/products/popular-saved', { params });
+      const response = await api.get('/api/v1/products/popular-saved', { params });
       const body: unknown = response.data;
       const items = getArray(body, 'items');
       if (items) return items as Product[];

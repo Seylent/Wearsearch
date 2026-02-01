@@ -87,7 +87,6 @@ const nextConfig = {
   async rewrites() {
     const backendUrl =
       process.env.NEXT_PUBLIC_API_URL || process.env.API_PROXY_TARGET || 'http://localhost:3000';
-    console.log('[Next.js] API Proxy target:', backendUrl);
     return [
       // Redirect /product/* to /products/* (singular to plural)
       {

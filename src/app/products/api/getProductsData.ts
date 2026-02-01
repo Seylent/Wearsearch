@@ -3,6 +3,7 @@
  */
 import type { Product } from '@/types';
 import { fetchBackendJson } from '@/lib/backendFetch';
+import { logError, logWarn } from '@/services/logger';
 
 const isRecord = (value: unknown): value is Record<string, unknown> =>
   typeof value === 'object' && value !== null;
@@ -91,7 +92,10 @@ export async function getProductsData(params?: {
         };
       }
     } catch {
-      console.log('BFF endpoint not available, trying fallback');
+      logWarn('BFF endpoint not available, trying fallback', {
+        component: 'getProductsData',
+        action: 'BFF_FALLBACK',
+      });
     }
 
     // Fallback to direct products endpoint
@@ -134,7 +138,11 @@ export async function getProductsData(params?: {
       },
     };
   } catch (error) {
-    console.error('Error fetching products:', error);
+    logError('Error fetching products', {
+      component: 'getProductsData',
+      action: 'FETCH_ERROR',
+      metadata: { error },
+    });
     return {
       products: [],
       total: 0,

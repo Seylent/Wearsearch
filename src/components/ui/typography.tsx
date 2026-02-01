@@ -108,17 +108,22 @@ export interface TextProps
   as?: 'p' | 'span' | 'div' | 'label';
 }
 
-export const Text = React.forwardRef<HTMLElement, TextProps>(
-  ({ className, as: Component = 'p', size, variant, weight, align, ...props }, ref) => {
-    return (
-      <Component
-        ref={ref as React.Ref<any>}
-        className={cn(textVariants({ size, variant, weight, align, className }))}
-        {...props}
-      />
-    );
-  }
-);
+export const Text = ({
+  className,
+  as: Component = 'p',
+  size,
+  variant,
+  weight,
+  align,
+  ...props
+}: TextProps) => {
+  return (
+    <Component
+      className={cn(textVariants({ size, variant, weight, align, className }))}
+      {...props}
+    />
+  );
+};
 
 Text.displayName = 'Text';
 
@@ -226,23 +231,20 @@ export interface ListProps extends React.HTMLAttributes<HTMLUListElement | HTMLO
   ordered?: boolean;
 }
 
-export const List = React.forwardRef<HTMLUListElement | HTMLOListElement, ListProps>(
-  ({ className, ordered = false, ...props }, ref) => {
-    const Component = ordered ? 'ol' : 'ul';
+export const List = ({ className, ordered = false, ...props }: ListProps) => {
+  const Component = ordered ? 'ol' : 'ul';
 
-    return (
-      <Component
-        ref={ref as React.Ref<any>}
-        className={cn(
-          'space-y-2',
-          ordered ? 'list-decimal list-inside' : 'list-disc list-inside',
-          className
-        )}
-        {...props}
-      />
-    );
-  }
-);
+  return (
+    <Component
+      className={cn(
+        'space-y-2',
+        ordered ? 'list-decimal list-inside' : 'list-disc list-inside',
+        className
+      )}
+      {...props}
+    />
+  );
+};
 
 List.displayName = 'List';
 

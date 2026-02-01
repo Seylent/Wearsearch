@@ -7,7 +7,7 @@ import { useCallback, useEffect, useState } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { authService } from '@/services/authService';
 import { clearAuth, getAuth, isCookieAuthMode, setCookieSessionActive } from '@/utils/authStorage';
-import { logAuthError } from '@/services/logger';
+import { logAuthError, logError, logInfo, logWarn } from '@/services/logger';
 import type { User } from '@/types';
 import { deriveAuthPermissions } from '@/features/auth/permissions';
 
@@ -52,9 +52,13 @@ export const useAuth = () => {
     queryFn: async () => {
       try {
         const token = getAuth();
-        console.log('🔍 Fetching current user data...', {
-          hasToken: !!token,
-          tokenPreview: token ? `${token.substring(0, 20)}...` : 'none',
+        logInfo('Fetching current user data', {
+          component: 'useAuth',
+          action: 'FETCH_USER',
+          metadata: {
+            hasToken: !!token,
+            tokenPreview: token ? `${token.substring(0, 20)}...` : 'none',
+          },
         });
         const currentUser = await authService.getCurrentUser();
         if (isCookieAuthMode()) {
@@ -65,7 +69,10 @@ export const useAuth = () => {
         // If 401 or 429, return null instead of throwing
         const status = getErrorStatus(error);
         if (status === 401) {
-          console.log('⚠️ Auth token invalid or expired, clearing session');
+          logWarn('Auth token invalid or expired, clearing session', {
+            component: 'useAuth',
+            action: 'TOKEN_INVALID',
+          });
           // Clear any stale auth tokens on 401
           clearAuth();
           // Also clear React Query cache
@@ -73,10 +80,17 @@ export const useAuth = () => {
           return null;
         }
         if (status === 429) {
-          console.log('⏳ Auth check rate limited, will retry later');
+          logWarn('Auth check rate limited, will retry later', {
+            component: 'useAuth',
+            action: 'RATE_LIMIT',
+          });
           return null;
         }
-        console.error('❌ Auth check failed:', error);
+        logError('Auth check failed', {
+          component: 'useAuth',
+          action: 'CHECK_AUTH',
+          metadata: { error },
+        });
         logAuthError(asError(error), 'CHECK_AUTH');
         return null;
       }
@@ -134,7 +148,10 @@ export const useAuth = () => {
   // Listen for auth events (login/logout) to refetch
   useEffect(() => {
     const handleAuthLogin = async () => {
-      console.log('🔄 Auth login event received, refetching user...');
+      logInfo('Auth login event received, refetching user', {
+        component: 'useAuth',
+        action: 'AUTH_LOGIN',
+      });
       // Force immediate refetch instead of just invalidating
       await queryClient.refetchQueries({
         queryKey: AUTH_QUERY_KEY,
@@ -143,7 +160,10 @@ export const useAuth = () => {
     };
 
     const handleAuthLogout = () => {
-      console.log('🚪 Auth logout event received, clearing user data');
+      logInfo('Auth logout event received, clearing user data', {
+        component: 'useAuth',
+        action: 'AUTH_LOGOUT',
+      });
       queryClient.setQueryData(AUTH_QUERY_KEY, null);
     };
 

@@ -24,7 +24,7 @@ export const searchService = {
    */
   async getSearchHistory(limit: number = 10): Promise<SearchHistoryItem[]> {
     try {
-      const response = await api.get(`/search/history?limit=${limit}`);
+      const response = await api.get(`/api/v1/search/history?limit=${limit}`);
       const history = response.data.history || response.data || [];
       return history.map(transformHistoryItem);
     } catch (error) {
@@ -39,7 +39,7 @@ export const searchService = {
    */
   async clearSearchHistory(): Promise<void> {
     try {
-      await api.delete('/search/history');
+      await api.delete('/api/v1/search/history');
     } catch (error) {
       throw handleApiError(error);
     }
@@ -50,7 +50,7 @@ export const searchService = {
    */
   async getPopularQueries(limit: number = 5): Promise<PopularQuery[]> {
     try {
-      const response = await api.get(`/search/popular?limit=${limit}`);
+      const response = await api.get(`/api/v1/search/popular?limit=${limit}`);
       const popular = response.data.popular || response.data || [];
       return popular.map(transformPopularQuery);
     } catch (error) {
@@ -70,7 +70,7 @@ export const searchService = {
    */
   async trackSearch(query: string, resultsCount?: number): Promise<void> {
     try {
-      await api.post('/search/track', {
+      await api.post('/api/v1/search/track', {
         query: query.trim(),
         results_count: resultsCount,
       });

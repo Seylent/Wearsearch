@@ -6,7 +6,8 @@
 import { useState, useEffect, useCallback, useMemo } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useIsAuthenticated } from '@/hooks/useIsAuthenticated';
-import { api, apiLegacy } from '@/services/api';
+import { safeGetItem, safeSetItem } from '@/utils/safeStorage';
+import { api } from '@/services/api';
 
 const STORAGE_KEY = 'wearsearch_saved_stores';
 
@@ -62,24 +63,14 @@ const parseSavedStores = (data: unknown): SavedStore[] => {
  * Get saved stores from localStorage
  */
 const getStoredStores = (): SavedStore[] => {
-  try {
-    const stored = localStorage.getItem(STORAGE_KEY);
-    if (!stored) return [];
-    return JSON.parse(stored);
-  } catch {
-    return [];
-  }
+  return safeGetItem<SavedStore[]>(STORAGE_KEY, []);
 };
 
 /**
  * Save stores to localStorage
  */
 const saveToStorage = (stores: SavedStore[]): void => {
-  try {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(stores));
-  } catch {
-    console.warn('Failed to save stores to localStorage');
-  }
+  safeSetItem(STORAGE_KEY, stores);
 };
 
 /**
@@ -100,21 +91,13 @@ export const useSavedStores = () => {
     queryKey: ['savedStores'],
     queryFn: async () => {
       try {
-        // Try v1 API first
-        const response = await api.get('/users/me/saved-stores', {
+        // v1 API endpoint
+        const response = await api.get('/api/v1/users/me/saved-stores', {
           headers: { 'X-Skip-Retry': 'true' },
         });
         return parseSavedStores(response.data);
       } catch {
-        // Fallback to legacy API
-        try {
-          const response = await apiLegacy.get('/user/saved-stores', {
-            headers: { 'X-Skip-Retry': 'true' },
-          });
-          return parseSavedStores(response.data);
-        } catch {
-          return [];
-        }
+        return [];
       }
     },
     enabled: globalThis.window !== undefined && isLoggedIn,
@@ -135,11 +118,7 @@ export const useSavedStores = () => {
   const addStoreMutation = useMutation({
     mutationFn: async (store: { id: string; name: string; logo_url?: string }) => {
       if (isLoggedIn) {
-        try {
-          await api.post(`/users/me/saved-stores/${store.id}`);
-        } catch {
-          await apiLegacy.post(`/user/saved-stores/${store.id}`);
-        }
+        await api.post(`/api/v1/users/me/saved-stores/${store.id}`);
       }
       return store;
     },
@@ -167,11 +146,7 @@ export const useSavedStores = () => {
   const removeStoreMutation = useMutation({
     mutationFn: async (storeId: string) => {
       if (isLoggedIn) {
-        try {
-          await api.delete(`/users/me/saved-stores/${storeId}`);
-        } catch {
-          await apiLegacy.delete(`/user/saved-stores/${storeId}`);
-        }
+        await api.delete(`/api/v1/users/me/saved-stores/${storeId}`);
       }
       return storeId;
     },

@@ -1,4 +1,5 @@
 import { apiUpload, handleApiError } from './api';
+import { logError, logInfo } from './logger';
 import { AxiosResponse } from 'axios';
 
 // Type definitions for file uploads
@@ -23,12 +24,16 @@ export const uploadService = {
       const formData = new FormData();
       formData.append('image', file);
 
-      console.log('📤 Uploading image:', {
-        name: file.name,
-        size: file.size,
-        type: file.type,
-        endpoint: '/upload/image',
-        fieldName: 'image',
+      logInfo('Uploading image', {
+        component: 'uploadService',
+        action: 'UPLOAD_IMAGE',
+        metadata: {
+          name: file.name,
+          size: file.size,
+          type: file.type,
+          endpoint: '/upload/image',
+          fieldName: 'image',
+        },
       });
 
       const response: AxiosResponse<UploadResponse> = await apiUpload.post(
@@ -41,10 +46,17 @@ export const uploadService = {
         }
       );
 
-      console.log('✅ Upload successful:', response.data);
+      logInfo('Upload successful', {
+        component: 'uploadService',
+        action: 'UPLOAD_IMAGE_SUCCESS',
+      });
       return response.data;
     } catch (error: unknown) {
-      console.error('❌ Upload failed:', error);
+      logError('Upload failed', {
+        component: 'uploadService',
+        action: 'UPLOAD_IMAGE_ERROR',
+        metadata: { error },
+      });
 
       // Extract proper error message
       const apiError = handleApiError(error);
@@ -67,9 +79,13 @@ export const uploadService = {
         formData.append('images', file);
       });
 
-      console.log('📤 Uploading multiple images:', {
-        count: files.length,
-        endpoint: '/upload/images',
+      logInfo('Uploading multiple images', {
+        component: 'uploadService',
+        action: 'UPLOAD_IMAGES',
+        metadata: {
+          count: files.length,
+          endpoint: '/upload/images',
+        },
       });
 
       const response: AxiosResponse<MultipleUploadResponse> = await apiUpload.post(
@@ -82,10 +98,17 @@ export const uploadService = {
         }
       );
 
-      console.log('✅ Multiple upload successful:', response.data);
+      logInfo('Multiple upload successful', {
+        component: 'uploadService',
+        action: 'UPLOAD_IMAGES_SUCCESS',
+      });
       return response.data;
     } catch (error: unknown) {
-      console.error('❌ Multiple upload failed:', error);
+      logError('Multiple upload failed', {
+        component: 'uploadService',
+        action: 'UPLOAD_IMAGES_ERROR',
+        metadata: { error },
+      });
 
       // Extract proper error message
       const apiError = handleApiError(error);

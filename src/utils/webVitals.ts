@@ -1,24 +1,21 @@
 /**
  * Web Vitals Monitoring
  * Track Core Web Vitals (LCP, INP, CLS, FCP, TTFB) for performance monitoring
- * 
+ *
  * Core Web Vitals:
  * - LCP (Largest Contentful Paint): Loading performance (< 2.5s good)
  * - INP (Interaction to Next Paint): Interactivity (< 200ms good) - replaces FID
  * - CLS (Cumulative Layout Shift): Visual stability (< 0.1 good)
- * 
+ *
  * Additional metrics:
  * - FCP (First Contentful Paint): < 1.8s good
  * - TTFB (Time to First Byte): < 800ms good
  */
 
 import { onCLS, onINP, onFCP, onLCP, onTTFB, type Metric } from 'web-vitals';
+import { logInfo } from '@/services/logger';
 
-type GtagFn = (
-  command: 'event',
-  eventName: string,
-  params: Record<string, unknown>
-) => void;
+type GtagFn = (command: 'event', eventName: string, params: Record<string, unknown>) => void;
 
 function hasGtag(win: Window): win is Window & { gtag: GtagFn } {
   return 'gtag' in win && typeof (win as Record<string, unknown>).gtag === 'function';
@@ -37,7 +34,7 @@ interface VitalMetric {
  */
 function getMetricRating(metric: Metric): 'good' | 'needs-improvement' | 'poor' {
   const { name, value } = metric;
-  
+
   switch (name) {
     case 'LCP':
       return value <= 2500 ? 'good' : value <= 4000 ? 'needs-improvement' : 'poor';
@@ -58,11 +55,11 @@ function getMetricRating(metric: Metric): 'good' | 'needs-improvement' | 'poor' 
  * Format metric for console logging
  */
 function formatMetric(metric: VitalMetric): string {
-  const emoji = metric.rating === 'good' ? '✅' : metric.rating === 'needs-improvement' ? '⚠️' : '❌';
-  const formattedValue = metric.name === 'CLS' 
-    ? metric.value.toFixed(3) 
-    : `${Math.round(metric.value)}ms`;
-  
+  const emoji =
+    metric.rating === 'good' ? '✅' : metric.rating === 'needs-improvement' ? '⚠️' : '❌';
+  const formattedValue =
+    metric.name === 'CLS' ? metric.value.toFixed(3) : `${Math.round(metric.value)}ms`;
+
   return `${emoji} ${metric.name}: ${formattedValue} (${metric.rating})`;
 }
 
@@ -80,7 +77,11 @@ function handleMetric(metric: Metric) {
 
   // Log to console in development
   if (process.env.NODE_ENV === 'development') {
-    console.log(formatMetric(vital));
+    logInfo(formatMetric(vital), {
+      component: 'webVitals',
+      action: 'METRIC',
+      metadata: { vital },
+    });
   }
 
   // Send to analytics in production
@@ -116,7 +117,7 @@ function sendToAnalytics(metric: VitalMetric) {
       url: window.location.href,
       timestamp: Date.now(),
     });
-    
+
     // Uncomment to send to your API
     // navigator.sendBeacon('/api/analytics/vitals', body);
   }
@@ -136,13 +137,16 @@ export function initWebVitals() {
   onLCP(handleMetric);
   onINP(handleMetric);
   onCLS(handleMetric);
-  
+
   // Track additional performance metrics
   onFCP(handleMetric);
   onTTFB(handleMetric);
-  
+
   if (process.env.NODE_ENV === 'development') {
-    console.log('📊 Web Vitals monitoring initialized');
+    logInfo('Web Vitals monitoring initialized', {
+      component: 'webVitals',
+      action: 'INIT',
+    });
   }
 }
 
@@ -152,7 +156,7 @@ export function initWebVitals() {
  */
 export async function getWebVitalsSnapshot(): Promise<Record<string, VitalMetric>> {
   const vitals: Record<string, VitalMetric> = {};
-  
+
   const handleSnapshot = (metric: Metric) => {
     vitals[metric.name] = {
       name: metric.name,
@@ -162,17 +166,17 @@ export async function getWebVitalsSnapshot(): Promise<Record<string, VitalMetric
       id: metric.id,
     };
   };
-  
+
   // Get current values
   onLCP(handleSnapshot);
   onINP(handleSnapshot);
   onCLS(handleSnapshot);
   onFCP(handleSnapshot);
   onTTFB(handleSnapshot);
-  
+
   // Wait a bit for metrics to be collected
   await new Promise(resolve => setTimeout(resolve, 100));
-  
+
   return vitals;
 }
 

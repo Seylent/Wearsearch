@@ -77,7 +77,7 @@ export const UserRoleManagement = () => {
     const fetchStores = async () => {
       setStoresLoading(true);
       try {
-        const response = await api.get('/admin/stores');
+        const response = await api.get('/api/v1/admin/stores');
         const payload = response.data?.data ?? response.data?.items ?? response.data;
         const items = getArray(payload, 'items') ?? (Array.isArray(payload) ? payload : []);
         if (items.length > 0) {
@@ -104,7 +104,7 @@ export const UserRoleManagement = () => {
     const fetchBrands = async () => {
       setBrandsLoading(true);
       try {
-        const response = await api.get('/brands');
+        const response = await api.get('/api/v1/brands');
         const payload = response.data?.data ?? response.data?.items ?? response.data;
         const items = getArray(payload, 'items') ?? (Array.isArray(payload) ? payload : []);
         if (items.length > 0) {
@@ -162,7 +162,7 @@ export const UserRoleManagement = () => {
         payload.brand_id = brandId;
       }
 
-      const response = await api.post('/admin/users/role', payload);
+      const response = await api.post('/api/v1/admin/users/role', payload);
 
       const responseBody = response.data ?? {};
       setMessage(responseBody.message || t('admin.rolesSaved', 'Role updated'));
