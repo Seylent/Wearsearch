@@ -2,14 +2,7 @@
  * Error Utils Tests
  */
 
-import { describe, it, expect } from 'vitest';
-import {
-  isError,
-  hasMessage,
-  isCanceledError,
-  getErrorMessage,
-  isAuthError,
-} from '../errorUtils';
+import { isError, hasMessage, isCanceledError, getErrorMessage, isAuthError } from '../errorUtils';
 
 describe('errorUtils', () => {
   describe('isError', () => {

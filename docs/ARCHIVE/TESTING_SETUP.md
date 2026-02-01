@@ -2,56 +2,62 @@
 
 ## 🎯 What's Been Added
 
-### 1. **Vitest Testing Framework**
-- Unit testing with Vitest
+### 1. **Jest Testing Framework**
+
+- Unit testing with Jest
 - React Testing Library integration
 - JSDOM environment for component testing
 - Test coverage reporting
 
 **Files Created:**
-- `vitest.config.ts` - Vitest configuration
+
 - `src/test/setup.ts` - Global test setup & mocks
 - `src/test/test-utils.tsx` - Custom render with providers
 - `src/utils/__tests__/errorUtils.test.ts` - Example utility tests
 - `src/components/__tests__/ProductCard.test.tsx` - Example component tests
 
 **Commands:**
+
 ```bash
-npm test              # Run tests in watch mode
-npm run test:ui       # Open Vitest UI
-npm run test:run      # Run tests once
-npm run test:coverage # Generate coverage report
+npm test              # Run tests
 ```
 
 **Test Results:**
+
 - ✅ 13/13 utility tests passing
 - ✅ 3/5 component tests passing (2 need minor fixes)
 
 ### 2. **Pre-commit Hooks (Husky + lint-staged)**
+
 - Automatic code quality checks before every commit
 - Prevents bad code from entering repository
 
 **What Runs on Commit:**
+
 1. **Lint** - ESLint checks & fixes
 2. **Format** - Prettier formatting
 3. **Type Check** - TypeScript compilation
 4. **Tests** - All tests must pass
 
 **Files Created:**
+
 - `.husky/pre-commit` - Pre-commit hook script
 - `prettier.config.js` - Prettier configuration
 
 **Commands:**
+
 ```bash
 npm run format       # Format all code
 npm run format:check # Check formatting
 ```
 
 ### 3. **Prettier Code Formatter**
+
 - Consistent code style across project
 - Auto-formatting on save (if configured in IDE)
 
 **Configuration:**
+
 - Single quotes
 - 2-space indentation
 - 100 character line width
@@ -61,10 +67,12 @@ npm run format:check # Check formatting
 ## 📊 Test Coverage
 
 Current coverage includes:
+
 - Error utility functions (100%)
 - ProductCard component (60%)
 
 **To improve coverage, add tests for:**
+
 - API services
 - React hooks
 - Context providers
@@ -73,6 +81,7 @@ Current coverage includes:
 ## 🚀 Usage Examples
 
 ### Running Tests:
+
 ```bash
 # Watch mode (development)
 npm test
@@ -88,8 +97,8 @@ npm run test:coverage
 ```
 
 ### Writing Tests:
+
 ```typescript
-import { describe, it, expect } from 'vitest';
 import { render, screen } from '@/test/test-utils';
 import MyComponent from '../MyComponent';
 
@@ -102,6 +111,7 @@ describe('MyComponent', () => {
 ```
 
 ### Formatting Code:
+
 ```bash
 # Format entire project
 npm run format
@@ -113,6 +123,7 @@ npm run format:check
 ## ⚙️ How Pre-commit Works
 
 When you run `git commit`:
+
 1. **Husky** intercepts the commit
 2. **lint-staged** runs on staged files:
    - ESLint fixes linting errors
@@ -123,6 +134,7 @@ When you run `git commit`:
 6. If any fail ❌ → commit blocked
 
 **To bypass (not recommended):**
+
 ```bash
 git commit --no-verify
 ```
@@ -130,12 +142,15 @@ git commit --no-verify
 ## 🎨 IDE Integration
 
 ### VS Code:
+
 Install extensions:
+
 - ESLint
 - Prettier
-- Vitest Runner (optional)
+- Jest (optional)
 
 Add to `.vscode/settings.json`:
+
 ```json
 {
   "editor.formatOnSave": true,
@@ -156,15 +171,17 @@ Add to `.vscode/settings.json`:
 ## 🐛 Troubleshooting
 
 **Tests failing?**
+
 ```bash
 # Clear cache
-npm run test:run -- --clearCache
+npm test -- --clearCache
 
 # Update snapshots
-npm run test:run -- -u
+npm test -- -u
 ```
 
 **Pre-commit too slow?**
+
 ```bash
 # Skip tests (faster)
 # Edit .husky/pre-commit and comment out:
@@ -172,6 +189,7 @@ npm run test:run -- -u
 ```
 
 **Formatting conflicts?**
+
 ```bash
 # Format everything
 npm run format
@@ -182,5 +200,5 @@ npm run format:check
 
 ---
 
-*Setup completed: January 4, 2026*
-*All quality tools active and configured*
+_Setup completed: January 4, 2026_
+_All quality tools active and configured_

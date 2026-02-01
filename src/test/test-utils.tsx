@@ -5,7 +5,6 @@
 
 import { ReactElement } from 'react';
 import { render, RenderOptions } from '@testing-library/react';
-// React Router imports removed
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { FavoritesProvider } from '@/contexts/FavoritesContext';
 import { CurrencyProvider } from '@/contexts/CurrencyContext';
@@ -29,25 +28,20 @@ interface AllTheProvidersProps {
 }
 
 // All providers wrapper
-function AllTheProviders({ children }:Readonly<AllTheProvidersProps>) {
+function AllTheProviders({ children }: Readonly<AllTheProvidersProps>) {
   const queryClient = createTestQueryClient();
 
   return (
     <QueryClientProvider client={queryClient}>
       <CurrencyProvider>
-        <BrowserRouter>
-          <FavoritesProvider>{children}</FavoritesProvider>
-        </BrowserRouter>
+        <FavoritesProvider>{children}</FavoritesProvider>
       </CurrencyProvider>
     </QueryClientProvider>
   );
 }
 
 // Custom render with all providers
-function renderWithProviders(
-  ui: ReactElement,
-  options?: Omit<RenderOptions, 'wrapper'>
-) {
+function renderWithProviders(ui: ReactElement, options?: Omit<RenderOptions, 'wrapper'>) {
   return render(ui, { wrapper: AllTheProviders, ...options });
 }
 
@@ -55,4 +49,3 @@ function renderWithProviders(
 export * from '@testing-library/react';
 export { renderWithProviders as render };
 export { createTestQueryClient };
-
