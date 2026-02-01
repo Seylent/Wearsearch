@@ -1,6 +1,6 @@
 ﻿'use client';
 
-import { useState, useEffect, useMemo, type ReactNode } from 'react';
+import { useState, useEffect, useMemo, useRef, type ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
 import type { TFunction } from 'i18next';
 import { useSearchParams } from 'next/navigation';
@@ -1034,6 +1034,7 @@ export function ProductsContent() {
 
   // Defer data fetching until after initial render
   const [shouldFetchData, setShouldFetchData] = useState(false);
+  const searchLogRef = useRef<string | null>(null);
 
   useEffect(() => {
     // Immediate fetch for better UX
@@ -1145,6 +1146,54 @@ export function ProductsContent() {
     Boolean(filters.selectedBrand) ||
     (filters.priceMin !== null && filters.priceMin > 0) ||
     (filters.priceMax !== null && filters.priceMax < maxPriceLimit);
+
+  useEffect(() => {
+    if (loading) return;
+    if (products.length > 0) return;
+    const hasSearchOrFilters = Boolean(filters.searchQuery) || isFilterActive;
+    if (!hasSearchOrFilters) return;
+
+    const payload = {
+      query: filters.searchQuery.trim(),
+      filters: {
+        colors: filters.selectedColors,
+        types: filters.selectedTypes,
+        materials: filters.selectedMaterials,
+        technologies: filters.selectedTechnologies,
+        sizes: filters.selectedSizes,
+        genders: filters.selectedGenders,
+        brand: filters.selectedBrand,
+        priceMin: filters.priceMin,
+        priceMax: filters.priceMax,
+      },
+      timestamp: new Date().toISOString(),
+    };
+
+    const fingerprint = JSON.stringify(payload);
+    if (searchLogRef.current === fingerprint) return;
+    searchLogRef.current = fingerprint;
+
+    fetch('/api/search-logs', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload),
+      keepalive: true,
+    }).catch(() => undefined);
+  }, [
+    loading,
+    products.length,
+    filters.searchQuery,
+    filters.selectedColors,
+    filters.selectedTypes,
+    filters.selectedMaterials,
+    filters.selectedTechnologies,
+    filters.selectedSizes,
+    filters.selectedGenders,
+    filters.selectedBrand,
+    filters.priceMin,
+    filters.priceMax,
+    isFilterActive,
+  ]);
 
   const defaultHeading = storeIdParam ? t('products.storeTitle') : t('products.heading');
   const genderCopy = getGenderCopy(genderParam, t);

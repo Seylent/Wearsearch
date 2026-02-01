@@ -1,7 +1,7 @@
 import api, { handleApiError } from './api';
 import ENDPOINTS from './endpoints';
 import { AxiosResponse } from 'axios';
-import { User } from './authService';
+import type { User } from '@/types';
 import { Product } from './productService';
 import { logError } from './logger';
 
@@ -65,12 +65,11 @@ export const userService = {
    */
   async getProfile(): Promise<UserProfile> {
     try {
-      const response: AxiosResponse<UserProfile> = await api.get(
-        ENDPOINTS.USERS.PROFILE
-      );
+      const response: AxiosResponse<UserProfile> = await api.get(ENDPOINTS.USERS.PROFILE);
       return response.data;
     } catch (error) {
-      throw new Error(handleApiError(error));
+      const apiError = handleApiError(error);
+      throw new Error(apiError.message);
     }
   },
 
@@ -85,7 +84,8 @@ export const userService = {
       );
       return response.data;
     } catch (error) {
-      throw new Error(handleApiError(error));
+      const apiError = handleApiError(error);
+      throw new Error(apiError.message);
     }
   },
 
@@ -94,26 +94,27 @@ export const userService = {
    */
   async getFavorites(): Promise<Product[]> {
     try {
-      const response: AxiosResponse<Product[]> = await api.get(
-        ENDPOINTS.USERS.FAVORITES
-      );
+      const response: AxiosResponse<Product[]> = await api.get(ENDPOINTS.USERS.FAVORITES);
       return response.data;
     } catch (error) {
-      throw new Error(handleApiError(error));
+      const apiError = handleApiError(error);
+      throw new Error(apiError.message);
     }
   },
 
   /**
    * Add product to favorites
    */
-  async addFavorite(productId: string | number): Promise<{ message: string; favorite: FavoriteProduct }> {
+  async addFavorite(
+    productId: string | number
+  ): Promise<{ message: string; favorite: FavoriteProduct }> {
     try {
-      const response: AxiosResponse<{ message: string; favorite: FavoriteProduct }> = await api.post(
-        ENDPOINTS.USERS.ADD_FAVORITE(productId)
-      );
+      const response: AxiosResponse<{ message: string; favorite: FavoriteProduct }> =
+        await api.post(ENDPOINTS.USERS.ADD_FAVORITE(productId));
       return response.data;
     } catch (error) {
-      throw new Error(handleApiError(error));
+      const apiError = handleApiError(error);
+      throw new Error(apiError.message);
     }
   },
 
@@ -127,18 +128,20 @@ export const userService = {
       );
       return response.data;
     } catch (error) {
-      throw new Error(handleApiError(error));
+      const apiError = handleApiError(error);
+      throw new Error(apiError.message);
     }
   },
 
   /**
    * Check favorite status for a product
    */
-  async checkFavorite(productId: string | number): Promise<{ is_favorited: boolean; favorite_id?: number }> {
+  async checkFavorite(
+    productId: string | number
+  ): Promise<{ is_favorited: boolean; favorite_id?: number }> {
     try {
-      const response: AxiosResponse<{ is_favorited: boolean; favorite_id?: number }> = await api.get(
-        ENDPOINTS.USERS.CHECK_FAVORITE(productId)
-      );
+      const response: AxiosResponse<{ is_favorited: boolean; favorite_id?: number }> =
+        await api.get(ENDPOINTS.USERS.CHECK_FAVORITE(productId));
       return response.data || { is_favorited: false };
     } catch {
       // Fallback: determine by listing favorites
@@ -151,7 +154,9 @@ export const userService = {
    * Toggle favorite status (add if not favorited, remove if already favorited)
    * Returns an object with the final state and a message
    */
-  async toggleFavorite(productId: string | number): Promise<{ is_favorited: boolean; message: string }> {
+  async toggleFavorite(
+    productId: string | number
+  ): Promise<{ is_favorited: boolean; message: string }> {
     try {
       const response: AxiosResponse<{ is_favorited: boolean; message: string }> = await api.post(
         ENDPOINTS.USERS.TOGGLE_FAVORITE,
@@ -159,7 +164,8 @@ export const userService = {
       );
       return response.data;
     } catch (error) {
-      throw new Error(handleApiError(error));
+      const apiError = handleApiError(error);
+      throw new Error(apiError.message);
     }
   },
 
@@ -169,9 +175,13 @@ export const userService = {
   async isFavorite(productId: string | number): Promise<boolean> {
     try {
       const favorites = await this.getFavorites();
-      return favorites.some((product) => product.id === Number(productId));
+      return favorites.some(product => product.id === Number(productId));
     } catch (error) {
-      logError(asError(error), { component: 'userService', action: 'IS_FAVORITE', metadata: { productId } });
+      logError(asError(error), {
+        component: 'userService',
+        action: 'IS_FAVORITE',
+        metadata: { productId },
+      });
       return false;
     }
   },
@@ -194,7 +204,8 @@ export const userService = {
       if (typeof details === 'string' && details.length > 0) {
         throw new Error(details);
       }
-      throw new Error(handleApiError(error));
+      const apiError = handleApiError(error);
+      throw new Error(apiError.message);
     }
   },
 };

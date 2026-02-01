@@ -126,6 +126,14 @@ const updateCanonicalLink = (canonicalUrl: string): void => {
 /**
  * Update structured data (JSON-LD)
  */
+const getCspNonce = (): string | null => {
+  try {
+    return document.querySelector('meta[name="csp-nonce"]')?.getAttribute('content') || null;
+  } catch {
+    return null;
+  }
+};
+
 const updateStructuredData = (structuredData: object): void => {
   try {
     if (!document.head) return;
@@ -136,6 +144,10 @@ const updateStructuredData = (structuredData: object): void => {
       script = document.createElement('script');
       script.type = 'application/ld+json';
       script.dataset.dynamic = 'true';
+      const nonce = getCspNonce();
+      if (nonce) {
+        script.setAttribute('nonce', nonce);
+      }
       document.head.appendChild(script);
     }
     script.textContent = JSON.stringify(structuredData);
@@ -224,64 +236,3 @@ export const useSEO = ({
     pathname,
   ]);
 };
-
-/**
- * Generate Product structured data
- */
-export const generateProductStructuredData = (product: {
-  id: string;
-  name: string;
-  description?: string;
-  image_url: string;
-  price?: number;
-  currency?: string;
-  brand?: string;
-  category?: string;
-}) => ({
-  '@context': 'https://schema.org',
-  '@type': 'Product',
-  name: product.name,
-  description: product.description || `${product.name} - Available at Wearsearch`,
-  image: product.image_url,
-  brand: product.brand
-    ? {
-        '@type': 'Brand',
-        name: product.brand,
-      }
-    : undefined,
-  category: product.category,
-  offers: product.price
-    ? {
-        '@type': 'Offer',
-        price: product.price,
-        priceCurrency: product.currency || 'UAH',
-        availability: 'https://schema.org/InStock',
-      }
-    : undefined,
-});
-
-/**
- * Generate BreadcrumbList structured data
- */
-export const generateBreadcrumbStructuredData = (items: Array<{ name: string; url: string }>) => ({
-  '@context': 'https://schema.org',
-  '@type': 'BreadcrumbList',
-  itemListElement: items.map((item, index) => ({
-    '@type': 'ListItem',
-    position: index + 1,
-    name: item.name,
-    item: item.url,
-  })),
-});
-
-/**
- * Generate Organization structured data
- */
-export const generateOrganizationStructuredData = () => ({
-  '@context': 'https://schema.org',
-  '@type': 'Organization',
-  name: DEFAULT_SITE_NAME,
-  url: 'https://wearsearch.com',
-  logo: 'https://wearsearch.com/logo.png',
-  sameAs: ['https://twitter.com/wearsearch', 'https://instagram.com/wearsearch'],
-});

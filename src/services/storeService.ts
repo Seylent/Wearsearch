@@ -39,6 +39,20 @@ export interface UpdateStoreData {
   is_recommended?: boolean;
 }
 
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return typeof value === 'object' && value !== null;
+}
+
+function hasItems(value: unknown): value is { items: Store[] } {
+  return isRecord(value) && Array.isArray((value as { items?: unknown }).items);
+}
+
+function hasSuccessData(value: unknown): value is { success: true; data: Store[] } {
+  return (
+    isRecord(value) && value.success === true && Array.isArray((value as { data?: unknown }).data)
+  );
+}
+
 // Store Service - handles all store-related API calls
 export const storeService = {
   /**
@@ -47,33 +61,36 @@ export const storeService = {
   async getAllStores(): Promise<Store[]> {
     try {
       console.log('[StoreService] Fetching all stores...');
-      const response: AxiosResponse<Store[] | { success: boolean; data: Store[] } | { items: Store[] }> = await api.get(
-        ENDPOINTS.STORES.LIST
-      );
-      
+      const response: AxiosResponse<
+        Store[] | { success: boolean; data: Store[] } | { items: Store[] }
+      > = await api.get(ENDPOINTS.STORES.LIST);
+
       console.log('[StoreService] Response:', response.data);
-      
-      if (Array.isArray(response.data)) {
-        console.log('[StoreService] Returned array of stores:', response.data.length);
-        return response.data;
+
+      const payload = response.data;
+
+      if (Array.isArray(payload)) {
+        console.log('[StoreService] Returned array of stores:', payload.length);
+        return payload;
       }
-      
+
       // Check for items array format (FastAPI pagination format)
-      if ('items' in response.data && Array.isArray(response.data.items)) {
-        console.log('[StoreService] Returned items array:', response.data.items.length);
-        return response.data.items;
+      if (hasItems(payload)) {
+        console.log('[StoreService] Returned items array:', payload.items.length);
+        return payload.items;
       }
-      
-      if (response.data.success && response.data.data) {
-        console.log('[StoreService] Returned data.data stores:', response.data.data.length);
-        return response.data.data;
+
+      if (hasSuccessData(payload)) {
+        console.log('[StoreService] Returned data.data stores:', payload.data.length);
+        return payload.data;
       }
-      
+
       console.warn('[StoreService] No stores found in response');
       return [];
     } catch (error) {
       console.error('[StoreService] Error fetching stores:', error);
-      throw new Error(handleApiError(error));
+      const apiError = handleApiError(error);
+      throw new Error(apiError.message);
     }
   },
 
@@ -82,12 +99,11 @@ export const storeService = {
    */
   async getStoreById(id: string | number): Promise<Store> {
     try {
-      const response: AxiosResponse<Store> = await api.get(
-        ENDPOINTS.STORES.DETAIL(id)
-      );
+      const response: AxiosResponse<Store> = await api.get(ENDPOINTS.STORES.DETAIL(id));
       return response.data;
     } catch (error) {
-      throw new Error(handleApiError(error));
+      const apiError = handleApiError(error);
+      throw new Error(apiError.message);
     }
   },
 
@@ -96,13 +112,11 @@ export const storeService = {
    */
   async createStore(data: CreateStoreData): Promise<Store> {
     try {
-      const response: AxiosResponse<Store> = await api.post(
-        ENDPOINTS.STORES.CREATE,
-        data
-      );
+      const response: AxiosResponse<Store> = await api.post(ENDPOINTS.STORES.CREATE, data);
       return response.data;
     } catch (error) {
-      throw new Error(handleApiError(error));
+      const apiError = handleApiError(error);
+      throw new Error(apiError.message);
     }
   },
 
@@ -111,13 +125,11 @@ export const storeService = {
    */
   async updateStore(id: string | number, data: UpdateStoreData): Promise<Store> {
     try {
-      const response: AxiosResponse<Store> = await api.put(
-        ENDPOINTS.STORES.UPDATE(id),
-        data
-      );
+      const response: AxiosResponse<Store> = await api.put(ENDPOINTS.STORES.UPDATE(id), data);
       return response.data;
     } catch (error) {
-      throw new Error(handleApiError(error));
+      const apiError = handleApiError(error);
+      throw new Error(apiError.message);
     }
   },
 
@@ -131,10 +143,10 @@ export const storeService = {
       );
       return response.data;
     } catch (error) {
-      throw new Error(handleApiError(error));
+      const apiError = handleApiError(error);
+      throw new Error(apiError.message);
     }
   },
 };
 
 export default storeService;
-

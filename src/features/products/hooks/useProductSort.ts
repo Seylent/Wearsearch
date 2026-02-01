@@ -19,15 +19,31 @@ export const useProductSort = (products: Product[]) => {
     const sorted = [...products];
     const [field, order] = sortBy.split('-') as [string, 'asc' | 'desc'];
 
+    const getSortValue = (product: Product): string | number => {
+      if (field === 'price') {
+        const raw =
+          product.price ??
+          product.price_min ??
+          product.min_price ??
+          product.max_price ??
+          product.maxPrice;
+        const numeric = typeof raw === 'number' ? raw : Number.parseFloat(String(raw));
+        return Number.isFinite(numeric) ? numeric : 0;
+      }
+      if (field === 'name') {
+        return String(product.name ?? '');
+      }
+      return '';
+    };
+
     sorted.sort((a, b) => {
-      const aVal = (a as Record<string, string | number | undefined>)[field] || '';
-      const bVal = (b as Record<string, string | number | undefined>)[field] || '';
+      const aVal = getSortValue(a);
+      const bVal = getSortValue(b);
 
       if (order === 'asc') {
         return aVal > bVal ? 1 : -1;
-      } else {
-        return aVal < bVal ? 1 : -1;
       }
+      return aVal < bVal ? 1 : -1;
     });
 
     return sorted;

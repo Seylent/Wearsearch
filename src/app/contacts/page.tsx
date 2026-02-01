@@ -1,5 +1,6 @@
 ﻿import { Suspense } from 'react';
 import { Metadata } from 'next';
+import { headers } from 'next/headers';
 import ContactsContent from '@/components/pages/ContactsContent';
 import { JsonLd, generateBreadcrumbSchema } from '@/lib/seo/structured-data';
 
@@ -58,7 +59,8 @@ export const metadata: Metadata = {
   },
 };
 
-export default function ContactsPage() {
+export default async function ContactsPage() {
+  const nonce = (await headers()).get('x-nonce') || undefined;
   return (
     <Suspense
       fallback={
@@ -75,6 +77,7 @@ export default function ContactsPage() {
             url: `${process.env.NEXT_PUBLIC_SITE_URL || 'https://wearsearch.com'}/contacts`,
           },
         ])}
+        nonce={nonce}
       />
       <ContactsContent />
     </Suspense>

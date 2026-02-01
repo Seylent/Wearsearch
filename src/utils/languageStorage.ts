@@ -41,7 +41,7 @@ export async function getServerLanguage(): Promise<LanguageCode> {
 
   try {
     const { cookies } = await import('next/headers');
-    const cookieStore = cookies();
+    const cookieStore = await cookies();
     const language = cookieStore.get(LANGUAGE_COOKIE.name)?.value;
     return language === 'en' || language === 'uk' ? language : 'uk';
   } catch {

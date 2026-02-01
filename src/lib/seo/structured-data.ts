@@ -1,149 +1,86 @@
-/**
- * Структуровані дані (JSON-LD) для покращення SEO
- */
+import React, { type ReactElement } from 'react';
 
-import React from 'react';
+const DEFAULT_SITE_NAME = 'Wearsearch';
 
-const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || 'https://wearsearch.com';
-const SITE_NAME = 'Wearsearch';
+type JsonLdProps = {
+  data: Record<string, unknown> | Array<Record<string, unknown>>;
+  nonce?: string;
+};
 
-// Базові типи для structured data
-interface StructuredData {
-  '@context': 'https://schema.org';
-  '@type': string;
-  [key: string]: unknown;
-}
+export const JsonLd = ({ data, nonce }: JsonLdProps): ReactElement =>
+  React.createElement('script', {
+    type: 'application/ld+json',
+    dangerouslySetInnerHTML: { __html: JSON.stringify(data) },
+    nonce,
+  });
 
-/**
- * Organization Schema для всього сайту
- */
-export function generateOrganizationSchema(): StructuredData {
-  return {
-    '@context': 'https://schema.org',
-    '@type': 'Organization',
-    name: SITE_NAME,
-    url: SITE_URL,
-    logo: `${SITE_URL}/logo.png`,
-    description: 'Порівняння цін на модний одяг, взуття та аксесуари',
-    sameAs: [
-      // Додайте посилання на соціальні мережі
-      // 'https://facebook.com/wearsearch',
-      // 'https://instagram.com/wearsearch',
-      // 'https://twitter.com/wearsearch',
-    ],
-  };
-}
-
-/**
- * WebSite Schema з пошуковою функцією
- */
-export function generateWebSiteSchema(): StructuredData {
-  return {
-    '@context': 'https://schema.org',
-    '@type': 'WebSite',
-    name: SITE_NAME,
-    url: SITE_URL,
-    potentialAction: {
-      '@type': 'SearchAction',
-      target: {
-        '@type': 'EntryPoint',
-        urlTemplate: `${SITE_URL}/search?q={search_term_string}`,
-      },
-      'query-input': 'required name=search_term_string',
-    },
-  };
-}
-
-/**
- * Product Schema для сторінки продукту
- */
-export function generateProductSchema(product: {
+export const generateProductStructuredData = (product: {
   id: string;
   name: string;
   description?: string;
-  brand?: string;
-  image?: string;
+  image_url: string;
   price?: number;
   currency?: string;
-  availability?: 'InStock' | 'OutOfStock' | 'PreOrder';
-  rating?: number;
-  reviewCount?: number;
-}): StructuredData {
-  return {
-    '@context': 'https://schema.org',
-    '@type': 'Product',
-    name: product.name,
-    description: product.description,
-    brand: product.brand
-      ? {
-          '@type': 'Brand',
-          name: product.brand,
-        }
-      : undefined,
-    image: product.image,
-    offers: {
-      '@type': 'Offer',
-      price: product.price?.toString(),
-      priceCurrency: product.currency || 'UAH',
-      availability: `https://schema.org/${product.availability || 'InStock'}`,
-      url: `${SITE_URL}/products/${product.id}`,
-    },
-    aggregateRating:
-      product.rating && product.reviewCount
-        ? {
-            '@type': 'AggregateRating',
-            ratingValue: product.rating.toString(),
-            reviewCount: product.reviewCount.toString(),
-          }
-        : undefined,
-  };
-}
+  brand?: string;
+  category?: string;
+}) => ({
+  '@context': 'https://schema.org',
+  '@type': 'Product',
+  name: product.name,
+  description: product.description || `${product.name} - Available at Wearsearch`,
+  image: product.image_url,
+  brand: product.brand
+    ? {
+        '@type': 'Brand',
+        name: product.brand,
+      }
+    : undefined,
+  category: product.category,
+  offers: product.price
+    ? {
+        '@type': 'Offer',
+        price: product.price,
+        priceCurrency: product.currency || 'UAH',
+        availability: 'https://schema.org/InStock',
+      }
+    : undefined,
+});
 
-/**
- * BreadcrumbList Schema для навігації
- */
-export function generateBreadcrumbSchema(
-  items: Array<{ name: string; url: string }>
-): StructuredData {
-  return {
-    '@context': 'https://schema.org',
-    '@type': 'BreadcrumbList',
-    itemListElement: items.map((item, index) => ({
-      '@type': 'ListItem',
-      position: index + 1,
-      name: item.name,
-      item: item.url,
-    })),
-  };
-}
+export const generateBreadcrumbStructuredData = (items: Array<{ name: string; url: string }>) => ({
+  '@context': 'https://schema.org',
+  '@type': 'BreadcrumbList',
+  itemListElement: items.map((item, index) => ({
+    '@type': 'ListItem',
+    position: index + 1,
+    name: item.name,
+    item: item.url,
+  })),
+});
 
-/**
- * ItemList Schema для сторінок колекцій (категорії, бренди)
- */
-export function generateItemListSchema(
+export const generateBreadcrumbSchema = (items: Array<{ name: string; url: string }>) =>
+  generateBreadcrumbStructuredData(items);
+
+export const generateItemListSchema = (
   items: Array<{ name: string; url: string }>,
   options?: { name?: string; description?: string }
-): StructuredData {
-  return {
-    '@context': 'https://schema.org',
-    '@type': 'ItemList',
-    name: options?.name,
-    description: options?.description,
-    itemListElement: items.map((item, index) => ({
-      '@type': 'ListItem',
-      position: index + 1,
-      name: item.name,
-      url: item.url,
-    })),
-  };
-}
+) => ({
+  '@context': 'https://schema.org',
+  '@type': 'ItemList',
+  ...(options?.name ? { name: options.name } : {}),
+  ...(options?.description ? { description: options.description } : {}),
+  itemListElement: items.map((item, index) => ({
+    '@type': 'ListItem',
+    position: index + 1,
+    name: item.name,
+    item: item.url,
+  })),
+});
 
-/**
- * Компонент для вставки JSON-LD на сторінку
- */
-export function JsonLd({ data }: { data: StructuredData }) {
-  return React.createElement('script', {
-    type: 'application/ld+json',
-    dangerouslySetInnerHTML: { __html: JSON.stringify(data) },
-  });
-}
+export const generateOrganizationStructuredData = () => ({
+  '@context': 'https://schema.org',
+  '@type': 'Organization',
+  name: DEFAULT_SITE_NAME,
+  url: 'https://wearsearch.com',
+  logo: 'https://wearsearch.com/logo.png',
+  sameAs: ['https://twitter.com/wearsearch', 'https://instagram.com/wearsearch'],
+});

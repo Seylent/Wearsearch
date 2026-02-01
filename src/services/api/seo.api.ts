@@ -4,6 +4,7 @@
  */
 
 import api from '../api';
+import { isApiError } from './errorHandler';
 import i18n from '@/i18n';
 
 export interface SEOData {
@@ -108,7 +109,9 @@ export const seoApi = {
       });
       return response.data.item;
     } catch (error) {
-      console.error(`[SEO API] Failed to fetch product SEO for ${productId}:`, error);
+      if (!isApiError(error) || !error.isNotFound()) {
+        console.error(`[SEO API] Failed to fetch product SEO for ${productId}:`, error);
+      }
       // Return default SEO if API fails
       return {
         meta_title: 'Product - Wearsearch',

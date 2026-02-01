@@ -1,16 +1,26 @@
-User-agent: Googlebot
-Allow: /
-
-User-agent: Bingbot
-Allow: /
-
-User-agent: Twitterbot
-Allow: /
-
-User-agent: facebookexternalhit
-Allow: /
-
 User-agent: *
-Allow: /
+Allow: /$
+
+# SEO categories (keep /products?type=)
+Allow: /products?type=
+Allow: /brands/
+Allow: /categories/
+Allow: /stores/
+
+# Filters (from useProductFilters)
+Disallow: /products?*q=
+Disallow: /products?*color=
+Disallow: /products?*material=
+Disallow: /products?*size=
+Disallow: /products?*brand=
+Disallow: /products?*price_min=
+Disallow: /products?*price_max=
+
+# Service areas
+Disallow: /admin/
+Disallow: /account/
+Disallow: /cart/
+Disallow: /checkout/
+Disallow: /api/
 
 Sitemap: https://wearsearch.com/sitemap.xml

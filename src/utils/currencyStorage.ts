@@ -11,7 +11,7 @@ export const CURRENCY_COOKIE = {
   maxAge: 365 * 24 * 60 * 60, // 1 year
   path: '/',
   sameSite: 'lax' as const,
-  secure: process.env.NODE_ENV === 'production'
+  secure: process.env.NODE_ENV === 'production',
 };
 
 // Client-side cookie utilities
@@ -21,13 +21,13 @@ export const currencyStorage = {
    */
   getCurrency(): CurrencyCode {
     if (globalThis.window === undefined) return 'UAH';
-    
+
     const value = document.cookie
       .split('; ')
       .find(row => row.startsWith(`${CURRENCY_COOKIE.name}=`))
       ?.split('=')[1];
-    
-    return (value === 'USD' || value === 'UAH') ? value : 'UAH';
+
+    return value === 'USD' || value === 'UAH' ? value : 'UAH';
   },
 
   /**
@@ -35,10 +35,10 @@ export const currencyStorage = {
    */
   setCurrency(currency: CurrencyCode): void {
     if (globalThis.window === undefined) return;
-    
+
     const cookieValue = `${CURRENCY_COOKIE.name}=${currency}; Max-Age=${CURRENCY_COOKIE.maxAge}; Path=${CURRENCY_COOKIE.path}; SameSite=${CURRENCY_COOKIE.sameSite}${CURRENCY_COOKIE.secure ? '; Secure' : ''}`;
     document.cookie = cookieValue;
-  }
+  },
 };
 
 /**
@@ -49,13 +49,13 @@ export async function getServerCurrency(): Promise<CurrencyCode> {
     // Client-side fallback
     return currencyStorage.getCurrency();
   }
-  
+
   try {
     // Dynamic import to avoid bundling in client
     const { cookies } = await import('next/headers');
-    const cookieStore = cookies();
+    const cookieStore = await cookies();
     const currency = cookieStore.get(CURRENCY_COOKIE.name)?.value;
-    return (currency === 'USD' || currency === 'UAH') ? currency : 'UAH';
+    return currency === 'USD' || currency === 'UAH' ? currency : 'UAH';
   } catch {
     return 'UAH';
   }

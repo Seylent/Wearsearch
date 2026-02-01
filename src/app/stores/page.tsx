@@ -1,5 +1,6 @@
 ﻿import { Suspense } from 'react';
 import { Metadata } from 'next';
+import { headers } from 'next/headers';
 import StoresContent from '@/components/pages/StoresContent';
 import {
   JsonLd,
@@ -62,7 +63,8 @@ export const metadata: Metadata = {
   },
 };
 
-export default function StoresPage() {
+export default async function StoresPage() {
+  const nonce = (await headers()).get('x-nonce') || undefined;
   return (
     <Suspense
       fallback={
@@ -79,12 +81,14 @@ export default function StoresPage() {
             url: `${process.env.NEXT_PUBLIC_SITE_URL || 'https://wearsearch.com'}/stores`,
           },
         ])}
+        nonce={nonce}
       />
       <JsonLd
         data={generateItemListSchema([], {
           name: 'Магазини',
           description: 'Список магазинів на Wearsearch',
         })}
+        nonce={nonce}
       />
       <StoresContent />
     </Suspense>

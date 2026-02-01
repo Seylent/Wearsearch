@@ -18,7 +18,7 @@ interface Product {
   name: string;
   image_url?: string;
   image?: string;
-  price: number | string;
+  price?: number | string;
   price_min?: number | string;
   min_price?: number | string;
   max_price?: number | string;

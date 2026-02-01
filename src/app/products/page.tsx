@@ -1,5 +1,6 @@
 import { Suspense } from 'react';
 import { Metadata } from 'next';
+import { headers } from 'next/headers';
 import { generateSearchMetadata } from '@/lib/seo/metadata-utils';
 import { shouldIndexPage } from '@/lib/seo/helpers';
 import { fetchBackendJson } from '@/lib/backendFetch';
@@ -108,7 +109,8 @@ export async function generateMetadata({
 }
 
 // Server Component
-export default function ProductsPage() {
+export default async function ProductsPage() {
+  const nonce = (await headers()).get('x-nonce') || undefined;
   return (
     <Suspense
       fallback={
@@ -125,6 +127,7 @@ export default function ProductsPage() {
             url: `${process.env.NEXT_PUBLIC_SITE_URL || 'https://wearsearch.com'}/products`,
           },
         ])}
+        nonce={nonce}
       />
       <ProductsContent />
     </Suspense>

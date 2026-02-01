@@ -1,11 +1,14 @@
 import type { Metadata, Viewport } from 'next';
+import { headers } from 'next/headers';
 import { Inter } from 'next/font/google';
 import { NextProviders } from './providers';
 import { getServerCurrency } from '@/utils/currencyStorage';
 import Navigation from '@/components/layout/Navigation';
 import Footer from '@/components/layout/Footer';
-import dynamic from 'next/dynamic';
 import { ResourceHintsInitializer } from '@/components/ResourceHintsInitializer';
+import { Analytics } from '@/components/Analytics';
+import { ClientOnlyOverlays } from '@/components/ClientOnlyOverlays';
+import { CookieBanner } from '@/components/CookieBanner';
 import './globals.css';
 
 const inter = Inter({
@@ -53,6 +56,7 @@ export default async function RootLayout({ children }: { readonly children: Reac
   const htmlLang = 'uk';
   const initialCurrency = await getServerCurrency();
   const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://wearsearch.com';
+  const nonce = (await headers()).get('x-nonce') || undefined;
   const organizationSchema = {
     '@context': 'https://schema.org',
     '@type': 'Organization',
@@ -74,6 +78,7 @@ export default async function RootLayout({ children }: { readonly children: Reac
 
   return (
     <html lang={htmlLang} suppressHydrationWarning>
+      <head>{nonce ? <meta name="csp-nonce" content={nonce} /> : null}</head>
       <body
         className={`min-h-screen bg-background text-foreground font-sans antialiased overflow-x-hidden selection:bg-foreground/20 ${inter.variable}`}
         suppressHydrationWarning
@@ -88,16 +93,19 @@ export default async function RootLayout({ children }: { readonly children: Reac
 
         <NextProviders initialCurrency={initialCurrency}>
           <ResourceHintsInitializer />
-          <NavigationProgress />
-          <OfflineBanner />
+          <ClientOnlyOverlays />
           <Navigation />
+          <Analytics />
+          <CookieBanner />
           <script
             type="application/ld+json"
             dangerouslySetInnerHTML={{ __html: JSON.stringify(organizationSchema) }}
+            nonce={nonce}
           />
           <script
             type="application/ld+json"
             dangerouslySetInnerHTML={{ __html: JSON.stringify(websiteSchema) }}
+            nonce={nonce}
           />
           <main id="main-content" className="flex-1 w-full min-h-screen">
             {children}
@@ -108,15 +116,3 @@ export default async function RootLayout({ children }: { readonly children: Reac
     </html>
   );
 }
-const NavigationProgress = dynamic(() => import('@/components/NavigationProgress'), {
-  ssr: false,
-  loading: () => null,
-});
-
-const OfflineBanner = dynamic(
-  () => import('@/components/OfflineBanner').then(mod => mod.OfflineBanner),
-  {
-    ssr: false,
-    loading: () => null,
-  }
-);

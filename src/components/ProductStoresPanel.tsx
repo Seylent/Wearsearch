@@ -5,19 +5,9 @@ import Image from 'next/image';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { SaveStoreButton } from '@/components/SaveStoreButton';
-import {
-  Filter,
-  MapPin,
-  SortAsc,
-  Tag,
-  ChevronDown,
-  Star,
-  Send,
-  Instagram,
-  Package,
-  ExternalLink,
-} from 'lucide-react';
+import { Filter, MapPin, SortAsc, Tag, ChevronDown, Star, Package } from 'lucide-react';
 import type { TFunction } from 'i18next';
+import { StorePriceCard } from '@/components/StorePriceCard';
 
 type NormalizedStore = {
   id: string;
@@ -30,9 +20,13 @@ type NormalizedStore = {
   telegram_url?: string;
   instagram_url?: string;
   store_url?: string;
+  affiliate_url?: string;
 };
 
 interface ProductStoresPanelProps {
+  productId: string;
+  productName: string;
+  productBrand?: string | null;
   priceRange: string | null;
   stores: NormalizedStore[];
   filteredStores: NormalizedStore[];
@@ -56,6 +50,9 @@ interface ProductStoresPanelProps {
 }
 
 const ProductStoresPanel: React.FC<ProductStoresPanelProps> = ({
+  productId,
+  productName,
+  productBrand,
   priceRange,
   stores,
   filteredStores,
@@ -277,47 +274,12 @@ const ProductStoresPanel: React.FC<ProductStoresPanelProps> = ({
                         </p>
                       )}
 
-                      <div className="flex gap-2">
-                        {store.telegram_url && (
-                          <a
-                            href={store.telegram_url}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="flex-1"
-                          >
-                            <Button variant="outline" size="sm" className="w-full">
-                              <Send className="w-4 h-4 mr-1" />
-                              Telegram
-                            </Button>
-                          </a>
-                        )}
-                        {store.instagram_url && (
-                          <a
-                            href={store.instagram_url}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="flex-1"
-                          >
-                            <Button variant="outline" size="sm" className="w-full">
-                              <Instagram className="w-4 h-4 mr-1" />
-                              Instagram
-                            </Button>
-                          </a>
-                        )}
-                        {store.store_url && (
-                          <a
-                            href={store.store_url}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="flex-1"
-                          >
-                            <Button variant="outline" size="sm" className="w-full">
-                              <ExternalLink className="w-4 h-4 mr-1" />
-                              {t('productDetail.visitStore', 'Store')}
-                            </Button>
-                          </a>
-                        )}
-                      </div>
+                      <StorePriceCard
+                        store={store}
+                        productId={productId}
+                        productName={productName}
+                        productBrand={productBrand}
+                      />
                     </div>
                   ))}
 

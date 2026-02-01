@@ -6,6 +6,7 @@
 'use client';
 
 import React from 'react';
+import { SafeHTML } from '@/components/SafeHTML';
 
 interface SEOTextSectionProps {
   title: string;
@@ -25,12 +26,10 @@ export const SEOTextSection: React.FC<SEOTextSectionProps> = ({
   return (
     <section className="mt-12 mb-8 px-4 max-w-7xl mx-auto">
       <div className="bg-zinc-900/50 border border-white/10 rounded-xl p-6 md:p-8">
-        <h2 className="text-2xl md:text-3xl font-bold text-white mb-4">
-          {title}
-        </h2>
-        
+        <h2 className="text-2xl md:text-3xl font-bold text-white mb-4">{title}</h2>
+
         <div className={`text-gray-300 leading-relaxed ${!expanded ? 'line-clamp-4' : ''}`}>
-          <div dangerouslySetInnerHTML={{ __html: content }} />
+          <SafeHTML html={content} className="prose prose-invert max-w-none" />
         </div>
 
         {!isExpanded && (
@@ -66,8 +65,11 @@ export const SEOTextSection: React.FC<SEOTextSectionProps> = ({
 /**
  * SEO-тексти для категорій (приклади)
  */
-export const CATEGORY_SEO_CONTENT: Record<string, { title: string; content: string; keywords: string[] }> = {
-  'krosovisky': {
+export const CATEGORY_SEO_CONTENT: Record<
+  string,
+  { title: string; content: string; keywords: string[] }
+> = {
+  krosovisky: {
     title: 'Як обрати кросівки: повний гід',
     content: `
       <p class="mb-4">
@@ -85,9 +87,15 @@ export const CATEGORY_SEO_CONTENT: Record<string, { title: string; content: stri
         Знайдіть найвигіднішу пропозицію за лічені секунди!
       </p>
     `,
-    keywords: ['Nike кросівки', 'Adidas кросівки', 'купити кросівки', 'кросівки ціна', 'спортивне взуття'],
+    keywords: [
+      'Nike кросівки',
+      'Adidas кросівки',
+      'купити кросівки',
+      'кросівки ціна',
+      'спортивне взуття',
+    ],
   },
-  'odag': {
+  odag: {
     title: 'Модний одяг онлайн: як обрати краще',
     content: `
       <p class="mb-4">
@@ -107,7 +115,7 @@ export const CATEGORY_SEO_CONTENT: Record<string, { title: string; content: stri
     `,
     keywords: ['одяг онлайн', 'купити одяг', 'модний одяг', 'одяг ціна', 'інтернет-магазин одягу'],
   },
-  'nike': {
+  nike: {
     title: 'Nike — офіційна продукція за найкращими цінами',
     content: `
       <p class="mb-4">
@@ -124,7 +132,13 @@ export const CATEGORY_SEO_CONTENT: Record<string, { title: string; content: stri
         Знайдіть свою ідеальну пару за найкращою ціною!
       </p>
     `,
-    keywords: ['Nike Air Force 1', 'Nike Air Max', 'Nike Dunk', 'Nike кросівки ціна', 'Nike Україна'],
+    keywords: [
+      'Nike Air Force 1',
+      'Nike Air Max',
+      'Nike Dunk',
+      'Nike кросівки ціна',
+      'Nike Україна',
+    ],
   },
 };
 

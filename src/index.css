@@ -111,6 +111,14 @@ body[style*='padding-right'] {
 }
 
 @layer utilities {
+  .scrollbar-hide::-webkit-scrollbar {
+    display: none;
+  }
+  .scrollbar-hide {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
+
   .animate-pulse-slow {
     animation: pulse 4s cubic-bezier(0.4, 0, 0.6, 1) infinite;
     will-change: opacity;
@@ -527,6 +535,10 @@ body[style*='padding-right'] {
 }
 
 @layer components {
+  .glass {
+    @apply bg-white/10 backdrop-blur-md border border-white/20;
+  }
+
   .neon-glow {
     box-shadow: var(--neon-glow);
   }

@@ -5,6 +5,7 @@
 
 import { Suspense } from 'react';
 import { Metadata } from 'next';
+import { headers } from 'next/headers';
 import Image from 'next/image';
 import { notFound } from 'next/navigation';
 import {
@@ -110,6 +111,7 @@ export async function generateMetadata({ params }: BrandPageProps): Promise<Meta
 // Основний компонент сторінки
 export default async function BrandPage({ params }: Readonly<BrandPageProps>) {
   const { slug } = params;
+  const nonce = (await headers()).get('x-nonce') || undefined;
 
   try {
     // Отримуємо дані бренду
@@ -189,8 +191,8 @@ export default async function BrandPage({ params }: Readonly<BrandPageProps>) {
 
     return (
       <>
-        <JsonLd data={breadcrumbData} />
-        <JsonLd data={itemListData} />
+        <JsonLd data={breadcrumbData} nonce={nonce} />
+        <JsonLd data={itemListData} nonce={nonce} />
 
         <div className="min-h-screen bg-black text-white">
           {/* Hero секція з H1 */}

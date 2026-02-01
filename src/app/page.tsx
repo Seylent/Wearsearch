@@ -1,5 +1,6 @@
 import { Suspense } from 'react';
 import { Metadata } from 'next';
+import { headers } from 'next/headers';
 
 // Data fetching
 import { getHomepageData } from './api/getHomepageData';
@@ -16,6 +17,7 @@ export const metadata: Metadata = generateHomeMetadata();
 
 // Server Component with proper data fetching
 export default async function HomePage() {
+  const nonce = (await headers()).get('x-nonce') || undefined;
   try {
     // Fetch data on the server
     const homepageData = await getHomepageData();
@@ -51,7 +53,7 @@ export default async function HomePage() {
           </div>
         }
       >
-        <JsonLd data={itemListData} />
+        <JsonLd data={itemListData} nonce={nonce} />
         <HomeContent
           featuredProducts={homepageData.featuredProducts}
           newProducts={homepageData.newProducts}

@@ -15,7 +15,11 @@ import { SaveStoreButton } from '@/components/SaveStoreButton';
 
 import type { PaginationInfo } from '@/types';
 
-const StoresContent: React.FC = () => {
+interface StoresContentProps {
+  storeId?: string;
+}
+
+const StoresContent: React.FC<StoresContentProps> = ({ storeId }) => {
   const router = useRouter();
   const searchParams = useSearchParams();
   const { t } = useTranslation();
@@ -107,7 +111,7 @@ const StoresContent: React.FC = () => {
     return Array.isArray(storesData) ? storesData : [];
   }, [storesData]);
 
-  const filteredStores = stores;
+  const filteredStores = storeId ? stores.filter(store => String(store.id) === storeId) : stores;
 
   return (
     <div className="min-h-screen bg-background text-foreground font-sans">

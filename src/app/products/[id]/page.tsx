@@ -1,9 +1,14 @@
 import { Suspense } from 'react';
 import { Metadata } from 'next';
+import { headers } from 'next/headers';
+import { notFound } from 'next/navigation';
 import ProductDetail from '@/components/ProductDetail';
 import { generateProductMetadata } from '@/lib/seo/metadata-utils';
 import { fetchBackendJson } from '@/lib/backendFetch';
-import { generateBreadcrumbStructuredData, generateProductStructuredData } from '@/hooks/useSEO';
+import {
+  generateBreadcrumbStructuredData,
+  generateProductStructuredData,
+} from '@/lib/seo/structured-data';
 import { getServerLanguage } from '@/utils/languageStorage';
 
 const isRecord = (value: unknown): value is Record<string, unknown> =>
@@ -29,16 +34,17 @@ const toOptionalNumber = (value: unknown): number | undefined => {
 
 // Types
 interface PageProps {
-  params: {
+  params: Promise<{
     id: string;
-  };
+  }>;
 }
 
 // Generate metadata for SEO
 export async function generateMetadata({ params }: PageProps): Promise<Metadata> {
   try {
+    const { id } = await params;
     const lang = await getServerLanguage();
-    const res = await fetchBackendJson<unknown>(`/products/${params.id}?lang=${lang}`, {
+    const res = await fetchBackendJson<unknown>(`/products/${id}?lang=${lang}`, {
       next: { revalidate: 3600 },
     });
 
@@ -74,7 +80,7 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
 
     const canonicalUrl =
       toOptionalString(isRecord(product) ? product.canonical_url : undefined) ||
-      `${process.env.NEXT_PUBLIC_SITE_URL || 'https://wearsearch.com'}/products/${params.id}`;
+      `${process.env.NEXT_PUBLIC_SITE_URL || 'https://wearsearch.com'}/products/${id}`;
 
     const productName = toOptionalString(isRecord(product) ? product.name : undefined) ?? 'Product';
     const productBrand = toOptionalString(isRecord(product) ? product.brand : undefined) ?? '';
@@ -158,12 +164,15 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
 
 // Server Component for product details
 export default async function ProductDetailPage({ params }: PageProps) {
+  const { id } = await params;
+  const nonce = (await headers()).get('x-nonce') || undefined;
   let structuredData: Record<string, unknown> | null = null;
   let breadcrumbData: Record<string, unknown> | null = null;
+  let hasProduct = false;
 
   try {
     const lang = await getServerLanguage();
-    const res = await fetchBackendJson<unknown>(`/products/${params.id}?lang=${lang}`, {
+    const res = await fetchBackendJson<unknown>(`/products/${id}?lang=${lang}`, {
       next: { revalidate: 3600 },
     });
     const payload = isRecord(res) ? res.data : undefined;
@@ -175,8 +184,9 @@ export default async function ProductDetailPage({ params }: PageProps) {
       payload;
 
     if (product) {
+      hasProduct = true;
       structuredData = generateProductStructuredData({
-        id: String(isRecord(product) ? (product.id ?? params.id) : params.id),
+        id: String(isRecord(product) ? (product.id ?? id) : id),
         name: String(isRecord(product) ? (product.name ?? '') : ''),
         description:
           toOptionalString(isRecord(product) ? product.seo_description : undefined) ||
@@ -205,13 +215,17 @@ export default async function ProductDetailPage({ params }: PageProps) {
             name: String(
               toOptionalString(isRecord(product) ? product.name : undefined) ?? 'Product'
             ),
-            url: `${siteUrl}/products/${params.id}`,
+            url: `${siteUrl}/products/${id}`,
           },
         ].filter(Boolean) as Array<{ name: string; url: string }>
       );
     }
   } catch (error) {
     console.error('Error fetching product for structured data:', error);
+  }
+
+  if (!hasProduct) {
+    notFound();
   }
 
   return (
@@ -226,12 +240,14 @@ export default async function ProductDetailPage({ params }: PageProps) {
         <script
           type="application/ld+json"
           dangerouslySetInnerHTML={{ __html: JSON.stringify(structuredData) }}
+          nonce={nonce}
         />
       )}
       {breadcrumbData && (
         <script
           type="application/ld+json"
           dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbData) }}
+          nonce={nonce}
         />
       )}
       <ProductDetail />

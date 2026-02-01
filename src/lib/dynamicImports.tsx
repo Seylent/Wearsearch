@@ -23,24 +23,20 @@ const FavoritesComponent = () => (
     <div className="text-center">
       <h1 className="text-3xl font-bold mb-4">Favorites</h1>
       <p className="text-gray-400">Your favorite products will appear here.</p>
-      <p className="text-gray-500 text-sm mt-2">This feature will be implemented with user authentication.</p>
+      <p className="text-gray-500 text-sm mt-2">
+        This feature will be implemented with user authentication.
+      </p>
     </div>
   </div>
 );
 
-export const DynamicFavorites = dynamic<Record<string, never>>(
-  () => Promise.resolve(FavoritesComponent),
-  {
-    loading: () => <PageLoader message="Loading Favorites..." />,
-    ssr: false,
-  }
-);
+export const DynamicFavorites = dynamic(() => Promise.resolve(FavoritesComponent), {
+  loading: () => <PageLoader message="Loading Favorites..." />,
+  ssr: false,
+});
 
 // Search components - heavy with autocomplete
-export const DynamicEnhancedSearch = dynamic<Record<string, never>>(
-  () => import('@/components/EnhancedSearch'),
-  {
-    loading: () => <PageLoader message="Loading Search..." />,
-    ssr: false, // Search is interactive only
-  }
-);
+export const DynamicEnhancedSearch = dynamic(() => import('@/components/EnhancedSearch'), {
+  loading: () => <PageLoader message="Loading Search..." />,
+  ssr: false, // Search is interactive only
+});

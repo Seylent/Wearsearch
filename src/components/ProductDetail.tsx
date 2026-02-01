@@ -1,10 +1,9 @@
 ﻿'use client';
 
 import { useParams, useRouter } from 'next/navigation';
-import Image from 'next/image';
 import { useState, useEffect, useMemo, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
-import { ArrowLeft, Edit, Package, Tag, ZoomIn } from 'lucide-react';
+import { ArrowLeft, Edit, Package, Tag } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { LazySection } from '@/components/common/LazySection';
 import { Breadcrumbs } from '@/components/Breadcrumbs';
@@ -14,6 +13,7 @@ import { FavoriteButton } from '@/components/FavoriteButton';
 import dynamic from 'next/dynamic';
 import ShareButton from '@/components/ShareButton';
 import AddToWishlistButton from '@/components/AddToWishlistButton';
+import { ProductImageGallery } from '@/components/ProductImageGallery';
 const ProductStoresPanel = dynamic(() => import('@/components/ProductStoresPanel'), {
   ssr: false,
   loading: () => null,
@@ -96,6 +96,7 @@ type NormalizedStore = Record<string, unknown> & {
   telegram_url?: string | null;
   instagram_url?: string | null;
   store_url?: string | null;
+  affiliate_url?: string | null;
   shipping_info?: string | null;
   is_recommended?: boolean;
   logo_url?: string | null;
@@ -196,9 +197,7 @@ const ProductDetail = () => {
   const { formatPrice } = useCurrencyConversion();
   const { currency } = useCurrency();
   const { isAuthenticated, permissions } = useAuth();
-  const selectedImage = 0; // Currently always showing first image
   const canManageProducts = isAuthenticated && permissions.canManageProducts;
-  const [isLightboxOpen, setIsLightboxOpen] = useState(false);
 
   // Dynamic SEO from API
   const [seoData, setSeoData] = useState<SEOData | null>(null);
@@ -401,6 +400,12 @@ const ProductDetail = () => {
       const rawSizes = storeRecord['sizes'] ?? storeRecord['available_sizes'];
       const sizes = parseSizes(rawSizes);
       const storeUrl = getFirstString(storeRecord['url'], storeInfo ? storeInfo['url'] : undefined);
+      const affiliateUrl = getFirstString(
+        storeRecord['affiliate_url'],
+        storeRecord['affiliateUrl'],
+        storeInfo ? storeInfo['affiliate_url'] : undefined,
+        storeInfo ? storeInfo['affiliateUrl'] : undefined
+      );
       const normalizedTelegram = storeUrl && /t\.me|telegram/i.test(storeUrl) ? storeUrl : null;
       const normalizedInstagram = storeUrl && /instagram\.com/i.test(storeUrl) ? storeUrl : null;
       const normalizedStoreUrl =
@@ -428,6 +433,7 @@ const ProductDetail = () => {
           normalizedInstagram
         ),
         store_url: normalizedStoreUrl,
+        affiliate_url: affiliateUrl,
         shipping_info: getFirstString(
           storeRecord['shipping_info'],
           storeRecord['shipping'],
@@ -601,6 +607,19 @@ const ProductDetail = () => {
     return `${formatPrice(min)} - ${formatPrice(max)}`;
   }, [stores, formatPrice]);
 
+  const productImages = useMemo(() => {
+    if (!product) return [];
+    const rawImages = [product.image_url, product.image].filter(
+      (value): value is string => typeof value === 'string' && value.trim().length > 0
+    );
+    return Array.from(new Set(rawImages)).map(convertS3UrlToHttps);
+  }, [product]);
+  const fallbackImage = convertS3UrlToHttps(
+    product?.image_url || product?.image || '/placeholder.svg'
+  );
+  const galleryImages = productImages.length > 0 ? productImages : [fallbackImage];
+  const primaryImage = galleryImages[0];
+
   // Loading state
   if (productLoading) {
     return (
@@ -620,9 +639,6 @@ const ProductDetail = () => {
       </div>
     );
   }
-
-  const productImages = product.image_url ? [product.image_url] : [];
-  const httpsImageUrl = convertS3UrlToHttps(productImages[selectedImage] || '/placeholder.svg');
 
   return (
     <div className="min-h-screen bg-background text-foreground font-sans">
@@ -667,75 +683,10 @@ const ProductDetail = () => {
           <div className="space-y-8">
             {/* Image Section */}
             <div className="relative animate-fade-in">
-              <div className="relative rounded-3xl overflow-hidden border border-transparent bg-transparent group">
-                {product && (
-                  <div className="absolute top-4 right-4 z-10 flex gap-2">
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      onClick={() => setIsLightboxOpen(true)}
-                      className="w-12 h-12 rounded-full bg-foreground/80 text-background backdrop-blur-sm md:hover:bg-foreground md:hover:text-background active:bg-foreground active:text-background transition-all dark:bg-black/60 dark:text-white dark:md:hover:bg-white dark:md:hover:text-black dark:active:bg-white dark:active:text-black"
-                      title={t('products.zoomImage', 'Click to zoom')}
-                    >
-                      <ZoomIn className="w-5 h-5" />
-                    </Button>
-                    <FavoriteButton
-                      productId={String(id)}
-                      variant="ghost"
-                      className="w-12 h-12 rounded-full bg-foreground/80 text-background backdrop-blur-sm md:hover:bg-foreground md:hover:text-background active:bg-foreground active:text-background transition-all dark:bg-black/60 dark:text-white dark:md:hover:bg-white dark:md:hover:text-black dark:active:bg-white dark:active:text-black"
-                    />
-                    <AddToWishlistButton
-                      productId={String(id)}
-                      productName={product.name}
-                      className="bg-foreground/80 text-background backdrop-blur-sm md:hover:bg-foreground md:hover:text-background active:bg-foreground active:text-background transition-all dark:bg-black/60 dark:text-white dark:md:hover:bg-white dark:md:hover:text-black dark:active:bg-white dark:active:text-black"
-                    />
-                    <ShareButton
-                      title={product.name}
-                      description={product.description}
-                      variant="ghost"
-                      className="w-12 h-12 rounded-full bg-foreground/80 text-background backdrop-blur-sm md:hover:bg-foreground md:hover:text-background active:bg-foreground active:text-background transition-all dark:bg-black/60 dark:text-white dark:md:hover:bg-white dark:md:hover:text-black dark:active:bg-white dark:active:text-black"
-                      productImage={httpsImageUrl}
-                      productName={product.name}
-                    />
-                  </div>
-                )}
-                <button
-                  type="button"
-                  className="relative w-full rounded-3xl flex items-center justify-center p-6 sm:p-8 lg:p-10 cursor-zoom-in border-0"
-                  style={{
-                    background: 'var(--product-media-bg)',
-                  }}
-                  onClick={() => setIsLightboxOpen(true)}
-                  aria-label={t('products.zoomImage', 'Click to zoom image')}
-                >
-                  <Image
-                    src={httpsImageUrl}
-                    alt={product.name}
-                    width={1200}
-                    height={1600}
-                    priority
-                    sizes="(max-width: 768px) 90vw, (max-width: 1200px) 60vw, 50vw"
-                    className="max-h-[68vh] sm:max-h-[72vh] lg:max-h-[80vh] w-auto object-contain transition-transform duration-300 group-hover:scale-[1.02]"
-                    draggable={false}
-                  />
-                </button>
+              <div className="relative rounded-3xl overflow-hidden border border-transparent bg-transparent">
+                <ProductImageGallery images={galleryImages} productName={product.name} />
               </div>
             </div>
-
-            {/* Image Lightbox */}
-            {isLightboxOpen && (
-              <ProductImageViewer
-                isOpen={isLightboxOpen}
-                onClose={() => setIsLightboxOpen(false)}
-                images={
-                  productImages.length > 0
-                    ? productImages.map(convertS3UrlToHttps)
-                    : [httpsImageUrl]
-                }
-                initialIndex={selectedImage}
-                alt={product.name}
-              />
-            )}
 
             {/* Product Info */}
             <div className="animate-fade-in-up" style={{ animationDelay: '0.2s' }}>
@@ -750,6 +701,27 @@ const ProductDetail = () => {
               <h1 className="font-display text-2xl sm:text-3xl md:text-5xl font-bold tracking-tight mb-4">
                 {product.name}
               </h1>
+
+              <div className="flex flex-wrap items-center gap-2 mb-6">
+                <FavoriteButton
+                  productId={String(id)}
+                  variant="ghost"
+                  className="h-10 w-10 rounded-full bg-foreground/10 text-foreground md:hover:bg-foreground/20"
+                />
+                <AddToWishlistButton
+                  productId={String(id)}
+                  productName={product.name}
+                  className="h-10 rounded-full px-4 bg-foreground/10 text-foreground md:hover:bg-foreground/20"
+                />
+                <ShareButton
+                  title={product.name}
+                  description={product.description}
+                  variant="ghost"
+                  className="h-10 w-10 rounded-full bg-foreground/10 text-foreground md:hover:bg-foreground/20"
+                  productImage={primaryImage}
+                  productName={product.name}
+                />
+              </div>
 
               {/* Details */}
               <div className="space-y-2 sm:space-y-3 mb-6 sm:mb-8">
@@ -855,6 +827,9 @@ const ProductDetail = () => {
           {/* Right: Stores Sidebar */}
           <LazySection minHeight="520px" rootMargin="200px">
             <ProductStoresPanel
+              productId={String(id)}
+              productName={product.name}
+              productBrand={brandName}
               priceRange={priceRange}
               stores={stores}
               filteredStores={filteredStores}
@@ -911,10 +886,3 @@ const ProductDetail = () => {
 };
 
 export default ProductDetail;
-const ProductImageViewer = dynamic(
-  () => import('@/components/ProductImageViewer').then(mod => mod.ProductImageViewer),
-  {
-    ssr: false,
-    loading: () => null,
-  }
-);

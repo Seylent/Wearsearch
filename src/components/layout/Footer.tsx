@@ -33,7 +33,7 @@ const Footer = () => {
                   alt="Wearsearch"
                   width={140}
                   height={32}
-                  className="h-8 w-auto"
+                  className="h-8 w-[140px]"
                 />
               </Link>
               <p className="text-sm text-muted-foreground leading-relaxed mt-3">
