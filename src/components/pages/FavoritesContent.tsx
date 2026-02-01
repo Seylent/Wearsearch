@@ -118,7 +118,7 @@ function FavoritesWithParams() {
 
   return (
     <div className="min-h-screen bg-background text-foreground">
-      <main className="container mx-auto px-4 sm:px-6 pt-24 sm:pt-28 pb-16">
+      <main className="max-w-[1800px] mx-auto px-6 md:px-12 lg:px-16 pt-24 sm:pt-28 pb-16">
         {/* Header */}
         <div className="mb-10">
           <div className="flex flex-col gap-6 sm:flex-row sm:items-start sm:justify-between">

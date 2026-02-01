@@ -53,17 +53,18 @@ class CategoryService {
   async getCategories(filters?: CategoryFilter): Promise<Category[]> {
     try {
       const searchParams = new URLSearchParams();
-      
+
       if (filters?.page) searchParams.set('page', filters.page.toString());
       if (filters?.limit) searchParams.set('limit', filters.limit.toString());
       if (filters?.search) searchParams.set('search', filters.search);
       if (filters?.parentId !== undefined) searchParams.set('parentId', filters.parentId || '');
-      if (filters?.isActive !== undefined) searchParams.set('isActive', filters.isActive.toString());
+      if (filters?.isActive !== undefined)
+        searchParams.set('isActive', filters.isActive.toString());
       if (filters?.sortBy) searchParams.set('sortBy', filters.sortBy);
       if (filters?.sortOrder) searchParams.set('sortOrder', filters.sortOrder);
 
       const url = `${this.baseUrl}/api/categories?${searchParams.toString()}`;
-      
+
       const response = await fetch(url, {
         next: { revalidate: 3600 }, // 1 hour cache
         headers: {
@@ -77,7 +78,10 @@ class CategoryService {
       }
 
       const data = await response.json();
-      return data?.data?.items || data?.items || data || this.getFallbackCategories();
+      const rawItems = data?.data?.items ?? data?.items ?? data ?? [];
+      const items = Array.isArray(rawItems) ? rawItems : [];
+      if (items.length === 0) return this.getFallbackCategories();
+      return items.map(item => this.normalizeCategory(item as Category));
     } catch (error) {
       console.error('Error fetching categories:', error);
       return this.getFallbackCategories();
@@ -130,11 +134,11 @@ class CategoryService {
    * Get main categories (top-level)
    */
   async getMainCategories(): Promise<Category[]> {
-    return this.getCategories({ 
-      parentId: null, 
-      isActive: true, 
+    return this.getCategories({
+      parentId: null,
+      isActive: true,
       sortBy: 'sortOrder',
-      sortOrder: 'asc'
+      sortOrder: 'asc',
     });
   }
 
@@ -142,11 +146,11 @@ class CategoryService {
    * Get subcategories for a parent category
    */
   async getSubcategories(parentId: string): Promise<Category[]> {
-    return this.getCategories({ 
-      parentId, 
-      isActive: true, 
+    return this.getCategories({
+      parentId,
+      isActive: true,
       sortBy: 'sortOrder',
-      sortOrder: 'asc'
+      sortOrder: 'asc',
     });
   }
 
@@ -154,10 +158,10 @@ class CategoryService {
    * Search categories
    */
   async searchCategories(query: string, limit = 10): Promise<Category[]> {
-    return this.getCategories({ 
-      search: query, 
+    return this.getCategories({
+      search: query,
       limit,
-      isActive: true 
+      isActive: true,
     });
   }
 
@@ -210,24 +214,41 @@ class CategoryService {
    */
   async getCategoryTree(): Promise<Category[]> {
     try {
+      const treeUrl = `${this.baseUrl}/api/categories?tree=1`;
+      const response = await fetch(treeUrl, {
+        next: { revalidate: 3600 },
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        const tree =
+          data?.tree ?? data?.data?.tree ?? data?.data?.items?.tree ?? data?.items?.tree ?? null;
+
+        if (Array.isArray(tree)) {
+          return tree.map(node => this.normalizeCategory(node as Category, true));
+        }
+      }
+
       const allCategories = await this.getCategories({ isActive: true });
-      
-      // Build tree structure
+
+      // Build tree structure from flat list
       const categoryMap = new Map<string, Category>();
       const rootCategories: Category[] = [];
 
-      // First pass: create map of all categories
       allCategories.forEach(category => {
         categoryMap.set(category.id, { ...category, subcategories: [] });
       });
 
-      // Second pass: build tree structure
       allCategories.forEach(category => {
         const categoryWithSubcategories = categoryMap.get(category.id);
         if (!categoryWithSubcategories) return;
 
-        if (category.parentId) {
-          const parent = categoryMap.get(category.parentId);
+        const parentId = category.parentId;
+        if (parentId) {
+          const parent = categoryMap.get(parentId);
           if (parent?.subcategories) {
             parent.subcategories.push(categoryWithSubcategories);
           }
@@ -241,6 +262,33 @@ class CategoryService {
       console.error('Error building category tree:', error);
       return this.getFallbackCategories();
     }
+  }
+
+  private normalizeCategory(raw: Category, includeChildren = false): Category {
+    const record = raw as unknown as Record<string, unknown>;
+    const normalized: Category = {
+      ...(raw as Category),
+      parentId:
+        typeof (record.parentId as string | undefined) === 'string'
+          ? (record.parentId as string)
+          : typeof (record.parent_id as string | undefined) === 'string'
+            ? (record.parent_id as string)
+            : null,
+      sortOrder:
+        typeof (record.sortOrder as number | undefined) === 'number'
+          ? (record.sortOrder as number)
+          : typeof (record.sort_order as number | undefined) === 'number'
+            ? (record.sort_order as number)
+            : undefined,
+    };
+
+    if (includeChildren && Array.isArray(record.subcategories)) {
+      normalized.subcategories = record.subcategories.map(child =>
+        this.normalizeCategory(child as Category, true)
+      );
+    }
+
+    return normalized;
   }
 }
 
@@ -262,13 +310,7 @@ export const getCategoryImageUrl = (category: Category): string => {
 
 // Type guards
 export const isCategory = (obj: unknown): obj is Category => {
-  return (
-    typeof obj === 'object' &&
-    obj !== null &&
-    'id' in obj &&
-    'name' in obj &&
-    'slug' in obj
-  );
+  return typeof obj === 'object' && obj !== null && 'id' in obj && 'name' in obj && 'slug' in obj;
 };
 
 export default categoryService;

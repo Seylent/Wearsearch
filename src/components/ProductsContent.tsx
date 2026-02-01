@@ -516,7 +516,7 @@ function FiltersDialogContent(props: FiltersDialogProps) {
   return (
     <div className="space-y-6 py-4">
       <div>
-        <h3 className="font-semibold mb-2 text-sm uppercase tracking-widest text-muted-foreground">
+        <h3 className="font-semibold mb-2 text-sm uppercase tracking-widest text-warm-gray">
           {t('products.color')}
         </h3>
         <div className="grid grid-cols-3 gap-1">
@@ -529,11 +529,11 @@ function FiltersDialogContent(props: FiltersDialogProps) {
                 id={`filter-color-${color}`}
                 checked={filters.selectedColors.includes(color)}
                 onCheckedChange={() => filters.toggleColor(color)}
-                className="min-w-[18px] min-h-[18px] h-[18px] w-[18px]"
+                className="min-w-[18px] min-h-[18px] h-[18px] w-[18px] border-earth/30 data-[state=checked]:bg-sand/60 data-[state=checked]:border-earth/40 data-[state=checked]:text-earth"
               />
               <Label
                 htmlFor={`filter-color-${color}`}
-                className="text-xs cursor-pointer active:text-foreground/80 transition-colors capitalize flex-1"
+                className="text-xs cursor-pointer text-warm-gray hover:text-earth transition-colors capitalize flex-1"
               >
                 {getColorTranslation(color)}
               </Label>
@@ -543,10 +543,10 @@ function FiltersDialogContent(props: FiltersDialogProps) {
         {colors.length > COMPACT_LIMIT && (
           <button
             onClick={() => setShowAllColors(!showAllColors)}
-            className="mt-2 text-xs text-primary hover:text-primary/80 transition-colors flex items-center gap-1"
+            className="mt-2 text-xs text-earth/70 hover:text-earth transition-colors flex items-center gap-1"
           >
             <ChevronDown
-              className={`w-3 h-3 transition-transform ${showAllColors ? 'rotate-180' : ''}`}
+              className={`w-3 h-3 text-earth/70 transition-transform ${showAllColors ? 'rotate-180' : ''}`}
             />
             {showAllColors
               ? t('common.showLess', 'Show less')
@@ -559,7 +559,7 @@ function FiltersDialogContent(props: FiltersDialogProps) {
       </div>
 
       <div>
-        <h3 className="font-semibold mb-2 text-sm uppercase tracking-widest text-muted-foreground">
+        <h3 className="font-semibold mb-2 text-sm uppercase tracking-widest text-warm-gray">
           {t('products.category')}
         </h3>
         <div className="grid grid-cols-2 gap-1">
@@ -572,11 +572,11 @@ function FiltersDialogContent(props: FiltersDialogProps) {
                 id={`filter-category-${category}`}
                 checked={filters.selectedTypes.includes(category)}
                 onCheckedChange={() => filters.toggleType(category)}
-                className="min-w-[18px] min-h-[18px] h-[18px] w-[18px]"
+                className="min-w-[18px] min-h-[18px] h-[18px] w-[18px] border-earth/30 data-[state=checked]:bg-sand/60 data-[state=checked]:border-earth/40 data-[state=checked]:text-earth"
               />
               <Label
                 htmlFor={`filter-category-${category}`}
-                className="text-xs cursor-pointer active:text-foreground/80 transition-colors capitalize flex-1"
+                className="text-xs cursor-pointer text-warm-gray hover:text-earth transition-colors capitalize flex-1"
               >
                 {categoryLabels[category] || getCategoryTranslation(category)}
               </Label>
@@ -586,10 +586,10 @@ function FiltersDialogContent(props: FiltersDialogProps) {
         {categories.length > COMPACT_LIMIT && (
           <button
             onClick={() => setShowAllCategories(!showAllCategories)}
-            className="mt-2 text-xs text-primary hover:text-primary/80 transition-colors flex items-center gap-1"
+            className="mt-2 text-xs text-earth/70 hover:text-earth transition-colors flex items-center gap-1"
           >
             <ChevronDown
-              className={`w-3 h-3 transition-transform ${showAllCategories ? 'rotate-180' : ''}`}
+              className={`w-3 h-3 text-earth/70 transition-transform ${showAllCategories ? 'rotate-180' : ''}`}
             />
             {showAllCategories
               ? t('common.showLess', 'Show less')
@@ -602,7 +602,7 @@ function FiltersDialogContent(props: FiltersDialogProps) {
       </div>
 
       <div>
-        <h3 className="font-semibold mb-2 text-sm uppercase tracking-widest text-muted-foreground">
+        <h3 className="font-semibold mb-2 text-sm uppercase tracking-widest text-warm-gray">
           {t('products.materials', 'Materials')}
         </h3>
         <div className="grid grid-cols-2 gap-1">
@@ -617,11 +617,11 @@ function FiltersDialogContent(props: FiltersDialogProps) {
                 onCheckedChange={() =>
                   filters.toggleMaterial(material.slug || material.id || material.name)
                 }
-                className="min-w-[18px] min-h-[18px] h-[18px] w-[18px]"
+                className="min-w-[18px] min-h-[18px] h-[18px] w-[18px] border-earth/30 data-[state=checked]:bg-sand/60 data-[state=checked]:border-earth/40 data-[state=checked]:text-earth"
               />
               <Label
                 htmlFor={`filter-material-${material.slug || material.id}`}
-                className="text-xs cursor-pointer active:text-foreground/80 transition-colors capitalize flex-1"
+                className="text-xs cursor-pointer text-warm-gray hover:text-earth transition-colors capitalize flex-1"
               >
                 {material.name}
               </Label>
@@ -631,10 +631,10 @@ function FiltersDialogContent(props: FiltersDialogProps) {
         {materials.length > COMPACT_LIMIT && (
           <button
             onClick={() => setShowAllMaterials(!showAllMaterials)}
-            className="mt-2 text-xs text-primary hover:text-primary/80 transition-colors flex items-center gap-1"
+            className="mt-2 text-xs text-earth/70 hover:text-earth transition-colors flex items-center gap-1"
           >
             <ChevronDown
-              className={`w-3 h-3 transition-transform ${showAllMaterials ? 'rotate-180' : ''}`}
+              className={`w-3 h-3 text-earth/70 transition-transform ${showAllMaterials ? 'rotate-180' : ''}`}
             />
             {showAllMaterials
               ? t('common.showLess', 'Show less')
@@ -647,7 +647,7 @@ function FiltersDialogContent(props: FiltersDialogProps) {
       </div>
 
       <div>
-        <h3 className="font-semibold mb-2 text-sm uppercase tracking-widest text-muted-foreground">
+        <h3 className="font-semibold mb-2 text-sm uppercase tracking-widest text-warm-gray">
           {t('products.technologies', 'Technologies')}
         </h3>
         <div className="grid grid-cols-2 gap-1">
@@ -664,11 +664,11 @@ function FiltersDialogContent(props: FiltersDialogProps) {
                 onCheckedChange={() =>
                   filters.toggleTechnology(technology.slug || technology.id || technology.name)
                 }
-                className="min-w-[18px] min-h-[18px] h-[18px] w-[18px]"
+                className="min-w-[18px] min-h-[18px] h-[18px] w-[18px] border-earth/30 data-[state=checked]:bg-sand/60 data-[state=checked]:border-earth/40 data-[state=checked]:text-earth"
               />
               <Label
                 htmlFor={`filter-technology-${technology.slug || technology.id}`}
-                className="text-xs cursor-pointer active:text-foreground/80 transition-colors capitalize flex-1"
+                className="text-xs cursor-pointer text-warm-gray hover:text-earth transition-colors capitalize flex-1"
               >
                 {technology.name}
               </Label>
@@ -678,10 +678,10 @@ function FiltersDialogContent(props: FiltersDialogProps) {
         {technologies.length > COMPACT_LIMIT && (
           <button
             onClick={() => setShowAllTechnologies(!showAllTechnologies)}
-            className="mt-2 text-xs text-primary hover:text-primary/80 transition-colors flex items-center gap-1"
+            className="mt-2 text-xs text-earth/70 hover:text-earth transition-colors flex items-center gap-1"
           >
             <ChevronDown
-              className={`w-3 h-3 transition-transform ${showAllTechnologies ? 'rotate-180' : ''}`}
+              className={`w-3 h-3 text-earth/70 transition-transform ${showAllTechnologies ? 'rotate-180' : ''}`}
             />
             {showAllTechnologies
               ? t('common.showLess', 'Show less')
@@ -694,7 +694,7 @@ function FiltersDialogContent(props: FiltersDialogProps) {
       </div>
 
       <div>
-        <h3 className="font-semibold mb-2 text-sm uppercase tracking-widest text-muted-foreground">
+        <h3 className="font-semibold mb-2 text-sm uppercase tracking-widest text-warm-gray">
           {t('products.sizes', 'Sizes')}
         </h3>
         <div className="grid grid-cols-3 gap-1">
@@ -707,11 +707,11 @@ function FiltersDialogContent(props: FiltersDialogProps) {
                 id={`filter-size-${size.slug || size.id}`}
                 checked={filters.selectedSizes.includes(size.slug || size.id || '')}
                 onCheckedChange={() => filters.toggleSize(size.slug || size.id || size.label)}
-                className="min-w-[18px] min-h-[18px] h-[18px] w-[18px]"
+                className="min-w-[18px] min-h-[18px] h-[18px] w-[18px] border-earth/30 data-[state=checked]:bg-sand/60 data-[state=checked]:border-earth/40 data-[state=checked]:text-earth"
               />
               <Label
                 htmlFor={`filter-size-${size.slug || size.id}`}
-                className="text-xs cursor-pointer active:text-foreground/80 transition-colors flex-1"
+                className="text-xs cursor-pointer text-warm-gray hover:text-earth transition-colors flex-1"
               >
                 {size.label}
               </Label>
@@ -721,10 +721,10 @@ function FiltersDialogContent(props: FiltersDialogProps) {
         {sizes.length > COMPACT_LIMIT && (
           <button
             onClick={() => setShowAllSizes(!showAllSizes)}
-            className="mt-2 text-xs text-primary hover:text-primary/80 transition-colors flex items-center gap-1"
+            className="mt-2 text-xs text-earth/70 hover:text-earth transition-colors flex items-center gap-1"
           >
             <ChevronDown
-              className={`w-3 h-3 transition-transform ${showAllSizes ? 'rotate-180' : ''}`}
+              className={`w-3 h-3 text-earth/70 transition-transform ${showAllSizes ? 'rotate-180' : ''}`}
             />
             {showAllSizes
               ? t('common.showLess', 'Show less')
@@ -737,7 +737,7 @@ function FiltersDialogContent(props: FiltersDialogProps) {
       </div>
 
       <div>
-        <h3 className="font-semibold mb-2 text-sm uppercase tracking-widest text-muted-foreground">
+        <h3 className="font-semibold mb-2 text-sm uppercase tracking-widest text-warm-gray">
           {t('products.gender')}
         </h3>
         <div className="grid grid-cols-3 gap-1">
@@ -750,11 +750,11 @@ function FiltersDialogContent(props: FiltersDialogProps) {
                 id={`filter-gender-${gender}`}
                 checked={filters.selectedGenders.includes(gender)}
                 onCheckedChange={() => filters.toggleGender(gender)}
-                className="min-w-[18px] min-h-[18px] h-[18px] w-[18px]"
+                className="min-w-[18px] min-h-[18px] h-[18px] w-[18px] border-earth/30 data-[state=checked]:bg-sand/60 data-[state=checked]:border-earth/40 data-[state=checked]:text-earth"
               />
               <Label
                 htmlFor={`filter-gender-${gender}`}
-                className="text-xs cursor-pointer active:text-foreground/80 transition-colors capitalize flex-1"
+                className="text-xs cursor-pointer text-warm-gray hover:text-earth transition-colors capitalize flex-1"
               >
                 {translateGender(gender)}
               </Label>
@@ -764,7 +764,7 @@ function FiltersDialogContent(props: FiltersDialogProps) {
       </div>
 
       <div>
-        <h3 className="font-semibold mb-3 text-sm uppercase tracking-widest text-muted-foreground">
+        <h3 className="font-semibold mb-3 text-sm uppercase tracking-widest text-warm-gray">
           {t('products.brand')}
         </h3>
         {filters.selectedBrand && (
@@ -775,7 +775,7 @@ function FiltersDialogContent(props: FiltersDialogProps) {
               filters.setSelectedBrand('');
               setCurrentPage(1);
             }}
-            className="mb-2 text-xs text-muted-foreground hover:text-foreground h-7"
+            className="mb-2 text-xs text-warm-gray hover:text-earth h-7"
           >
             {t('filters.clearBrand', { brand: filters.selectedBrand })}
           </Button>
@@ -785,9 +785,9 @@ function FiltersDialogContent(props: FiltersDialogProps) {
           placeholder={t('products.searchBrand')}
           value={brandSearchQuery}
           onChange={(e: React.ChangeEvent<HTMLInputElement>) => setBrandSearchQuery(e.target.value)}
-          className="mb-2 h-9 text-sm"
+          className="mb-2 h-9 text-sm rounded-full bg-background/60 border-earth/20 text-earth placeholder:text-warm-gray focus:border-earth/40"
         />
-        <div className="max-h-40 overflow-y-auto space-y-1 border border-foreground/10 rounded-lg p-2">
+        <div className="max-h-40 overflow-y-auto space-y-1 border border-earth/20 rounded-2xl p-2 bg-background/60">
           {brandsList.length > 0 ? (
             filteredBrandList.map((brand: { id: string; name: string }) => (
               <button
@@ -796,19 +796,17 @@ function FiltersDialogContent(props: FiltersDialogProps) {
                   filters.setSelectedBrand(brand.name);
                   setCurrentPage(1);
                 }}
-                className={`w-full text-left px-2 py-1.5 rounded-md text-sm transition-colors ${
+                className={`w-full text-left px-3 py-1.5 rounded-lg text-sm transition-colors ${
                   filters.selectedBrand === brand.name
-                    ? 'bg-primary text-primary-foreground'
-                    : 'hover:bg-foreground/5'
+                    ? 'bg-sand/50 text-earth'
+                    : 'text-warm-gray hover:text-earth hover:bg-sand/30'
                 }`}
               >
                 {brand.name}
               </button>
             ))
           ) : (
-            <p className="text-xs text-muted-foreground text-center py-3">
-              {t('common.noResults')}
-            </p>
+            <p className="text-xs text-warm-gray text-center py-3">{t('common.noResults')}</p>
           )}
         </div>
       </div>
@@ -831,16 +829,16 @@ function FiltersDialogContent(props: FiltersDialogProps) {
         />
       </div>
 
-      <div className="flex gap-2 pt-4 border-t border-foreground/10">
+      <div className="flex gap-2 pt-4 border-t border-earth/10">
         <Button
           variant="ghost"
-          className="flex-1 text-muted-foreground hover:text-foreground h-10"
+          className="flex-1 text-warm-gray hover:text-earth h-10 rounded-full border border-earth/20 hover:border-earth/40"
           onClick={filters.clearFilters}
         >
           {t('products.clearFilters')}
         </Button>
         <Button
-          className="flex-1 bg-primary text-primary-foreground hover:bg-primary/90 h-10"
+          className="flex-1 bg-sand/60 text-earth border border-earth/40 hover:bg-sand/70 h-10 rounded-full"
           onClick={() => setFilterOpen(false)}
         >
           {t('products.applyFilters')}
@@ -1224,163 +1222,179 @@ export function ProductsContent() {
         <NeonAbstractions />
       </div>
 
-      <main className="container mx-auto px-4 py-8 relative z-10 pt-24 sm:pt-28">
-        <div className="flex flex-col md:flex-row justify-between items-start md:items-end gap-6 mb-8">
-          <div>
-            <h1 className="text-3xl sm:text-4xl md:text-5xl font-display font-bold text-foreground mb-4 neon-text">
-              {pageHeading}
-            </h1>
-            <p className="text-muted-foreground max-w-2xl text-lg neon-description">
-              {pageDescription}
-            </p>
+      <main className="w-full px-6 md:px-12 lg:px-16 py-8 relative z-10 pt-24 sm:pt-28">
+        <div className="max-w-[1800px] mx-auto">
+          <div className="flex flex-col md:flex-row justify-between items-start md:items-end gap-6 mb-8">
+            <div>
+              <h1 className="text-3xl sm:text-4xl md:text-5xl font-display font-bold text-foreground mb-4 neon-text">
+                {pageHeading}
+              </h1>
+              <p className="text-muted-foreground max-w-2xl text-lg neon-description font-serif">
+                {pageDescription}
+              </p>
+            </div>
           </div>
-        </div>
 
-        {/* Controls Bar */}
-        <div className="sticky top-[72px] rounded-2xl z-30 bg-background/80 backdrop-blur-xl border border-foreground/10 p-4 mb-8 shadow-2xl transition-all duration-300">
-          <div className="flex flex-col gap-4">
-            <div className="flex flex-col lg:flex-row gap-4 items-stretch lg:items-center justify-between">
-              {/* Search with animated border */}
-              <div className="relative flex-1 min-w-0">
-                <div className="relative group">
-                  {/* Animated border gradient */}
-                  <div className="absolute -inset-0.5 bg-gradient-to-r from-white/60 via-white/90 to-white/60 rounded-xl blur-sm opacity-60 group-hover:opacity-85 group-focus-within:opacity-100 transition-opacity duration-300 animate-gradient-shift"></div>
-                  <div className="relative flex items-center">
-                    <Search className="absolute left-3 w-4 h-4 text-muted-foreground z-10 group-focus-within:text-white transition-colors" />
-                    <Input
-                      type="text"
-                      placeholder={t('products.searchPlaceholder')}
-                      value={filters.searchQuery}
-                      onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
-                        filters.setSearchQuery(e.target.value);
-                        setCurrentPage(1);
-                      }}
-                      className="pl-9 h-11 w-full bg-background border-foreground/10 focus:border-white/50 transition-all font-medium rounded-xl relative"
-                    />
-                  </div>
-                </div>
-              </div>
-
-              <div className="flex flex-wrap items-center gap-3">
-                {/* Filter Dialog */}
-                <Dialog open={filterOpen} onOpenChange={setFilterOpen} modal={false}>
-                  <DialogTrigger asChild>
-                    <Button
-                      variant={isFilterActive ? 'default' : 'outline'}
-                      className="h-11 px-4 gap-2 rounded-xl relative overflow-hidden"
-                    >
-                      <Filter className="w-4 h-4" />
-                      <span className="hidden sm:inline">{t('products.filters')}</span>
-                      {isFilterActive && (
-                        <div className="absolute top-2 right-2 w-2 h-2 rounded-full bg-primary animate-pulse" />
-                      )}
-                    </Button>
-                  </DialogTrigger>
-                  <DialogContent className="sm:max-w-[425px] overflow-hidden flex flex-col max-h-[90vh]">
-                    <DialogHeader>
-                      <DialogTitle>{t('products.filters')}</DialogTitle>
-                      <DialogDescription className="text-white/60">
-                        {t(
-                          'products.filtersDescription',
-                          'Оберіть параметри для фільтрації товарів'
-                        )}
-                      </DialogDescription>
-                    </DialogHeader>
-                    <div className="flex-1 overflow-y-auto pr-2">
-                      <FiltersDialogContent
-                        t={t}
-                        visibleColors={visibleColors}
-                        colors={colors}
-                        showAllColors={showAllColors}
-                        setShowAllColors={setShowAllColors}
-                        visibleCategories={visibleCategories}
-                        categories={categories}
-                        categoryLabels={categoryLabels}
-                        showAllCategories={showAllCategories}
-                        setShowAllCategories={setShowAllCategories}
-                        COMPACT_LIMIT={COMPACT_LIMIT}
-                        genders={genders}
-                        materials={materials}
-                        visibleMaterials={visibleMaterials}
-                        showAllMaterials={showAllMaterials}
-                        setShowAllMaterials={setShowAllMaterials}
-                        technologies={technologies}
-                        visibleTechnologies={visibleTechnologies}
-                        showAllTechnologies={showAllTechnologies}
-                        setShowAllTechnologies={setShowAllTechnologies}
-                        sizes={sizes}
-                        visibleSizes={visibleSizes}
-                        showAllSizes={showAllSizes}
-                        setShowAllSizes={setShowAllSizes}
-                        filters={filters}
-                        brands={brands}
-                        brandSearchQuery={brandSearchQuery}
-                        setBrandSearchQuery={setBrandSearchQuery}
-                        setCurrentPage={setCurrentPage}
-                        getCurrencySymbol={getCurrencySymbol}
-                        currency={currency}
-                        setFilterOpen={setFilterOpen}
+          <div className="sticky top-[72px] rounded-3xl z-30 bg-background/85 backdrop-blur-xl border border-earth/20 p-4 mb-8 shadow-2xl transition-all duration-300">
+            <div className="flex flex-col gap-4">
+              <div className="flex flex-col lg:flex-row gap-4 items-stretch lg:items-center justify-between">
+                {/* Search with animated border */}
+                <div className="relative flex-1 min-w-0">
+                  <div className="relative group">
+                    {/* Animated border gradient */}
+                    <div className="absolute -inset-0.5 bg-gradient-to-r from-white/60 via-white/90 to-white/60 rounded-xl blur-sm opacity-60 group-hover:opacity-85 group-focus-within:opacity-100 transition-opacity duration-300 animate-gradient-shift"></div>
+                    <div className="relative flex items-center">
+                      <Search className="absolute left-3 w-4 h-4 text-warm-gray z-10 group-focus-within:text-earth transition-colors" />
+                      <Input
+                        type="text"
+                        placeholder={t('products.searchPlaceholder')}
+                        value={filters.searchQuery}
+                        onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
+                          filters.setSearchQuery(e.target.value);
+                          setCurrentPage(1);
+                        }}
+                        className="pl-9 h-11 w-full bg-background/60 border-earth/20 text-earth placeholder:text-warm-gray focus:border-earth/40 transition-all font-medium rounded-full relative"
                       />
                     </div>
-                  </DialogContent>
-                </Dialog>
+                  </div>
+                </div>
 
-                {/* Sort Select */}
-                <Select
-                  value={sort.sortBy}
-                  onValueChange={value => {
-                    sort.setSortBy(value as SortOption);
-                    setCurrentPage(1);
-                  }}
-                >
-                  <SelectTrigger className="w-[180px] h-11 bg-background/50 border-foreground/10 rounded-xl">
-                    <SelectValue placeholder={t('products.sortBy')} />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="default">{t('products.sortDefault')}</SelectItem>
-                    <SelectItem value="price_asc">{t('products.priceAsc')}</SelectItem>
-                    <SelectItem value="price_desc">{t('products.priceDesc')}</SelectItem>
-                    <SelectItem value="newest">{t('products.newest')}</SelectItem>
-                  </SelectContent>
-                </Select>
+                <div className="flex flex-wrap items-center gap-3">
+                  {/* Filter Dialog */}
+                  <Dialog open={filterOpen} onOpenChange={setFilterOpen} modal={false}>
+                    <DialogTrigger asChild>
+                      <Button
+                        variant={isFilterActive ? 'default' : 'outline'}
+                        className={`h-11 px-4 gap-2 rounded-full relative overflow-hidden border border-earth/20 transition-all duration-150 touch-manipulation active:scale-95 ${
+                          isFilterActive
+                            ? 'bg-sand/40 text-earth border-earth/40'
+                            : 'bg-background text-warm-gray hover:text-earth hover:border-earth/40'
+                        }`}
+                      >
+                        <Filter className="w-4 h-4" />
+                        <span className="hidden sm:inline">{t('products.filters')}</span>
+                        {isFilterActive && (
+                          <div className="absolute top-2 right-2 w-2 h-2 rounded-full bg-primary animate-pulse" />
+                        )}
+                      </Button>
+                    </DialogTrigger>
+                    <DialogContent className="sm:max-w-[425px] overflow-hidden flex flex-col max-h-[90vh] rounded-3xl border border-earth/20 bg-background/95 text-earth">
+                      <DialogHeader>
+                        <DialogTitle>{t('products.filters')}</DialogTitle>
+                        <DialogDescription className="text-warm-gray">
+                          {t(
+                            'products.filtersDescription',
+                            'Оберіть параметри для фільтрації товарів'
+                          )}
+                        </DialogDescription>
+                      </DialogHeader>
+                      <div className="flex-1 overflow-y-auto pr-2">
+                        <FiltersDialogContent
+                          t={t}
+                          visibleColors={visibleColors}
+                          colors={colors}
+                          showAllColors={showAllColors}
+                          setShowAllColors={setShowAllColors}
+                          visibleCategories={visibleCategories}
+                          categories={categories}
+                          categoryLabels={categoryLabels}
+                          showAllCategories={showAllCategories}
+                          setShowAllCategories={setShowAllCategories}
+                          COMPACT_LIMIT={COMPACT_LIMIT}
+                          genders={genders}
+                          materials={materials}
+                          visibleMaterials={visibleMaterials}
+                          showAllMaterials={showAllMaterials}
+                          setShowAllMaterials={setShowAllMaterials}
+                          technologies={technologies}
+                          visibleTechnologies={visibleTechnologies}
+                          showAllTechnologies={showAllTechnologies}
+                          setShowAllTechnologies={setShowAllTechnologies}
+                          sizes={sizes}
+                          visibleSizes={visibleSizes}
+                          showAllSizes={showAllSizes}
+                          setShowAllSizes={setShowAllSizes}
+                          filters={filters}
+                          brands={brands}
+                          brandSearchQuery={brandSearchQuery}
+                          setBrandSearchQuery={setBrandSearchQuery}
+                          setCurrentPage={setCurrentPage}
+                          getCurrencySymbol={getCurrencySymbol}
+                          currency={currency}
+                          setFilterOpen={setFilterOpen}
+                        />
+                      </div>
+                    </DialogContent>
+                  </Dialog>
 
-                {/* View Layout Toggle */}
-                <div className="hidden sm:flex bg-background/50 p-1 rounded-xl border border-foreground/10">
-                  <Button
-                    variant={layout.columns === 2 ? 'secondary' : 'ghost'}
-                    size="icon"
-                    onClick={() => layout.setColumns(2)}
-                    className="h-9 w-9 rounded-lg"
-                    aria-label="Two columns"
+                  {/* Sort Select */}
+                  <Select
+                    value={sort.sortBy}
+                    onValueChange={value => {
+                      sort.setSortBy(value as SortOption);
+                      setCurrentPage(1);
+                    }}
                   >
-                    <LayoutGrid className="w-4 h-4" />
-                  </Button>
-                  <Button
-                    variant={layout.columns === 4 ? 'secondary' : 'ghost'}
-                    size="icon"
-                    onClick={() => layout.setColumns(4)}
-                    className="h-9 w-9 rounded-lg"
-                    aria-label="Four columns"
-                  >
-                    <Grid3x3 className="w-4 h-4" />
-                  </Button>
-                  <Button
-                    variant={layout.columns === 6 ? 'secondary' : 'ghost'}
-                    size="icon"
-                    onClick={() => layout.setColumns(6)}
-                    className="h-9 w-9 rounded-lg hidden lg:flex"
-                    aria-label="Six columns"
-                  >
-                    <Columns3 className="w-4 h-4" />
-                  </Button>
+                    <SelectTrigger className="w-[180px] h-11 bg-background/60 border-earth/20 rounded-full text-warm-gray hover:text-earth hover:border-earth/40">
+                      <SelectValue placeholder={t('products.sortBy')} />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="default">{t('products.sortDefault')}</SelectItem>
+                      <SelectItem value="price_asc">{t('products.priceAsc')}</SelectItem>
+                      <SelectItem value="price_desc">{t('products.priceDesc')}</SelectItem>
+                      <SelectItem value="newest">{t('products.newest')}</SelectItem>
+                    </SelectContent>
+                  </Select>
+
+                  {/* View Layout Toggle */}
+                  <div className="hidden sm:flex bg-background/60 p-1 rounded-full border border-earth/20">
+                    <Button
+                      variant={layout.columns === 2 ? 'secondary' : 'ghost'}
+                      size="icon"
+                      onClick={() => layout.setColumns(2)}
+                      className={`h-9 w-9 rounded-full border transition-all duration-150 ${
+                        layout.columns === 2
+                          ? 'bg-sand/40 text-earth border-earth/40'
+                          : 'border-transparent text-warm-gray hover:text-earth hover:border-earth/40'
+                      }`}
+                      aria-label="Two columns"
+                    >
+                      <LayoutGrid className="w-4 h-4" />
+                    </Button>
+                    <Button
+                      variant={layout.columns === 4 ? 'secondary' : 'ghost'}
+                      size="icon"
+                      onClick={() => layout.setColumns(4)}
+                      className={`h-9 w-9 rounded-full border transition-all duration-150 ${
+                        layout.columns === 4
+                          ? 'bg-sand/40 text-earth border-earth/40'
+                          : 'border-transparent text-warm-gray hover:text-earth hover:border-earth/40'
+                      }`}
+                      aria-label="Four columns"
+                    >
+                      <Grid3x3 className="w-4 h-4" />
+                    </Button>
+                    <Button
+                      variant={layout.columns === 6 ? 'secondary' : 'ghost'}
+                      size="icon"
+                      onClick={() => layout.setColumns(6)}
+                      className={`h-9 w-9 rounded-full border transition-all duration-150 hidden lg:flex ${
+                        layout.columns === 6
+                          ? 'bg-sand/40 text-earth border-earth/40'
+                          : 'border-transparent text-warm-gray hover:text-earth hover:border-earth/40'
+                      }`}
+                      aria-label="Six columns"
+                    >
+                      <Columns3 className="w-4 h-4" />
+                    </Button>
+                  </div>
                 </div>
               </div>
             </div>
           </div>
         </div>
 
-        {/* Main Content Grid */}
-        <div className="space-y-8">{mainContent}</div>
+        <div className="w-full space-y-8">{mainContent}</div>
 
         {/* Recently Viewed - Client Side */}
         <RecentlyViewedProducts />

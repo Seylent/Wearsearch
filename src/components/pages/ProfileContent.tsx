@@ -227,7 +227,7 @@ const Profile = () => {
       <section className="relative min-h-[35vh] flex items-center justify-center overflow-hidden pt-28 pb-8">
         <NeonAbstractions />
 
-        <div className="container mx-auto px-6 relative z-10 text-center">
+        <div className="max-w-[1800px] mx-auto px-6 md:px-12 lg:px-16 relative z-10 text-center">
           <div className="inline-flex items-center gap-2 px-5 py-2.5 glass-card-strong rounded-full mb-6">
             <Sparkles className="w-3 h-3" />
             <span className="text-xs text-foreground/80 tracking-wider uppercase font-medium">
@@ -243,7 +243,7 @@ const Profile = () => {
         </div>
       </section>
 
-      <main className="container mx-auto px-6 pb-16">
+      <main className="max-w-[1800px] mx-auto px-6 md:px-12 lg:px-16 pb-16">
         <div className="max-w-2xl mx-auto">
           {/* Logout Button */}
           <div className="flex justify-end mb-6">

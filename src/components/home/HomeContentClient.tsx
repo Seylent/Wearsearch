@@ -4,6 +4,8 @@ import { useEffect, useMemo, useState } from 'react';
 import Link from 'next/link';
 import { useTranslation } from 'react-i18next';
 import { ArrowUpRight } from 'lucide-react';
+import { motion, useReducedMotion } from 'framer-motion';
+import { ScrollReveal } from '@/components/common/ScrollReveal';
 import { useCurrencyConversion } from '@/hooks/useCurrencyConversion';
 import ProductCard from '@/components/ProductCard';
 import RecentlyViewedProducts from '@/components/RecentlyViewedProducts';
@@ -64,6 +66,7 @@ export default function HomeContentClient({
   const [popularProducts, setPopularProducts] = useState<Product[]>(initialPopularProducts);
   const [popularCurrency, setPopularCurrency] = useState<'UAH' | 'USD'>('UAH');
   const [heroSeo, setHeroSeo] = useState<SEOData | null>(seoData ?? null);
+  const reduceMotion = useReducedMotion();
 
   const fallbackCategories = useMemo(
     () =>
@@ -141,10 +144,10 @@ export default function HomeContentClient({
 
       setIsLoading(true);
       try {
-        // Use the same v1 endpoint shape as the rest of the app.
+        // Use canonical items endpoint for product lists.
         // Next rewrites proxy this to backend: http://localhost:3000
         const response = await fetch(
-          `/api/v1/pages/home?currency=${currentCurrency}&lang=${encodeURIComponent(lang)}`
+          `/api/v1/items?limit=12&sort=newest&currency=${encodeURIComponent(currentCurrency)}&lang=${encodeURIComponent(lang)}`
         );
 
         if (!response.ok) {
@@ -156,30 +159,23 @@ export default function HomeContentClient({
 
         const data = await response.json();
 
-        // v1 homepage endpoint can return different shapes, e.g.
-        // - { success, data: { featured_products: [...] } }
-        // - { item: { featured_products / products / items: [...] }, currency: { code: 'USD' } }
         const topCurrency =
           data?.currency?.code === 'USD' || data?.currency?.code === 'UAH'
             ? data.currency.code
             : currentCurrency;
 
-        const item = data?.item ?? data?.data ?? data;
-        const inner = item?.data ?? item;
+        const itemsPayload = data?.data ?? data;
+        const items =
+          itemsPayload?.items ??
+          itemsPayload?.products ??
+          itemsPayload?.data?.items ??
+          (Array.isArray(itemsPayload) ? itemsPayload : null);
 
-        const seoFromApi = item?.seo ?? inner?.seo ?? data?.seo;
-        if (seoFromApi && typeof seoFromApi === 'object') {
-          setHeroSeo(seoFromApi as SEOData);
-        }
-
-        const featured =
-          inner?.featured_products ?? inner?.featuredProducts ?? inner?.products ?? inner?.items;
-
-        if (Array.isArray(featured)) {
-          setProducts(featured);
+        if (Array.isArray(items)) {
+          setProducts(items);
           setProductsCurrency(topCurrency);
         } else {
-          console.warn('Unexpected home currency response shape:', data);
+          console.warn('Unexpected items response shape:', data);
           setProducts(initialProducts);
           setProductsCurrency(currentCurrency === 'USD' ? 'USD' : 'UAH');
         }
@@ -206,7 +202,7 @@ export default function HomeContentClient({
 
       try {
         const response = await fetch(
-          `/api/v1/products/popular-saved?limit=5&currency=${encodeURIComponent(currentCurrency)}`
+          `/api/v1/items?limit=5&sort=popular&currency=${encodeURIComponent(currentCurrency)}`
         );
         if (!response.ok) {
           setPopularProducts(initialPopularProducts.slice(0, 5));
@@ -215,7 +211,7 @@ export default function HomeContentClient({
         }
 
         const data = await response.json();
-        const items = data?.items ?? data?.products ?? data?.data?.products ?? data;
+        const items = data?.items ?? data?.products ?? data?.data?.items ?? data;
         if (Array.isArray(items)) {
           setPopularProducts(items.slice(0, 5));
           setPopularCurrency(currentCurrency === 'USD' ? 'USD' : 'UAH');
@@ -239,8 +235,23 @@ export default function HomeContentClient({
     return null;
   }
 
+  const gridVariants = {
+    hidden: { opacity: 1 },
+    show: {
+      opacity: 1,
+      transition: reduceMotion ? {} : { staggerChildren: 0.1 },
+    },
+  };
+
+  const itemVariants = {
+    hidden: reduceMotion ? { opacity: 1, y: 0 } : { opacity: 0, y: 30 },
+    show: reduceMotion
+      ? { opacity: 1, y: 0 }
+      : { opacity: 1, y: 0, transition: { duration: 0.6, ease: [0.22, 1, 0.36, 1] } },
+  };
+
   return (
-    <div className="min-h-screen bg-black text-white" suppressHydrationWarning>
+    <div className="min-h-screen bg-white text-black" suppressHydrationWarning>
       <main id="main-content">
         {/* Hero Section */}
         <HomeHero
@@ -261,366 +272,402 @@ export default function HomeContentClient({
         />
 
         {banners.length > 0 && (
-          <section className="py-6 sm:py-8 bg-black">
-            <div className="container mx-auto px-4 sm:px-6">
-              <BannerCarousel banners={banners} />
-            </div>
-          </section>
+          <ScrollReveal>
+            <section className="py-6 sm:py-8 bg-white">
+              <div className="w-full px-6 md:px-12 lg:px-16">
+                <BannerCarousel banners={banners} />
+              </div>
+            </section>
+          </ScrollReveal>
         )}
 
-        <section className="py-10 sm:py-14 bg-white text-foreground dark:bg-black border-y border-border">
-          <div className="container mx-auto px-4 sm:px-6">
-            <header className="flex items-end justify-between gap-4 mb-6 sm:mb-8">
-              <div>
-                <div className="inline-flex items-center gap-2 mb-2">
-                  <div
-                    className="w-1.5 h-1.5 rounded-full bg-muted-foreground"
-                    aria-hidden="true"
-                  />
-                  <span className="text-[10px] sm:text-xs text-muted-foreground uppercase tracking-wider">
-                    {t('home.howItWorksLabel', 'How it works')}
-                  </span>
-                </div>
-                <h2 className="font-display text-2xl sm:text-3xl md:text-4xl font-bold">
-                  {t('home.howItWorksTitle', 'Find your fit in three steps')}
-                </h2>
-                <p className="text-sm sm:text-base text-muted-foreground mt-2">
-                  {t('home.howItWorksHint', 'Search, compare, and buy with confidence')}
-                </p>
-              </div>
-            </header>
-
-            <div className="grid gap-4 sm:gap-6 md:grid-cols-3">
-              {[
-                {
-                  step: '01',
-                  title: t('home.howItWorksStep1Title', 'Explore products'),
-                  text: t(
-                    'home.howItWorksStep1Text',
-                    'Browse categories or search for the exact item you want.'
-                  ),
-                },
-                {
-                  step: '02',
-                  title: t('home.howItWorksStep2Title', 'Compare prices'),
-                  text: t(
-                    'home.howItWorksStep2Text',
-                    'See offers from multiple stores in one place.'
-                  ),
-                },
-                {
-                  step: '03',
-                  title: t('home.howItWorksStep3Title', 'Buy from the seller'),
-                  text: t(
-                    'home.howItWorksStep3Text',
-                    'Go directly to the store and place your order.'
-                  ),
-                },
-              ].map(card => (
-                <div
-                  key={card.step}
-                  className="rounded-2xl border border-border bg-white/90 dark:bg-black/80 p-5 sm:p-6"
-                >
-                  <div className="text-xs text-muted-foreground uppercase tracking-wider mb-3">
-                    {card.step}
+        <ScrollReveal>
+          <section className="py-10 sm:py-14 bg-white text-foreground border-y border-border">
+            <div className="w-full px-6 md:px-12 lg:px-16">
+              <header className="flex items-end justify-between gap-4 mb-6 sm:mb-8">
+                <div className="text-left">
+                  <div className="inline-flex items-center gap-2 mb-2">
+                    <div
+                      className="w-1.5 h-1.5 rounded-full bg-muted-foreground"
+                      aria-hidden="true"
+                    />
+                    <span className="text-[10px] sm:text-xs text-muted-foreground uppercase tracking-wider">
+                      {t('home.howItWorksLabel', 'How it works')}
+                    </span>
                   </div>
-                  <h3 className="text-lg sm:text-xl font-semibold text-foreground mb-2">
-                    {card.title}
-                  </h3>
-                  <p className="text-sm text-muted-foreground leading-relaxed">{card.text}</p>
+                  <h2 className="font-display text-2xl sm:text-3xl md:text-4xl font-bold">
+                    {t('home.howItWorksTitle', 'Find your fit in three steps')}
+                  </h2>
+                  <p className="text-sm sm:text-base text-muted-foreground mt-2 font-serif">
+                    {t('home.howItWorksHint', 'Search, compare, and buy with confidence')}
+                  </p>
                 </div>
-              ))}
-            </div>
-          </div>
-        </section>
+              </header>
 
-        <section className="py-12 sm:py-16 bg-white text-foreground dark:bg-black border-y border-border">
-          <div className="container mx-auto px-4 sm:px-6">
-            <header className="flex items-end justify-between gap-4 mb-6 sm:mb-8">
-              <div>
-                <div className="inline-flex items-center gap-2 mb-2">
-                  <div
-                    className="w-1.5 h-1.5 rounded-full bg-muted-foreground"
-                    aria-hidden="true"
-                  />
-                  <span className="text-[10px] sm:text-xs text-muted-foreground uppercase tracking-wider">
-                    {t('home.shopByGender', 'Shop by vibe')}
-                  </span>
-                </div>
-                <h2 className="font-display text-2xl sm:text-3xl md:text-4xl font-bold">
-                  {t('home.genderPicks', 'Find your lane')}
-                </h2>
-                <p className="text-sm sm:text-base text-muted-foreground mt-2">
-                  {t('home.genderHint', 'Curated edits for every silhouette and mood')}
-                </p>
-              </div>
-            </header>
-
-            <div className="flex items-center justify-between text-xs text-muted-foreground mb-3 sm:mb-4">
-              <span>{t('home.scrollHint', 'Swipe to explore')}</span>
-            </div>
-
-            <div className="relative">
-              <div className="pointer-events-none absolute inset-y-0 left-0 w-8 bg-gradient-to-r from-white to-transparent dark:from-black" />
-              <div className="pointer-events-none absolute inset-y-0 right-0 w-8 bg-gradient-to-l from-white to-transparent dark:from-black" />
-
-              <div className="flex gap-4 overflow-x-auto pb-2 -mx-1 px-1 snap-x snap-mandatory">
+              <div className="grid gap-8 md:grid-cols-3">
                 {[
                   {
-                    label: t('home.women', 'Women'),
-                    sub: t('home.womenTag', 'Soft power tailoring'),
-                    href: '/products?gender=women',
-                    accent: 'from-fuchsia-500/60 via-fuchsia-400/30 to-transparent',
+                    step: '01',
+                    title: t('home.howItWorksStep1Title', 'Explore products'),
+                    text: t(
+                      'home.howItWorksStep1Text',
+                      'Browse categories or search for the exact item you want.'
+                    ),
                   },
                   {
-                    label: t('home.men', 'Men'),
-                    sub: t('home.menTag', 'Utility with edge'),
-                    href: '/products?gender=men',
-                    accent: 'from-cyan-500/60 via-sky-400/30 to-transparent',
+                    step: '02',
+                    title: t('home.howItWorksStep2Title', 'Compare prices'),
+                    text: t(
+                      'home.howItWorksStep2Text',
+                      'See offers from multiple stores in one place.'
+                    ),
                   },
                   {
-                    label: t('home.unisex', 'Unisex'),
-                    sub: t('home.unisexTag', 'Fluid essentials'),
-                    href: '/products?gender=unisex',
-                    accent: 'from-emerald-500/60 via-lime-400/30 to-transparent',
+                    step: '03',
+                    title: t('home.howItWorksStep3Title', 'Buy from the seller'),
+                    text: t(
+                      'home.howItWorksStep3Text',
+                      'Go directly to the store and place your order.'
+                    ),
                   },
                 ].map(card => (
-                  <Link
-                    key={card.label}
-                    href={card.href}
-                    className="group relative min-w-[260px] sm:min-w-[300px] min-h-[170px] snap-start rounded-2xl border border-border bg-white/90 dark:bg-black p-5 transition hover:border-foreground/40"
-                  >
-                    <div className="relative z-10 flex h-full flex-col gap-3">
-                      <div className="text-lg sm:text-xl font-semibold text-foreground">
-                        {card.label}
-                      </div>
-                      <div className="mt-auto inline-flex items-center gap-2 text-sm text-foreground">
-                        {t('home.browse', 'Browse')}
-                        <ArrowUpRight className="h-4 w-4" />
-                      </div>
+                  <div key={card.step} className="p-1 sm:p-2">
+                    <div className="text-4xl sm:text-5xl font-serif text-muted-foreground/40 mb-3">
+                      {card.step}
                     </div>
-                  </Link>
+                    <h3 className="text-xl sm:text-2xl font-serif text-foreground mb-3">
+                      {card.title}
+                    </h3>
+                    <p className="text-sm text-muted-foreground leading-relaxed font-serif">
+                      {card.text}
+                    </p>
+                  </div>
                 ))}
               </div>
             </div>
-          </div>
-        </section>
+          </section>
+        </ScrollReveal>
 
-        <section
-          id="categories-section"
-          className="py-10 sm:py-16 bg-white text-foreground dark:bg-black border-b border-border"
-        >
-          <div className="container mx-auto px-4 sm:px-6">
-            <header className="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-4 mb-6">
-              <div>
-                <div className="inline-flex items-center gap-2 mb-2">
-                  <div
-                    className="w-1.5 h-1.5 rounded-full bg-muted-foreground"
-                    aria-hidden="true"
-                  />
-                  <span className="text-[10px] sm:text-xs text-muted-foreground uppercase tracking-wider">
-                    {t('home.categoriesLabel', 'Categories')}
-                  </span>
-                </div>
-                <h2 className="font-display text-2xl sm:text-3xl md:text-4xl font-bold text-foreground">
-                  {t('home.shopByCategory', 'Browse by category')}
-                </h2>
-                <p className="text-sm sm:text-base text-muted-foreground mt-2">
-                  {t('home.categoryHint', 'Swipe through the essential edits')}
-                </p>
-              </div>
-              <Link
-                href="/products"
-                className="text-sm text-muted-foreground hover:text-foreground transition inline-flex items-center gap-2"
-              >
-                {t('home.viewAllCategories', 'View all')}
-                <ArrowUpRight className="h-4 w-4" />
-              </Link>
-            </header>
-
-            <div className="relative">
-              <div className="pointer-events-none absolute inset-y-0 left-0 w-8 bg-gradient-to-r from-white to-transparent dark:from-black" />
-              <div className="pointer-events-none absolute inset-y-0 right-0 w-8 bg-gradient-to-l from-white to-transparent dark:from-black" />
-
-              <div className="flex gap-4 overflow-x-auto pb-4 -mx-1 px-1 snap-x snap-mandatory">
-                {categoryCards.map(category => (
-                  <Link
-                    key={category.id}
-                    href={`/products?type=${encodeURIComponent(category.slug)}`}
-                    className="group relative min-w-[240px] sm:min-w-[280px] min-h-[120px] snap-start rounded-2xl border border-border bg-white/90 dark:bg-zinc-950/80 p-5 transition hover:border-foreground/40"
-                  >
-                    <div className="absolute right-4 top-4 text-xs text-muted-foreground opacity-0 transition group-hover:opacity-100">
-                      {t('home.open', 'Open')}
-                    </div>
-                    <div className="h-full flex items-center justify-center text-base font-semibold text-foreground text-center">
-                      {category.name}
-                    </div>
-                  </Link>
-                ))}
-              </div>
-            </div>
-          </div>
-        </section>
-
-        <section className="py-12 sm:py-16 bg-black border-b border-white/5">
-          <div className="container mx-auto px-4 sm:px-6">
-            <header className="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-4 sm:gap-6 mb-6">
-              <div>
-                <div className="inline-flex items-center gap-2 mb-2 sm:mb-3">
-                  <div className="w-1.5 h-1.5 rounded-full bg-foreground" aria-hidden="true" />
-                  <span className="text-[10px] sm:text-xs text-white/60 uppercase tracking-wider">
-                    {t('home.topSavedLabel', 'Top saved')}
-                  </span>
-                </div>
-                <h2 className="font-display text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-bold text-white">
-                  {t('home.topSavedTitle', 'Most saved right now')}
-                </h2>
-                <p className="text-sm sm:text-base text-white/70 mt-1 sm:mt-2">
-                  {t('home.topSavedHint', 'The top 5 picks loved by the community')}
-                </p>
-              </div>
-              <Link
-                href="/products?sort=popular"
-                className="text-sm text-white/60 hover:text-white transition inline-flex items-center gap-2"
-              >
-                {t('home.viewAllPopular', 'View all')}
-                <ArrowUpRight className="h-4 w-4" />
-              </Link>
-            </header>
-
-            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3 sm:gap-4">
-              {popularProducts.length > 0 ? (
-                popularProducts
-                  .slice(0, 5)
-                  .map(product => (
-                    <ProductCard
-                      key={product.id}
-                      id={product.id}
-                      name={product.name}
-                      image={product.image_url || product.image || ''}
-                      price={product.price}
-                      minPrice={product.price_min ?? product.min_price}
-                      maxPrice={product.max_price ?? product.maxPrice}
-                      brand={product.brand}
-                      priceCurrency={
-                        product.currency === 'USD' || product.currency === 'UAH'
-                          ? product.currency
-                          : popularCurrency
-                      }
+        <ScrollReveal>
+          <section className="py-12 sm:py-16 bg-white text-foreground border-y border-border">
+            <div className="w-full px-6 md:px-12 lg:px-16">
+              <header className="flex items-end justify-between gap-4 mb-6 sm:mb-8">
+                <div className="text-left">
+                  <div className="inline-flex items-center gap-2 mb-2">
+                    <div
+                      className="w-1.5 h-1.5 rounded-full bg-muted-foreground"
+                      aria-hidden="true"
                     />
-                  ))
-              ) : (
-                <div className="col-span-full text-center py-10 text-white/60">
-                  {t('home.topSavedEmpty', 'No popular products yet')}
+                    <span className="text-[10px] sm:text-xs text-muted-foreground uppercase tracking-wider">
+                      {t('home.shopByGender', 'Shop by vibe')}
+                    </span>
+                  </div>
+                  <h2 className="font-display text-2xl sm:text-3xl md:text-4xl font-bold">
+                    {t('home.genderPicks', 'Find your lane')}
+                  </h2>
+                  <p className="text-sm sm:text-base text-muted-foreground mt-2 font-serif">
+                    {t('home.genderHint', 'Curated edits for every silhouette and mood')}
+                  </p>
                 </div>
-              )}
+              </header>
+
+              <div className="flex items-center justify-between text-xs text-muted-foreground mb-3 sm:mb-4">
+                <span>{t('home.scrollHint', 'Swipe to explore')}</span>
+              </div>
+
+              <div className="relative">
+                <div className="pointer-events-none absolute inset-y-0 left-0 w-8 bg-gradient-to-r from-white to-transparent" />
+                <div className="pointer-events-none absolute inset-y-0 right-0 w-8 bg-gradient-to-l from-white to-transparent" />
+
+                <div className="flex gap-6 overflow-x-auto pb-4 -mx-1 px-1 snap-x snap-mandatory">
+                  {[
+                    {
+                      label: t('home.women', 'Women'),
+                      sub: t('home.womenTag', 'Soft power tailoring'),
+                      href: '/products?gender=women',
+                      accent: 'from-fuchsia-500/60 via-fuchsia-400/30 to-transparent',
+                    },
+                    {
+                      label: t('home.men', 'Men'),
+                      sub: t('home.menTag', 'Utility with edge'),
+                      href: '/products?gender=men',
+                      accent: 'from-cyan-500/60 via-sky-400/30 to-transparent',
+                    },
+                    {
+                      label: t('home.unisex', 'Unisex'),
+                      sub: t('home.unisexTag', 'Fluid essentials'),
+                      href: '/products?gender=unisex',
+                      accent: 'from-emerald-500/60 via-lime-400/30 to-transparent',
+                    },
+                  ].map(card => (
+                    <Link
+                      key={card.label}
+                      href={card.href}
+                      className="group relative min-w-[280px] sm:min-w-[360px] min-h-[220px] snap-start rounded-3xl bg-muted p-8 transition"
+                    >
+                      <div className="relative z-10 flex h-full flex-col gap-4">
+                        <div className="text-2xl sm:text-3xl font-serif text-foreground">
+                          {card.label}
+                        </div>
+                        <div className="text-sm text-muted-foreground font-serif">{card.sub}</div>
+                        <div className="mt-auto inline-flex items-center gap-2 text-sm text-foreground">
+                          {t('home.browse', 'Browse')}
+                          <ArrowUpRight className="h-4 w-4" />
+                        </div>
+                      </div>
+                    </Link>
+                  ))}
+                </div>
+              </div>
             </div>
-          </div>
-        </section>
+          </section>
+        </ScrollReveal>
+
+        <ScrollReveal>
+          <section
+            id="categories-section"
+            className="py-10 sm:py-16 bg-white text-foreground border-b border-border"
+          >
+            <div className="w-full px-6 md:px-12 lg:px-16">
+              <header className="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-4 mb-6">
+                <div>
+                  <div className="inline-flex items-center gap-2 mb-2">
+                    <div
+                      className="w-1.5 h-1.5 rounded-full bg-muted-foreground"
+                      aria-hidden="true"
+                    />
+                    <span className="text-[10px] sm:text-xs text-muted-foreground uppercase tracking-wider">
+                      {t('home.categoriesLabel', 'Categories')}
+                    </span>
+                  </div>
+                  <h2 className="font-display text-2xl sm:text-3xl md:text-4xl font-bold text-foreground">
+                    {t('home.shopByCategory', 'Browse by category')}
+                  </h2>
+                  <p className="text-sm sm:text-base text-muted-foreground mt-2 font-serif">
+                    {t('home.categoryHint', 'Swipe through the essential edits')}
+                  </p>
+                </div>
+                <Link
+                  href="/products"
+                  className="text-sm text-muted-foreground hover:text-foreground transition inline-flex items-center gap-2"
+                >
+                  {t('home.viewAllCategories', 'View all')}
+                  <ArrowUpRight className="h-4 w-4" />
+                </Link>
+              </header>
+
+              <div className="relative">
+                <div className="pointer-events-none absolute inset-y-0 left-0 w-8 bg-gradient-to-r from-white to-transparent" />
+                <div className="pointer-events-none absolute inset-y-0 right-0 w-8 bg-gradient-to-l from-white to-transparent" />
+
+                <div className="flex gap-6 overflow-x-auto pb-4 -mx-1 px-1 snap-x snap-mandatory">
+                  {categoryCards.map(category => (
+                    <Link
+                      key={category.id}
+                      href={`/products?type=${encodeURIComponent(category.slug)}`}
+                      className="group relative min-w-[260px] sm:min-w-[340px] min-h-[180px] snap-start rounded-3xl bg-muted p-8 transition"
+                    >
+                      <div className="absolute right-6 top-6 text-xs text-muted-foreground opacity-0 transition group-hover:opacity-100">
+                        {t('home.open', 'Open')}
+                      </div>
+                      <div className="h-full flex items-center justify-center text-2xl font-serif text-foreground text-center">
+                        {category.name}
+                      </div>
+                    </Link>
+                  ))}
+                </div>
+              </div>
+            </div>
+          </section>
+        </ScrollReveal>
+
+        <ScrollReveal>
+          <section className="py-24 md:py-32 bg-white border-b border-border">
+            <div className="w-full px-6 md:px-12 lg:px-16">
+              <header className="flex flex-col sm:flex-row items-start sm:items-end sm:justify-between gap-4 sm:gap-6 mb-10 md:mb-14 text-left">
+                <div>
+                  <div className="inline-flex items-center gap-2 mb-3">
+                    <div className="w-1.5 h-1.5 rounded-full bg-warm-gray" aria-hidden="true" />
+                    <span className="text-xs text-warm-gray uppercase tracking-[0.2em]">
+                      {t('home.topSavedLabel', 'Top saved')}
+                    </span>
+                  </div>
+                  <h2 className="font-serif text-4xl md:text-5xl lg:text-6xl text-earth">
+                    {t('home.topSavedTitle', 'Most saved right now')}
+                  </h2>
+                  <p className="text-sm md:text-base text-warm-gray mt-3 max-w-xl">
+                    {t('home.topSavedHint', 'The top 5 picks loved by the community')}
+                  </p>
+                </div>
+                <Link
+                  href="/products?sort=popular"
+                  className="text-xs uppercase tracking-[0.2em] text-warm-gray hover:text-earth transition inline-flex items-center gap-2 self-start sm:self-auto"
+                >
+                  {t('home.viewAllPopular', 'View all')}
+                  <ArrowUpRight className="h-4 w-4" />
+                </Link>
+              </header>
+            </div>
+
+            <motion.div
+              className="w-full px-6 md:px-12 lg:px-16"
+              variants={gridVariants}
+              initial="hidden"
+              whileInView="show"
+              viewport={{ once: true, margin: '-100px' }}
+            >
+              <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-x-6 gap-y-10 md:gap-y-14">
+                {popularProducts.length > 0 ? (
+                  popularProducts.slice(0, 5).map(product => (
+                    <motion.div
+                      key={product.id}
+                      variants={itemVariants}
+                      className="transition-transform duration-300 hover:-translate-y-1"
+                    >
+                      <ProductCard
+                        id={product.id}
+                        name={product.name}
+                        image={product.image_url || product.image || ''}
+                        price={product.price}
+                        minPrice={product.price_min ?? product.min_price}
+                        maxPrice={product.max_price ?? product.maxPrice}
+                        brand={product.brand}
+                        priceCurrency={
+                          product.currency === 'USD' || product.currency === 'UAH'
+                            ? product.currency
+                            : popularCurrency
+                        }
+                      />
+                    </motion.div>
+                  ))
+                ) : (
+                  <div className="col-span-full text-center py-10 text-warm-gray">
+                    {t('home.topSavedEmpty', 'No popular products yet')}
+                  </div>
+                )}
+              </div>
+            </motion.div>
+          </section>
+        </ScrollReveal>
 
         {/* New Arrivals Section */}
-        <section id="products-section" className="py-12 sm:py-16 md:py-20 bg-black">
-          <div className="container mx-auto px-4 sm:px-6">
-            <header className="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-4 sm:gap-6 mb-6 sm:mb-10">
-              <div>
-                <div className="inline-flex items-center gap-2 mb-2 sm:mb-3">
-                  <div className="w-1.5 h-1.5 rounded-full bg-foreground" aria-hidden="true" />
-                  <span className="text-[10px] sm:text-xs text-white/60 uppercase tracking-wider">
-                    {t('home.justIn', 'Just In')}
-                  </span>
-                </div>
-                <h2 className="font-display text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-bold text-white">
-                  {t('home.newArrivals', 'New Arrivals')}
-                </h2>
-                <p className="text-sm sm:text-base text-white/70 mt-1 sm:mt-2">
-                  {t('home.freshPieces', 'Fresh pieces from the latest collections')}
-                </p>
-              </div>
-            </header>
-
-            {/* Loading state */}
-            {isLoading && (
-              <div className="col-span-full text-center py-8">
-                <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-white"></div>
-              </div>
-            )}
-
-            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-3 sm:gap-4">
-              {hasProducts ? (
-                products
-                  .slice(0, 12)
-                  .map(product => (
-                    <ProductCard
-                      key={product.id}
-                      id={product.id}
-                      name={product.name}
-                      image={product.image_url || product.image || ''}
-                      price={product.price}
-                      minPrice={product.price_min ?? product.min_price}
-                      maxPrice={product.max_price ?? product.maxPrice}
-                      brand={product.brand}
-                      priceCurrency={
-                        product.currency === 'USD' || product.currency === 'UAH'
-                          ? product.currency
-                          : productsCurrency
-                      }
-                    />
-                  ))
-              ) : (
-                <div className="col-span-full text-center py-16 px-4">
-                  <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-white/5 mb-4">
-                    <svg
-                      className="w-8 h-8 text-white/40"
-                      fill="none"
-                      viewBox="0 0 24 24"
-                      stroke="currentColor"
-                    >
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        strokeWidth={2}
-                        d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4"
-                      />
-                    </svg>
+        <ScrollReveal>
+          <section id="products-section" className="py-24 md:py-32 bg-white">
+            <div className="w-full px-6 md:px-12 lg:px-16">
+              <header className="flex flex-col sm:flex-row items-start sm:items-end sm:justify-between gap-4 sm:gap-6 mb-10 md:mb-14 text-left">
+                <div>
+                  <div className="inline-flex items-center gap-2 mb-3">
+                    <div className="w-1.5 h-1.5 rounded-full bg-warm-gray" aria-hidden="true" />
+                    <span className="text-xs text-warm-gray uppercase tracking-[0.2em]">
+                      {t('home.justIn', 'Just In')}
+                    </span>
                   </div>
-                  <h3 className="text-xl font-bold text-white mb-2">
-                    {t('home.noProductsTitle', 'Немає доступних продуктів')}
-                  </h3>
-                  <p className="text-white/60 mb-4 max-w-md mx-auto">
-                    {t(
-                      'home.noProductsDescription',
-                      'Підключіть backend сервер для завантаження продуктів.'
-                    )}
-                    <br />
-                    {t('home.noProductsHint', 'Перевірте NEXT_PUBLIC_API_URL в .env файлі.')}
+                  <h2 className="font-serif text-4xl md:text-5xl lg:text-6xl text-earth">
+                    {t('home.newArrivals', 'New Arrivals')}
+                  </h2>
+                  <p className="text-sm md:text-base text-warm-gray mt-3 max-w-xl">
+                    {t('home.freshPieces', 'Fresh pieces from the latest collections')}
                   </p>
-                  <div className="text-sm text-white/40 font-mono bg-white/5 rounded-lg p-4 max-w-lg mx-auto">
-                    <div className="text-left">
-                      <div className="text-white/60 mb-2">
-                        {t('home.noProductsExpected', 'Очікується:')}
-                      </div>
-                      <div>NEXT_PUBLIC_API_URL=http://localhost:3000</div>
-                      <div className="mt-3 text-white/60 mb-2">
-                        {t('home.noProductsBackend', 'Або запустіть backend:')}
-                      </div>
-                      <div>cd backend && npm run dev</div>
-                    </div>
-                  </div>
+                </div>
+              </header>
+
+              {isLoading && (
+                <div className="col-span-full text-center py-8">
+                  <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-earth"></div>
                 </div>
               )}
             </div>
 
-            {/* View All Button */}
-            <ViewAllButton label={t('home.viewAllProducts', 'View All Products')} />
-          </div>
-        </section>
+            <motion.div
+              className="w-full px-6 md:px-12 lg:px-16"
+              variants={gridVariants}
+              initial="hidden"
+              whileInView="show"
+              viewport={{ once: true, margin: '-100px' }}
+            >
+              <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-x-6 gap-y-12 md:gap-y-16">
+                {hasProducts ? (
+                  products.slice(0, 12).map(product => (
+                    <motion.div
+                      key={product.id}
+                      variants={itemVariants}
+                      className="transition-transform duration-300 hover:-translate-y-1"
+                    >
+                      <ProductCard
+                        id={product.id}
+                        name={product.name}
+                        image={product.image_url || product.image || ''}
+                        price={product.price}
+                        minPrice={product.price_min ?? product.min_price}
+                        maxPrice={product.max_price ?? product.maxPrice}
+                        brand={product.brand}
+                        priceCurrency={
+                          product.currency === 'USD' || product.currency === 'UAH'
+                            ? product.currency
+                            : productsCurrency
+                        }
+                      />
+                    </motion.div>
+                  ))
+                ) : (
+                  <div className="col-span-full text-center py-16 px-4">
+                    <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-sand mb-4">
+                      <svg
+                        className="w-8 h-8 text-warm-gray"
+                        fill="none"
+                        viewBox="0 0 24 24"
+                        stroke="currentColor"
+                      >
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          strokeWidth={2}
+                          d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4"
+                        />
+                      </svg>
+                    </div>
+                    <h3 className="text-xl font-serif text-earth mb-2">
+                      {t('home.noProductsTitle', 'Немає доступних продуктів')}
+                    </h3>
+                    <p className="text-warm-gray mb-4 max-w-md mx-auto">
+                      {t(
+                        'home.noProductsDescription',
+                        'Підключіть backend сервер для завантаження продуктів.'
+                      )}
+                      <br />
+                      {t('home.noProductsHint', 'Перевірте NEXT_PUBLIC_API_URL в .env файлі.')}
+                    </p>
+                    <div className="text-sm text-warm-gray font-mono bg-sand rounded-none p-4 max-w-lg mx-auto">
+                      <div className="text-left">
+                        <div className="text-earth mb-2">
+                          {t('home.noProductsExpected', 'Очікується:')}
+                        </div>
+                        <div>NEXT_PUBLIC_API_URL=http://localhost:3000</div>
+                        <div className="mt-3 text-earth mb-2">
+                          {t('home.noProductsBackend', 'Або запустіть backend:')}
+                        </div>
+                        <div>cd backend && npm run dev</div>
+                      </div>
+                    </div>
+                  </div>
+                )}
+              </div>
+            </motion.div>
+
+            <div className="max-w-[1800px] mx-auto px-6 md:px-12 lg:px-16">
+              <ViewAllButton label={t('home.viewAllProducts', 'View All Products')} />
+            </div>
+          </section>
+        </ScrollReveal>
 
         {/* Recently Viewed Section */}
-        <section className="py-8 sm:py-12 bg-black border-t border-white/5">
-          <div className="container mx-auto px-4 sm:px-6">
-            <RecentlyViewedProducts maxItems={8} showClearButton={true} />
-          </div>
-        </section>
+        <ScrollReveal>
+          <section className="py-8 sm:py-12 bg-white border-t border-border">
+            <div className="w-full px-6 md:px-12 lg:px-16">
+              <RecentlyViewedProducts maxItems={8} showClearButton={true} />
+            </div>
+          </section>
+        </ScrollReveal>
       </main>
     </div>
   );

@@ -95,7 +95,7 @@ export function UserProfileMenu() {
   return (
     <DropdownMenu modal={false}>
       <DropdownMenuTrigger asChild>
-        <button className="group flex items-center gap-3 rounded-full border border-border/50 bg-card/40 backdrop-blur-sm p-2 pr-4 md:p-1.5 md:pr-3 min-h-[44px] md:min-h-0 md:hover:bg-card/60 md:hover:border-foreground/30 md:hover:shadow-[0_0_30px_rgba(255,255,255,0.15)] active:bg-card/60 active:border-foreground/30 active:scale-95 transition-all duration-150 touch-manipulation">
+        <button className="group flex items-center gap-3 rounded-full border border-border bg-white p-2 pr-4 md:p-1.5 md:pr-3 min-h-[44px] md:min-h-0 md:hover:border-foreground/30 active:scale-95 transition-all duration-150 touch-manipulation">
           <Avatar className="h-10 w-10 md:h-8 md:w-8 ring-2 ring-border/50 md:group-hover:ring-foreground/30 transition-all">
             <AvatarImage src={user.avatar_url} alt={displayName} />
             <AvatarFallback className="bg-foreground text-background font-bold text-xs">

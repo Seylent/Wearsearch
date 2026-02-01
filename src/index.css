@@ -1,5 +1,4 @@
-/* Google Fonts - using link tag in HTML for better caching and preconnect */
-/* Fonts are loaded via <link> in index.html for optimal performance */
+/* Fonts are loaded via next/font in src/app/layout.tsx */
 
 /* Custom logo font - Youre Gone */
 @font-face {
@@ -13,14 +12,15 @@
 /* Logo font class with good fallbacks */
 .font-logo {
   font-family:
-    'Youre Gone',
-    'Outfit',
     'Montserrat',
+    'Futura',
+    'Avenir',
+    'Century Gothic',
     system-ui,
     -apple-system,
     sans-serif;
-  font-weight: 400;
-  letter-spacing: -0.02em;
+  font-weight: 700;
+  letter-spacing: 0.05em;
 }
 
 @tailwind base;
@@ -214,69 +214,51 @@ body[style*='padding-right'] {
 
 @layer base {
   :root {
-    /* Light theme (default tokens) */
+    /* Neutral monochrome palette */
     --background: 0 0% 100%;
-    --foreground: 0 0% 8%;
+    --foreground: 0 0% 0%;
 
     --card: 0 0% 100%;
-    --card-foreground: 0 0% 8%;
+    --card-foreground: 0 0% 0%;
 
     --popover: 0 0% 100%;
-    --popover-foreground: 0 0% 8%;
+    --popover-foreground: 0 0% 0%;
 
-    --primary: 0 0% 10%;
-    --primary-foreground: 0 0% 98%;
+    --primary: 0 0% 0%;
+    --primary-foreground: 0 0% 100%;
 
-    --secondary: 0 0% 92%;
-    --secondary-foreground: 0 0% 12%;
+    --secondary: 0 0% 96%;
+    --secondary-foreground: 0 0% 0%;
 
-    --muted: 0 0% 94%;
-    --muted-foreground: 0 0% 38%;
+    --muted: 0 0% 96%;
+    --muted-foreground: 0 0% 40%;
 
-    --accent: 0 0% 88%;
-    --accent-foreground: 0 0% 12%;
+    --accent: 0 0% 0%;
+    --accent-foreground: 0 0% 100%;
 
     --destructive: 0 62% 50%;
     --destructive-foreground: 0 0% 100%;
 
-    --border: 0 0% 85%;
-    --input: 0 0% 86%;
-    --ring: 0 0% 12%;
+    --border: 0 0% 90%;
+    --input: 0 0% 90%;
+    --ring: 0 0% 0%;
 
-    --radius: 0.5rem;
+    --radius: 0.125rem;
 
-    /* Custom tokens */
-    --neon-glow: 0 0 40px rgba(0, 0, 0, 0.08);
-    --neon-glow-soft: 0 0 60px rgba(0, 0, 0, 0.05);
-    --neon-glow-intense: 0 0 80px rgba(0, 0, 0, 0.12);
-    --card-surface: 0 0% 100%;
-    --card-surface-hover: 0 0% 97%;
-    --text-secondary: 0 0% 32%;
-    --text-tertiary: 0 0% 45%;
-    --neon-fg: 0 0% 12%;
+    --gradient-neon: none;
+    --gradient-card: none;
+    --gradient-radial: none;
+    --gradient-text: none;
+    --page-gradient: none;
+    --section-gradient: none;
+    --surface-glow: none;
+    --product-media-bg: none;
+    --product-card-media-bg: none;
+    --neon-text-shadow: none;
+    --neon-glow: 0 0 0 rgba(0, 0, 0, 0);
+    --neon-glow-soft: 0 0 0 rgba(0, 0, 0, 0);
+    --neon-glow-intense: 0 0 0 rgba(0, 0, 0, 0);
 
-    /* Gradients */
-    --gradient-neon: linear-gradient(180deg, rgba(0, 0, 0, 0.06) 0%, transparent 100%);
-    --gradient-card: linear-gradient(180deg, hsl(0 0% 100%) 0%, hsl(0 0% 96%) 100%);
-    --gradient-radial: radial-gradient(circle at 50% 0%, rgba(0, 0, 0, 0.05) 0%, transparent 50%);
-    --gradient-text: linear-gradient(180deg, hsl(0 0% 10%) 0%, hsl(0 0% 40%) 100%);
-    --page-gradient:
-      radial-gradient(circle at 15% 15%, rgba(0, 0, 0, 0.08), transparent 45%),
-      radial-gradient(circle at 85% 20%, rgba(0, 0, 0, 0.05), transparent 50%),
-      linear-gradient(180deg, #ffffff 0%, #ffffff 100%);
-    --section-gradient: linear-gradient(180deg, #ffffff 0%, #ffffff 100%);
-    --surface-glow:
-      radial-gradient(circle at 20% 10%, rgba(0, 0, 0, 0.08), transparent 50%),
-      radial-gradient(circle at 80% 0%, rgba(0, 0, 0, 0.06), transparent 55%);
-    --product-media-bg:
-      radial-gradient(circle at 20% 20%, rgba(0, 0, 0, 0.06) 0%, transparent 55%),
-      radial-gradient(circle at 80% 70%, rgba(0, 0, 0, 0.05) 0%, transparent 55%),
-      linear-gradient(135deg, #f6f6f6 0%, #e5e5e5 100%);
-    --product-card-media-bg:
-      radial-gradient(circle at 20% 20%, rgba(0, 0, 0, 0.05) 0%, transparent 55%),
-      radial-gradient(circle at 80% 70%, rgba(0, 0, 0, 0.04) 0%, transparent 55%),
-      linear-gradient(135deg, #f7f7f7 0%, #e6e6e6 100%);
-    --neon-text-shadow: 0 0 20px rgba(0, 0, 0, 0.18), 0 0 40px rgba(0, 0, 0, 0.12);
     --scrollbar-track: 0 0% 96%;
     --scrollbar-thumb: 0 0% 70%;
     --scrollbar-thumb-hover: 0 0% 60%;
@@ -360,10 +342,8 @@ body[style*='padding-right'] {
     font-feature-settings:
       'rlig' 1,
       'calt' 1;
-    background-image: var(--page-gradient);
-    background-attachment: fixed;
-    background-repeat: no-repeat;
-    background-size: cover;
+    background-color: #ffffff !important;
+    color: #000000;
   }
 
   /* Light theme overrides for hardcoded dark utility classes */
@@ -504,7 +484,9 @@ body[style*='padding-right'] {
   h4,
   h5,
   h6 {
-    @apply font-display tracking-tight;
+    @apply font-serif;
+    font-weight: 400;
+    letter-spacing: -0.02em;
   }
 
   /* Remove text cursor where not needed */
@@ -535,10 +517,6 @@ body[style*='padding-right'] {
 }
 
 @layer components {
-  .glass {
-    @apply bg-white/10 backdrop-blur-md border border-white/20;
-  }
-
   .neon-glow {
     box-shadow: var(--neon-glow);
   }
@@ -570,76 +548,6 @@ body[style*='padding-right'] {
 
   .gradient-radial {
     background: var(--gradient-radial);
-  }
-
-  .glass-surface {
-    @apply bg-card/50 backdrop-blur-xl border border-border/50;
-    transform: translateZ(0);
-    contain: layout paint;
-  }
-
-  .glass-card {
-    @apply bg-foreground/5 backdrop-blur-2xl border border-foreground/10;
-    box-shadow:
-      inset 0 1px 1px rgba(255, 255, 255, 0.1),
-      inset 0 -1px 1px rgba(0, 0, 0, 0.1),
-      0 0 40px rgba(255, 255, 255, 0.05);
-    transform: translateZ(0);
-    contain: layout paint;
-  }
-
-  .light .glass-card {
-    background-image: var(--surface-glow);
-    box-shadow:
-      inset 0 1px 1px rgba(255, 255, 255, 0.6),
-      inset 0 -1px 1px rgba(0, 0, 0, 0.08),
-      0 12px 30px rgba(0, 0, 0, 0.08);
-  }
-
-  .glass-card-strong {
-    @apply bg-foreground/10 backdrop-blur-3xl border border-foreground/20;
-    box-shadow:
-      inset 0 2px 4px rgba(255, 255, 255, 0.15),
-      inset 0 -2px 4px rgba(0, 0, 0, 0.15),
-      0 0 60px rgba(255, 255, 255, 0.1);
-    transform: translateZ(0);
-    contain: layout paint;
-  }
-
-  .light .glass-card-strong {
-    background-image: var(--surface-glow);
-    box-shadow:
-      inset 0 2px 4px rgba(255, 255, 255, 0.65),
-      inset 0 -2px 4px rgba(0, 0, 0, 0.12),
-      0 16px 40px rgba(0, 0, 0, 0.12);
-  }
-
-  /* Reduced blur for better performance on mobile */
-  @media (max-width: 768px) {
-    .glass-surface {
-      backdrop-filter: blur(8px);
-      -webkit-backdrop-filter: blur(8px);
-    }
-    .glass-card {
-      backdrop-filter: blur(12px);
-      -webkit-backdrop-filter: blur(12px);
-    }
-    .glass-card-strong {
-      backdrop-filter: blur(16px);
-      -webkit-backdrop-filter: blur(16px);
-    }
-  }
-
-  .btn-glass {
-    @apply border border-white/20 text-white bg-white/5 backdrop-blur-xl hover:bg-white/10 transition-all duration-300 px-8 py-4 rounded-xl font-medium;
-  }
-
-  .light .btn-glass {
-    @apply border border-foreground/15 text-foreground bg-foreground/5 hover:bg-foreground/10;
-  }
-
-  .btn-glass-lg {
-    @apply btn-glass text-lg px-10 py-5;
   }
 
   .section-container {

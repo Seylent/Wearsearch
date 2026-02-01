@@ -17,15 +17,14 @@ const Footer = () => {
   };
 
   return (
-    <footer className="bg-black border-t border-zinc-800/50 pt-16 pb-8">
-      <div className="container mx-auto px-6">
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-10 mb-12">
-          {/* Links */}
+    <footer className="bg-white border-t border-border pt-16 pb-12">
+      <div className="max-w-[1800px] mx-auto px-6 md:px-12 lg:px-16">
+        <div className="grid grid-cols-1 md:grid-cols-[2fr_1fr_1fr] gap-12 mb-14">
           <div>
             <div className="mb-6 max-w-md">
               <Link
                 href="/"
-                className="inline-flex items-center gap-3 text-white hover:text-foreground transition-colors"
+                className="inline-flex items-center gap-3 text-earth hover:text-warm-gray transition-colors"
                 aria-label={t('aria.navigateToHomepage')}
               >
                 <Image
@@ -36,11 +35,14 @@ const Footer = () => {
                   className="h-8 w-[140px]"
                 />
               </Link>
-              <p className="text-sm text-muted-foreground leading-relaxed mt-3">
+              <p className="text-sm text-warm-gray leading-relaxed mt-4 max-w-md">
                 {t('footer.brandDescription', '© 2026 wearsearch. Створено для зручних покупок.')}
               </p>
             </div>
-            <h4 className="font-display font-semibold mb-5 text-sm tracking-wider uppercase text-white">
+          </div>
+
+          <div>
+            <h4 className="font-serif mb-5 text-xs tracking-[0.25em] uppercase text-earth">
               {t('footer.shop')}
             </h4>
             <ul className="space-y-3">
@@ -48,7 +50,7 @@ const Footer = () => {
                 <li key={link.name}>
                   <Link
                     href={link.href}
-                    className="text-sm text-muted-foreground hover:text-foreground transition-colors select-none"
+                    className="text-sm text-warm-gray hover:text-earth transition-colors select-none"
                   >
                     {link.name}
                   </Link>
@@ -58,7 +60,7 @@ const Footer = () => {
           </div>
 
           <div>
-            <h4 className="font-display font-semibold mb-5 text-sm tracking-wider uppercase text-white">
+            <h4 className="font-serif mb-5 text-xs tracking-[0.25em] uppercase text-earth">
               {t('footer.company')}
             </h4>
             <ul className="space-y-3">
@@ -66,7 +68,7 @@ const Footer = () => {
                 <li key={link.name}>
                   <Link
                     href={link.href}
-                    className="text-sm text-muted-foreground hover:text-foreground transition-colors select-none"
+                    className="text-sm text-warm-gray hover:text-earth transition-colors select-none"
                   >
                     {link.name}
                   </Link>
@@ -75,7 +77,7 @@ const Footer = () => {
               <li>
                 <Link
                   href="/contacts"
-                  className="text-sm text-muted-foreground hover:text-foreground transition-colors"
+                  className="text-sm text-warm-gray hover:text-earth transition-colors"
                 >
                   {t('footer.contact')}
                 </Link>
@@ -84,18 +86,20 @@ const Footer = () => {
           </div>
         </div>
 
-        {/* Bottom */}
-        <div className="pt-8 border-t border-zinc-800/50 flex justify-center items-center">
+        <div className="pt-8 border-t border-clay flex flex-col md:flex-row justify-between items-center gap-4">
+          <div className="text-xs uppercase tracking-[0.2em] text-warm-gray">
+            {t('footer.madeFor', 'Designed for effortless shopping')}
+          </div>
           <div className="flex gap-6">
             <Link
               href="/privacy"
-              className="text-xs text-zinc-600 hover:text-zinc-400 transition-colors select-none"
+              className="text-xs uppercase tracking-[0.2em] text-warm-gray hover:text-earth transition-colors select-none"
             >
               {t('footer.privacyPolicy')}
             </Link>
             <Link
               href="/terms"
-              className="text-xs text-zinc-600 hover:text-zinc-400 transition-colors select-none"
+              className="text-xs uppercase tracking-[0.2em] text-warm-gray hover:text-earth transition-colors select-none"
             >
               {t('footer.termsOfService')}
             </Link>

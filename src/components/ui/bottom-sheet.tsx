@@ -57,7 +57,7 @@ export const BottomSheet: React.FC<BottomSheetProps> = ({
       {/* Backdrop */}
       <div
         className={cn(
-          'fixed inset-0 z-50 bg-black/80 backdrop-blur-sm',
+          'fixed inset-0 z-50 bg-black/40',
           'animate-in fade-in-0 duration-300',
           !open && 'animate-out fade-out-0 duration-200'
         )}
@@ -105,24 +105,15 @@ export const BottomSheet: React.FC<BottomSheetProps> = ({
 
         {/* Content */}
         <div className="overflow-y-auto max-h-[calc(85vh-120px)] overscroll-contain">
-          <div className="p-6">
-            {children}
-          </div>
+          <div className="p-6">{children}</div>
         </div>
 
         {/* Footer Actions (Optional) */}
         <div className="sticky bottom-0 left-0 right-0 bg-background border-t border-border p-4 flex gap-3">
-          <Button
-            variant="outline"
-            className="flex-1 min-h-[44px]"
-            onClick={onClose}
-          >
+          <Button variant="outline" className="flex-1 min-h-[44px]" onClick={onClose}>
             Cancel
           </Button>
-          <Button
-            className="flex-1 min-h-[44px]"
-            onClick={onClose}
-          >
+          <Button className="flex-1 min-h-[44px]" onClick={onClose}>
             Apply
           </Button>
         </div>

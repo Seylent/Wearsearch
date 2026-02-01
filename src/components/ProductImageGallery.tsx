@@ -36,15 +36,15 @@ export const ProductImageGallery = ({ images, productName }: Props) => {
   return (
     <>
       <div className="flex flex-col-reverse lg:flex-row gap-4">
-        <div className="flex lg:flex-col gap-2 overflow-x-auto lg:overflow-y-auto lg:w-24 scrollbar-hide">
+        <div className="flex lg:flex-col gap-3 overflow-x-auto lg:overflow-y-auto lg:w-24 scrollbar-hide">
           {images.map((img, i) => (
             <button
               key={`${img}-${i}`}
               onClick={() => setSelected(i)}
-              className={`relative w-20 h-20 lg:w-24 lg:h-24 flex-shrink-0 rounded-lg overflow-hidden border-2 transition-all ${
+              className={`relative w-20 h-20 lg:w-24 lg:h-24 flex-shrink-0 rounded-xl overflow-hidden border transition-all ${
                 selected === i
-                  ? 'border-white shadow-[0_0_10px_rgba(255,255,255,0.3)]'
-                  : 'border-white/20'
+                  ? 'border-foreground/60 shadow-[0_12px_24px_rgba(0,0,0,0.12)]'
+                  : 'border-border'
               }`}
             >
               <Image src={img} alt="" fill className="object-cover" sizes="96px" />
@@ -53,10 +53,10 @@ export const ProductImageGallery = ({ images, productName }: Props) => {
         </div>
 
         <div
-          className="relative flex-1 bg-white/5 rounded-2xl overflow-hidden cursor-zoom-in group"
+          className="relative flex-1 bg-muted/50 rounded-3xl overflow-hidden cursor-zoom-in group"
           onClick={() => setIsOpen(true)}
         >
-          <div className="relative w-full h-[400px] lg:h-[600px]">
+          <div className="relative w-full h-[420px] lg:h-[620px]">
             <Image
               src={images[selected]}
               alt={productName}
@@ -67,7 +67,7 @@ export const ProductImageGallery = ({ images, productName }: Props) => {
               quality={90}
             />
           </div>
-          <div className="absolute bottom-4 right-4 glass px-3 py-1 text-sm rounded-full">
+          <div className="absolute bottom-4 right-4 bg-white/90 border border-border px-3 py-1 text-xs rounded-full">
             {selected + 1} / {images.length}
           </div>
         </div>
@@ -79,7 +79,7 @@ export const ProductImageGallery = ({ images, productName }: Props) => {
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            className="fixed inset-0 z-50 bg-black/95 backdrop-blur-xl flex items-center justify-center"
+            className="fixed inset-0 z-50 bg-black/90 flex items-center justify-center"
             onClick={() => setIsOpen(false)}
           >
             <button
@@ -87,7 +87,7 @@ export const ProductImageGallery = ({ images, productName }: Props) => {
                 e.stopPropagation();
                 prev();
               }}
-              className="absolute left-4 p-3 glass hover:bg-white/20 rounded-full hidden lg:block"
+              className="absolute left-4 p-3 bg-white/90 border border-border rounded-full hidden lg:block"
             >
               <ChevronLeft className="w-6 h-6" />
             </button>
@@ -97,14 +97,14 @@ export const ProductImageGallery = ({ images, productName }: Props) => {
                 e.stopPropagation();
                 next();
               }}
-              className="absolute right-4 p-3 glass hover:bg-white/20 rounded-full hidden lg:block"
+              className="absolute right-4 p-3 bg-white/90 border border-border rounded-full hidden lg:block"
             >
               <ChevronRight className="w-6 h-6" />
             </button>
 
             <button
               onClick={() => setIsOpen(false)}
-              className="absolute top-4 right-4 p-2 glass rounded-full"
+              className="absolute top-4 right-4 p-2 bg-white/90 border border-border rounded-full"
             >
               <X className="w-6 h-6" />
             </button>
@@ -130,7 +130,7 @@ export const ProductImageGallery = ({ images, productName }: Props) => {
               />
             </motion.div>
 
-            <div className="absolute bottom-8 left-1/2 -translate-x-1/2 glass px-4 py-2 text-sm rounded-full lg:hidden">
+            <div className="absolute bottom-8 left-1/2 -translate-x-1/2 bg-white/90 border border-border px-4 py-2 text-sm rounded-full lg:hidden">
               Swipe left/right to view
             </div>
           </motion.div>

@@ -125,7 +125,7 @@ export function BannerCarousel({
 
       {/* Dots Navigation */}
       {banners.length > 1 && (
-        <div className="absolute bottom-4 sm:bottom-6 left-1/2 -translate-x-1/2 flex gap-2 md:gap-3 z-10 bg-black/30 backdrop-blur-sm rounded-full px-4 py-2">
+        <div className="absolute bottom-4 sm:bottom-6 left-1/2 -translate-x-1/2 flex gap-2 md:gap-3 z-10 bg-white border border-border rounded-full px-4 py-2">
           {banners.map((banner, index) => (
             <button
               key={banner.id}

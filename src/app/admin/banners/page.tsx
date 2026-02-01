@@ -27,7 +27,7 @@ export default function AdminBannersPage() {
 
   return (
     <div className="min-h-screen bg-black text-white">
-      <div className="container mx-auto px-4 py-8">
+      <div className="max-w-[1800px] mx-auto px-6 md:px-12 lg:px-16 py-8">
         <BannerManager />
       </div>
     </div>

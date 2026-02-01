@@ -4,6 +4,7 @@
  */
 
 import React from 'react';
+import { motion, useReducedMotion } from 'framer-motion';
 import { Search, History, TrendingUp, Trash2, X } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import type { SearchHistoryItem } from '@/hooks/useSearchHistory';
@@ -17,104 +18,133 @@ interface SearchHistoryProps {
   onClearHistory?: () => void;
 }
 
-export const SearchHistory: React.FC<SearchHistoryProps> = React.memo(({
-  query,
-  searchHistory = [],
-  popularQueries = [],
-  onHistoryClick,
-  onRemoveHistory,
-  onClearHistory,
-}) => {
-  const { t } = useTranslation();
+export const SearchHistory: React.FC<SearchHistoryProps> = React.memo(
+  ({
+    query,
+    searchHistory = [],
+    popularQueries = [],
+    onHistoryClick,
+    onRemoveHistory,
+    onClearHistory,
+  }) => {
+    const { t } = useTranslation();
+    const reduceMotion = useReducedMotion();
 
-  // Only show when query is empty/short
-  if (query.length >= 2) {
-    return null;
-  }
+    const listVariants = {
+      hidden: { opacity: 1 },
+      show: {
+        opacity: 1,
+        transition: reduceMotion ? {} : { staggerChildren: 0.04 },
+      },
+    };
 
-  return (
-    <div className="p-4">
-      {/* Search History */}
-      {searchHistory.length > 0 && (
-        <div className="mb-6">
-          <div className="flex items-center justify-between mb-3">
-            <span className="text-xs font-medium text-white/40 uppercase tracking-wider flex items-center gap-2">
-              <History className="w-3 h-3" />
-              {t('search.recentSearches', 'Recent Searches')}
-            </span>
-            {onClearHistory && (
-              <button
-                onClick={onClearHistory}
-                className="text-xs text-white/40 hover:text-white flex items-center gap-1 transition-colors"
-              >
-                <Trash2 className="w-3 h-3" />
-                {t('search.clearHistory', 'Clear')}
-              </button>
-            )}
-          </div>
-          <div className="space-y-1">
-            {searchHistory.slice(0, 5).map((item) => (
-              <div
-                key={item.query}
-                className="flex items-center justify-between group px-3 py-2 rounded-lg hover:bg-white/5 transition-colors"
-              >
+    const itemVariants = {
+      hidden: reduceMotion ? { opacity: 1, y: 0 } : { opacity: 0, y: 8 },
+      show: reduceMotion
+        ? { opacity: 1, y: 0 }
+        : { opacity: 1, y: 0, transition: { duration: 0.35, ease: [0.22, 1, 0.36, 1] } },
+    };
+
+    // Only show when query is empty/short
+    if (query.length >= 2) {
+      return null;
+    }
+
+    return (
+      <div className="rounded-2xl border border-border bg-muted/30 p-5">
+        {/* Popular Searches */}
+        {popularQueries.length > 0 && (
+          <div className="mb-6">
+            <div className="flex items-center gap-2 mb-4">
+              <TrendingUp className="w-4 h-4 text-muted-foreground" />
+              <span className="text-xs font-medium text-muted-foreground uppercase tracking-[0.3em]">
+                {t('search.mostSearched', 'Most searched')}
+              </span>
+            </div>
+            <div className="flex flex-wrap gap-2">
+              {popularQueries.slice(0, 8).map(popularQuery => (
                 <button
-                  onClick={() => onHistoryClick?.(item.query)}
-                  className="flex items-center gap-3 flex-1 text-left"
+                  key={popularQuery}
+                  onClick={() => onHistoryClick?.(popularQuery)}
+                  className="inline-flex items-center gap-2 px-3 py-2 rounded-full text-xs uppercase tracking-[0.2em] bg-white border border-border text-muted-foreground hover:text-foreground hover:border-foreground/40 transition-colors"
                 >
-                  <History className="w-4 h-4 text-white/40" />
-                  <span className="text-white/80">{item.query}</span>
+                  {popularQuery}
                 </button>
-                {onRemoveHistory && (
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* Search History */}
+        {searchHistory.length > 0 && (
+          <div>
+            <div className="flex items-center justify-between mb-4">
+              <span className="text-xs font-medium text-muted-foreground uppercase tracking-[0.3em] flex items-center gap-2">
+                <History className="w-3 h-3" />
+                {t('search.recentSearches', 'Recent Searches')}
+              </span>
+              {onClearHistory && (
+                <button
+                  onClick={onClearHistory}
+                  className="text-xs text-muted-foreground hover:text-foreground flex items-center gap-1 transition-colors"
+                >
+                  <Trash2 className="w-3 h-3" />
+                  {t('search.clearHistory', 'Clear')}
+                </button>
+              )}
+            </div>
+            <motion.div
+              className="space-y-2"
+              variants={listVariants}
+              initial="hidden"
+              animate="show"
+            >
+              {searchHistory.slice(0, 5).map(item => (
+                <motion.div
+                  key={item.query}
+                  className="flex items-center justify-between group px-3 py-2 rounded-xl bg-white border border-border hover:border-foreground/30 transition-colors"
+                  variants={itemVariants}
+                >
                   <button
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      onRemoveHistory(item.query);
-                    }}
-                    className="opacity-0 group-hover:opacity-100 text-white/40 hover:text-white p-1 transition-opacity"
-                    aria-label={t('search.removeFromHistory', 'Remove from history')}
+                    onClick={() => onHistoryClick?.(item.query)}
+                    className="flex items-center gap-3 flex-1 text-left"
                   >
-                    <X className="w-4 h-4" />
+                    <History className="w-4 h-4 text-muted-foreground" />
+                    <span className="text-foreground/80 text-sm">{item.query}</span>
                   </button>
-                )}
-              </div>
-            ))}
+                  {onRemoveHistory && (
+                    <button
+                      onClick={e => {
+                        e.stopPropagation();
+                        onRemoveHistory(item.query);
+                      }}
+                      className="opacity-0 group-hover:opacity-100 text-muted-foreground hover:text-foreground p-1 transition-opacity"
+                      aria-label={t('search.removeFromHistory', 'Remove from history')}
+                    >
+                      <X className="w-4 h-4" />
+                    </button>
+                  )}
+                </motion.div>
+              ))}
+            </motion.div>
           </div>
-        </div>
-      )}
+        )}
 
-      {/* Popular Searches */}
-      {popularQueries.length > 0 && (
-        <div>
-          <span className="text-xs font-medium text-white/40 uppercase tracking-wider flex items-center gap-2 mb-3">
-            <TrendingUp className="w-3 h-3" />
-            {t('search.popular', 'Popular')}
-          </span>
-          <div className="flex flex-wrap gap-2">
-            {popularQueries.slice(0, 8).map((popularQuery) => (
-              <button
-                key={popularQuery}
-                onClick={() => onHistoryClick?.(popularQuery)}
-                className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-sm bg-white/5 text-white/70 hover:bg-white/10 hover:text-white transition-colors"
-              >
-                <TrendingUp className="w-3 h-3" />
-                {popularQuery}
-              </button>
-            ))}
+        {/* Empty state when no history */}
+        {searchHistory.length === 0 && popularQueries.length === 0 && (
+          <div className="text-center py-6">
+            <Search className="w-10 h-10 mx-auto mb-3 text-muted-foreground" />
+            <p className="text-muted-foreground">
+              {t('search.startTyping', 'Start typing to search products and stores...')}
+            </p>
+            <p className="text-muted-foreground text-sm mt-2">
+              {t('search.hint', 'Search by product name, brand, category, or store name')}
+            </p>
           </div>
-        </div>
-      )}
-
-      {/* Empty state when no history */}
-      {searchHistory.length === 0 && popularQueries.length === 0 && (
-        <div className="text-center py-4">
-          <Search className="w-12 h-12 mx-auto mb-4 text-white/20" />
-          <p className="text-white/60">{t('search.startTyping', 'Start typing to search products and stores...')}</p>
-          <p className="text-white/40 text-sm mt-2">{t('search.hint', 'Search by product name, brand, category, or store name')}</p>
-        </div>
-      )}
-    </div>
-  );
-});
+        )}
+      </div>
+    );
+  }
+);
 
 SearchHistory.displayName = 'SearchHistory';

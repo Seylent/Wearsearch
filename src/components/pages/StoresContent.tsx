@@ -119,7 +119,7 @@ const StoresContent: React.FC<StoresContentProps> = ({ storeId }) => {
       <section className="relative min-h-[70vh] flex items-center justify-center overflow-hidden pt-28">
         <NeonAbstractions />
 
-        <div className="container mx-auto px-4 sm:px-6 relative z-10 text-center">
+        <div className="max-w-[1800px] mx-auto px-6 md:px-12 lg:px-16 relative z-10 text-center">
           <h1
             className="font-display text-5xl sm:text-6xl md:text-7xl lg:text-8xl font-bold mb-6 tracking-tight animate-fade-in-up"
             style={{ animationDelay: '0.1s' }}
@@ -186,7 +186,7 @@ const StoresContent: React.FC<StoresContentProps> = ({ storeId }) => {
 
       {/* Stores Grid */}
       <section className="py-24 relative">
-        <div className="container mx-auto px-4 sm:px-6" id="main-content">
+        <div className="max-w-[1800px] mx-auto px-6 md:px-12 lg:px-16" id="main-content">
           {(() => {
             if (loading) {
               return <StoreGridSkeleton count={9} />;

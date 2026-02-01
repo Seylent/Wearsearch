@@ -1,6 +1,6 @@
 import type { Metadata, Viewport } from 'next';
 import { headers } from 'next/headers';
-import { Inter } from 'next/font/google';
+import { Inter, Montserrat } from 'next/font/google';
 import { NextProviders } from './providers';
 import { getServerCurrency } from '@/utils/currencyStorage';
 import Navigation from '@/components/layout/Navigation';
@@ -15,6 +15,13 @@ const inter = Inter({
   subsets: ['latin', 'cyrillic'],
   display: 'swap',
   variable: '--font-inter',
+});
+
+const montserrat = Montserrat({
+  subsets: ['latin', 'cyrillic'],
+  weight: ['400', '500', '600', '700', '800'],
+  display: 'swap',
+  variable: '--font-montserrat',
 });
 
 // Basic metadata - pages will override this
@@ -80,7 +87,7 @@ export default async function RootLayout({ children }: { readonly children: Reac
     <html lang={htmlLang} suppressHydrationWarning>
       <head>{nonce ? <meta name="csp-nonce" content={nonce} /> : null}</head>
       <body
-        className={`min-h-screen bg-background text-foreground font-sans antialiased overflow-x-hidden selection:bg-foreground/20 ${inter.variable}`}
+        className={`min-h-screen bg-background text-foreground font-sans antialiased overflow-x-hidden selection:bg-foreground/20 ${inter.variable} ${montserrat.variable}`}
         suppressHydrationWarning
       >
         {/* Skip to main content link for accessibility */}

@@ -57,7 +57,7 @@ const PriceRangeFilter: React.FC<PriceRangeFilterProps> = ({
       setRange(newRange);
       setInputMin(String(values[0]));
       setInputMax(String(values[1]));
-      
+
       if (!showApplyButton && onChange) {
         onChange(values[0], values[1]);
       }
@@ -77,7 +77,7 @@ const PriceRangeFilter: React.FC<PriceRangeFilterProps> = ({
       const numValue = parseFloat(value);
       if (isNaN(numValue)) return;
 
-      setRange((prev) => {
+      setRange(prev => {
         const newRange: [number, number] =
           type === 'min'
             ? [Math.max(min, Math.min(numValue, prev[1])), prev[1]]
@@ -123,7 +123,7 @@ const PriceRangeFilter: React.FC<PriceRangeFilterProps> = ({
     setRange([min, max]);
     setInputMin(String(min));
     setInputMax(String(max));
-    
+
     if (onChange) {
       onChange(min, max);
     }
@@ -135,8 +135,8 @@ const PriceRangeFilter: React.FC<PriceRangeFilterProps> = ({
   return (
     <div className={cn('space-y-4', className)}>
       <div className="flex items-center gap-2">
-        <Coins className="w-4 h-4 text-white/60" aria-hidden="true" />
-        <Label className="text-sm font-medium text-white">
+        <Coins className="w-4 h-4 text-warm-gray" aria-hidden="true" />
+        <Label className="text-sm font-medium text-earth">
           {t('filters.priceRange', 'Price Range')}
         </Label>
       </div>
@@ -156,43 +156,43 @@ const PriceRangeFilter: React.FC<PriceRangeFilterProps> = ({
       {/* Min/Max inputs */}
       <div className="flex items-center gap-3">
         <div className="flex-1">
-          <Label htmlFor="price-min" className="text-xs text-white/60 mb-1 block">
+          <Label htmlFor="price-min" className="text-xs text-warm-gray mb-1 block">
             {t('filters.min', 'Min')}
           </Label>
           <div className="relative">
-            <span className="absolute left-3 top-1/2 -translate-y-1/2 text-white/40 text-sm">
+            <span className="absolute left-3 top-1/2 -translate-y-1/2 text-warm-gray/70 text-sm">
               {currency}
             </span>
             <Input
               id="price-min"
               type="number"
               value={inputMin}
-              onChange={(e) => handleInputChange('min', e.target.value)}
+              onChange={e => handleInputChange('min', e.target.value)}
               onBlur={() => handleInputBlur('min')}
-              className="pl-7 bg-white/5 border-white/10 text-white text-sm h-9"
+              className="pl-7 bg-background/60 border-earth/20 text-earth text-sm h-9 rounded-full"
               min={min}
               max={range[1]}
             />
           </div>
         </div>
 
-        <span className="text-white/40 mt-5">—</span>
+        <span className="text-warm-gray/60 mt-5">—</span>
 
         <div className="flex-1">
-          <Label htmlFor="price-max" className="text-xs text-white/60 mb-1 block">
+          <Label htmlFor="price-max" className="text-xs text-warm-gray mb-1 block">
             {t('filters.max', 'Max')}
           </Label>
           <div className="relative">
-            <span className="absolute left-3 top-1/2 -translate-y-1/2 text-white/40 text-sm">
+            <span className="absolute left-3 top-1/2 -translate-y-1/2 text-warm-gray/70 text-sm">
               {currency}
             </span>
             <Input
               id="price-max"
               type="number"
               value={inputMax}
-              onChange={(e) => handleInputChange('max', e.target.value)}
+              onChange={e => handleInputChange('max', e.target.value)}
               onBlur={() => handleInputBlur('max')}
-              className="pl-7 bg-white/5 border-white/10 text-white text-sm h-9"
+              className="pl-7 bg-background/60 border-earth/20 text-earth text-sm h-9 rounded-full"
               min={range[0]}
               max={max}
             />
@@ -207,14 +207,14 @@ const PriceRangeFilter: React.FC<PriceRangeFilterProps> = ({
             variant="outline"
             size="sm"
             onClick={handleReset}
-            className="flex-1 bg-transparent border-white/10 text-white/60 hover:text-white hover:bg-white/5"
+            className="flex-1 bg-transparent border-earth/20 text-warm-gray hover:text-earth hover:border-earth/40 rounded-full"
           >
             {t('filters.reset', 'Reset')}
           </Button>
           <Button
             size="sm"
             onClick={handleApply}
-            className="flex-1 bg-white text-black hover:bg-white/90"
+            className="flex-1 bg-sand/60 text-earth border border-earth/40 hover:bg-sand/70 rounded-full"
           >
             {t('filters.apply', 'Apply')}
           </Button>

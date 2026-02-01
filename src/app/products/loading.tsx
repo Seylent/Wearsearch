@@ -1,7 +1,7 @@
 export default function Loading() {
   return (
     <div className="min-h-screen bg-black text-white pt-24 pb-16">
-      <div className="container mx-auto px-4">
+      <div className="max-w-[1800px] mx-auto px-6 md:px-12 lg:px-16">
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6">
           {Array.from({ length: 8 }).map((_, idx) => (
             <div

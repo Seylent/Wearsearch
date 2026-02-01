@@ -74,11 +74,11 @@ const ContactsContent = () => {
       <section className="relative min-h-[40vh] flex items-center justify-center overflow-hidden pt-28 pb-12">
         <NeonAbstractions />
 
-        <div className="container mx-auto px-6 relative z-10 text-center">
+        <div className="max-w-[1800px] mx-auto px-6 md:px-12 lg:px-16 relative z-10 text-center">
           <h1 className="font-display text-5xl sm:text-6xl md:text-7xl font-bold mb-4 tracking-tight">
             <span className="neon-text">{t('contacts.title', 'Contact Us')}</span>
           </h1>
-          <p className="text-lg sm:text-xl text-muted-foreground max-w-2xl mx-auto">
+          <p className="text-lg sm:text-xl text-muted-foreground max-w-2xl mx-auto font-serif">
             {t(
               'contacts.subtitle',
               "We'd love to hear from you! Reach out via social media or email."
@@ -89,13 +89,13 @@ const ContactsContent = () => {
 
       {/* Main Content */}
       <section className="relative py-16 sm:py-24">
-        <div className="container mx-auto px-6 max-w-5xl">
+        <div className="max-w-[1600px] mx-auto px-6 md:px-12 lg:px-16">
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-12">
             {/* Left Column - Contact Channels */}
             <div className="space-y-6">
               <div>
                 <h2 className="text-3xl font-bold mb-4">{t('contacts.reachUs', 'Reach Us')}</h2>
-                <p className="text-muted-foreground mb-8">
+                <p className="text-muted-foreground mb-8 font-serif">
                   {t(
                     'contacts.reachDescription',
                     'Choose your preferred way to connect with us. We respond to all messages within 24 hours.'

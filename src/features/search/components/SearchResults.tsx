@@ -4,6 +4,7 @@
  */
 
 import React, { useMemo } from 'react';
+import { motion, useReducedMotion } from 'framer-motion';
 import Image from 'next/image';
 import { Search, Store as StoreIcon, Package } from 'lucide-react';
 import { convertS3UrlToHttps } from '@/lib/utils';
@@ -26,42 +27,65 @@ export const SearchResults: React.FC<SearchResultsProps> = React.memo(
   ({ query, results, isLoading, showNoResults, onResultClick, onViewAll }) => {
     const { t } = useTranslation();
     const { formatPrice } = useCurrencyConversion();
-    const skeletonRows = useMemo(() => Array.from({ length: 5 }, (_, i) => i), []);
+    const skeletonRows = useMemo(() => Array.from({ length: 6 }, (_, i) => i), []);
+    const reduceMotion = useReducedMotion();
+
+    const productResults = useMemo(
+      () => results.filter(result => result.type === 'product'),
+      [results]
+    );
+    const storeResults = useMemo(
+      () => results.filter(result => result.type === 'store'),
+      [results]
+    );
+
+    const listVariants = {
+      hidden: { opacity: 1 },
+      show: {
+        opacity: 1,
+        transition: reduceMotion ? {} : { staggerChildren: 0.03 },
+      },
+    };
+
+    const itemVariants = {
+      hidden: reduceMotion ? { opacity: 1, y: 0 } : { opacity: 0, y: 10 },
+      show: reduceMotion
+        ? { opacity: 1, y: 0 }
+        : { opacity: 1, y: 0, transition: { duration: 0.4, ease: [0.22, 1, 0.36, 1] } },
+    };
 
     if (isLoading && query.length >= 2) {
       return (
-        <div className="p-4">
-          <div className="space-y-3">
+        <div className="pb-6">
+          <div className="grid grid-cols-2 lg:grid-cols-3 gap-4">
             {skeletonRows.map(i => (
-              <div key={i} className="flex items-center gap-4 p-2">
-                <Skeleton className="h-16 w-16 rounded-lg bg-white/10" />
-                <div className="flex-1 space-y-2">
-                  <Skeleton className="h-4 w-2/3 bg-white/10" />
-                  <Skeleton className="h-3 w-1/2 bg-white/10" />
+              <div key={i} className="p-3 border border-border rounded-2xl">
+                <Skeleton className="h-28 w-full rounded-xl bg-muted" />
+                <div className="mt-3 space-y-2">
+                  <Skeleton className="h-3 w-3/4 bg-muted" />
+                  <Skeleton className="h-3 w-1/2 bg-muted" />
                 </div>
-                <Skeleton className="h-4 w-14 bg-white/10" />
               </div>
             ))}
           </div>
-          <p className="mt-4 text-center text-white/60">{t('search.searching', 'Searching...')}</p>
+          <p className="mt-4 text-sm text-muted-foreground">
+            {t('search.searching', 'Searching...')}
+          </p>
         </div>
       );
     }
 
     if (showNoResults) {
       return (
-        <div className="p-8 text-center">
-          <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-white/5 flex items-center justify-center">
-            <Search className="w-8 h-8 text-white/40" />
+        <div className="p-6 text-center">
+          <div className="w-14 h-14 mx-auto mb-4 rounded-full bg-muted flex items-center justify-center">
+            <Search className="w-6 h-6 text-muted-foreground" />
           </div>
-          <p className="text-white/60">
+          <p className="text-muted-foreground">
             {t('search.noResults', 'No products or stores found for "{{query}}"', { query })}
           </p>
-          <p className="text-white/40 text-sm mt-2">
+          <p className="text-muted-foreground text-sm mt-2">
             {t('search.tryDifferent', 'Try a different search term')}
-          </p>
-          <p className="text-white/30 text-xs mt-4">
-            💡 Tip: Check browser console (F12) for debug info
           </p>
         </div>
       );
@@ -73,99 +97,117 @@ export const SearchResults: React.FC<SearchResultsProps> = React.memo(
 
     return (
       <>
-        <div className="divide-y divide-white/5">
-          {results.map(result => {
-            const isStore = result.type === 'store';
-
-            return (
-              <button
-                key={`${result.type}-${result.id}`}
-                onClick={() => onResultClick({ id: result.id, type: result.type })}
-                className={`w-full p-4 flex items-center gap-4 hover:bg-white/5 transition-colors text-left group ${
-                  isStore ? 'bg-white/[0.02]' : ''
-                }`}
-              >
-                {/* Image/Logo */}
-                <div
-                  className={`w-16 h-16 rounded-lg overflow-hidden flex-shrink-0 border ${
-                    isStore ? 'bg-white/10 border-white/20' : 'bg-white/5 border-white/10'
-                  }`}
+        {productResults.length > 0 && (
+          <div className="mb-6">
+            <div className="flex items-center gap-2 mb-4">
+              <span className="text-xs uppercase tracking-[0.3em] text-muted-foreground">
+                {t('search.suggestedProducts', 'Suggested products')}
+              </span>
+            </div>
+            <motion.div
+              className="grid grid-cols-2 lg:grid-cols-3 gap-4"
+              variants={listVariants}
+              initial="hidden"
+              animate="show"
+            >
+              {productResults.map(result => (
+                <motion.button
+                  key={`product-${result.id}`}
+                  onClick={() => onResultClick({ id: result.id, type: result.type })}
+                  className="group text-left rounded-2xl border border-border bg-white hover:bg-muted/40 transition-colors p-3"
+                  variants={itemVariants}
                 >
-                  {result.image || result.logo_url ? (
-                    <Image
-                      src={convertS3UrlToHttps(result.image || result.logo_url || '')}
-                      alt={result.name}
-                      width={64}
-                      height={64}
-                      className="w-full h-full object-cover"
-                      loading="lazy"
-                    />
-                  ) : (
-                    <div className="w-full h-full flex items-center justify-center">
-                      {isStore ? (
-                        <StoreIcon className="w-6 h-6 text-white/40" />
-                      ) : (
-                        <Package className="w-6 h-6 text-white/20" />
-                      )}
-                    </div>
-                  )}
-                </div>
-
-                {/* Info */}
-                <div className="flex-1 min-w-0">
-                  <div className="flex items-center gap-2 mb-1">
-                    {isStore && (
-                      <div className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-white/10 border border-white/20">
-                        <StoreIcon className="w-3 h-3" />
-                        <span className="text-[10px] font-medium uppercase tracking-wider">
-                          Store
-                        </span>
+                  <div className="relative w-full h-28 rounded-xl overflow-hidden bg-muted">
+                    {result.image ? (
+                      <Image
+                        src={convertS3UrlToHttps(result.image)}
+                        alt={result.name}
+                        fill
+                        className="object-cover transition-transform duration-300 group-hover:scale-105"
+                        sizes="(max-width: 1024px) 50vw, 20vw"
+                        loading="lazy"
+                      />
+                    ) : (
+                      <div className="w-full h-full flex items-center justify-center">
+                        <Package className="w-6 h-6 text-muted-foreground" />
                       </div>
                     )}
-                    <h3 className="font-medium text-white group-hover:text-white/90 transition-colors truncate">
-                      {result.name}
-                    </h3>
                   </div>
+                  <div className="mt-3">
+                    <p className="text-sm font-medium text-foreground truncate">{result.name}</p>
+                    <div className="mt-1 flex items-center justify-between text-xs text-muted-foreground">
+                      <span className="truncate">
+                        {result.category ? getCategoryTranslation(result.category) : ''}
+                      </span>
+                      {result.price && (
+                        <span className="text-foreground font-medium">
+                          {formatPrice(Number(result.price))}
+                        </span>
+                      )}
+                    </div>
+                  </div>
+                </motion.button>
+              ))}
+            </motion.div>
+          </div>
+        )}
 
-                  <div className="flex items-center gap-2 text-sm text-white/50">
-                    {isStore ? (
-                      <>
-                        {result.product_count !== undefined && (
-                          <span className="truncate">{result.product_count} products</span>
-                        )}
-                        <span className="text-white/30">→ View all products</span>
-                      </>
+        {storeResults.length > 0 && (
+          <div>
+            <div className="flex items-center gap-2 mb-4">
+              <span className="text-xs uppercase tracking-[0.3em] text-muted-foreground">
+                {t('search.suggestedStores', 'Stores')}
+              </span>
+            </div>
+            <motion.div
+              className="space-y-2"
+              variants={listVariants}
+              initial="hidden"
+              animate="show"
+            >
+              {storeResults.map(result => (
+                <motion.button
+                  key={`store-${result.id}`}
+                  onClick={() => onResultClick({ id: result.id, type: result.type })}
+                  className="w-full p-3 flex items-center gap-3 rounded-xl border border-border bg-white hover:bg-muted/40 transition-colors text-left"
+                  variants={itemVariants}
+                >
+                  <div className="w-12 h-12 rounded-lg overflow-hidden flex-shrink-0 border border-border bg-muted">
+                    {result.logo_url ? (
+                      <Image
+                        src={convertS3UrlToHttps(result.logo_url)}
+                        alt={result.name}
+                        width={48}
+                        height={48}
+                        className="w-full h-full object-cover"
+                        loading="lazy"
+                      />
                     ) : (
-                      <>
-                        {result.category && (
-                          <span className="truncate">
-                            {getCategoryTranslation(result.category)}
-                          </span>
-                        )}
-                        {result.brand && result.category && <span>•</span>}
-                        {result.brand && <span className="truncate">{result.brand}</span>}
-                      </>
+                      <div className="w-full h-full flex items-center justify-center">
+                        <StoreIcon className="w-5 h-5 text-muted-foreground" />
+                      </div>
                     )}
                   </div>
-                </div>
-
-                {/* Price (only for products) */}
-                {!isStore && result.price && (
-                  <div className="text-white font-medium flex-shrink-0">
-                    {formatPrice(Number(result.price))}
+                  <div className="flex-1 min-w-0">
+                    <p className="text-sm font-medium text-foreground truncate">{result.name}</p>
+                    <p className="text-xs text-muted-foreground">
+                      {result.product_count !== undefined
+                        ? `${result.product_count} ${t('search.products', 'products')}`
+                        : t('search.viewStore', 'View store')}
+                    </p>
                   </div>
-                )}
-              </button>
-            );
-          })}
-        </div>
+                </motion.button>
+              ))}
+            </motion.div>
+          </div>
+        )}
 
         {/* View All Button */}
         {query.trim() && (
-          <div className="p-4 border-t border-white/10">
+          <div className="mt-6">
             <button
               onClick={onViewAll}
-              className="w-full py-3 px-4 bg-white/10 hover:bg-white/15 rounded-xl text-white font-medium transition-colors"
+              className="w-full py-3 px-4 bg-black text-white rounded-full font-medium transition-colors hover:bg-black/90"
             >
               {t('search.viewAll', 'View All Results for "{{query}}"', { query })}
             </button>

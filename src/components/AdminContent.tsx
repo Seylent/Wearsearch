@@ -95,7 +95,7 @@ const AdminContent = () => {
 
   if (!isAuthenticated) {
     return (
-      <div className="container mx-auto px-4 py-12">
+      <div className="max-w-[1800px] mx-auto px-6 md:px-12 lg:px-16 py-12">
         <div className="flex flex-col items-center justify-center space-y-4">
           <ShieldCheck className="w-16 h-16 text-muted-foreground/50" />
           <p className="text-lg text-muted-foreground">{t('admin.notAuthenticated')}</p>
@@ -106,7 +106,7 @@ const AdminContent = () => {
 
   if (!canAccessAdminPanel) {
     return (
-      <div className="container mx-auto px-4 py-12">
+      <div className="max-w-[1800px] mx-auto px-6 md:px-12 lg:px-16 py-12">
         <div className="flex flex-col items-center justify-center space-y-4">
           <ShieldCheck className="w-16 h-16 text-muted-foreground/50" />
           <p className="text-lg text-muted-foreground">{t('admin.noAccess')}</p>
@@ -116,7 +116,7 @@ const AdminContent = () => {
   }
 
   return (
-    <div className="container mx-auto px-4 py-6 md:py-8">
+    <div className="max-w-[1800px] mx-auto px-6 md:px-12 lg:px-16 py-6 md:py-8">
       {/* Header */}
       <div className="mb-6">
         <h1 className="text-2xl md:text-3xl font-bold">{t('admin.title')}</h1>

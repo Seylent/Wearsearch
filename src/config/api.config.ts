@@ -17,8 +17,17 @@ const deriveLegacyBaseUrl = (baseUrl: string): string => {
 };
 
 const resolveBaseUrl = (): string => {
-  const envBase = process.env.NEXT_PUBLIC_API_BASE_URL;
-  if (envBase) return envBase;
+  const envBase = process.env.NEXT_PUBLIC_API_BASE_URL || process.env.NEXT_PUBLIC_API_URL;
+  if (envBase) {
+    const trimmed = envBase.trim();
+    if (typeof window !== 'undefined' && process.env.NODE_ENV !== 'production') {
+      const port = window.location?.port;
+      if (trimmed.startsWith('/') && port && port !== '3000') {
+        return `http://localhost:3000${trimmed}`;
+      }
+    }
+    return trimmed;
+  }
 
   if (typeof window !== 'undefined' && process.env.NODE_ENV !== 'production') {
     const port = window.location?.port;

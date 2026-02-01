@@ -623,17 +623,17 @@ const ProductDetail = () => {
   // Loading state
   if (productLoading) {
     return (
-      <div className="min-h-screen bg-background text-foreground flex items-center justify-center">
-        <div className="animate-spin w-12 h-12 border-2 border-foreground border-t-transparent rounded-full" />
+      <div className="min-h-screen bg-white text-earth flex items-center justify-center">
+        <div className="animate-spin w-12 h-12 border-2 border-earth border-t-transparent rounded-full" />
       </div>
     );
   }
 
   if (!product) {
     return (
-      <div className="min-h-screen bg-background text-foreground flex flex-col items-center justify-center">
-        <h2 className="font-display text-2xl font-bold mb-4">Product Not Found</h2>
-        <Button onClick={() => router.push('/')} className="rounded-full">
+      <div className="min-h-screen bg-white text-earth flex flex-col items-center justify-center">
+        <h2 className="font-serif text-3xl mb-4">Product Not Found</h2>
+        <Button onClick={() => router.push('/')} className="rounded-none bg-earth text-cream">
           Go Home
         </Button>
       </div>
@@ -641,8 +641,8 @@ const ProductDetail = () => {
   }
 
   return (
-    <div className="min-h-screen bg-background text-foreground font-sans">
-      <div className="container mx-auto px-4 sm:px-6 py-12 pt-28">
+    <div className="min-h-screen bg-white text-earth font-sans">
+      <div className="max-w-[1800px] mx-auto px-6 md:px-12 lg:px-16 py-20 pt-28">
         {/* Breadcrumbs */}
         <Breadcrumbs
           items={[
@@ -655,12 +655,16 @@ const ProductDetail = () => {
             },
             { label: product?.name || t('nav.product', 'Product') },
           ]}
-          className="mb-6"
+          className="mb-8 text-warm-gray"
         />
 
         {/* Back Button & Edit */}
-        <div className="flex justify-between items-center mb-8">
-          <Button variant="ghost" onClick={() => router.back()} className="group">
+        <div className="flex justify-between items-center mb-10">
+          <Button
+            variant="ghost"
+            onClick={() => router.back()}
+            className="group text-xs uppercase tracking-[0.2em] text-warm-gray hover:text-earth"
+          >
             <ArrowLeft className="w-4 h-4 mr-2 md:group-hover:-translate-x-1 transition-transform" />
             {t('common.back')}
           </Button>
@@ -669,7 +673,7 @@ const ProductDetail = () => {
             <Button
               variant="outline"
               onClick={() => router.push(`/admin?editProduct=${id}`)}
-              className="gap-2"
+              className="gap-2 rounded-none border-earth text-earth hover:bg-earth hover:text-cream"
             >
               <Edit className="w-4 h-4" />
               {t('products.editProduct')}
@@ -678,12 +682,12 @@ const ProductDetail = () => {
         </div>
 
         {/* Product Layout - Two Columns (big image, right sidebar) */}
-        <div className="grid grid-cols-1 lg:grid-cols-[1fr,360px] gap-8 mb-16 items-start">
+        <div className="grid grid-cols-1 lg:grid-cols-[1fr,380px] gap-10 lg:gap-16 mb-20 items-start">
           {/* Left: Image & Details */}
           <div className="space-y-8">
             {/* Image Section */}
             <div className="relative animate-fade-in">
-              <div className="relative rounded-3xl overflow-hidden border border-transparent bg-transparent">
+              <div className="relative rounded-3xl overflow-hidden border border-border bg-muted/40">
                 <ProductImageGallery images={galleryImages} productName={product.name} />
               </div>
             </div>
@@ -692,83 +696,83 @@ const ProductDetail = () => {
             <div className="animate-fade-in-up" style={{ animationDelay: '0.2s' }}>
               {/* Brand */}
               {brandName && (
-                <p className="text-xs sm:text-sm text-muted-foreground uppercase tracking-[0.15em] sm:tracking-[0.2em] mb-2 sm:mb-3">
+                <p className="text-xs text-warm-gray uppercase tracking-[0.25em] mb-3">
                   {brandName}
                 </p>
               )}
 
               {/* Title */}
-              <h1 className="font-display text-2xl sm:text-3xl md:text-5xl font-bold tracking-tight mb-4">
+              <h1 className="font-serif text-4xl sm:text-5xl md:text-6xl lg:text-7xl tracking-tight leading-[0.95] mb-6">
                 {product.name}
               </h1>
 
-              <div className="flex flex-wrap items-center gap-2 mb-6">
+              <div className="flex flex-wrap items-center gap-3 mb-8">
                 <FavoriteButton
                   productId={String(id)}
                   variant="ghost"
-                  className="h-10 w-10 rounded-full bg-foreground/10 text-foreground md:hover:bg-foreground/20"
+                  className="h-11 w-11 rounded-full border border-earth text-earth hover:bg-earth hover:text-cream"
                 />
                 <AddToWishlistButton
                   productId={String(id)}
                   productName={product.name}
-                  className="h-10 rounded-full px-4 bg-foreground/10 text-foreground md:hover:bg-foreground/20"
+                  className="h-11 rounded-full px-5 border border-earth text-earth hover:bg-earth hover:text-cream"
                 />
                 <ShareButton
                   title={product.name}
                   description={product.description}
                   variant="ghost"
-                  className="h-10 w-10 rounded-full bg-foreground/10 text-foreground md:hover:bg-foreground/20"
+                  className="h-11 w-11 rounded-full border border-earth text-earth hover:bg-earth hover:text-cream"
                   productImage={primaryImage}
                   productName={product.name}
                 />
               </div>
 
               {/* Details */}
-              <div className="space-y-2 sm:space-y-3 mb-6 sm:mb-8">
+              <div className="space-y-4 mb-8">
                 {product.type && (
                   <div className="flex items-center gap-2 sm:gap-3">
-                    <Tag className="w-4 h-4 sm:w-5 sm:h-5 text-muted-foreground flex-shrink-0" />
-                    <span className="text-xs sm:text-sm text-muted-foreground">
+                    <Tag className="w-4 h-4 sm:w-5 sm:h-5 text-warm-gray flex-shrink-0" />
+                    <span className="text-xs sm:text-sm text-warm-gray uppercase tracking-[0.2em]">
                       {t('products.category')}:
                     </span>
-                    <span className="text-sm sm:text-base font-medium capitalize">
+                    <span className="text-sm sm:text-base font-medium capitalize text-earth">
                       {getCategoryTranslation(product.type)}
                     </span>
                   </div>
                 )}
                 {product.color && (
                   <div className="flex items-center gap-2 sm:gap-3">
-                    <Package className="w-4 h-4 sm:w-5 sm:h-5 text-muted-foreground flex-shrink-0" />
-                    <span className="text-xs sm:text-sm text-muted-foreground">
+                    <Package className="w-4 h-4 sm:w-5 sm:h-5 text-warm-gray flex-shrink-0" />
+                    <span className="text-xs sm:text-sm text-warm-gray uppercase tracking-[0.2em]">
                       {t('products.color')}:
                     </span>
-                    <span className="text-sm sm:text-base font-medium capitalize">
+                    <span className="text-sm sm:text-base font-medium capitalize text-earth">
                       {getColorTranslation(product.color)}
                     </span>
                   </div>
                 )}
                 {product.gender && (
                   <div className="flex items-center gap-2 sm:gap-3">
-                    <Package className="w-4 h-4 sm:w-5 sm:h-5 text-muted-foreground flex-shrink-0" />
-                    <span className="text-xs sm:text-sm text-muted-foreground">
+                    <Package className="w-4 h-4 sm:w-5 sm:h-5 text-warm-gray flex-shrink-0" />
+                    <span className="text-xs sm:text-sm text-warm-gray uppercase tracking-[0.2em]">
                       {t('products.gender')}:
                     </span>
-                    <span className="text-sm sm:text-base font-medium capitalize">
+                    <span className="text-sm sm:text-base font-medium capitalize text-earth">
                       {translateGender(product.gender)}
                     </span>
                   </div>
                 )}
                 {materialLabels.length > 0 && (
                   <div className="flex items-start gap-2 sm:gap-3">
-                    <Tag className="w-4 h-4 sm:w-5 sm:h-5 text-muted-foreground flex-shrink-0" />
-                    <span className="text-xs sm:text-sm text-muted-foreground">
+                    <Tag className="w-4 h-4 sm:w-5 sm:h-5 text-warm-gray flex-shrink-0" />
+                    <span className="text-xs sm:text-sm text-warm-gray uppercase tracking-[0.2em]">
                       {t('products.materials', 'Materials')}:
                     </span>
                     <div className="flex flex-wrap gap-2">
                       {materialLabels.map(label => (
                         <span
                           key={`material-${label}`}
-                          className="text-xs sm:text-sm px-2 py-1 rounded-full bg-foreground/5"
+                          className="text-xs sm:text-sm px-2.5 py-1 rounded-full border border-border text-earth"
                         >
                           {label}
                         </span>
@@ -778,15 +782,15 @@ const ProductDetail = () => {
                 )}
                 {technologyLabels.length > 0 && (
                   <div className="flex items-start gap-2 sm:gap-3">
-                    <Tag className="w-4 h-4 sm:w-5 sm:h-5 text-muted-foreground flex-shrink-0" />
-                    <span className="text-xs sm:text-sm text-muted-foreground">
+                    <Tag className="w-4 h-4 sm:w-5 sm:h-5 text-warm-gray flex-shrink-0" />
+                    <span className="text-xs sm:text-sm text-warm-gray uppercase tracking-[0.2em]">
                       {t('products.technologies', 'Technologies')}:
                     </span>
                     <div className="flex flex-wrap gap-2">
                       {technologyLabels.map(label => (
                         <span
                           key={`technology-${label}`}
-                          className="text-xs sm:text-sm px-2 py-1 rounded-full bg-foreground/5"
+                          className="text-xs sm:text-sm px-2.5 py-1 rounded-full border border-border text-earth"
                         >
                           {label}
                         </span>
@@ -796,15 +800,15 @@ const ProductDetail = () => {
                 )}
                 {sizeLabels.length > 0 && (
                   <div className="flex items-start gap-2 sm:gap-3">
-                    <Tag className="w-4 h-4 sm:w-5 sm:h-5 text-muted-foreground flex-shrink-0" />
-                    <span className="text-xs sm:text-sm text-muted-foreground">
+                    <Tag className="w-4 h-4 sm:w-5 sm:h-5 text-warm-gray flex-shrink-0" />
+                    <span className="text-xs sm:text-sm text-warm-gray uppercase tracking-[0.2em]">
                       {t('products.sizes', 'Sizes')}:
                     </span>
                     <div className="flex flex-wrap gap-2">
                       {sizeLabels.map(label => (
                         <span
                           key={`size-${label}`}
-                          className="text-xs sm:text-sm px-2 py-1 rounded-full bg-foreground/5"
+                          className="text-xs sm:text-sm px-2.5 py-1 rounded-full border border-border text-earth"
                         >
                           {label}
                         </span>
@@ -816,9 +820,9 @@ const ProductDetail = () => {
 
               {/* Description */}
               {descriptionText && (
-                <div className="mb-8 p-6 rounded-xl border border-border/50 bg-card/40 backdrop-blur-sm">
-                  <h3 className="font-semibold mb-2">{t('productDetail.description')}</h3>
-                  <p className="text-muted-foreground leading-relaxed">{descriptionText}</p>
+                <div className="mb-10 p-6 rounded-2xl border border-border bg-muted/30">
+                  <h3 className="font-serif text-xl mb-3">{t('productDetail.description')}</h3>
+                  <p className="text-warm-gray leading-relaxed">{descriptionText}</p>
                 </div>
               )}
             </div>

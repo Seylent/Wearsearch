@@ -13,6 +13,7 @@ interface CurrencySwitchProps {
   showExchangeRate?: boolean;
   containerClassName?: string;
   layout?: 'column' | 'row';
+  display?: 'full' | 'emoji';
 }
 
 export const CurrencySwitch: React.FC<CurrencySwitchProps> = ({
@@ -22,6 +23,7 @@ export const CurrencySwitch: React.FC<CurrencySwitchProps> = ({
   showExchangeRate = false,
   containerClassName = '',
   layout = 'column',
+  display = 'full',
 }) => {
   const { currency, setCurrency, exchangeRate, loading } = useCurrency();
   const { t } = useTranslation();
@@ -49,10 +51,18 @@ export const CurrencySwitch: React.FC<CurrencySwitchProps> = ({
         onClick={toggleCurrency}
         className={`flex items-center gap-2 ${className}`}
         disabled={loading}
+        aria-label={display === 'emoji' ? currentName : undefined}
       >
-        <span className="font-medium">
-          {currentSymbol} {currentName}
-        </span>
+        {display === 'emoji' ? (
+          <>
+            <span aria-hidden="true">{currentSymbol}</span>
+            <span className="sr-only">{currentName}</span>
+          </>
+        ) : (
+          <span className="font-medium">
+            {currentSymbol} {currentName}
+          </span>
+        )}
       </Button>
 
       {showExchangeRate && currency === 'USD' && exchangeRate && (

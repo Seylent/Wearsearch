@@ -4,6 +4,7 @@
  */
 
 import React from 'react';
+import { motion, useReducedMotion } from 'framer-motion';
 import { useTranslation } from 'react-i18next';
 import type { SearchResult } from '../hooks/useProductSearch';
 import type { SearchHistoryItem } from '@/hooks/useSearchHistory';
@@ -61,48 +62,66 @@ export const SearchDropdownView: React.FC<Readonly<SearchDropdownViewProps>> = R
     onClearHistory,
   }) => {
     const { t } = useTranslation();
+    const reduceMotion = useReducedMotion();
+
+    const overlayTransition = reduceMotion ? { duration: 0 } : { duration: 0.4 };
+    const panelTransition = reduceMotion
+      ? { duration: 0 }
+      : { duration: 0.6, ease: [0.22, 1, 0.36, 1] };
 
     return (
-      <div
+      <motion.div
         role="dialog"
         aria-modal="true"
-        className="fixed inset-0 z-[100] bg-black/60 backdrop-blur-sm flex items-start justify-center pt-2 sm:pt-4 p-4"
+        className="fixed inset-0 z-[100] bg-white/80 backdrop-blur-sm flex items-start justify-center pt-4 sm:pt-8 px-4 pb-6"
         aria-label={t('aria.searchResults')}
+        initial={reduceMotion ? { opacity: 1 } : { opacity: 0 }}
+        animate={{ opacity: 1 }}
+        exit={reduceMotion ? { opacity: 1 } : { opacity: 0 }}
+        transition={overlayTransition}
       >
-        <div
+        <motion.div
           ref={dropdownRef}
-          className="w-full max-w-2xl bg-black/95 border border-white/20 backdrop-blur-xl rounded-2xl shadow-[0_0_50px_rgba(255,255,255,0.2)] overflow-hidden"
+          className="w-full max-w-6xl bg-white border border-border shadow-[0_30px_90px_rgba(0,0,0,0.12)] rounded-3xl overflow-hidden"
           role="search"
+          initial={reduceMotion ? { opacity: 1, y: 0 } : { opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          exit={reduceMotion ? { opacity: 1, y: 0 } : { opacity: 0, y: -10 }}
+          transition={panelTransition}
         >
           <SearchInput
             value={query}
             onChange={onQueryChange}
             onClose={onClose}
             onSubmit={onViewAll}
+            onClear={() => onQueryChange('')}
             inputRef={inputRef}
           />
 
-          <div className="max-h-[60vh] overflow-y-auto">
-            <SearchResults
-              query={query}
-              results={results}
-              isLoading={isLoading}
-              showNoResults={showNoResults}
-              onResultClick={onResultClick}
-              onViewAll={onViewAll}
-            />
-
-            <SearchHistory
-              query={query}
-              searchHistory={searchHistory}
-              popularQueries={popularQueries}
-              onHistoryClick={onHistoryClick}
-              onRemoveHistory={onRemoveHistory}
-              onClearHistory={onClearHistory}
-            />
+          <div className="grid grid-cols-1 lg:grid-cols-[1.1fr_2fr] gap-6 px-6 pb-6 pt-4 max-h-[70vh] overflow-y-auto">
+            <div className="order-2 lg:order-1">
+              <SearchHistory
+                query={query}
+                searchHistory={searchHistory}
+                popularQueries={popularQueries}
+                onHistoryClick={onHistoryClick}
+                onRemoveHistory={onRemoveHistory}
+                onClearHistory={onClearHistory}
+              />
+            </div>
+            <div className="order-1 lg:order-2">
+              <SearchResults
+                query={query}
+                results={results}
+                isLoading={isLoading}
+                showNoResults={showNoResults}
+                onResultClick={onResultClick}
+                onViewAll={onViewAll}
+              />
+            </div>
           </div>
-        </div>
-      </div>
+        </motion.div>
+      </motion.div>
     );
   }
 );

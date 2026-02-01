@@ -112,7 +112,7 @@ const RecentlyViewedCard: React.FC<RecentlyViewedCardProps> = ({ item, onRemove 
           e.stopPropagation();
           onRemove();
         }}
-        className="absolute top-2 right-2 w-6 h-6 rounded-full bg-foreground/40 backdrop-blur-sm flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-200 hover:bg-foreground/60 text-foreground dark:bg-black/60 dark:hover:bg-black/80 dark:text-white"
+        className="absolute top-2 right-2 w-6 h-6 rounded-full bg-white border border-border flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-200 hover:bg-muted text-foreground"
         aria-label={t('recentlyViewed.remove', 'Remove from recently viewed')}
       >
         <X className="w-3 h-3" />

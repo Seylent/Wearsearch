@@ -34,7 +34,7 @@ export function HomeContent({ products, seoData, isLoading }: Readonly<HomeConte
             <NeonAbstractions />
           </div>
 
-          <div className="container mx-auto px-4 sm:px-6 relative z-10">
+          <div className="max-w-[1800px] mx-auto px-6 md:px-12 lg:px-16 relative z-10">
             <div className="max-w-4xl mx-auto text-center mt-4 sm:mt-16 md:mt-20">
               {/* Main headline - LCP element, render immediately */}
               <h1 className="font-display text-4xl sm:text-5xl md:text-6xl lg:text-7xl xl:text-8xl font-bold mb-4 sm:mb-6 tracking-tight">
@@ -56,7 +56,7 @@ export function HomeContent({ products, seoData, isLoading }: Readonly<HomeConte
               </h1>
 
               {/* Subheadline */}
-              <p className="text-base sm:text-lg md:text-xl text-white/80 max-w-2xl mx-auto mb-6 sm:mb-10 leading-relaxed backdrop-blur-sm px-4">
+              <p className="text-base sm:text-lg md:text-xl text-white/80 max-w-2xl mx-auto mb-6 sm:mb-10 leading-relaxed backdrop-blur-sm px-4 font-serif">
                 {seoData?.content_text || t('home.heroSubtitle')}
               </p>
 
@@ -89,7 +89,7 @@ export function HomeContent({ products, seoData, isLoading }: Readonly<HomeConte
 
         {/* New Arrivals Section */}
         <section id="products-section" className="py-12 sm:py-16 md:py-20 bg-black">
-          <div className="container mx-auto px-4 sm:px-6">
+          <div className="max-w-[1800px] mx-auto px-6 md:px-12 lg:px-16">
             {/* Section Header */}
             <header className="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-4 sm:gap-6 mb-6 sm:mb-10">
               <div>
@@ -102,7 +102,7 @@ export function HomeContent({ products, seoData, isLoading }: Readonly<HomeConte
                 <h2 className="font-display text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-bold text-white">
                   {t('home.newArrivals')}
                 </h2>
-                <p className="text-sm sm:text-base text-white/70 mt-1 sm:mt-2">
+                <p className="text-sm sm:text-base text-white/70 mt-1 sm:mt-2 font-serif">
                   {t('home.freshPieces')}
                 </p>
               </div>
@@ -147,7 +147,7 @@ export function HomeContent({ products, seoData, isLoading }: Readonly<HomeConte
 
         {/* Recently Viewed Section */}
         <section className="py-8 sm:py-12 bg-black border-t border-white/5">
-          <div className="container mx-auto px-4 sm:px-6">
+          <div className="max-w-[1800px] mx-auto px-6 md:px-12 lg:px-16">
             <RecentlyViewedProducts maxItems={8} showClearButton={true} />
           </div>
         </section>

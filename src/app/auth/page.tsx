@@ -7,7 +7,6 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { ArrowLeft, Lock, Mail, User, Loader2 } from 'lucide-react';
-import { NeonAbstractions } from '@/components/NeonAbstractions';
 import { useToast } from '@/hooks/use-toast';
 import { api } from '@/services/api';
 
@@ -135,28 +134,15 @@ export default function AuthPage() {
   };
 
   return (
-    <div className="min-h-screen bg-background text-foreground">
-      {/* Auth Section */}
-      <section className="relative flex items-center justify-center min-h-screen overflow-hidden px-4 py-20">
-        {/* NeonAbstractions background - stars and round objects ONLY */}
-        <div className="absolute inset-0 z-0">
-          <NeonAbstractions />
-        </div>
-
-        {/* Background Effects */}
-        <div className="absolute inset-0 opacity-30 z-[1]">
-          <div className="absolute top-1/4 left-1/4 w-96 h-96 bg-white/5 rounded-full blur-3xl" />
-          <div className="absolute bottom-1/4 right-1/4 w-80 h-80 bg-white/3 rounded-full blur-3xl" />
-        </div>
-
+    <div className="min-h-screen bg-white text-black">
+      <section className="relative flex items-center justify-center min-h-screen px-4 py-20">
         <div className="w-full max-w-md relative z-10">
-          {/* Auth Card */}
-          <div className="backdrop-blur-xl bg-card/40 border border-border/50 rounded-2xl p-8 shadow-2xl">
+          <div className="bg-white border border-border rounded-none p-8 shadow-[0_20px_60px_rgba(0,0,0,0.08)]">
             {/* Back button */}
             <Button
               variant="ghost"
               onClick={() => router.push('/')}
-              className="mb-6 -ml-2 text-muted-foreground hover:text-foreground"
+              className="mb-6 -ml-2 text-muted-foreground hover:text-foreground text-xs uppercase tracking-[0.2em]"
             >
               <ArrowLeft className="w-4 h-4 mr-2" />
               {t('common.back', 'Назад')}
@@ -164,10 +150,10 @@ export default function AuthPage() {
 
             {/* Header */}
             <div className="text-center mb-8">
-              <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-white/5 border border-white/10 mb-4">
+              <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-muted border border-border mb-4">
                 <Lock className="w-8 h-8" />
               </div>
-              <h1 className="text-3xl font-bold mb-2">
+              <h1 className="text-3xl font-serif mb-2">
                 {isLogin ? t('auth.login', 'Вхід') : t('auth.signup', 'Реєстрація')}
               </h1>
               <p className="text-muted-foreground">
@@ -192,7 +178,7 @@ export default function AuthPage() {
                       value={formData.display_name}
                       onChange={handleInputChange}
                       placeholder={t('auth.displayNamePlaceholder', "Ваше ім'я")}
-                      className="pl-10 bg-white/5 border-white/10 focus:border-white/20 h-12"
+                      className="pl-10 bg-transparent border-b border-border rounded-none focus:border-foreground h-12"
                       maxLength={50}
                     />
                   </div>
@@ -213,7 +199,7 @@ export default function AuthPage() {
                       value={formData.username}
                       onChange={handleInputChange}
                       placeholder={t('auth.usernamePlaceholder', 'Ваш нікнейм')}
-                      className="pl-10 bg-white/5 border-white/10 focus:border-white/20 h-12"
+                      className="pl-10 bg-transparent border-b border-border rounded-none focus:border-foreground h-12"
                       pattern="[a-zA-Z0-9_]{3,30}"
                       title="3-30 символів, лише літери, цифри та _"
                     />
@@ -239,7 +225,7 @@ export default function AuthPage() {
                         ? t('auth.emailOrUsernamePlaceholder', 'your@email.com або username')
                         : 'your@email.com'
                     }
-                    className="pl-10 bg-white/5 border-white/10 focus:border-white/20 h-12"
+                    className="pl-10 bg-transparent border-b border-border rounded-none focus:border-foreground h-12"
                     required
                   />
                 </div>
@@ -257,7 +243,7 @@ export default function AuthPage() {
                     value={formData.password}
                     onChange={handleInputChange}
                     placeholder="••••••••"
-                    className="pl-10 bg-white/5 border-white/10 focus:border-white/20 h-12"
+                    className="pl-10 bg-transparent border-b border-border rounded-none focus:border-foreground h-12"
                     minLength={6}
                     required
                   />
@@ -282,7 +268,7 @@ export default function AuthPage() {
                       value={formData.confirmPassword}
                       onChange={handleInputChange}
                       placeholder="••••••••"
-                      className="pl-10 bg-white/5 border-white/10 focus:border-white/20 h-12"
+                      className="pl-10 bg-transparent border-b border-border rounded-none focus:border-foreground h-12"
                       required={!isLogin}
                     />
                   </div>
@@ -303,7 +289,7 @@ export default function AuthPage() {
               <Button
                 type="submit"
                 disabled={isLoading}
-                className="w-full h-12 text-base font-medium bg-white text-black hover:bg-white/90 disabled:opacity-50"
+                className="w-full h-12 text-base font-medium bg-black text-white hover:bg-black/90 disabled:opacity-50 rounded-none"
               >
                 {(() => {
                   if (isLoading) {

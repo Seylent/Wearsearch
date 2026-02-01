@@ -70,7 +70,7 @@ export default function PublicWishlistContent({ shareId, className }: PublicWish
 
   return (
     <div className={cn('min-h-screen bg-background text-foreground', className)}>
-      <main className="container mx-auto px-4 sm:px-6 pt-24 sm:pt-28 pb-16">
+      <main className="max-w-[1800px] mx-auto px-6 md:px-12 lg:px-16 pt-24 sm:pt-28 pb-16">
         <div className="mb-10">
           <div className="inline-flex items-center gap-2 mb-3 select-none">
             <span className="text-xs text-muted-foreground uppercase tracking-wider">

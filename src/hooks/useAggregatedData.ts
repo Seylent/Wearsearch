@@ -97,7 +97,7 @@ export const useHomepageData = (currency: string = 'UAH', options?: QueryOptions
 
         try {
           const [productsRes, statsRes] = await Promise.all([
-            api.get('/products/popular-saved', { params: { limit: 12, currency } }),
+            api.get('/items', { params: { limit: 12, sort: 'newest', currency } }),
             api
               .get('/statistics')
               .catch(() => ({ data: { total_products: 0, total_stores: 0, total_brands: 0 } })),
