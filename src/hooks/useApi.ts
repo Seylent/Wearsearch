@@ -11,7 +11,6 @@ import {
   keepPreviousData,
 } from '@tanstack/react-query';
 import { api, apiLegacy } from '@/services/api';
-import { getAuth } from '@/utils/authStorage';
 import { useIsAuthenticated } from '@/hooks/useIsAuthenticated';
 import type { Product, Brand, FavoritesResponse } from '@/types';
 
@@ -394,11 +393,6 @@ export const useFavorites = () => {
     queryFn: async () => {
       try {
         // Double check auth before making request
-        const token = getAuth();
-        if (!token) {
-          return { favorites: [], total: 0 };
-        }
-
         const response = await api.get('/users/me/favorites', { params: { page: 1, limit: 100 } });
         const body: unknown = response.data;
         const payload =
@@ -437,7 +431,7 @@ export const useFavorites = () => {
     refetchOnReconnect: false, // Don't refetch on reconnect to avoid bursts
     refetchInterval: false, // Disable automatic refetching
     // Only fetch if user is authenticated - check token exists and not expired
-    enabled: isLoggedIn && !!getAuth(),
+    enabled: isLoggedIn,
   });
 };
 
@@ -478,7 +472,7 @@ export const useFavoritesPage = (
     staleTime: 30 * 1000,
     gcTime: 5 * 60 * 1000,
     refetchOnWindowFocus: false,
-    enabled: isLoggedIn && !!getAuth(),
+    enabled: isLoggedIn,
     ...options,
   });
 };
@@ -629,7 +623,7 @@ export const useCheckFavorite = (productId: string, enabled = true) => {
         return { is_favorited: false };
       }
     },
-    enabled: enabled && !!productId && !!getAuth(),
+    enabled: enabled && !!productId,
     staleTime: 1 * 60 * 1000, // 1 minute
   });
 };

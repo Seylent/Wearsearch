@@ -13,7 +13,10 @@ import { FavoriteButton } from '@/components/FavoriteButton';
 import dynamic from 'next/dynamic';
 import ShareButton from '@/components/ShareButton';
 import AddToWishlistButton from '@/components/AddToWishlistButton';
-import { ProductImageGallery } from '@/components/ProductImageGallery';
+const ProductImageGallery = dynamic(
+  () => import('@/components/ProductImageGallery').then(mod => mod.ProductImageGallery),
+  { ssr: false, loading: () => null }
+);
 const ProductStoresPanel = dynamic(() => import('@/components/ProductStoresPanel'), {
   ssr: false,
   loading: () => null,

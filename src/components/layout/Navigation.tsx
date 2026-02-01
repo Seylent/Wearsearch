@@ -22,6 +22,7 @@ import { AnimatePresence, motion, useReducedMotion } from 'framer-motion';
 import { ThemeToggle } from '@/components/common/ThemeToggle';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { categoryService, type Category } from '@/services/categoryService';
+import { useIsTouchDevice } from '@/hooks/use-touch-device';
 
 const isRecord = (value: unknown): value is Record<string, unknown> =>
   typeof value === 'object' && value !== null;
@@ -38,6 +39,8 @@ const Navigation: React.FC = () => {
   const [categoryTree, setCategoryTree] = useState<Category[]>([]);
   const [flatCategories, setFlatCategories] = useState<Category[]>([]);
   const reduceMotion = useReducedMotion();
+  const isTouchDevice = useIsTouchDevice();
+  const shouldAnimate = !reduceMotion && !isTouchDevice;
   const closeMegaTimeoutRef = useRef<number | null>(null);
 
   useEffect(() => {
@@ -373,181 +376,333 @@ const Navigation: React.FC = () => {
         </div>
       </nav>
 
-      <AnimatePresence>
-        {activeMegaMenu && (
-          <motion.div
-            className="hidden md:block absolute top-full left-0 right-0 bg-white border-t border-border overflow-hidden"
-            variants={megaVariants}
-            initial="hidden"
-            animate="show"
-            exit="exit"
-            onMouseEnter={cancelMegaClose}
-            onMouseLeave={scheduleMegaClose}
-          >
-            <motion.div className="max-w-[1800px] mx-auto px-6 md:px-12 lg:px-16 py-10">
-              <motion.div
-                className="grid grid-cols-[1.4fr_1.4fr_1.4fr_1.4fr_1fr] gap-10"
-                variants={megaContentVariants}
-              >
-                {activeMegaMenu.columns.map(column => (
-                  <motion.div key={column.title} variants={megaItemVariants}>
-                    <div className="text-xs uppercase tracking-[0.2em] text-warm-gray mb-4">
-                      {column.title}
-                    </div>
-                    <ul className="space-y-2">
-                      {column.links.map(link => (
-                        <li key={link.label}>
-                          <Link
-                            href={link.href}
-                            onClick={() => setActiveMega(null)}
-                            className="text-sm text-earth hover:text-warm-gray transition-colors"
-                          >
-                            {link.label}
-                          </Link>
-                        </li>
-                      ))}
-                    </ul>
-                  </motion.div>
-                ))}
+      {shouldAnimate ? (
+        <AnimatePresence>
+          {activeMegaMenu && (
+            <motion.div
+              className="hidden md:block absolute top-full left-0 right-0 bg-white border-t border-border overflow-hidden"
+              variants={megaVariants}
+              initial="hidden"
+              animate="show"
+              exit="exit"
+              onMouseEnter={cancelMegaClose}
+              onMouseLeave={scheduleMegaClose}
+            >
+              <motion.div className="max-w-[1800px] mx-auto px-6 md:px-12 lg:px-16 py-10">
                 <motion.div
-                  variants={megaItemVariants}
-                  initial={reduceMotion ? { opacity: 1, scale: 1 } : { opacity: 0, scale: 1.05 }}
-                  animate={{ opacity: 1, scale: 1 }}
-                  className="relative rounded-3xl bg-muted overflow-hidden flex flex-col justify-end p-6"
+                  className="grid grid-cols-[1.4fr_1.4fr_1.4fr_1.4fr_1fr] gap-10"
+                  variants={megaContentVariants}
                 >
-                  <div className="absolute inset-0 bg-gradient-to-br from-white via-muted to-border opacity-90" />
-                  <div className="relative z-10">
-                    <div className="text-xs uppercase tracking-[0.2em] text-warm-gray mb-2">
-                      {activeMegaMenu.imageTitle}
+                  {activeMegaMenu.columns.map(column => (
+                    <motion.div key={column.title} variants={megaItemVariants}>
+                      <div className="text-xs uppercase tracking-[0.2em] text-warm-gray mb-4">
+                        {column.title}
+                      </div>
+                      <ul className="space-y-2">
+                        {column.links.map(link => (
+                          <li key={link.label}>
+                            <Link
+                              href={link.href}
+                              onClick={() => setActiveMega(null)}
+                              className="text-sm text-earth hover:text-warm-gray transition-colors"
+                            >
+                              {link.label}
+                            </Link>
+                          </li>
+                        ))}
+                      </ul>
+                    </motion.div>
+                  ))}
+                  <motion.div
+                    variants={megaItemVariants}
+                    initial={reduceMotion ? { opacity: 1, scale: 1 } : { opacity: 0, scale: 1.05 }}
+                    animate={{ opacity: 1, scale: 1 }}
+                    className="relative rounded-3xl bg-muted overflow-hidden flex flex-col justify-end p-6"
+                  >
+                    <div className="absolute inset-0 bg-gradient-to-br from-white via-muted to-border opacity-90" />
+                    <div className="relative z-10">
+                      <div className="text-xs uppercase tracking-[0.2em] text-warm-gray mb-2">
+                        {activeMegaMenu.imageTitle}
+                      </div>
+                      <div className="text-lg font-serif text-earth mb-2">
+                        {t('mega.featureSubtitle', 'Editorial Selection')}
+                      </div>
+                      <p className="text-sm text-warm-gray">{activeMegaMenu.imageCopy}</p>
                     </div>
-                    <div className="text-lg font-serif text-earth mb-2">
-                      {t('mega.featureSubtitle', 'Editorial Selection')}
-                    </div>
-                    <p className="text-sm text-warm-gray">{activeMegaMenu.imageCopy}</p>
-                  </div>
+                  </motion.div>
                 </motion.div>
               </motion.div>
             </motion.div>
-          </motion.div>
-        )}
-      </AnimatePresence>
-
-      <AnimatePresence>
-        {nav.mobileMenuOpen && (
-          <>
-            <motion.div
-              className="md:hidden fixed inset-0 bg-black/20 z-40"
-              onClick={nav.closeMobileMenu}
-              aria-hidden="true"
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-              transition={reduceMotion ? { duration: 0 } : { duration: 0.3 }}
-            />
-            <motion.div
-              className="md:hidden fixed bottom-0 left-0 right-0 top-[420px] bg-sand/95 text-earth rounded-t-3xl border border-earth/10 shadow-[0_-18px_40px_rgba(0,0,0,0.16)] backdrop-blur-xl overflow-hidden z-50"
-              role="menu"
-              aria-label={t('aria.mainNavigation')}
-              initial={reduceMotion ? { opacity: 1, y: 0 } : { opacity: 0, y: 40 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={reduceMotion ? { opacity: 1, y: 0 } : { opacity: 0, y: 20 }}
-              transition={
-                reduceMotion ? { duration: 0 } : { duration: 0.4, ease: [0.22, 1, 0.36, 1] }
-              }
-            >
-              <div className="flex justify-center pt-3 pb-2">
-                <div className="w-12 h-1.5 bg-earth/15 rounded-full" />
+          )}
+        </AnimatePresence>
+      ) : activeMegaMenu ? (
+        <div
+          className="hidden md:block absolute top-full left-0 right-0 bg-white border-t border-border overflow-hidden"
+          onMouseEnter={cancelMegaClose}
+          onMouseLeave={scheduleMegaClose}
+        >
+          <div className="max-w-[1800px] mx-auto px-6 md:px-12 lg:px-16 py-10">
+            <div className="grid grid-cols-[1.4fr_1.4fr_1.4fr_1.4fr_1fr] gap-10">
+              {activeMegaMenu.columns.map(column => (
+                <div key={column.title}>
+                  <div className="text-xs uppercase tracking-[0.2em] text-warm-gray mb-4">
+                    {column.title}
+                  </div>
+                  <ul className="space-y-2">
+                    {column.links.map(link => (
+                      <li key={link.label}>
+                        <Link
+                          href={link.href}
+                          onClick={() => setActiveMega(null)}
+                          className="text-sm text-earth hover:text-warm-gray transition-colors"
+                        >
+                          {link.label}
+                        </Link>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              ))}
+              <div className="relative rounded-3xl bg-muted overflow-hidden flex flex-col justify-end p-6">
+                <div className="absolute inset-0 bg-gradient-to-br from-white via-muted to-border opacity-90" />
+                <div className="relative z-10">
+                  <div className="text-xs uppercase tracking-[0.2em] text-warm-gray mb-2">
+                    {activeMegaMenu.imageTitle}
+                  </div>
+                  <div className="text-lg font-serif text-earth mb-2">
+                    {t('mega.featureSubtitle', 'Editorial Selection')}
+                  </div>
+                  <p className="text-sm text-warm-gray">{activeMegaMenu.imageCopy}</p>
+                </div>
               </div>
-              {isMounted && user && (
-                <div className="px-6 py-4 border-b border-border">
-                  <div className="flex items-center gap-3">
-                    <div className="w-10 h-10 rounded-full bg-muted flex items-center justify-center">
-                      <UserIcon className="w-5 h-5 text-earth" />
-                    </div>
-                    <div className="flex flex-col">
-                      <span className="font-medium text-sm text-earth">{user.email || 'User'}</span>
-                      <span className="text-xs text-warm-gray">{userRole || 'Buyer'}</span>
+            </div>
+          </div>
+        </div>
+      ) : null}
+
+      {shouldAnimate ? (
+        <AnimatePresence>
+          {nav.mobileMenuOpen && (
+            <>
+              <motion.div
+                className="md:hidden fixed inset-0 bg-black/20 z-40"
+                onClick={nav.closeMobileMenu}
+                aria-hidden="true"
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+                transition={reduceMotion ? { duration: 0 } : { duration: 0.3 }}
+              />
+              <motion.div
+                className="md:hidden fixed bottom-0 left-0 right-0 top-[420px] bg-sand/95 text-earth rounded-t-3xl border border-earth/10 shadow-[0_-18px_40px_rgba(0,0,0,0.16)] backdrop-blur-xl overflow-hidden z-50"
+                role="menu"
+                aria-label={t('aria.mainNavigation')}
+                initial={reduceMotion ? { opacity: 1, y: 0 } : { opacity: 0, y: 40 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={reduceMotion ? { opacity: 1, y: 0 } : { opacity: 0, y: 20 }}
+                transition={
+                  reduceMotion ? { duration: 0 } : { duration: 0.4, ease: [0.22, 1, 0.36, 1] }
+                }
+              >
+                <div className="flex justify-center pt-3 pb-2">
+                  <div className="w-12 h-1.5 bg-earth/15 rounded-full" />
+                </div>
+                {isMounted && user && (
+                  <div className="px-6 py-4 border-b border-border">
+                    <div className="flex items-center gap-3">
+                      <div className="w-10 h-10 rounded-full bg-muted flex items-center justify-center">
+                        <UserIcon className="w-5 h-5 text-earth" />
+                      </div>
+                      <div className="flex flex-col">
+                        <span className="font-medium text-sm text-earth">
+                          {user.email || 'User'}
+                        </span>
+                        <span className="text-xs text-warm-gray">{userRole || 'Buyer'}</span>
+                      </div>
                     </div>
                   </div>
-                </div>
-              )}
-
-              <div className="flex flex-col max-h-[70vh] overflow-y-auto px-4 pb-5">
-                {navLinks.map(link => (
-                  <Link
-                    key={link.name}
-                    href={link.href}
-                    onClick={nav.closeMobileMenu}
-                    className={`px-5 py-3.5 min-h-[52px] text-sm uppercase tracking-[0.2em] transition-all duration-150 touch-manipulation active:scale-[0.98] flex items-center gap-3 rounded-full border ${
-                      pathname === link.href
-                        ? 'text-earth border-earth/40 bg-white'
-                        : 'text-warm-gray border-earth/10 bg-white/70 active:text-earth active:border-earth/30'
-                    }`}
-                  >
-                    {link.name}
-                  </Link>
-                ))}
-
-                <button
-                  className="mt-3 px-5 py-3.5 min-h-[52px] text-sm uppercase tracking-[0.2em] transition-all duration-150 text-warm-gray active:text-earth text-left rounded-full border border-earth/10 bg-white/70 flex items-center gap-3"
-                  onClick={() => {
-                    nav.closeMobileMenu();
-                    document
-                      .querySelector('[data-contacts-trigger]')
-                      ?.dispatchEvent(new MouseEvent('click', { bubbles: true }));
-                  }}
-                >
-                  {t('nav.contacts')}
-                </button>
-
-                {isMounted && canAccessStoreMenu && (
-                  <Link
-                    href="/store-menu"
-                    onClick={nav.closeMobileMenu}
-                    className={`mt-3 px-5 py-3.5 min-h-[52px] text-sm uppercase tracking-[0.2em] transition-all duration-150 flex items-center gap-3 rounded-full border ${
-                      pathname === '/store-menu' || pathname.startsWith('/store-menu/')
-                        ? 'text-earth border-earth/40 bg-white'
-                        : 'text-warm-gray border-earth/10 bg-white/70 active:text-earth active:border-earth/30'
-                    }`}
-                  >
-                    {t('nav.storeMenu', 'Мій магазин')}
-                  </Link>
                 )}
 
-                {isMounted && canAccessAdminPanel && (
-                  <Link
-                    href="/admin"
-                    onClick={nav.closeMobileMenu}
-                    className={`mt-3 px-5 py-3.5 min-h-[52px] text-sm uppercase tracking-[0.2em] transition-all duration-150 flex items-center gap-3 rounded-full border ${
-                      pathname === '/admin'
-                        ? 'text-earth border-earth/40 bg-white'
-                        : 'text-warm-gray border-earth/10 bg-white/70 active:text-earth active:border-earth/30'
-                    }`}
-                  >
-                    {t('nav.admin')}
-                  </Link>
-                )}
+                <div className="flex flex-col max-h-[70vh] overflow-y-auto px-4 pb-5">
+                  {navLinks.map(link => (
+                    <Link
+                      key={link.name}
+                      href={link.href}
+                      onClick={nav.closeMobileMenu}
+                      className={`px-5 py-3.5 min-h-[52px] text-sm uppercase tracking-[0.2em] transition-all duration-150 touch-manipulation active:scale-[0.98] flex items-center gap-3 rounded-full border ${
+                        pathname === link.href
+                          ? 'text-earth border-earth/40 bg-white'
+                          : 'text-warm-gray border-earth/10 bg-white/70 active:text-earth active:border-earth/30'
+                      }`}
+                    >
+                      {link.name}
+                    </Link>
+                  ))}
 
-                {isMounted && user && (
                   <button
-                    className="mt-3 px-5 py-3.5 min-h-[52px] text-sm uppercase tracking-[0.2em] transition-all duration-150 text-destructive text-left rounded-full border border-destructive/30 bg-white/70 flex items-center gap-3"
+                    className="mt-3 px-5 py-3.5 min-h-[52px] text-sm uppercase tracking-[0.2em] transition-all duration-150 text-warm-gray active:text-earth text-left rounded-full border border-earth/10 bg-white/70 flex items-center gap-3"
                     onClick={() => {
                       nav.closeMobileMenu();
-                      router.push('/auth');
+                      document
+                        .querySelector('[data-contacts-trigger]')
+                        ?.dispatchEvent(new MouseEvent('click', { bubbles: true }));
                     }}
                   >
-                    {t('auth.signOut', 'Sign Out')}
+                    {t('nav.contacts')}
                   </button>
-                )}
-              </div>
-            </motion.div>
-          </>
-        )}
-      </AnimatePresence>
 
-      <AnimatePresence>
-        {nav.showSearch && <SearchDropdown onClose={nav.closeSearch} />}
-      </AnimatePresence>
+                  {isMounted && canAccessStoreMenu && (
+                    <Link
+                      href="/store-menu"
+                      onClick={nav.closeMobileMenu}
+                      className={`mt-3 px-5 py-3.5 min-h-[52px] text-sm uppercase tracking-[0.2em] transition-all duration-150 flex items-center gap-3 rounded-full border ${
+                        pathname === '/store-menu' || pathname.startsWith('/store-menu/')
+                          ? 'text-earth border-earth/40 bg-white'
+                          : 'text-warm-gray border-earth/10 bg-white/70 active:text-earth active:border-earth/30'
+                      }`}
+                    >
+                      {t('nav.storeMenu', 'Мій магазин')}
+                    </Link>
+                  )}
+
+                  {isMounted && canAccessAdminPanel && (
+                    <Link
+                      href="/admin"
+                      onClick={nav.closeMobileMenu}
+                      className={`mt-3 px-5 py-3.5 min-h-[52px] text-sm uppercase tracking-[0.2em] transition-all duration-150 flex items-center gap-3 rounded-full border ${
+                        pathname === '/admin'
+                          ? 'text-earth border-earth/40 bg-white'
+                          : 'text-warm-gray border-earth/10 bg-white/70 active:text-earth active:border-earth/30'
+                      }`}
+                    >
+                      {t('nav.admin')}
+                    </Link>
+                  )}
+
+                  {isMounted && user && (
+                    <button
+                      className="mt-3 px-5 py-3.5 min-h-[52px] text-sm uppercase tracking-[0.2em] transition-all duration-150 text-destructive text-left rounded-full border border-destructive/30 bg-white/70 flex items-center gap-3"
+                      onClick={() => {
+                        nav.closeMobileMenu();
+                        router.push('/auth');
+                      }}
+                    >
+                      {t('auth.signOut', 'Sign Out')}
+                    </button>
+                  )}
+                </div>
+              </motion.div>
+            </>
+          )}
+        </AnimatePresence>
+      ) : nav.mobileMenuOpen ? (
+        <>
+          <div
+            className="md:hidden fixed inset-0 bg-black/20 z-40"
+            onClick={nav.closeMobileMenu}
+            aria-hidden="true"
+          />
+          <div
+            className="md:hidden fixed bottom-0 left-0 right-0 top-[420px] bg-sand/95 text-earth rounded-t-3xl border border-earth/10 shadow-[0_-18px_40px_rgba(0,0,0,0.16)] backdrop-blur-xl overflow-hidden z-50"
+            role="menu"
+            aria-label={t('aria.mainNavigation')}
+          >
+            <div className="flex justify-center pt-3 pb-2">
+              <div className="w-12 h-1.5 bg-earth/15 rounded-full" />
+            </div>
+            {isMounted && user && (
+              <div className="px-6 py-4 border-b border-border">
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 rounded-full bg-muted flex items-center justify-center">
+                    <UserIcon className="w-5 h-5 text-earth" />
+                  </div>
+                  <div className="flex flex-col">
+                    <span className="font-medium text-sm text-earth">{user.email || 'User'}</span>
+                    <span className="text-xs text-warm-gray">{userRole || 'Buyer'}</span>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            <div className="flex flex-col max-h-[70vh] overflow-y-auto px-4 pb-5">
+              {navLinks.map(link => (
+                <Link
+                  key={link.name}
+                  href={link.href}
+                  onClick={nav.closeMobileMenu}
+                  className={`px-5 py-3.5 min-h-[52px] text-sm uppercase tracking-[0.2em] transition-all duration-150 touch-manipulation active:scale-[0.98] flex items-center gap-3 rounded-full border ${
+                    pathname === link.href
+                      ? 'text-earth border-earth/40 bg-white'
+                      : 'text-warm-gray border-earth/10 bg-white/70 active:text-earth active:border-earth/30'
+                  }`}
+                >
+                  {link.name}
+                </Link>
+              ))}
+
+              <button
+                className="mt-3 px-5 py-3.5 min-h-[52px] text-sm uppercase tracking-[0.2em] transition-all duration-150 text-warm-gray active:text-earth text-left rounded-full border border-earth/10 bg-white/70 flex items-center gap-3"
+                onClick={() => {
+                  nav.closeMobileMenu();
+                  document
+                    .querySelector('[data-contacts-trigger]')
+                    ?.dispatchEvent(new MouseEvent('click', { bubbles: true }));
+                }}
+              >
+                {t('nav.contacts')}
+              </button>
+
+              {isMounted && canAccessStoreMenu && (
+                <Link
+                  href="/store-menu"
+                  onClick={nav.closeMobileMenu}
+                  className={`mt-3 px-5 py-3.5 min-h-[52px] text-sm uppercase tracking-[0.2em] transition-all duration-150 flex items-center gap-3 rounded-full border ${
+                    pathname === '/store-menu' || pathname.startsWith('/store-menu/')
+                      ? 'text-earth border-earth/40 bg-white'
+                      : 'text-warm-gray border-earth/10 bg-white/70 active:text-earth active:border-earth/30'
+                  }`}
+                >
+                  {t('nav.storeMenu', 'Мій магазин')}
+                </Link>
+              )}
+
+              {isMounted && canAccessAdminPanel && (
+                <Link
+                  href="/admin"
+                  onClick={nav.closeMobileMenu}
+                  className={`mt-3 px-5 py-3.5 min-h-[52px] text-sm uppercase tracking-[0.2em] transition-all duration-150 flex items-center gap-3 rounded-full border ${
+                    pathname === '/admin'
+                      ? 'text-earth border-earth/40 bg-white'
+                      : 'text-warm-gray border-earth/10 bg-white/70 active:text-earth active:border-earth/30'
+                  }`}
+                >
+                  {t('nav.admin')}
+                </Link>
+              )}
+
+              {isMounted && user && (
+                <button
+                  className="mt-3 px-5 py-3.5 min-h-[52px] text-sm uppercase tracking-[0.2em] transition-all duration-150 text-destructive text-left rounded-full border border-destructive/30 bg-white/70 flex items-center gap-3"
+                  onClick={() => {
+                    nav.closeMobileMenu();
+                    router.push('/auth');
+                  }}
+                >
+                  {t('auth.signOut', 'Sign Out')}
+                </button>
+              )}
+            </div>
+          </div>
+        </>
+      ) : null}
+
+      {shouldAnimate ? (
+        <AnimatePresence>
+          {nav.showSearch && <SearchDropdown onClose={nav.closeSearch} />}
+        </AnimatePresence>
+      ) : nav.showSearch ? (
+        <SearchDropdown onClose={nav.closeSearch} />
+      ) : null}
     </header>
   );
 };

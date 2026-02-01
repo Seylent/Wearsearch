@@ -6,9 +6,10 @@
 import { useCallback, useEffect, useState } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { authService } from '@/services/authService';
-import { clearAuth, getAuth } from '@/utils/authStorage';
+import { clearAuth, getAuth, isCookieAuthMode, setCookieSessionActive } from '@/utils/authStorage';
 import { logAuthError } from '@/services/logger';
 import type { User } from '@/types';
+import { deriveAuthPermissions } from '@/features/auth/permissions';
 
 // Cache key for auth queries
 const AUTH_QUERY_KEY = ['auth', 'current-user'];
@@ -43,7 +44,7 @@ export const useAuth = () => {
   }, []);
 
   // Check if we have a token client-side
-  const hasToken = isMounted ? !!getAuth() : false;
+  const hasToken = isMounted ? (isCookieAuthMode() ? true : !!getAuth()) : false;
 
   // Use React Query for caching and preventing duplicate requests
   const { data: user, isLoading } = useQuery<User | null, unknown>({
@@ -55,7 +56,11 @@ export const useAuth = () => {
           hasToken: !!token,
           tokenPreview: token ? `${token.substring(0, 20)}...` : 'none',
         });
-        return await authService.getCurrentUser();
+        const currentUser = await authService.getCurrentUser();
+        if (isCookieAuthMode()) {
+          setCookieSessionActive(true);
+        }
+        return currentUser;
       } catch (error) {
         // If 401 or 429, return null instead of throwing
         const status = getErrorStatus(error);
@@ -95,30 +100,19 @@ export const useAuth = () => {
     retryDelay: attemptIndex => Math.min(2000 * 2 ** attemptIndex, 60000),
   });
 
-  const role = user?.role;
-  const isAdmin = role === 'admin';
-  const isStoreOwner = role === 'store_owner';
-  const isStoreManager = role === 'store_manager' || role === 'manager';
-  const isBrandOwner = role === 'brand_owner';
-  const isModerator = role === 'moderator';
-
-  // Navigation visibility based on roles
-  const canAccessStoreMenu = isStoreOwner || isStoreManager || isBrandOwner;
-  const canAccessAdminPanel = isAdmin || isModerator;
-  const canAccessAnyPanel = canAccessStoreMenu || canAccessAdminPanel;
-
-  const permissions = {
-    canManageProducts: isAdmin,
-    canManageStores: isAdmin,
-    canManageBrands: isAdmin,
-    canManageBanners: isAdmin,
-    canManageContacts: isAdmin,
-    canManageUserRoles: isAdmin,
-    canManageBrandPermissions: isAdmin || isBrandOwner,
-    canManageBrandOfficialStore: isAdmin || isBrandOwner,
-    canManageStoreManagers: isAdmin || isStoreOwner,
-    canManageStoreProducts: isAdmin || isStoreOwner || isStoreManager,
-  };
+  const derived = deriveAuthPermissions(user?.role);
+  const {
+    role,
+    isAdmin,
+    isStoreOwner,
+    isStoreManager,
+    isBrandOwner,
+    isModerator,
+    canAccessStoreMenu,
+    canAccessAdminPanel,
+    canAccessAnyPanel,
+    permissions,
+  } = derived;
 
   // Manual refresh function
   const checkAuth = useCallback(async () => {

@@ -114,9 +114,8 @@ const nextConfig = {
     ];
   },
 
-  // Temporarily skip TypeScript checking during build
   typescript: {
-    ignoreBuildErrors: true,
+    ignoreBuildErrors: false,
   },
 };
 

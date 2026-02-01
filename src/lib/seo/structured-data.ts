@@ -84,3 +84,36 @@ export const generateOrganizationStructuredData = () => ({
   logo: 'https://wearsearch.com/logo.png',
   sameAs: ['https://twitter.com/wearsearch', 'https://instagram.com/wearsearch'],
 });
+
+export const generateStoreStructuredData = (store: {
+  name: string;
+  description?: string;
+  logo_url?: string;
+  url?: string;
+  website_url?: string;
+  contact_email?: string;
+  contact_phone?: string;
+  country?: string;
+  sameAs?: string[];
+}) => {
+  const sameAs = store.sameAs?.filter(Boolean);
+  const url = store.website_url || store.url;
+
+  return {
+    '@context': 'https://schema.org',
+    '@type': 'Store',
+    name: store.name,
+    description: store.description,
+    url,
+    logo: store.logo_url,
+    sameAs: sameAs && sameAs.length > 0 ? sameAs : undefined,
+    email: store.contact_email,
+    telephone: store.contact_phone,
+    address: store.country
+      ? {
+          '@type': 'PostalAddress',
+          addressCountry: store.country,
+        }
+      : undefined,
+  };
+};

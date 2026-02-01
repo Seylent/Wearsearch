@@ -14,6 +14,7 @@ import {
   useAddExistingProduct,
   useStoreDashboard,
 } from '@/features/store-menu/hooks/useStoreMenu';
+import { useBrands } from '@/hooks/useApi';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -37,6 +38,11 @@ import {
 } from '@/components/ui/dialog';
 import { OptimizedImage } from '@/components/OptimizedImage';
 import { toast } from 'sonner';
+import {
+  getBrandAccessByName,
+  normalizeStoreMenuBrands,
+  type StoreMenuBrand,
+} from '@/features/store-menu/brandAccess';
 
 const SIZES = [
   '36',
@@ -61,6 +67,8 @@ const SIZES = [
 function AddProductDialog({
   product,
   storeId,
+  storeBrandId,
+  brands,
   isOpen,
   onClose,
 }: {
@@ -72,6 +80,8 @@ function AddProductDialog({
     base_price: number;
   } | null;
   storeId: string;
+  storeBrandId: string | null;
+  brands: StoreMenuBrand[];
   isOpen: boolean;
   onClose: () => void;
 }) {
@@ -81,7 +91,22 @@ function AddProductDialog({
 
   if (!product) return null;
 
+  const brandAccess = getBrandAccessByName({
+    brandName: product.brand,
+    brands,
+    storeBrandId,
+  });
+
   const handleAdd = async () => {
+    if (!brandAccess.isAllowed) {
+      toast.error(
+        brandAccess.brandName
+          ? `Бренд "${brandAccess.brandName}" є закритим. Додавати товари може лише офіційний магазин.`
+          : 'Обраний бренд є закритим. Додавати товари може лише офіційний магазин.'
+      );
+      return;
+    }
+
     try {
       await addMutation.mutateAsync({
         storeId,
@@ -166,7 +191,12 @@ function AddProductDialog({
           </Button>
           <Button
             onClick={handleAdd}
-            disabled={!storePrice || selectedSizes.length === 0 || addMutation.isPending}
+            disabled={
+              !storePrice ||
+              selectedSizes.length === 0 ||
+              addMutation.isPending ||
+              !brandAccess.isAllowed
+            }
           >
             {addMutation.isPending ? 'Додавання...' : 'Додати'}
           </Button>
@@ -189,12 +219,24 @@ function AllProductsContent({ storeId }: { storeId: string }) {
   } | null>(null);
 
   const { data: dashboardData } = useStoreDashboard(storeId);
+  const { data: brandsData } = useBrands();
   const { data, isLoading } = useSiteProducts(storeId, 1, search, category, brand);
   const products = data?.items || [];
 
   const isOfficialStore = !!dashboardData?.store.brand_id;
+  const storeBrandId = dashboardData?.store.brand_id ?? null;
   const brandName = dashboardData?.store.name || '';
   const hasFilters = search || category || brand;
+
+  const brands = React.useMemo<StoreMenuBrand[]>(() => {
+    const normalized = normalizeStoreMenuBrands(brandsData);
+    if (normalized.length > 0) return normalized;
+    return [
+      { id: 'nike', name: 'Nike', is_closed: false },
+      { id: 'adidas', name: 'Adidas', is_closed: false },
+      { id: 'puma', name: 'Puma', is_closed: false },
+    ];
+  }, [brandsData]);
 
   return (
     <div className="space-y-4">
@@ -258,9 +300,17 @@ function AllProductsContent({ storeId }: { storeId: string }) {
                   </SelectTrigger>
                   <SelectContent>
                     <SelectItem value="all">Всі бренди</SelectItem>
-                    <SelectItem value="nike">Nike</SelectItem>
-                    <SelectItem value="adidas">Adidas</SelectItem>
-                    <SelectItem value="puma">Puma</SelectItem>
+                    {brands.map(item => {
+                      const isRestricted =
+                        item.is_closed && (!storeBrandId || storeBrandId !== item.id);
+                      const label = isRestricted ? `${item.name} (закритий)` : item.name;
+
+                      return (
+                        <SelectItem key={item.id} value={item.id} disabled={isRestricted}>
+                          {label}
+                        </SelectItem>
+                      );
+                    })}
                   </SelectContent>
                 </Select>
               )}
@@ -341,6 +391,8 @@ function AllProductsContent({ storeId }: { storeId: string }) {
       <AddProductDialog
         product={selectedProduct}
         storeId={storeId}
+        storeBrandId={storeBrandId}
+        brands={brands}
         isOpen={!!selectedProduct}
         onClose={() => setSelectedProduct(null)}
       />

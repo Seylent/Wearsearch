@@ -5,7 +5,7 @@
 
 import axios, { AxiosInstance, AxiosError, InternalAxiosRequestConfig, AxiosResponse } from 'axios';
 import { API_CONFIG } from '@/config/api.config';
-import { clearAuth } from '@/utils/authStorage';
+import { clearAuth, isAuthenticated, isCookieAuthMode } from '@/utils/authStorage';
 import { handleApiError as createApiError, ApiError } from './api/errorHandler';
 import { retryWithBackoff } from '@/utils/retryWithBackoff';
 import type { ApiError as ApiErrorType } from '@/types';
@@ -36,7 +36,18 @@ const readAuthTokenFromStorage = (): string | null => {
 // Get token (client-side, SSR-safe)
 const getAuth = (): string | null => {
   if (typeof window === 'undefined') return null;
+  if (isCookieAuthMode()) return null;
   return readAuthTokenFromStorage();
+};
+
+const readCookie = (name: string): string | null => {
+  if (typeof document === 'undefined') return null;
+  const match = document.cookie.match(new RegExp(`(?:^|; )${name}=([^;]*)`));
+  return match ? decodeURIComponent(match[1]) : null;
+};
+
+const getCsrfToken = (): string | null => {
+  return readCookie('csrf_token');
 };
 
 /**
@@ -145,14 +156,13 @@ function handleAuthError(apiError: ApiError): void {
   const isAuthError = apiError.status === 401;
   if (!isAuthError) return;
 
-  // Check if user was previously authenticated
-  const wasAuthenticated = typeof window !== 'undefined' && localStorage.getItem(AUTH_TOKEN_KEY);
+  const wasAuthenticated = isAuthenticated();
 
   if (wasAuthenticated && process.env.NODE_ENV !== 'production') {
     console.warn('🔒 Authentication error - token may be expired');
   }
 
-  if (wasAuthenticated) {
+  if (isCookieAuthMode() || wasAuthenticated) {
     clearAuth();
   }
 }
@@ -277,6 +287,19 @@ const attachInterceptors = (client: AxiosInstance, fallback?: FallbackConfig) =>
    */
   client.interceptors.request.use(
     (config: InternalAxiosRequestConfig) => {
+      const method = (config.method || 'get').toLowerCase();
+      const shouldAttachCsrf = !['get', 'head', 'options'].includes(method);
+
+      if (shouldAttachCsrf) {
+        const csrfToken = getCsrfToken();
+        if (csrfToken && config.headers) {
+          config.headers['X-CSRF-Token'] ??= csrfToken;
+        }
+      }
+
+      if (isCookieAuthMode()) {
+        return config;
+      }
       const token = getAuth();
       const url = config.url || '';
 

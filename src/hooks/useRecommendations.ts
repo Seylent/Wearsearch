@@ -5,7 +5,6 @@
 
 import { useQuery } from '@tanstack/react-query';
 import { authService } from '@/services/authService';
-import { getAuth } from '@/utils/authStorage';
 import { useIsAuthenticated } from '@/hooks/useIsAuthenticated';
 import recommendationsService, {
   RecommendedProduct,
@@ -22,7 +21,7 @@ export const useRecommendations = (limit: number = 10) => {
   const { data, isLoading, error, refetch } = useQuery({
     queryKey: ['recommendations', limit],
     queryFn: () => recommendationsService.getRecommendations(limit),
-    enabled: isLoggedIn && !!getAuth(),
+    enabled: isLoggedIn,
     staleTime: 1000 * 60 * 10, // 10 minutes
     retry: (failureCount, error: { status?: number; response?: { status?: number } }) => {
       const status = error?.status ?? error?.response?.status;

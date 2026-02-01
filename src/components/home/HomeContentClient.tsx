@@ -2,18 +2,26 @@
 
 import { useEffect, useMemo, useState } from 'react';
 import Link from 'next/link';
+import dynamic from 'next/dynamic';
 import { useTranslation } from 'react-i18next';
 import { ArrowUpRight } from 'lucide-react';
 import { motion, useReducedMotion } from 'framer-motion';
 import { ScrollReveal } from '@/components/common/ScrollReveal';
 import { useCurrencyConversion } from '@/hooks/useCurrencyConversion';
 import ProductCard from '@/components/ProductCard';
-import RecentlyViewedProducts from '@/components/RecentlyViewedProducts';
 import { ViewAllButton } from './ViewAllButton';
 import { HomeHero } from './HomeHero';
-import { BannerCarousel } from '@/components/BannerCarousel';
+const BannerCarousel = dynamic(
+  () => import('@/components/BannerCarousel').then(mod => mod.BannerCarousel),
+  { ssr: false, loading: () => null }
+);
+const RecentlyViewedProducts = dynamic(() => import('@/components/RecentlyViewedProducts'), {
+  ssr: false,
+  loading: () => null,
+});
 import type { Banner } from '@/types/banner';
 import { PRODUCT_CATEGORIES, getCategoryDisplayName } from '@/constants/categories';
+import { useIsTouchDevice } from '@/hooks/use-touch-device';
 
 interface Product {
   id: string | number;
@@ -67,6 +75,8 @@ export default function HomeContentClient({
   const [popularCurrency, setPopularCurrency] = useState<'UAH' | 'USD'>('UAH');
   const [heroSeo, setHeroSeo] = useState<SEOData | null>(seoData ?? null);
   const reduceMotion = useReducedMotion();
+  const isTouchDevice = useIsTouchDevice();
+  const shouldAnimate = !reduceMotion && !isTouchDevice;
 
   const fallbackCategories = useMemo(
     () =>
@@ -509,44 +519,78 @@ export default function HomeContentClient({
               </header>
             </div>
 
-            <motion.div
-              className="w-full px-6 md:px-12 lg:px-16"
-              variants={gridVariants}
-              initial="hidden"
-              whileInView="show"
-              viewport={{ once: true, margin: '-100px' }}
-            >
-              <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-x-6 gap-y-10 md:gap-y-14">
-                {popularProducts.length > 0 ? (
-                  popularProducts.slice(0, 5).map(product => (
-                    <motion.div
-                      key={product.id}
-                      variants={itemVariants}
-                      className="transition-transform duration-300 hover:-translate-y-1"
-                    >
-                      <ProductCard
-                        id={product.id}
-                        name={product.name}
-                        image={product.image_url || product.image || ''}
-                        price={product.price}
-                        minPrice={product.price_min ?? product.min_price}
-                        maxPrice={product.max_price ?? product.maxPrice}
-                        brand={product.brand}
-                        priceCurrency={
-                          product.currency === 'USD' || product.currency === 'UAH'
-                            ? product.currency
-                            : popularCurrency
-                        }
-                      />
-                    </motion.div>
-                  ))
-                ) : (
-                  <div className="col-span-full text-center py-10 text-warm-gray">
-                    {t('home.topSavedEmpty', 'No popular products yet')}
-                  </div>
-                )}
+            {shouldAnimate ? (
+              <motion.div
+                className="w-full px-6 md:px-12 lg:px-16"
+                variants={gridVariants}
+                initial="hidden"
+                whileInView="show"
+                viewport={{ once: true, margin: '-100px' }}
+              >
+                <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-x-6 gap-y-10 md:gap-y-14">
+                  {popularProducts.length > 0 ? (
+                    popularProducts.slice(0, 5).map(product => (
+                      <motion.div
+                        key={product.id}
+                        variants={itemVariants}
+                        className="transition-transform duration-300 hover:-translate-y-1"
+                      >
+                        <ProductCard
+                          id={product.id}
+                          name={product.name}
+                          image={product.image_url || product.image || ''}
+                          price={product.price}
+                          minPrice={product.price_min ?? product.min_price}
+                          maxPrice={product.max_price ?? product.maxPrice}
+                          brand={product.brand}
+                          priceCurrency={
+                            product.currency === 'USD' || product.currency === 'UAH'
+                              ? product.currency
+                              : popularCurrency
+                          }
+                        />
+                      </motion.div>
+                    ))
+                  ) : (
+                    <div className="col-span-full text-center py-10 text-warm-gray">
+                      {t('home.topSavedEmpty', 'No popular products yet')}
+                    </div>
+                  )}
+                </div>
+              </motion.div>
+            ) : (
+              <div className="w-full px-6 md:px-12 lg:px-16">
+                <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-x-6 gap-y-10 md:gap-y-14">
+                  {popularProducts.length > 0 ? (
+                    popularProducts.slice(0, 5).map(product => (
+                      <div
+                        key={product.id}
+                        className="transition-transform duration-300 hover:-translate-y-1"
+                      >
+                        <ProductCard
+                          id={product.id}
+                          name={product.name}
+                          image={product.image_url || product.image || ''}
+                          price={product.price}
+                          minPrice={product.price_min ?? product.min_price}
+                          maxPrice={product.max_price ?? product.maxPrice}
+                          brand={product.brand}
+                          priceCurrency={
+                            product.currency === 'USD' || product.currency === 'UAH'
+                              ? product.currency
+                              : popularCurrency
+                          }
+                        />
+                      </div>
+                    ))
+                  ) : (
+                    <div className="col-span-full text-center py-10 text-warm-gray">
+                      {t('home.topSavedEmpty', 'No popular products yet')}
+                    </div>
+                  )}
+                </div>
               </div>
-            </motion.div>
+            )}
           </section>
         </ScrollReveal>
 
@@ -578,81 +622,152 @@ export default function HomeContentClient({
               )}
             </div>
 
-            <motion.div
-              className="w-full px-6 md:px-12 lg:px-16"
-              variants={gridVariants}
-              initial="hidden"
-              whileInView="show"
-              viewport={{ once: true, margin: '-100px' }}
-            >
-              <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-x-6 gap-y-12 md:gap-y-16">
-                {hasProducts ? (
-                  products.slice(0, 12).map(product => (
-                    <motion.div
-                      key={product.id}
-                      variants={itemVariants}
-                      className="transition-transform duration-300 hover:-translate-y-1"
-                    >
-                      <ProductCard
-                        id={product.id}
-                        name={product.name}
-                        image={product.image_url || product.image || ''}
-                        price={product.price}
-                        minPrice={product.price_min ?? product.min_price}
-                        maxPrice={product.max_price ?? product.maxPrice}
-                        brand={product.brand}
-                        priceCurrency={
-                          product.currency === 'USD' || product.currency === 'UAH'
-                            ? product.currency
-                            : productsCurrency
-                        }
-                      />
-                    </motion.div>
-                  ))
-                ) : (
-                  <div className="col-span-full text-center py-16 px-4">
-                    <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-sand mb-4">
-                      <svg
-                        className="w-8 h-8 text-warm-gray"
-                        fill="none"
-                        viewBox="0 0 24 24"
-                        stroke="currentColor"
+            {shouldAnimate ? (
+              <motion.div
+                className="w-full px-6 md:px-12 lg:px-16"
+                variants={gridVariants}
+                initial="hidden"
+                whileInView="show"
+                viewport={{ once: true, margin: '-100px' }}
+              >
+                <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-x-6 gap-y-12 md:gap-y-16">
+                  {hasProducts ? (
+                    products.slice(0, 12).map(product => (
+                      <motion.div
+                        key={product.id}
+                        variants={itemVariants}
+                        className="transition-transform duration-300 hover:-translate-y-1"
                       >
-                        <path
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                          strokeWidth={2}
-                          d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4"
+                        <ProductCard
+                          id={product.id}
+                          name={product.name}
+                          image={product.image_url || product.image || ''}
+                          price={product.price}
+                          minPrice={product.price_min ?? product.min_price}
+                          maxPrice={product.max_price ?? product.maxPrice}
+                          brand={product.brand}
+                          priceCurrency={
+                            product.currency === 'USD' || product.currency === 'UAH'
+                              ? product.currency
+                              : productsCurrency
+                          }
                         />
-                      </svg>
-                    </div>
-                    <h3 className="text-xl font-serif text-earth mb-2">
-                      {t('home.noProductsTitle', 'Немає доступних продуктів')}
-                    </h3>
-                    <p className="text-warm-gray mb-4 max-w-md mx-auto">
-                      {t(
-                        'home.noProductsDescription',
-                        'Підключіть backend сервер для завантаження продуктів.'
-                      )}
-                      <br />
-                      {t('home.noProductsHint', 'Перевірте NEXT_PUBLIC_API_URL в .env файлі.')}
-                    </p>
-                    <div className="text-sm text-warm-gray font-mono bg-sand rounded-none p-4 max-w-lg mx-auto">
-                      <div className="text-left">
-                        <div className="text-earth mb-2">
-                          {t('home.noProductsExpected', 'Очікується:')}
+                      </motion.div>
+                    ))
+                  ) : (
+                    <div className="col-span-full text-center py-16 px-4">
+                      <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-sand mb-4">
+                        <svg
+                          className="w-8 h-8 text-warm-gray"
+                          fill="none"
+                          viewBox="0 0 24 24"
+                          stroke="currentColor"
+                        >
+                          <path
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            strokeWidth={2}
+                            d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4"
+                          />
+                        </svg>
+                      </div>
+                      <h3 className="text-xl font-serif text-earth mb-2">
+                        {t('home.noProductsTitle', 'Немає доступних продуктів')}
+                      </h3>
+                      <p className="text-warm-gray mb-4 max-w-md mx-auto">
+                        {t(
+                          'home.noProductsDescription',
+                          'Підключіть backend сервер для завантаження продуктів.'
+                        )}
+                        <br />
+                        {t('home.noProductsHint', 'Перевірте NEXT_PUBLIC_API_URL в .env файлі.')}
+                      </p>
+                      <div className="text-sm text-warm-gray font-mono bg-sand rounded-none p-4 max-w-lg mx-auto">
+                        <div className="text-left">
+                          <div className="text-earth mb-2">
+                            {t('home.noProductsExpected', 'Очікується:')}
+                          </div>
+                          <div>NEXT_PUBLIC_API_URL=http://localhost:3000</div>
+                          <div className="mt-3 text-earth mb-2">
+                            {t('home.noProductsBackend', 'Або запустіть backend:')}
+                          </div>
+                          <div>cd backend && npm run dev</div>
                         </div>
-                        <div>NEXT_PUBLIC_API_URL=http://localhost:3000</div>
-                        <div className="mt-3 text-earth mb-2">
-                          {t('home.noProductsBackend', 'Або запустіть backend:')}
-                        </div>
-                        <div>cd backend && npm run dev</div>
                       </div>
                     </div>
-                  </div>
-                )}
+                  )}
+                </div>
+              </motion.div>
+            ) : (
+              <div className="w-full px-6 md:px-12 lg:px-16">
+                <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-x-6 gap-y-12 md:gap-y-16">
+                  {hasProducts ? (
+                    products.slice(0, 12).map(product => (
+                      <div
+                        key={product.id}
+                        className="transition-transform duration-300 hover:-translate-y-1"
+                      >
+                        <ProductCard
+                          id={product.id}
+                          name={product.name}
+                          image={product.image_url || product.image || ''}
+                          price={product.price}
+                          minPrice={product.price_min ?? product.min_price}
+                          maxPrice={product.max_price ?? product.maxPrice}
+                          brand={product.brand}
+                          priceCurrency={
+                            product.currency === 'USD' || product.currency === 'UAH'
+                              ? product.currency
+                              : productsCurrency
+                          }
+                        />
+                      </div>
+                    ))
+                  ) : (
+                    <div className="col-span-full text-center py-16 px-4">
+                      <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-sand mb-4">
+                        <svg
+                          className="w-8 h-8 text-warm-gray"
+                          fill="none"
+                          viewBox="0 0 24 24"
+                          stroke="currentColor"
+                        >
+                          <path
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            strokeWidth={2}
+                            d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4"
+                          />
+                        </svg>
+                      </div>
+                      <h3 className="text-xl font-serif text-earth mb-2">
+                        {t('home.noProductsTitle', 'Немає доступних продуктів')}
+                      </h3>
+                      <p className="text-warm-gray mb-4 max-w-md mx-auto">
+                        {t(
+                          'home.noProductsDescription',
+                          'Підключіть backend сервер для завантаження продуктів.'
+                        )}
+                        <br />
+                        {t('home.noProductsHint', 'Перевірте NEXT_PUBLIC_API_URL в .env файлі.')}
+                      </p>
+                      <div className="text-sm text-warm-gray font-mono bg-sand rounded-none p-4 max-w-lg mx-auto">
+                        <div className="text-left">
+                          <div className="text-earth mb-2">
+                            {t('home.noProductsExpected', 'Очікується:')}
+                          </div>
+                          <div>NEXT_PUBLIC_API_URL=http://localhost:3000</div>
+                          <div className="mt-3 text-earth mb-2">
+                            {t('home.noProductsBackend', 'Або запустіть backend:')}
+                          </div>
+                          <div>cd backend && npm run dev</div>
+                        </div>
+                      </div>
+                    </div>
+                  )}
+                </div>
               </div>
-            </motion.div>
+            )}
 
             <div className="max-w-[1800px] mx-auto px-6 md:px-12 lg:px-16">
               <ViewAllButton label={t('home.viewAllProducts', 'View All Products')} />

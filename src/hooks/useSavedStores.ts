@@ -5,7 +5,6 @@
 
 import { useState, useEffect, useCallback, useMemo } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { getAuth } from '@/utils/authStorage';
 import { useIsAuthenticated } from '@/hooks/useIsAuthenticated';
 import { api, apiLegacy } from '@/services/api';
 
@@ -118,7 +117,7 @@ export const useSavedStores = () => {
         }
       }
     },
-    enabled: globalThis.window !== undefined && isLoggedIn && !!getAuth(),
+    enabled: globalThis.window !== undefined && isLoggedIn,
     staleTime: 5 * 60 * 1000, // 5 minutes
     retry: (failureCount, error: { status?: number; response?: { status?: number } }) => {
       const status = error?.status ?? error?.response?.status;

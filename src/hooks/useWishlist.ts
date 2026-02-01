@@ -1,6 +1,5 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useIsAuthenticated } from '@/hooks/useIsAuthenticated';
-import { getAuth } from '@/utils/authStorage';
 import type { WishlistResponse } from '@/types';
 import {
   addWishlistItem,
@@ -20,7 +19,7 @@ export const useWishlist = (enabled = true) => {
   return useQuery<WishlistResponse>({
     queryKey: wishlistQueryKey,
     queryFn: getWishlist,
-    enabled: enabled && isLoggedIn && !!getAuth(),
+    enabled: enabled && isLoggedIn,
     staleTime: 5 * 60 * 1000,
     gcTime: 15 * 60 * 1000,
     retry: false,

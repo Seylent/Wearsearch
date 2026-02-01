@@ -5,7 +5,7 @@
 
 'use client';
 
-import React, { useState } from 'react';
+import React, { useMemo, useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useStoreContext } from '@/features/store-menu/context/StoreContext';
@@ -15,7 +15,9 @@ import {
   useCreateProduct,
   useSiteProducts,
   useAddExistingProduct,
+  useStoreDashboard,
 } from '@/features/store-menu/hooks/useStoreMenu';
+import { useBrands } from '@/hooks/useApi';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -34,6 +36,12 @@ import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Checkbox } from '@/components/ui/checkbox';
 import { OptimizedImage } from '@/components/OptimizedImage';
 import { toast } from 'sonner';
+import {
+  getBrandAccess,
+  getBrandAccessByName,
+  normalizeStoreMenuBrands,
+  type StoreMenuBrand,
+} from '@/features/store-menu/brandAccess';
 
 type ProductSource = 'new' | 'existing';
 type Step = 1 | 2 | 3 | 4 | 5;
@@ -93,6 +101,9 @@ function SourceSelection({ onSelect }: { onSelect: (source: ProductSource) => vo
 function NewProductForm({ storeId }: { storeId: string }) {
   const router = useRouter();
   const createMutation = useCreateProduct();
+  const { data: dashboardData } = useStoreDashboard(storeId);
+  const storeBrandId = dashboardData?.store?.brand_id ?? null;
+  const { data: brandsData } = useBrands();
   const [step, setStep] = useState<Step>(2);
   const [formData, setFormData] = useState({
     name: '',
@@ -118,6 +129,21 @@ function NewProductForm({ storeId }: { storeId: string }) {
 
   const handleSubmit = async () => {
     try {
+      const { isAllowed, isClosed, brandName } = getBrandAccess({
+        brandId: formData.brand_id,
+        brands,
+        storeBrandId,
+      });
+
+      if (!isAllowed) {
+        toast.error(
+          brandName
+            ? `Бренд "${brandName}" є закритим. Додавати товари може лише офіційний магазин.`
+            : 'Обраний бренд є закритим. Додавати товари може лише офіційний магазин.'
+        );
+        return;
+      }
+
       await createMutation.mutateAsync({
         storeId,
         data: {
@@ -157,6 +183,23 @@ function NewProductForm({ storeId }: { storeId: string }) {
         return false;
     }
   };
+
+  const brands = useMemo<StoreMenuBrand[]>(() => {
+    const normalized = normalizeStoreMenuBrands(brandsData);
+    if (normalized.length > 0) return normalized;
+
+    return [
+      { id: 'nike', name: 'Nike', is_closed: false },
+      { id: 'adidas', name: 'Adidas', is_closed: false },
+      { id: 'puma', name: 'Puma', is_closed: false },
+    ];
+  }, [brandsData]);
+
+  const selectedBrandAccess = getBrandAccess({
+    brandId: formData.brand_id,
+    brands,
+    storeBrandId,
+  });
 
   return (
     <div className="space-y-6">
@@ -254,11 +297,24 @@ function NewProductForm({ storeId }: { storeId: string }) {
                     <SelectValue placeholder="Виберіть бренд" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="nike">Nike</SelectItem>
-                    <SelectItem value="adidas">Adidas</SelectItem>
-                    <SelectItem value="puma">Puma</SelectItem>
+                    {brands.map(brand => {
+                      const isRestricted =
+                        brand.is_closed === true && (!storeBrandId || storeBrandId !== brand.id);
+                      const label = isRestricted ? `${brand.name} (закритий)` : brand.name;
+
+                      return (
+                        <SelectItem key={brand.id} value={brand.id} disabled={isRestricted}>
+                          {label}
+                        </SelectItem>
+                      );
+                    })}
                   </SelectContent>
                 </Select>
+                {selectedBrandAccess.isClosed && !selectedBrandAccess.isAllowed ? (
+                  <p className="text-xs text-destructive">
+                    Додавати товари до закритого бренду може лише офіційний магазин.
+                  </p>
+                ) : null}
               </div>
             </>
           )}
@@ -413,6 +469,9 @@ function NewProductForm({ storeId }: { storeId: string }) {
 function ExistingProductSelector({ storeId }: { storeId: string }) {
   const router = useRouter();
   const addMutation = useAddExistingProduct();
+  const { data: dashboardData } = useStoreDashboard(storeId);
+  const storeBrandId = dashboardData?.store?.brand_id ?? null;
+  const { data: brandsData } = useBrands();
   const [search, setSearch] = useState('');
   const [selectedProduct, setSelectedProduct] = useState<string | null>(null);
   const [storePrice, setStorePrice] = useState('');
@@ -421,8 +480,34 @@ function ExistingProductSelector({ storeId }: { storeId: string }) {
   const { data, isLoading } = useSiteProducts(storeId, 1, search);
   const products = data?.items || [];
 
+  const brands = useMemo<StoreMenuBrand[]>(() => {
+    const normalized = normalizeStoreMenuBrands(brandsData);
+    if (normalized.length > 0) return normalized;
+    return [
+      { id: 'nike', name: 'Nike', is_closed: false },
+      { id: 'adidas', name: 'Adidas', is_closed: false },
+      { id: 'puma', name: 'Puma', is_closed: false },
+    ];
+  }, [brandsData]);
+
+  const selectedProductData = products.find(product => product.id === selectedProduct);
+  const selectedBrandAccess = getBrandAccessByName({
+    brandName: selectedProductData?.brand,
+    brands,
+    storeBrandId,
+  });
+
   const handleAdd = async () => {
     if (!selectedProduct || !storePrice || selectedSizes.length === 0) return;
+
+    if (!selectedBrandAccess.isAllowed) {
+      toast.error(
+        selectedBrandAccess.brandName
+          ? `Бренд "${selectedBrandAccess.brandName}" є закритим. Додавати товари може лише офіційний магазин.`
+          : 'Обраний бренд є закритим. Додавати товари може лише офіційний магазин.'
+      );
+      return;
+    }
 
     try {
       await addMutation.mutateAsync({
@@ -546,7 +631,12 @@ function ExistingProductSelector({ storeId }: { storeId: string }) {
             <Button
               className="w-full"
               onClick={handleAdd}
-              disabled={!storePrice || selectedSizes.length === 0 || addMutation.isPending}
+              disabled={
+                !storePrice ||
+                selectedSizes.length === 0 ||
+                addMutation.isPending ||
+                !selectedBrandAccess.isAllowed
+              }
             >
               {addMutation.isPending ? 'Додавання...' : 'Додати до мого магазину'}
             </Button>

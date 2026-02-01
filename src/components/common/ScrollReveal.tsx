@@ -2,6 +2,7 @@
 
 import { motion, useReducedMotion } from 'framer-motion';
 import type { PropsWithChildren } from 'react';
+import { useIsTouchDevice } from '@/hooks/use-touch-device';
 
 interface ScrollRevealProps {
   className?: string;
@@ -9,8 +10,9 @@ interface ScrollRevealProps {
 
 export function ScrollReveal({ children, className }: PropsWithChildren<ScrollRevealProps>) {
   const reduceMotion = useReducedMotion();
+  const isTouchDevice = useIsTouchDevice();
 
-  if (reduceMotion) {
+  if (reduceMotion || isTouchDevice) {
     return <div className={className}>{children}</div>;
   }
 

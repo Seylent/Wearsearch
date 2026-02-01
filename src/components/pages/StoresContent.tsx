@@ -12,6 +12,7 @@ import { Button } from '@/components/ui/button';
 import { Search, ExternalLink, Star, Package, Send, Camera } from 'lucide-react';
 import { useStoresPageData } from '@/hooks/useAggregatedData';
 import { SaveStoreButton } from '@/components/SaveStoreButton';
+import { useDebounce } from '@/hooks/useDebounce';
 
 import type { PaginationInfo } from '@/types';
 
@@ -26,6 +27,7 @@ const StoresContent: React.FC<StoresContentProps> = ({ storeId }) => {
 
   // Local state
   const [searchQuery, setSearchQuery] = useState('');
+  const debouncedSearch = useDebounce(searchQuery, 300);
   // Server-driven pagination
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 24;
@@ -50,7 +52,7 @@ const StoresContent: React.FC<StoresContentProps> = ({ storeId }) => {
     const params = new URLSearchParams(searchParams.toString());
     params.set('page', String(currentPage));
 
-    const trimmed = searchQuery.trim();
+    const trimmed = debouncedSearch.trim();
     if (trimmed) {
       params.set('search', trimmed);
     } else {
@@ -65,7 +67,7 @@ const StoresContent: React.FC<StoresContentProps> = ({ storeId }) => {
       router.push(`/stores?${newQueryString}`);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [currentPage, searchQuery, searchParams]);
+  }, [currentPage, debouncedSearch, searchParams]);
 
   // Reset page when search changes
   useEffect(() => {
@@ -90,9 +92,9 @@ const StoresContent: React.FC<StoresContentProps> = ({ storeId }) => {
     () => ({
       page: currentPage,
       limit: itemsPerPage,
-      search: searchQuery || undefined,
+      search: debouncedSearch || undefined,
     }),
-    [currentPage, itemsPerPage, searchQuery]
+    [currentPage, itemsPerPage, debouncedSearch]
   );
 
   // Use aggregated hook for better performance

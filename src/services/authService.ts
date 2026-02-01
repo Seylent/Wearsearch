@@ -4,7 +4,14 @@
  */
 
 import { api, apiLegacy, handleApiError } from './api';
-import { setAuth, clearAuth, isAuthenticated, getAuth } from '@/utils/authStorage';
+import {
+  setAuth,
+  clearAuth,
+  isAuthenticated,
+  getAuth,
+  isCookieAuthMode,
+  setCookieSessionActive,
+} from '@/utils/authStorage';
 import { getValidGuestFavorites, clearGuestFavorites } from './guestFavorites';
 import { logAuthError } from './logger';
 import type { User, LoginCredentials, RegisterData, AuthResponse } from '@/types';
@@ -107,9 +114,21 @@ export const authService = {
         // Sync guest favorites after successful login
         await this.syncGuestFavorites(token);
 
+        if (isCookieAuthMode()) {
+          setCookieSessionActive(true);
+        }
+        if (globalThis.window !== undefined) {
+          globalThis.window.dispatchEvent(new Event('auth:login'));
+        }
         console.log('✅ Login completed successfully');
       } else {
         console.error('❌ No token received from login response');
+        if (isCookieAuthMode()) {
+          setCookieSessionActive(true);
+          if (globalThis.window !== undefined) {
+            globalThis.window.dispatchEvent(new Event('auth:login'));
+          }
+        }
       }
 
       return data;
@@ -153,6 +172,17 @@ export const authService = {
         await this.syncGuestFavorites(token);
         if (data.user) {
           localStorage.setItem('user', JSON.stringify(data.user));
+        }
+        if (isCookieAuthMode()) {
+          setCookieSessionActive(true);
+        }
+        if (globalThis.window !== undefined) {
+          globalThis.window.dispatchEvent(new Event('auth:login'));
+        }
+      } else if (isCookieAuthMode()) {
+        setCookieSessionActive(true);
+        if (globalThis.window !== undefined) {
+          globalThis.window.dispatchEvent(new Event('auth:login'));
         }
       }
 
