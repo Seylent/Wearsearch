@@ -9,6 +9,8 @@
     "build": "next build",
     "start": "next start",
     "lint": "eslint \"src/**/*.{ts,tsx,js,jsx}\"",
+    "sanitise-env-secrets": "bash ./scripts/sanitize-env-secrets.sh",
+    "clean-git-history": "bash ./scripts/clean-git-history.sh",
     "type-check": "tsc --noEmit",
     "test": "jest",
     "optimize-images": "node scripts/optimizeImages.js",
