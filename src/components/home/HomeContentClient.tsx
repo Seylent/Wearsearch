@@ -262,7 +262,7 @@ export default function HomeContentClient({
 
   return (
     <div className="min-h-screen bg-white text-black" suppressHydrationWarning>
-      <main id="main-content">
+      <div>
         {/* Hero Section */}
         <HomeHero
           h1Title={heroSeo?.h1_title}
@@ -301,14 +301,14 @@ export default function HomeContentClient({
                       className="w-1.5 h-1.5 rounded-full bg-muted-foreground"
                       aria-hidden="true"
                     />
-                    <span className="text-[10px] sm:text-xs text-muted-foreground uppercase tracking-wider">
+                    <span className="text-xs sm:text-sm text-muted-foreground/80 uppercase tracking-[0.18em]">
                       {t('home.howItWorksLabel', 'How it works')}
                     </span>
                   </div>
                   <h2 className="font-display text-2xl sm:text-3xl md:text-4xl font-bold">
                     {t('home.howItWorksTitle', 'Find your fit in three steps')}
                   </h2>
-                  <p className="text-sm sm:text-base text-muted-foreground mt-2 font-serif">
+                  <p className="text-sm sm:text-base text-muted-foreground/80 mt-2 font-serif">
                     {t('home.howItWorksHint', 'Search, compare, and buy with confidence')}
                   </p>
                 </div>
@@ -342,10 +342,10 @@ export default function HomeContentClient({
                   },
                 ].map(card => (
                   <div key={card.step} className="p-1 sm:p-2">
-                    <div className="text-4xl sm:text-5xl font-serif text-muted-foreground/40 mb-3">
+                    <div className="text-4xl sm:text-5xl font-display font-medium text-muted-foreground/55 mb-2 leading-[0.85] tracking-[-0.03em]">
                       {card.step}
                     </div>
-                    <h3 className="text-xl sm:text-2xl font-serif text-foreground mb-3">
+                    <h3 className="text-xl sm:text-2xl font-serif text-foreground mb-2">
                       {card.title}
                     </h3>
                     <p className="text-sm text-muted-foreground leading-relaxed font-serif">
@@ -368,14 +368,14 @@ export default function HomeContentClient({
                       className="w-1.5 h-1.5 rounded-full bg-muted-foreground"
                       aria-hidden="true"
                     />
-                    <span className="text-[10px] sm:text-xs text-muted-foreground uppercase tracking-wider">
+                    <span className="text-xs sm:text-sm text-muted-foreground/80 uppercase tracking-[0.18em]">
                       {t('home.shopByGender', 'Shop by vibe')}
                     </span>
                   </div>
                   <h2 className="font-display text-2xl sm:text-3xl md:text-4xl font-bold">
                     {t('home.genderPicks', 'Find your lane')}
                   </h2>
-                  <p className="text-sm sm:text-base text-muted-foreground mt-2 font-serif">
+                  <p className="text-sm sm:text-base text-muted-foreground/80 mt-2 font-serif">
                     {t('home.genderHint', 'Curated edits for every silhouette and mood')}
                   </p>
                 </div>
@@ -446,14 +446,14 @@ export default function HomeContentClient({
                       className="w-1.5 h-1.5 rounded-full bg-muted-foreground"
                       aria-hidden="true"
                     />
-                    <span className="text-[10px] sm:text-xs text-muted-foreground uppercase tracking-wider">
+                    <span className="text-xs sm:text-sm text-muted-foreground/80 uppercase tracking-[0.18em]">
                       {t('home.categoriesLabel', 'Categories')}
                     </span>
                   </div>
                   <h2 className="font-display text-2xl sm:text-3xl md:text-4xl font-bold text-foreground">
                     {t('home.shopByCategory', 'Browse by category')}
                   </h2>
-                  <p className="text-sm sm:text-base text-muted-foreground mt-2 font-serif">
+                  <p className="text-sm sm:text-base text-muted-foreground/80 mt-2 font-serif">
                     {t('home.categoryHint', 'Swipe through the essential edits')}
                   </p>
                 </div>
@@ -783,7 +783,7 @@ export default function HomeContentClient({
             </div>
           </section>
         </ScrollReveal>
-      </main>
+      </div>
     </div>
   );
 }

@@ -5,15 +5,16 @@
  * Displays similar products based on category, brand, and price
  */
 
-import { memo, useRef } from 'react';
+import { memo, useMemo, useRef } from 'react';
 import Link from 'next/link';
-import Image from 'next/image';
 import { useTranslation } from 'react-i18next';
 import { Sparkles } from 'lucide-react';
 import { useRelatedProducts } from '@/hooks/useApi';
 import { convertS3UrlToHttps } from '@/lib/utils';
 import { useCurrencyConversion } from '@/hooks/useCurrencyConversion';
 import { useLazyLoad } from '@/hooks/useIntersectionObserver';
+import { usePresignedImages } from '@/hooks/usePresignedImage';
+import { PresignedImage } from '@/components/common/PresignedImage';
 
 const isRecord = (value: unknown): value is Record<string, unknown> =>
   typeof value === 'object' && value !== null;
@@ -57,6 +58,17 @@ export const RelatedProducts = memo(
     }
     const resolvedTotal = typeof total === 'number' ? total : resolvedProducts.length;
 
+    const imageSources = useMemo(
+      () =>
+        resolvedProducts.filter(isRecord).map(product => {
+          const raw =
+            getString(product, 'image') ?? getString(product, 'image_url') ?? '/placeholder.svg';
+          return raw ? convertS3UrlToHttps(raw) : '';
+        }),
+      [resolvedProducts]
+    );
+    const resolvedImages = usePresignedImages(imageSources);
+
     // Don't show section if no products or still loading
     if (!hasProvidedProducts && isLoading) {
       return (
@@ -98,9 +110,9 @@ export const RelatedProducts = memo(
         </div>
 
         <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
-          {resolvedProducts.filter(isRecord).flatMap(product => {
+          {resolvedProducts.filter(isRecord).map((product, index) => {
             const id = getIdString(product);
-            if (!id) return [];
+            if (!id) return null;
 
             const image =
               getString(product, 'image') ?? getString(product, 'image_url') ?? '/placeholder.svg';
@@ -110,11 +122,11 @@ export const RelatedProducts = memo(
             const priceText =
               typeof price === 'number' || typeof price === 'string' ? String(price) : undefined;
 
-            return [
+            return (
               <Link key={id} href={`/product/${id}`} className="group block">
                 <div className="relative rounded-2xl overflow-hidden bg-muted aspect-square mb-3 transition-transform md:group-hover:scale-105">
-                  <Image
-                    src={convertS3UrlToHttps(image)}
+                  <PresignedImage
+                    src={resolvedImages[index] || convertS3UrlToHttps(image)}
                     alt={title}
                     fill
                     sizes="(max-width: 768px) 50vw, 20vw"
@@ -135,8 +147,8 @@ export const RelatedProducts = memo(
                     <p className="text-sm font-semibold">{formatPrice(Number(priceText) || 0)}</p>
                   )}
                 </div>
-              </Link>,
-            ];
+              </Link>
+            );
           })}
         </div>
       </div>

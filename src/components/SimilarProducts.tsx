@@ -8,11 +8,12 @@
 import React from 'react';
 import { useTranslation } from 'react-i18next';
 import Link from 'next/link';
-import Image from 'next/image';
 import { Sparkles, Loader2 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useSimilarProducts } from '@/hooks/useRecommendations';
 import { useCurrencyConversion } from '@/hooks/useCurrencyConversion';
+import { usePresignedImages } from '@/hooks/usePresignedImage';
+import { PresignedImage } from '@/components/common/PresignedImage';
 
 interface SimilarProductsProps {
   productId: string | number;
@@ -24,6 +25,9 @@ const SimilarProducts: React.FC<SimilarProductsProps> = ({ productId, limit = 6,
   const { t } = useTranslation();
   const { formatPrice } = useCurrencyConversion();
   const { similarProducts, isLoading } = useSimilarProducts(productId, limit);
+  const resolvedImages = usePresignedImages(
+    similarProducts.map(product => product.image || product.image_url || '')
+  );
 
   // Show loading state
   if (isLoading) {
@@ -57,13 +61,13 @@ const SimilarProducts: React.FC<SimilarProductsProps> = ({ productId, limit = 6,
       </div>
 
       <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-6 gap-4">
-        {similarProducts.map(product => {
-          const imageUrl = product.image || product.image_url || '/placeholder.png';
+        {similarProducts.map((product, index) => {
+          const imageUrl = resolvedImages[index] || product.image || product.image_url || '';
 
           return (
             <Link key={product.id} href={`/product/${product.id}`} className="group block">
               <div className="relative aspect-square rounded-lg overflow-hidden bg-white/5 border border-white/10 transition-all group-hover:border-white/30">
-                <Image
+                <PresignedImage
                   src={imageUrl}
                   alt={product.name}
                   fill

@@ -1,26 +1,60 @@
-import { useState, useRef } from 'react';
 import Image from 'next/image';
+import { useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { X, Image as ImageIcon } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useImageUpload } from '@/hooks/useImageUpload';
 import { useToast } from '@/hooks/use-toast';
+import { uploadService, type UploadResponse } from '@/services/uploadService';
 
 interface ImageUploaderProps {
-  onImageUpload: (url: string) => void;
+  onImageUpload: (image: UploadResponse) => void;
   currentImage?: string;
   label?: string;
 }
 
 export const ImageUploader = ({ onImageUpload, currentImage, label }: ImageUploaderProps) => {
   const { t } = useTranslation();
-  const [preview, setPreview] = useState<string>(currentImage || '');
+  const [preview, setPreview] = useState<string>('');
   const [dragActive, setDragActive] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const { toast } = useToast();
 
   // Use centralized upload hook instead of direct fetch
   const uploadMutation = useImageUpload();
+
+  const isDirectUrl = (value: string) =>
+    value.startsWith('http://') ||
+    value.startsWith('https://') ||
+    value.startsWith('/') ||
+    value.startsWith('data:') ||
+    value.startsWith('blob:');
+
+  useEffect(() => {
+    if (!currentImage) {
+      setPreview('');
+      return;
+    }
+
+    if (isDirectUrl(currentImage)) {
+      setPreview(currentImage);
+      return;
+    }
+
+    let isActive = true;
+    uploadService
+      .getImageUrl(currentImage)
+      .then(result => {
+        if (isActive) setPreview(result.url);
+      })
+      .catch(() => {
+        if (isActive) setPreview('');
+      });
+
+    return () => {
+      isActive = false;
+    };
+  }, [currentImage]);
 
   const handleFileChange = async (selectedFile: File) => {
     if (!selectedFile.type.startsWith('image/')) {
@@ -50,9 +84,9 @@ export const ImageUploader = ({ onImageUpload, currentImage, label }: ImageUploa
 
     try {
       // Use centralized upload service via hook
-      const url = await uploadMutation.mutateAsync(selectedFile);
-      onImageUpload(url);
-      setPreview(url); // Update preview with uploaded URL
+      const result = await uploadMutation.mutateAsync(selectedFile);
+      onImageUpload(result);
+      setPreview(result.url); // Update preview with uploaded URL
       toast({
         title: t('imageUploader.uploadSuccessTitle'),
         description: t('imageUploader.uploadSuccessDescription'),

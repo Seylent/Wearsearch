@@ -170,13 +170,13 @@ function DashboardContent({ storeId }: { storeId: string }) {
             {/* Quick Actions */}
             <div className="flex flex-wrap gap-2 md:ml-auto">
               <Link href="/store-menu/products/new">
-                <Button>
+                <Button variant="pill" size="pill">
                   <PlusCircle className="mr-2 h-4 w-4" />
                   Додати товар
                 </Button>
               </Link>
               <Link href="/store-menu/store">
-                <Button variant="outline">
+                <Button variant="pillOutline" size="pill">
                   <Edit className="mr-2 h-4 w-4" />
                   Редагувати магазин
                 </Button>
@@ -302,7 +302,7 @@ function DashboardContent({ storeId }: { storeId: string }) {
               <Package className="mx-auto h-12 w-12 text-muted-foreground" />
               <p className="mt-2 text-muted-foreground">У вашому магазині ще немає товарів</p>
               <Link href="/store-menu/products/new" className="mt-4 inline-block">
-                <Button>
+                <Button variant="pill" size="pill">
                   <PlusCircle className="mr-2 h-4 w-4" />
                   Додати перший товар
                 </Button>

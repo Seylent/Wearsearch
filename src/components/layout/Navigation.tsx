@@ -3,6 +3,7 @@
 import React from 'react';
 import dynamic from 'next/dynamic';
 import { useRouter, usePathname } from 'next/navigation';
+import Image from 'next/image';
 import Link from 'next/link';
 import { useTranslation } from 'react-i18next';
 import { UserProfileMenu } from '@/components/UserProfileMenu';
@@ -17,9 +18,8 @@ import { LanguageSelector } from '@/components/LanguageSelector';
 import { CurrencySwitch } from '@/components/common/CurrencySwitch';
 import { useAuth } from '@/features/auth/hooks/useAuth';
 import { useNavigationState } from '@/features/auth/hooks/useNavigationState';
-import { Search, User as UserIcon, Menu, X } from 'lucide-react';
+import { Search, User as UserIcon, Menu, X, ChevronDown } from 'lucide-react';
 import { AnimatePresence, motion, useReducedMotion } from 'framer-motion';
-import { ThemeToggle } from '@/components/common/ThemeToggle';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { categoryService, type Category } from '@/services/categoryService';
 import { useIsTouchDevice } from '@/hooks/use-touch-device';
@@ -30,7 +30,7 @@ const isRecord = (value: unknown): value is Record<string, unknown> =>
 const Navigation: React.FC = () => {
   const router = useRouter();
   const pathname = usePathname();
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
 
   // 🔥 Попередження hydration error - тільки на клієнті
   const [isMounted, setIsMounted] = useState(false);
@@ -38,6 +38,8 @@ const Navigation: React.FC = () => {
   const [activeMega, setActiveMega] = useState<string | null>(null);
   const [categoryTree, setCategoryTree] = useState<Category[]>([]);
   const [flatCategories, setFlatCategories] = useState<Category[]>([]);
+  const [mobileCategoriesOpen, setMobileCategoriesOpen] = useState(false);
+  const [openMobileCategoryIds, setOpenMobileCategoryIds] = useState<Record<string, boolean>>({});
   const reduceMotion = useReducedMotion();
   const isTouchDevice = useIsTouchDevice();
   const shouldAnimate = !reduceMotion && !isTouchDevice;
@@ -45,13 +47,14 @@ const Navigation: React.FC = () => {
 
   useEffect(() => {
     setIsMounted(true);
-  }, []);
+  }, [i18n.language]);
 
   useEffect(() => {
     let isActive = true;
+    const lang = (i18n.language || 'uk').split('-')[0];
     Promise.all([
-      categoryService.getCategoryTree(),
-      categoryService.getCategories({ isActive: true }),
+      categoryService.getCategoryTree(lang),
+      categoryService.getCategories({ isActive: true, lang }),
     ])
       .then(([tree, all]) => {
         if (!isActive) return;
@@ -72,7 +75,10 @@ const Navigation: React.FC = () => {
   }, []);
 
   useEffect(() => {
-    const handleScroll = () => setIsScrolled(window.scrollY > 50);
+    const handleScroll = () => {
+      setIsScrolled(window.scrollY > 50);
+    };
+
     handleScroll();
     window.addEventListener('scroll', handleScroll, { passive: true });
     return () => window.removeEventListener('scroll', handleScroll);
@@ -84,6 +90,17 @@ const Navigation: React.FC = () => {
 
   // Use navigation state hook
   const nav = useNavigationState();
+
+  useEffect(() => {
+    if (!nav.mobileMenuOpen) {
+      setMobileCategoriesOpen(false);
+      setOpenMobileCategoryIds({});
+    }
+  }, [nav.mobileMenuOpen]);
+
+  useEffect(() => {
+    nav.closeAll();
+  }, [pathname, nav, nav.closeAll]);
 
   const handleLogoClick = () => {
     if (pathname === '/') {
@@ -100,7 +117,7 @@ const Navigation: React.FC = () => {
   ];
 
   const navLinkBaseClass =
-    'min-h-[40px] px-4 rounded-full flex items-center justify-center border border-earth/20 text-xs uppercase tracking-[0.28em] font-medium transition-all duration-150 touch-manipulation hover:border-earth/40 active:scale-95';
+    'min-h-[40px] px-4 rounded-full flex items-center justify-center border border-earth/20 text-xs uppercase tracking-[0.28em] font-medium transition-all duration-150 touch-manipulation hover:border-earth/40 active:scale-95 font-helvetica700';
 
   const categoryColumns = useMemo(() => {
     const topCategories = categoryTree.slice(0, 4);
@@ -159,6 +176,57 @@ const Navigation: React.FC = () => {
 
     return columns;
   }, [categoryTree, flatCategories, t]);
+
+  const mobileCategoryNodes = useMemo(() => {
+    return categoryTree.length > 0 ? categoryTree : flatCategories;
+  }, [categoryTree, flatCategories]);
+
+  const renderMobileCategoryTree = (nodes: Category[], depth = 0) => (
+    <ul className={depth === 0 ? 'mt-3 space-y-2' : 'mt-2 space-y-2 pl-4 border-l border-earth/10'}>
+      {nodes.map(node => {
+        const slug = node.slug || node.name;
+        const children = (node.subcategories || []).filter(child => child.isActive !== false);
+        const nodeKey = String(node.id || slug);
+        const isOpen = !!openMobileCategoryIds[nodeKey];
+        return (
+          <li key={`${node.id}-${depth}`}>
+            {children.length > 0 ? (
+              <div>
+                <button
+                  type="button"
+                  onClick={() =>
+                    setOpenMobileCategoryIds(prev => ({ ...prev, [nodeKey]: !isOpen }))
+                  }
+                  className="w-full flex items-center justify-between text-sm text-warm-gray hover:text-earth transition-colors"
+                >
+                  <span>{node.name}</span>
+                  <ChevronDown
+                    className={`w-4 h-4 transition-transform duration-200 ${isOpen ? 'rotate-180' : ''}`}
+                  />
+                </button>
+                <Link
+                  href={`/products?type=${encodeURIComponent(slug)}`}
+                  onClick={nav.closeMobileMenu}
+                  className="mt-1 block text-[11px] uppercase tracking-[0.2em] text-earth/70 hover:text-earth"
+                >
+                  {t('mega.viewAllCategory', 'All {{name}}', { name: node.name })}
+                </Link>
+                {isOpen ? renderMobileCategoryTree(children, depth + 1) : null}
+              </div>
+            ) : (
+              <Link
+                href={`/products?type=${encodeURIComponent(slug)}`}
+                onClick={nav.closeMobileMenu}
+                className="block text-sm text-warm-gray hover:text-earth transition-colors"
+              >
+                {node.name}
+              </Link>
+            )}
+          </li>
+        );
+      })}
+    </ul>
+  );
 
   const megaMenus: Record<
     string,
@@ -224,7 +292,7 @@ const Navigation: React.FC = () => {
 
   return (
     <header
-      className={`fixed top-0 left-0 right-0 z-50 transition-all duration-500 relative ${
+      className={`fixed left-0 right-0 top-0 z-50 pointer-events-auto transition-[background-color,box-shadow] duration-500 ${
         isScrolled ? 'bg-white/95 shadow-sm' : 'bg-transparent'
       }`}
     >
@@ -243,7 +311,15 @@ const Navigation: React.FC = () => {
           aria-label={t('aria.navigateToHomepage')}
           suppressHydrationWarning
         >
-          <span className="flex items-center leading-none text-earth text-base sm:text-lg md:text-xl uppercase tracking-[0.05em] font-logo font-bold">
+          <Image
+            src="/logow1.webp"
+            alt="Wearsearch"
+            width={36}
+            height={36}
+            className="h-8 w-8 sm:h-9 sm:w-9 object-contain"
+            priority
+          />
+          <span className="font-helvetica700 flex items-center leading-none text-earth text-base sm:text-lg md:text-xl uppercase tracking-[0.05em]">
             Wearsearch
           </span>
         </button>
@@ -321,9 +397,6 @@ const Navigation: React.FC = () => {
           >
             <Search className="w-5 h-5" />
           </button>
-
-          {/* Theme Toggle */}
-          <ThemeToggle className="hidden sm:inline-flex h-10 w-10 md:h-9 md:w-9 border border-earth/20 text-earth hover:border-earth/40 hover:bg-sand" />
 
           <div className="hidden sm:block">
             <LanguageSelector />
@@ -494,18 +567,27 @@ const Navigation: React.FC = () => {
                 transition={reduceMotion ? { duration: 0 } : { duration: 0.3 }}
               />
               <motion.div
-                className="md:hidden fixed bottom-0 left-0 right-0 top-[420px] bg-sand/95 text-earth rounded-t-3xl border border-earth/10 shadow-[0_-18px_40px_rgba(0,0,0,0.16)] backdrop-blur-xl overflow-hidden z-50"
+                className="md:hidden fixed inset-y-0 left-0 w-[82vw] max-w-[360px] bg-sand/95 text-earth rounded-r-3xl border-r border-earth/10 shadow-[18px_0_40px_rgba(0,0,0,0.16)] backdrop-blur-xl overflow-hidden z-50 flex flex-col"
                 role="menu"
                 aria-label={t('aria.mainNavigation')}
-                initial={reduceMotion ? { opacity: 1, y: 0 } : { opacity: 0, y: 40 }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={reduceMotion ? { opacity: 1, y: 0 } : { opacity: 0, y: 20 }}
+                initial={reduceMotion ? { opacity: 1, x: 0 } : { opacity: 0, x: -40 }}
+                animate={{ opacity: 1, x: 0 }}
+                exit={reduceMotion ? { opacity: 1, x: 0 } : { opacity: 0, x: -20 }}
                 transition={
                   reduceMotion ? { duration: 0 } : { duration: 0.4, ease: [0.22, 1, 0.36, 1] }
                 }
               >
-                <div className="flex justify-center pt-3 pb-2">
-                  <div className="w-12 h-1.5 bg-earth/15 rounded-full" />
+                <div className="flex items-center justify-between px-6 pt-6 pb-3">
+                  <div className="text-xs uppercase tracking-[0.2em] text-warm-gray">
+                    {t('nav.menu', 'Menu')}
+                  </div>
+                  <button
+                    onClick={nav.closeMobileMenu}
+                    className="w-10 h-10 rounded-full flex items-center justify-center border border-earth/15 text-earth hover:border-earth/40"
+                    aria-label={t('aria.closeMenu')}
+                  >
+                    <X className="w-5 h-5" />
+                  </button>
                 </div>
                 {isMounted && user && (
                   <div className="px-6 py-4 border-b border-border">
@@ -523,24 +605,53 @@ const Navigation: React.FC = () => {
                   </div>
                 )}
 
-                <div className="flex flex-col max-h-[70vh] overflow-y-auto px-4 pb-5">
-                  {navLinks.map(link => (
-                    <Link
-                      key={link.name}
-                      href={link.href}
-                      onClick={nav.closeMobileMenu}
-                      className={`px-5 py-3.5 min-h-[52px] text-sm uppercase tracking-[0.2em] transition-all duration-150 touch-manipulation active:scale-[0.98] flex items-center gap-3 rounded-full border ${
-                        pathname === link.href
-                          ? 'text-earth border-earth/40 bg-white'
-                          : 'text-warm-gray border-earth/10 bg-white/70 active:text-earth active:border-earth/30'
-                      }`}
-                    >
-                      {link.name}
-                    </Link>
-                  ))}
+                <div className="flex-1 flex flex-col gap-3 overflow-y-auto px-4 pb-6">
+                  {navLinks.map(link => {
+                    if (link.href === '/products') {
+                      return (
+                        <div
+                          key={link.name}
+                          className="rounded-2xl border border-earth/10 bg-white/70"
+                        >
+                          <button
+                            type="button"
+                            onClick={() => setMobileCategoriesOpen(prev => !prev)}
+                            className="w-full px-5 py-3.5 min-h-[52px] text-sm uppercase tracking-[0.2em] transition-all duration-150 text-warm-gray active:text-earth flex items-center justify-between"
+                          >
+                            <span>{t('footer.allClothing', 'Весь одяг')}</span>
+                            <ChevronDown
+                              className={`w-4 h-4 transition-transform duration-200 ${
+                                mobileCategoriesOpen ? 'rotate-180' : ''
+                              }`}
+                            />
+                          </button>
+                          {mobileCategoriesOpen && mobileCategoryNodes.length > 0 && (
+                            <div className="px-5 pb-4">
+                              {renderMobileCategoryTree(mobileCategoryNodes)}
+                            </div>
+                          )}
+                        </div>
+                      );
+                    }
+
+                    return (
+                      <Link
+                        key={link.name}
+                        href={link.href}
+                        onClick={nav.closeMobileMenu}
+                        className={`px-5 py-3.5 min-h-[52px] text-sm uppercase tracking-[0.2em] transition-all duration-150 touch-manipulation active:scale-[0.98] flex items-center gap-3 rounded-full border ${
+                          pathname === link.href
+                            ? 'text-earth border-earth/40 bg-white'
+                            : 'text-warm-gray border-earth/10 bg-white/70 active:text-earth active:border-earth/30'
+                        }`}
+                      >
+                        {link.name}
+                      </Link>
+                    );
+                  })}
 
                   <button
-                    className="mt-3 px-5 py-3.5 min-h-[52px] text-sm uppercase tracking-[0.2em] transition-all duration-150 text-warm-gray active:text-earth text-left rounded-full border border-earth/10 bg-white/70 flex items-center gap-3"
+                    className="px-5 py-3.5 min-h-[52px] text-sm uppercase tracking-[0.2em] transition-all duration-150 text-warm-gray active:text-earth text-left rounded-full border border-earth/10 bg-white/70 flex items-center gap-3"
                     onClick={() => {
                       nav.closeMobileMenu();
                       document
@@ -555,7 +666,7 @@ const Navigation: React.FC = () => {
                     <Link
                       href="/store-menu"
                       onClick={nav.closeMobileMenu}
-                      className={`mt-3 px-5 py-3.5 min-h-[52px] text-sm uppercase tracking-[0.2em] transition-all duration-150 flex items-center gap-3 rounded-full border ${
+                      className={`px-5 py-3.5 min-h-[52px] text-sm uppercase tracking-[0.2em] transition-all duration-150 flex items-center gap-3 rounded-full border ${
                         pathname === '/store-menu' || pathname.startsWith('/store-menu/')
                           ? 'text-earth border-earth/40 bg-white'
                           : 'text-warm-gray border-earth/10 bg-white/70 active:text-earth active:border-earth/30'
@@ -569,7 +680,7 @@ const Navigation: React.FC = () => {
                     <Link
                       href="/admin"
                       onClick={nav.closeMobileMenu}
-                      className={`mt-3 px-5 py-3.5 min-h-[52px] text-sm uppercase tracking-[0.2em] transition-all duration-150 flex items-center gap-3 rounded-full border ${
+                      className={`px-5 py-3.5 min-h-[52px] text-sm uppercase tracking-[0.2em] transition-all duration-150 flex items-center gap-3 rounded-full border ${
                         pathname === '/admin'
                           ? 'text-earth border-earth/40 bg-white'
                           : 'text-warm-gray border-earth/10 bg-white/70 active:text-earth active:border-earth/30'
@@ -581,7 +692,7 @@ const Navigation: React.FC = () => {
 
                   {isMounted && user && (
                     <button
-                      className="mt-3 px-5 py-3.5 min-h-[52px] text-sm uppercase tracking-[0.2em] transition-all duration-150 text-destructive text-left rounded-full border border-destructive/30 bg-white/70 flex items-center gap-3"
+                      className="px-5 py-3.5 min-h-[52px] text-sm uppercase tracking-[0.2em] transition-all duration-150 text-destructive text-left rounded-full border border-destructive/30 bg-white/70 flex items-center gap-3"
                       onClick={() => {
                         nav.closeMobileMenu();
                         router.push('/auth');
@@ -603,12 +714,21 @@ const Navigation: React.FC = () => {
             aria-hidden="true"
           />
           <div
-            className="md:hidden fixed bottom-0 left-0 right-0 top-[420px] bg-sand/95 text-earth rounded-t-3xl border border-earth/10 shadow-[0_-18px_40px_rgba(0,0,0,0.16)] backdrop-blur-xl overflow-hidden z-50"
+            className="md:hidden fixed inset-y-0 left-0 w-[82vw] max-w-[360px] bg-sand/95 text-earth rounded-r-3xl border-r border-earth/10 shadow-[18px_0_40px_rgba(0,0,0,0.16)] backdrop-blur-xl overflow-hidden z-50 flex flex-col"
             role="menu"
             aria-label={t('aria.mainNavigation')}
           >
-            <div className="flex justify-center pt-3 pb-2">
-              <div className="w-12 h-1.5 bg-earth/15 rounded-full" />
+            <div className="flex items-center justify-between px-6 pt-6 pb-3">
+              <div className="text-xs uppercase tracking-[0.2em] text-warm-gray">
+                {t('nav.menu', 'Menu')}
+              </div>
+              <button
+                onClick={nav.closeMobileMenu}
+                className="w-10 h-10 rounded-full flex items-center justify-center border border-earth/15 text-earth hover:border-earth/40"
+                aria-label={t('aria.closeMenu')}
+              >
+                <X className="w-5 h-5" />
+              </button>
             </div>
             {isMounted && user && (
               <div className="px-6 py-4 border-b border-border">
@@ -624,24 +744,50 @@ const Navigation: React.FC = () => {
               </div>
             )}
 
-            <div className="flex flex-col max-h-[70vh] overflow-y-auto px-4 pb-5">
-              {navLinks.map(link => (
-                <Link
-                  key={link.name}
-                  href={link.href}
-                  onClick={nav.closeMobileMenu}
-                  className={`px-5 py-3.5 min-h-[52px] text-sm uppercase tracking-[0.2em] transition-all duration-150 touch-manipulation active:scale-[0.98] flex items-center gap-3 rounded-full border ${
-                    pathname === link.href
-                      ? 'text-earth border-earth/40 bg-white'
-                      : 'text-warm-gray border-earth/10 bg-white/70 active:text-earth active:border-earth/30'
-                  }`}
-                >
-                  {link.name}
-                </Link>
-              ))}
+            <div className="flex-1 flex flex-col gap-3 overflow-y-auto px-4 pb-6">
+              {navLinks.map(link => {
+                if (link.href === '/products') {
+                  return (
+                    <div key={link.name} className="rounded-2xl border border-earth/10 bg-white/70">
+                      <button
+                        type="button"
+                        onClick={() => setMobileCategoriesOpen(prev => !prev)}
+                        className="w-full px-5 py-3.5 min-h-[52px] text-sm uppercase tracking-[0.2em] transition-all duration-150 text-warm-gray active:text-earth flex items-center justify-between"
+                      >
+                        <span>{t('footer.allClothing', 'Весь одяг')}</span>
+                        <ChevronDown
+                          className={`w-4 h-4 transition-transform duration-200 ${
+                            mobileCategoriesOpen ? 'rotate-180' : ''
+                          }`}
+                        />
+                      </button>
+                      {mobileCategoriesOpen && mobileCategoryNodes.length > 0 && (
+                        <div className="px-5 pb-4">
+                          {renderMobileCategoryTree(mobileCategoryNodes)}
+                        </div>
+                      )}
+                    </div>
+                  );
+                }
+
+                return (
+                  <Link
+                    key={link.name}
+                    href={link.href}
+                    onClick={nav.closeMobileMenu}
+                    className={`px-5 py-3.5 min-h-[52px] text-sm uppercase tracking-[0.2em] transition-all duration-150 touch-manipulation active:scale-[0.98] flex items-center gap-3 rounded-full border ${
+                      pathname === link.href
+                        ? 'text-earth border-earth/40 bg-white'
+                        : 'text-warm-gray border-earth/10 bg-white/70 active:text-earth active:border-earth/30'
+                    }`}
+                  >
+                    {link.name}
+                  </Link>
+                );
+              })}
 
               <button
-                className="mt-3 px-5 py-3.5 min-h-[52px] text-sm uppercase tracking-[0.2em] transition-all duration-150 text-warm-gray active:text-earth text-left rounded-full border border-earth/10 bg-white/70 flex items-center gap-3"
+                className="px-5 py-3.5 min-h-[52px] text-sm uppercase tracking-[0.2em] transition-all duration-150 text-warm-gray active:text-earth text-left rounded-full border border-earth/10 bg-white/70 flex items-center gap-3"
                 onClick={() => {
                   nav.closeMobileMenu();
                   document
@@ -656,7 +802,7 @@ const Navigation: React.FC = () => {
                 <Link
                   href="/store-menu"
                   onClick={nav.closeMobileMenu}
-                  className={`mt-3 px-5 py-3.5 min-h-[52px] text-sm uppercase tracking-[0.2em] transition-all duration-150 flex items-center gap-3 rounded-full border ${
+                  className={`px-5 py-3.5 min-h-[52px] text-sm uppercase tracking-[0.2em] transition-all duration-150 flex items-center gap-3 rounded-full border ${
                     pathname === '/store-menu' || pathname.startsWith('/store-menu/')
                       ? 'text-earth border-earth/40 bg-white'
                       : 'text-warm-gray border-earth/10 bg-white/70 active:text-earth active:border-earth/30'
@@ -670,7 +816,7 @@ const Navigation: React.FC = () => {
                 <Link
                   href="/admin"
                   onClick={nav.closeMobileMenu}
-                  className={`mt-3 px-5 py-3.5 min-h-[52px] text-sm uppercase tracking-[0.2em] transition-all duration-150 flex items-center gap-3 rounded-full border ${
+                  className={`px-5 py-3.5 min-h-[52px] text-sm uppercase tracking-[0.2em] transition-all duration-150 flex items-center gap-3 rounded-full border ${
                     pathname === '/admin'
                       ? 'text-earth border-earth/40 bg-white'
                       : 'text-warm-gray border-earth/10 bg-white/70 active:text-earth active:border-earth/30'
@@ -682,7 +828,7 @@ const Navigation: React.FC = () => {
 
               {isMounted && user && (
                 <button
-                  className="mt-3 px-5 py-3.5 min-h-[52px] text-sm uppercase tracking-[0.2em] transition-all duration-150 text-destructive text-left rounded-full border border-destructive/30 bg-white/70 flex items-center gap-3"
+                  className="px-5 py-3.5 min-h-[52px] text-sm uppercase tracking-[0.2em] transition-all duration-150 text-destructive text-left rounded-full border border-destructive/30 bg-white/70 flex items-center gap-3"
                   onClick={() => {
                     nav.closeMobileMenu();
                     router.push('/auth');

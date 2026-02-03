@@ -6,7 +6,6 @@
 import { Suspense } from 'react';
 import { Metadata } from 'next';
 import { headers } from 'next/headers';
-import Image from 'next/image';
 import { notFound } from 'next/navigation';
 import {
   JsonLd,
@@ -15,6 +14,7 @@ import {
 } from '@/lib/seo/structured-data';
 import { SEOTextSection } from '@/components/seo/SEOTextSection';
 import { fetchBackendJson } from '@/lib/backendFetch';
+import { PresignedImage } from '@/components/common/PresignedImage';
 
 const isRecord = (value: unknown): value is Record<string, unknown> =>
   typeof value === 'object' && value !== null;
@@ -33,6 +33,37 @@ const getArray = (value: unknown, key: string): unknown[] | undefined => {
 
 const toOptionalString = (value: unknown): string | undefined =>
   typeof value === 'string' ? value : undefined;
+
+const isDirectUrl = (value: string) =>
+  value.startsWith('http://') ||
+  value.startsWith('https://') ||
+  value.startsWith('/') ||
+  value.startsWith('data:') ||
+  value.startsWith('blob:');
+
+const resolvePresignedUrl = async (value?: string): Promise<string | undefined> => {
+  if (!value) return undefined;
+  if (isDirectUrl(value)) return value;
+
+  const result = await fetchBackendJson<unknown>(`/upload/image/${encodeURIComponent(value)}`, {
+    next: { revalidate: 300 },
+  });
+  if (!result || !result.data) return undefined;
+
+  if (isRecord(result.data) && typeof result.data.url === 'string') {
+    return result.data.url;
+  }
+
+  if (
+    isRecord(result.data) &&
+    isRecord(result.data.data) &&
+    typeof result.data.data.url === 'string'
+  ) {
+    return result.data.data.url;
+  }
+
+  return undefined;
+};
 
 interface BrandPageProps {
   params: {
@@ -68,7 +99,9 @@ export async function generateMetadata({ params }: BrandPageProps): Promise<Meta
       isRecord(brand) ? brand.seo_description : undefined
     );
     const brandDescription = toOptionalString(isRecord(brand) ? brand.description : undefined);
-    const brandLogoUrl = toOptionalString(isRecord(brand) ? brand.logo_url : undefined);
+    const brandLogoUrl = await resolvePresignedUrl(
+      toOptionalString(isRecord(brand) ? brand.logo_url : undefined)
+    );
     const canonicalUrl =
       toOptionalString(isRecord(brand) ? brand.canonical_url : undefined) ||
       `${siteUrl}/brands/${slug}`;
@@ -220,7 +253,7 @@ export default async function BrandPage({ params }: Readonly<BrandPageProps>) {
               {/* H1 */}
               <div className="flex items-center gap-6 mb-4">
                 {brandLogoUrl && (
-                  <Image
+                  <PresignedImage
                     src={brandLogoUrl}
                     alt={`${brandName} logo`}
                     width={80}
@@ -260,7 +293,7 @@ export default async function BrandPage({ params }: Readonly<BrandPageProps>) {
                     }) => (
                       <div key={product.id} className="bg-zinc-900 rounded-lg p-4">
                         <a href={`/products/${product.id}`} className="block">
-                          <Image
+                          <PresignedImage
                             src={product.image_url || '/placeholder.jpg'}
                             alt={product.name}
                             width={384}

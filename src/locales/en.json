@@ -15,10 +15,12 @@
     "logout": "Logout",
     "login": "Login",
     "register": "Register",
+    "goHome": "Go Home",
     "submit": "Submit",
     "reset": "Reset",
     "showAll": "Show all ({{count}})",
     "showLess": "Show less",
+    "pageOf": "Page {{page}} of {{total}}",
     "noResults": "No results found",
     "from": "from",
     "recommended": "Recommended",
@@ -27,6 +29,19 @@
     "description": "Description",
     "create": "Create",
     "products": "products"
+  },
+  "errors": {
+    "somethingWentWrong": "Something went wrong",
+    "unexpectedError": "We're sorry, but something unexpected happened. Please try refreshing the page.",
+    "refreshPage": "Refresh Page",
+    "tryAgain": "Try Again",
+    "retrying": "Retrying...",
+    "showDetails": "Show technical details",
+    "hideDetails": "Hide technical details",
+    "loadDataFailed": "We encountered an error while loading the data. Please try again.",
+    "productLoadFailed": "Failed to load product. Please try again.",
+    "storesLoadFailed": "Failed to load stores",
+    "storesLoadDescription": "We couldn't load the stores. Please check your connection and try again."
   },
   "theme": {
     "label": "Theme"
@@ -83,7 +98,14 @@
     "signIn": "Sign In",
     "signOut": "Sign Out"
   },
+  "mega": {
+    "categories": "Categories",
+    "featureTitle": "Curated picks",
+    "featureCopy": "Discover new drops and essentials from trusted stores.",
+    "viewAllCategory": "All {{name}}"
+  },
   "footer": {
+    "allClothing": "All clothing",
     "styleNotesTitle": "Style notes",
     "styleNotesBody": "Discover new drops, seasonal edits, and timeless staples. We focus on fit, fabric, and longevity so every choice feels intentional.",
     "shop": "Shop",
@@ -99,6 +121,7 @@
     "termsOfService": "Terms of service"
   },
   "profile": {
+    "accountSettings": "Account Settings",
     "title": "Profile",
     "seoTitle": "Profile",
     "seoDescription": "Manage your profile, security settings, and account preferences.",
@@ -340,7 +363,23 @@
   },
   "emptyStates": {
     "noProductsAvailable": "No products available",
-    "checkBackSoon": "We don't have any products available at the moment. Please check back soon for new arrivals!"
+    "checkBackSoon": "We don't have any products available at the moment. Please check back soon for new arrivals!",
+    "noProductsMatch": "No products match your filters",
+    "tryAdjustingFilters": "Try adjusting your filters or search criteria to discover more products.",
+    "clearAllFilters": "Clear All Filters",
+    "noStoreProductsTitle": "No products yet",
+    "noStoreProductsNamed": "{{store}} hasn't added any products yet. Check back soon!",
+    "noStoreProducts": "This store hasn't added any products yet. Follow them to get notified when they add new items.",
+    "noStoresMatch": "No stores match your search",
+    "noStoresFound": "No stores found",
+    "tryDifferentSearch": "Try a different search term or browse all stores.",
+    "noStoresAvailable": "There are no stores available at the moment. Please check back later as new stores join our platform!",
+    "clearSearch": "Clear Search",
+    "noResultsFor": "No results for \"{{query}}\"",
+    "noResultsDescription": "We couldn't find anything matching your search. Try different keywords or browse our categories.",
+    "noFavoritesTitle": "No favorites yet",
+    "noFavoritesDescription": "Start building your collection by adding products you love to your favorites.",
+    "browseProducts": "Browse Products"
   },
   "product": {
     "seoTitle": "Product",
@@ -520,7 +559,10 @@
     "seoTitle": "Favorites",
     "seoDescription": "View and manage your favorite products.",
     "noSearchResults": "No products match your search",
-    "noFavorites": "No favorite products yet"
+    "noFavorites": "No favorite products yet",
+    "searchHint": "Try adjusting your search terms",
+    "emptyHint": "Start exploring and save products you love to see them here",
+    "browseProducts": "Browse Products"
   },
   "wishlist": {
     "shareWithFriends": "Share wishlist",
@@ -546,6 +588,9 @@
     "ourStory": "Our Story",
     "title": "About WearSearch",
     "description": "Your guide to the world of fashion online shopping. Find the best stores and products in one place.",
+    "ctaTitle": "Ready to Explore?",
+    "ctaDescription": "Discover our curated collection of exceptional fashion pieces.",
+    "ctaButton": "Browse Collections",
     "missionTitle": "Our Mission",
     "mission": "We strive to make online shopping simpler and more enjoyable by bringing the best fashion brands together in one place.",
     "valuesTitle": "Our Values",
@@ -564,9 +609,11 @@
     "storesTitle": "Stores",
     "description": "Explore our curated collection of online fashion stores. Find the best shops for your style.",
     "searchPlaceholder": "Search stores...",
-    "storesLabel": "Stores"
+    "storesLabel": "Stores",
+    "viewProducts": "View Products"
   },
   "productDetail": {
+    "notFoundTitle": "Product Not Found",
     "description": "Description",
     "similarProducts": "Similar products",
     "product": "product",

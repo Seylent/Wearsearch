@@ -3,6 +3,7 @@
 import Link from 'next/link';
 import { useTranslation } from 'react-i18next';
 import { ScrollButton } from './ScrollButton';
+import { CircleAbstractions } from './CircleAbstractions';
 
 interface HomeHeroProps {
   h1Title?: string;
@@ -35,19 +36,18 @@ export function HomeHero({
     Boolean(primaryCtaLabel && primaryCtaHref) || Boolean(secondaryCtaLabel && secondaryCtaHref);
 
   return (
-    <section className="relative min-h-[100svh] w-full overflow-hidden bg-white text-earth">
-      <div className="relative z-10 h-full flex flex-col justify-center md:justify-end">
-        <div className="max-w-[1800px] mx-auto w-full px-6 md:px-12 lg:px-16 py-20 md:pb-32">
-          <p className="text-[11px] sm:text-sm md:text-base uppercase tracking-[0.15em] sm:tracking-[0.2em] text-earth/70 mb-4 md:mb-6">
-            {contentText || t('home.heroTagline', 'Маркетплейс модного одягу та взуття')}
+    <section className="relative min-h-[82svh] sm:min-h-[90svh] md:min-h-[100svh] w-full overflow-hidden bg-white text-earth">
+      <CircleAbstractions />
+      <div className="relative z-10 h-full flex flex-col justify-start md:justify-end">
+        <div className="max-w-[1800px] mx-auto w-full px-6 md:px-12 lg:px-16 pt-16 pb-10 sm:pt-20 sm:pb-16 md:py-20 md:pb-32">
+          <p className="text-base md:text-lg text-earth/70 max-w-2xl mb-6 md:mb-8 font-medium leading-relaxed">
+            {contentText ||
+              t(
+                'home.heroDescription',
+                'Wearsearch — це платформа, де бренди та магазини розміщують свої колекції. Знаходьте одяг, взуття та аксесуари в одному місці, порівнюйте ціни та зберігайте улюблені товари.'
+              )}
           </p>
-          <p className="text-sm md:text-base text-earth/60 max-w-2xl mb-6 md:mb-8">
-            {t(
-              'home.heroDescription',
-              'Wearsearch — це платформа, де бренди та магазини розміщують свої колекції. Знаходьте одяг, взуття та аксесуари в одному місці, порівнюйте ціни та зберігайте улюблені товари.'
-            )}
-          </p>
-          <h1 className="font-serif text-4xl sm:text-5xl md:text-7xl lg:text-9xl text-earth leading-[0.95] sm:leading-[0.9] max-w-[20ch] sm:max-w-4xl">
+          <h1 className="font-display text-4xl sm:text-5xl md:text-7xl lg:text-9xl text-earth leading-[0.95] sm:leading-[0.9] max-w-[20ch] sm:max-w-4xl font-semibold tracking-[-0.02em]">
             <span className="block">{h1Title || fallbackTitleLines[0]}</span>
             {!h1Title && (
               <>
@@ -81,7 +81,7 @@ export function HomeHero({
             </div>
           )}
 
-          <div className="mt-8 md:mt-10">
+          <div className="mt-6 sm:mt-8 md:mt-10">
             <ScrollButton targetId="products-section" />
           </div>
         </div>

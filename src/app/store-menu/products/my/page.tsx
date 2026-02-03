@@ -91,10 +91,15 @@ function DeleteProductDialog({
           </DialogDescription>
         </DialogHeader>
         <DialogFooter>
-          <Button variant="outline" onClick={onClose}>
+          <Button variant="pillOutline" size="pill" onClick={onClose}>
             Скасувати
           </Button>
-          <Button variant="destructive" onClick={handleDelete} disabled={deleteMutation.isPending}>
+          <Button
+            variant="destructive"
+            size="pill"
+            onClick={handleDelete}
+            disabled={deleteMutation.isPending}
+          >
             {deleteMutation.isPending ? 'Видалення...' : 'Видалити'}
           </Button>
         </DialogFooter>
@@ -179,7 +184,7 @@ function ProductsContent({ storeId }: { storeId: string }) {
           <p className="text-muted-foreground">Керуйте товарами у вашому магазині</p>
         </div>
         <Link href="/store-menu/products/new">
-          <Button>
+          <Button variant="pill" size="pill">
             <PlusCircle className="mr-2 h-4 w-4" />
             Додати товар
           </Button>
@@ -378,7 +383,7 @@ function ProductsContent({ storeId }: { storeId: string }) {
               </p>
               {!hasFilters && (
                 <Link href="/store-menu/products/new" className="mt-4 inline-block">
-                  <Button>
+                  <Button variant="pill" size="pill">
                     <PlusCircle className="mr-2 h-4 w-4" />
                     Додати товар
                   </Button>

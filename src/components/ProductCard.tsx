@@ -7,6 +7,7 @@ import { useTranslation } from 'react-i18next';
 import FavoriteButton from './FavoriteButton';
 import { ProductDescription } from './ProductDescription';
 import { useCurrencyConversion } from '@/hooks/useCurrencyConversion';
+import { usePresignedImage } from '@/hooks/usePresignedImage';
 import type { CurrencyCode } from '@/utils/currencyStorage';
 
 // Skeleton loader component
@@ -70,6 +71,11 @@ const ProductCard: React.FC<ProductCardProps> = memo(
       return Number.isFinite(num) ? num : null;
     };
 
+    // Handle both 'image' and 'image_url' from different API responses
+    const imgSrc = image || '/placeholder-product.jpg';
+    const resolvedImage = usePresignedImage(imgSrc);
+    const displayImage = resolvedImage || '/placeholder-product.jpg';
+
     // Safety checks
     if (!id || !name) {
       return null;
@@ -96,9 +102,6 @@ const ProductCard: React.FC<ProductCardProps> = memo(
     const showPriceRange =
       displayMinPrice !== null && displayMaxPrice !== null && displayMinPrice !== displayMaxPrice;
 
-    // Handle both 'image' and 'image_url' from different API responses
-    const imgSrc = image || '/placeholder-product.jpg';
-
     return (
       <Link
         href={`/products/${id}`}
@@ -106,13 +109,13 @@ const ProductCard: React.FC<ProductCardProps> = memo(
         aria-label={t('aria.viewProduct', { product: name })}
       >
         <div
-          className="relative h-full flex flex-col rounded-2xl border border-earth/10 bg-white overflow-hidden transition-all duration-200 hover:border-earth/30 hover:shadow-[0_10px_30px_rgba(0,0,0,0.08)]"
+          className="relative h-full flex flex-col rounded-2xl border border-earth/30 sm:border-earth/20 bg-white shadow-[0_6px_18px_rgba(15,15,15,0.06)] overflow-hidden transition-all duration-200 hover:border-earth/40 hover:shadow-[0_14px_32px_rgba(15,15,15,0.12)]"
           role="article"
           aria-labelledby={`product-name-${id}`}
         >
           <div className="relative aspect-[3/4] overflow-hidden bg-white">
             <Image
-              src={imgSrc}
+              src={displayImage}
               alt={name}
               fill
               sizes="(max-width: 640px) 50vw, (max-width: 768px) 33vw, (max-width: 1024px) 25vw, 20vw"
@@ -138,7 +141,7 @@ const ProductCard: React.FC<ProductCardProps> = memo(
             </div>
           </div>
 
-          <div className="pt-6 flex-1 flex flex-col justify-between">
+          <div className="pt-5 flex-1 flex flex-col justify-between">
             <div>
               {brand && (
                 <p className="text-xs uppercase tracking-[0.2em] text-warm-gray mb-1">{brand}</p>
@@ -146,7 +149,7 @@ const ProductCard: React.FC<ProductCardProps> = memo(
 
               <h3
                 id={`product-name-${id}`}
-                className="font-serif text-xl text-earth line-clamp-2 mb-2 transition-colors group-hover:text-warm-gray"
+                className="font-sans text-base sm:text-lg font-medium text-earth normal-case tracking-normal line-clamp-2 mb-2 transition-colors group-hover:text-warm-gray"
               >
                 {name}
               </h3>
@@ -167,12 +170,12 @@ const ProductCard: React.FC<ProductCardProps> = memo(
 
             <div className="mt-2">
               {showPriceRange ? (
-                <p className="text-base text-earth font-medium">
+                <p className="text-sm sm:text-base text-earth font-medium">
                   {formatWithCurrency(displayMinPrice ?? 0, priceCurrency)} -
                   {formatWithCurrency(displayMaxPrice ?? 0, priceCurrency)}
                 </p>
               ) : displayMinPrice !== null ? (
-                <p className="text-base text-earth font-medium">
+                <p className="text-sm sm:text-base text-earth font-medium">
                   {t('common.from')} {formatWithCurrency(displayMinPrice, priceCurrency)}
                 </p>
               ) : (

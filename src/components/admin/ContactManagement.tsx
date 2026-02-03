@@ -88,6 +88,8 @@ export const ContactManagement: React.FC = () => {
         <Button
           onClick={handleSave}
           disabled={loading}
+          variant="pill"
+          size="pill"
           className={isSaved ? 'bg-green-600 hover:bg-green-700' : ''}
         >
           {(() => {

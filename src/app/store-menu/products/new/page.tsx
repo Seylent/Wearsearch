@@ -445,17 +445,22 @@ function NewProductForm({ storeId }: { storeId: string }) {
           )}
 
           <div className="flex justify-between pt-4">
-            <Button variant="outline" onClick={handleBack} disabled={step === 2}>
+            <Button variant="pillOutline" size="pill" onClick={handleBack} disabled={step === 2}>
               <ArrowLeft className="mr-2 h-4 w-4" />
               Назад
             </Button>
             {step < 5 ? (
-              <Button onClick={handleNext} disabled={!isStepValid()}>
+              <Button onClick={handleNext} disabled={!isStepValid()} variant="pill" size="pill">
                 Далі
                 <ArrowRight className="ml-2 h-4 w-4" />
               </Button>
             ) : (
-              <Button onClick={handleSubmit} disabled={createMutation.isPending}>
+              <Button
+                onClick={handleSubmit}
+                disabled={createMutation.isPending}
+                variant="pill"
+                size="pill"
+              >
                 {createMutation.isPending ? 'Публікація...' : 'Опублікувати'}
               </Button>
             )}
@@ -637,6 +642,8 @@ function ExistingProductSelector({ storeId }: { storeId: string }) {
                 addMutation.isPending ||
                 !selectedBrandAccess.isAllowed
               }
+              variant="pill"
+              size="pill"
             >
               {addMutation.isPending ? 'Додавання...' : 'Додати до мого магазину'}
             </Button>

@@ -8,6 +8,7 @@ import React, { useEffect } from 'react';
 import { X } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
+import { lockBodyScroll, unlockBodyScroll } from '@/lib/scrollLock';
 
 interface BottomSheetProps {
   open: boolean;
@@ -27,15 +28,15 @@ export const BottomSheet: React.FC<BottomSheetProps> = ({
   // Prevent body scroll when sheet is open
   useEffect(() => {
     if (open) {
-      document.body.style.overflow = 'hidden';
-      document.body.style.touchAction = 'none';
+      lockBodyScroll();
     } else {
-      document.body.style.overflow = '';
-      document.body.style.touchAction = '';
+      unlockBodyScroll();
     }
+
     return () => {
-      document.body.style.overflow = '';
-      document.body.style.touchAction = '';
+      if (open) {
+        unlockBodyScroll();
+      }
     };
   }, [open]);
 
@@ -76,6 +77,7 @@ export const BottomSheet: React.FC<BottomSheetProps> = ({
           !open && 'animate-out slide-out-to-bottom duration-200',
           className
         )}
+        data-scroll-lock-root
         role="dialog"
         aria-modal="true"
         aria-labelledby="bottom-sheet-title"
@@ -110,10 +112,15 @@ export const BottomSheet: React.FC<BottomSheetProps> = ({
 
         {/* Footer Actions (Optional) */}
         <div className="sticky bottom-0 left-0 right-0 bg-background border-t border-border p-4 flex gap-3">
-          <Button variant="outline" className="flex-1 min-h-[44px]" onClick={onClose}>
+          <Button
+            variant="pillOutline"
+            size="pill"
+            className="flex-1 min-h-[44px]"
+            onClick={onClose}
+          >
             Cancel
           </Button>
-          <Button className="flex-1 min-h-[44px]" onClick={onClose}>
+          <Button variant="pill" size="pill" className="flex-1 min-h-[44px]" onClick={onClose}>
             Apply
           </Button>
         </div>

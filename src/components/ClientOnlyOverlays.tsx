@@ -1,6 +1,7 @@
 'use client';
 
 import dynamic from 'next/dynamic';
+import { ScrollLockReset } from '@/components/ScrollLockReset';
 
 const NavigationProgress = dynamic(() => import('@/components/NavigationProgress'), {
   ssr: false,
@@ -19,5 +20,6 @@ export const ClientOnlyOverlays = () => (
   <>
     <NavigationProgress />
     <OfflineBanner />
+    <ScrollLockReset />
   </>
 );

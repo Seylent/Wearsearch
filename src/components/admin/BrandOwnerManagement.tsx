@@ -178,7 +178,7 @@ export const BrandOwnerManagement = () => {
               />
             </div>
             <div className="flex items-end">
-              <Button type="submit" disabled={loading}>
+              <Button type="submit" disabled={loading} variant="pill" size="pill">
                 {t('brand.addStorePermission', 'Grant access')}
               </Button>
             </div>
@@ -241,7 +241,7 @@ export const BrandOwnerManagement = () => {
               />
             </div>
             <div className="flex items-end">
-              <Button type="submit" disabled={loading}>
+              <Button type="submit" disabled={loading} variant="pill" size="pill">
                 {t('brand.linkOfficialStore', 'Link store')}
               </Button>
             </div>

@@ -7,6 +7,7 @@ import { useTranslation } from 'react-i18next';
 import { getPublicWishlist, type PublicWishlist } from '@/services/wishlistService';
 import { useCurrency } from '@/contexts/CurrencyContext';
 import { cn } from '@/lib/utils';
+import { usePresignedImages } from '@/hooks/usePresignedImage';
 
 interface PublicWishlistContentProps {
   shareId: string;
@@ -67,6 +68,7 @@ export default function PublicWishlistContent({ shareId, className }: PublicWish
   }, [shareId, currency]);
 
   const items = useMemo(() => data?.items ?? [], [data]);
+  const resolvedImages = usePresignedImages(items.map(item => item.image_url ?? ''));
 
   return (
     <div className={cn('min-h-screen bg-background text-foreground', className)}>
@@ -89,7 +91,7 @@ export default function PublicWishlistContent({ shareId, className }: PublicWish
           <div className="text-center py-16 text-muted-foreground">Loading...</div>
         ) : items.length > 0 ? (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-            {items.map(item => {
+            {items.map((item, index) => {
               const minPrice = getNumber(item.price) ?? getNumber(item.price_min);
               const maxPrice = getNumber(item.max_price);
               const itemCurrency = normalizeCurrency(item.currency);
@@ -109,9 +111,9 @@ export default function PublicWishlistContent({ shareId, className }: PublicWish
                   className="group overflow-hidden rounded-2xl border border-border/40 bg-card/50 shadow-sm transition hover:border-foreground/40"
                 >
                   <div className="relative aspect-[4/5] bg-muted/30">
-                    {item.image_url && (
+                    {(resolvedImages[index] || item.image_url) && (
                       <Image
-                        src={item.image_url}
+                        src={resolvedImages[index] || item.image_url || ''}
                         alt={item.name || 'Product'}
                         fill
                         sizes="(max-width: 768px) 50vw, 25vw"

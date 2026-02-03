@@ -1259,13 +1259,13 @@ export function ProductsContent() {
                   </div>
                 </div>
 
-                <div className="flex flex-wrap items-center gap-3">
+                <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
                   {/* Filter Dialog */}
                   <Dialog open={filterOpen} onOpenChange={setFilterOpen} modal={false}>
                     <DialogTrigger asChild>
                       <Button
                         variant={isFilterActive ? 'default' : 'outline'}
-                        className={`h-11 px-4 gap-2 rounded-full relative overflow-hidden border border-earth/20 transition-all duration-150 touch-manipulation active:scale-95 ${
+                        className={`h-11 px-4 gap-2 rounded-full w-full sm:w-auto relative overflow-hidden border border-earth/20 transition-all duration-150 touch-manipulation active:scale-95 ${
                           isFilterActive
                             ? 'bg-sand/40 text-earth border-earth/40'
                             : 'bg-background text-warm-gray hover:text-earth hover:border-earth/40'
@@ -1335,7 +1335,7 @@ export function ProductsContent() {
                       setCurrentPage(1);
                     }}
                   >
-                    <SelectTrigger className="w-[180px] h-11 bg-background/60 border-earth/20 rounded-full text-warm-gray hover:text-earth hover:border-earth/40">
+                    <SelectTrigger className="w-full sm:w-[180px] h-11 bg-background/60 border-earth/20 rounded-full text-warm-gray hover:text-earth hover:border-earth/40">
                       <SelectValue placeholder={t('products.sortBy')} />
                     </SelectTrigger>
                     <SelectContent>

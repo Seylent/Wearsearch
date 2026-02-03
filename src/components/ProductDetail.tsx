@@ -635,9 +635,16 @@ const ProductDetail = () => {
   if (!product) {
     return (
       <div className="min-h-screen bg-white text-earth flex flex-col items-center justify-center">
-        <h2 className="font-serif text-3xl mb-4">Product Not Found</h2>
-        <Button onClick={() => router.push('/')} className="rounded-none bg-earth text-cream">
-          Go Home
+        <h2 className="font-serif text-3xl mb-4">
+          {t('productDetail.notFoundTitle', 'Product Not Found')}
+        </h2>
+        <Button
+          variant="pill"
+          size="pill"
+          onClick={() => router.push('/')}
+          className="w-full sm:w-auto"
+        >
+          {t('common.goHome', 'Go Home')}
         </Button>
       </div>
     );
@@ -674,9 +681,10 @@ const ProductDetail = () => {
 
           {canManageProducts && (
             <Button
-              variant="outline"
+              variant="pillOutline"
+              size="pill"
               onClick={() => router.push(`/admin?editProduct=${id}`)}
-              className="gap-2 rounded-none border-earth text-earth hover:bg-earth hover:text-cream"
+              className="gap-2"
             >
               <Edit className="w-4 h-4" />
               {t('products.editProduct')}

@@ -2,6 +2,7 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import NextImage from 'next/image';
 import { X, ChevronLeft, ChevronRight, ZoomIn } from 'lucide-react';
+import { lockBodyScroll, unlockBodyScroll } from '@/lib/scrollLock';
 
 interface ProductImageViewerProps {
   isOpen: boolean;
@@ -37,9 +38,9 @@ export const ProductImageViewer = ({
     setCurrentIndex(initialIndex);
     setZoom(1);
     zoomRef.current = 1;
-    document.body.style.overflow = 'hidden';
+    lockBodyScroll();
     return () => {
-      document.body.style.overflow = '';
+      unlockBodyScroll();
     };
   }, [isOpen, initialIndex]);
 
@@ -128,7 +129,9 @@ export const ProductImageViewer = ({
 
   const handleTouchMove = (event: React.TouchEvent) => {
     if (event.touches.length === 2 && pinchStartDistance.current) {
-      event.preventDefault();
+      if (event.cancelable) {
+        event.preventDefault();
+      }
       const dx = event.touches[0].clientX - event.touches[1].clientX;
       const dy = event.touches[0].clientY - event.touches[1].clientY;
       const nextDistance = Math.hypot(dx, dy);
@@ -164,7 +167,10 @@ export const ProductImageViewer = ({
   if (!isOpen || !currentImage) return null;
 
   return createPortal(
-    <div className="fixed inset-0 z-[120] bg-black/95 text-white overflow-hidden">
+    <div
+      className="fixed inset-0 z-[120] bg-black/95 text-white overflow-hidden"
+      data-scroll-lock-root
+    >
       <div className="absolute inset-0" onClick={onClose} aria-hidden="true" />
 
       <div className="relative z-[1] flex flex-col h-full min-h-0">
@@ -212,7 +218,7 @@ export const ProductImageViewer = ({
             onTouchEnd={handleTouchEnd}
             style={{
               cursor: zoom > 1 ? 'zoom-out' : 'zoom-in',
-              touchAction: 'none',
+              touchAction: 'pan-y',
             }}
           >
             <NextImage

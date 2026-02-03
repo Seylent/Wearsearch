@@ -69,7 +69,7 @@ const ContactsContent = () => {
   }, []);
 
   return (
-    <div className="min-h-screen bg-black text-white overflow-x-hidden font-sans">
+    <div className="min-h-screen bg-white text-foreground overflow-x-hidden font-sans">
       {/* Hero Section */}
       <section className="relative min-h-[40vh] flex items-center justify-center overflow-hidden pt-28 pb-12">
         <NeonAbstractions />

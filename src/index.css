@@ -1,5 +1,107 @@
 /* Fonts are loaded via next/font in src/app/layout.tsx */
 
+/* Global font definitions and typography baseline */
+:root {
+  --font-base: 'Helvetica Neue', 'Arial Black', Arial, sans-serif;
+  --font-heading: 'Helvetica Neue', 'Arial Black', Arial, sans-serif;
+  --foreground: #111;
+  --background: #ffffff;
+}
+
+body {
+  font-family: var(--font-base);
+  color: #111;
+  -webkit-overflow-scrolling: touch;
+}
+
+/* Headings should be bold and uppercase */
+h1,
+h2,
+h3,
+h4,
+h5,
+h6 {
+  font-family: var(--font-heading);
+  font-weight: 700; /* Bold / Heavy */
+  text-transform: uppercase;
+  color: #000;
+  letter-spacing: 0.02em;
+}
+
+/* Menu and navigation should follow heading typography */
+a,
+.nav-link,
+.menu a,
+nav a {
+  font-family: var(--font-heading);
+  font-weight: 700;
+  text-transform: uppercase;
+  color: #000;
+}
+
+/* Common card/section titles */
+.card-title,
+.section-title,
+.product-name,
+.brand-name,
+.logo-title,
+.title-block {
+  font-family: var(--font-heading);
+  font-weight: 700;
+  text-transform: uppercase;
+}
+
+/* Generic button/text controls that should be bold uppercase */
+.btn,
+.button,
+.pill {
+  font-family: var(--font-heading);
+  font-weight: 700;
+  text-transform: uppercase;
+}
+/* Additional explicit font utilities for uniform typography */
+.font-helvetica700 {
+  font-family: var(--font-heading);
+  font-weight: 700;
+  text-transform: uppercase;
+}
+.font-helvetica800 {
+  font-family: var(--font-heading);
+  font-weight: 800;
+  text-transform: uppercase;
+}
+.font-serif {
+  font-family: var(--font-heading) !important;
+  font-weight: 700 !important;
+  text-transform: uppercase !important;
+}
+/* Global Helvetica Neue Bold/Heavy with fallbacks */
+:root {
+  --font-heading: 'Helvetica Neue', 'Arial Black', Arial, sans-serif;
+}
+body {
+  font-family: 'Helvetica Neue', 'Arial Black', Arial, sans-serif;
+}
+h1,
+h2,
+h3,
+h4,
+h5,
+h6 {
+  font-family: var(--font-heading);
+  font-weight: 700;
+  text-transform: uppercase;
+  color: #000;
+}
+a,
+header nav a,
+.menu a {
+  font-family: var(--font-heading);
+  font-weight: 700;
+  text-transform: uppercase;
+  color: #000;
+}
+
 /* Custom logo font - Youre Gone */
 @font-face {
   font-family: 'Youre Gone';
@@ -37,16 +139,7 @@ html {
 }
 
 body {
-  /* Enable GPU acceleration for the entire page */
-  transform: translateZ(0);
-  -webkit-transform: translateZ(0);
-  backface-visibility: hidden;
-  -webkit-backface-visibility: hidden;
   overflow-x: hidden;
-  /* CSS Containment для ізоляції рендерингу */
-  contain: layout style paint;
-  /* Prevent layout shift from scrollbar */
-  min-width: 100vw;
 }
 
 /* Override Radix UI scroll lock for all states */
@@ -57,6 +150,15 @@ body[data-scroll-locked] {
 
 body[style*='overflow: hidden'] {
   overflow: auto !important;
+}
+
+html[style*='overflow: hidden'] {
+  overflow: auto !important;
+}
+
+html[style*='touch-action: none'],
+body[style*='touch-action: none'] {
+  touch-action: auto !important;
 }
 
 body[style*='padding-right'] {
@@ -334,7 +436,7 @@ body[style*='padding-right'] {
   }
 
   * {
-    @apply border-border;
+    border: 1px solid transparent;
   }
 
   body {

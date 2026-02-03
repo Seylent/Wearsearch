@@ -192,15 +192,19 @@ function FavoritesWithParams() {
                   </h3>
                   <p className="text-muted-foreground mb-4 max-w-md mx-auto text-sm select-none">
                     {searchQuery
-                      ? 'Try adjusting your search terms'
-                      : 'Start exploring and save products you love to see them here'}
+                      ? t('favorites.searchHint', 'Try adjusting your search terms')
+                      : t(
+                          'favorites.emptyHint',
+                          'Start exploring and save products you love to see them here'
+                        )}
                   </p>
                   <Button
                     onClick={() => router.push('/products')}
-                    className="rounded-full w-full sm:w-auto"
-                    size="sm"
+                    variant="pill"
+                    size="pill"
+                    className="w-full sm:w-auto"
                   >
-                    Browse Products
+                    {t('favorites.browseProducts', 'Browse Products')}
                   </Button>
                 </div>
               );
@@ -260,23 +264,28 @@ function FavoritesWithParams() {
         {pageInfo && pageInfo.totalPages > 1 && (
           <div className="flex flex-col sm:flex-row items-center justify-center gap-3 sm:gap-4 mt-10 sm:mt-12">
             <Button
-              variant="outline"
+              variant="pillOutline"
               onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
               disabled={!pageInfo.hasPrev || favoritesPageFetching}
+              size="pill"
               className="w-full sm:w-auto"
             >
-              Prev
+              {t('common.previous')}
             </Button>
             <span className="text-sm text-muted-foreground">
-              Page {pageInfo.page} of {pageInfo.totalPages}
+              {t('common.pageOf', 'Page {{page}} of {{total}}', {
+                page: pageInfo.page,
+                total: pageInfo.totalPages,
+              })}
             </span>
             <Button
-              variant="outline"
+              variant="pillOutline"
               onClick={() => setCurrentPage(p => p + 1)}
               disabled={!pageInfo.hasNext || favoritesPageFetching}
+              size="pill"
               className="w-full sm:w-auto"
             >
-              Next
+              {t('common.next')}
             </Button>
           </div>
         )}

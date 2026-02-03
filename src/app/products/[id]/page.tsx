@@ -32,6 +32,37 @@ const toOptionalNumber = (value: unknown): number | undefined => {
   return undefined;
 };
 
+const isDirectUrl = (value: string) =>
+  value.startsWith('http://') ||
+  value.startsWith('https://') ||
+  value.startsWith('/') ||
+  value.startsWith('data:') ||
+  value.startsWith('blob:');
+
+const resolvePresignedUrl = async (value?: string): Promise<string | undefined> => {
+  if (!value) return undefined;
+  if (isDirectUrl(value)) return value;
+
+  const result = await fetchBackendJson<unknown>(`/upload/image/${encodeURIComponent(value)}`, {
+    next: { revalidate: 300 },
+  });
+  if (!result || !result.data) return undefined;
+
+  if (isRecord(result.data) && typeof result.data.url === 'string') {
+    return result.data.url;
+  }
+
+  if (
+    isRecord(result.data) &&
+    isRecord(result.data.data) &&
+    typeof result.data.data.url === 'string'
+  ) {
+    return result.data.data.url;
+  }
+
+  return undefined;
+};
+
 // Types
 interface PageProps {
   params: Promise<{
@@ -87,7 +118,8 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
     const productDescription =
       toOptionalString(isRecord(product) ? product.seo_description : undefined) ||
       toOptionalString(isRecord(product) ? product.description : undefined);
-    const productImageUrl = toOptionalString(isRecord(product) ? product.image_url : undefined);
+    const rawImageUrl = toOptionalString(isRecord(product) ? product.image_url : undefined);
+    const productImageUrl = await resolvePresignedUrl(rawImageUrl);
     const productPrice = toOptionalNumber(isRecord(product) ? product.price : undefined);
     const productCurrency =
       toOptionalString(isRecord(product) ? product.currency : undefined) || 'UAH';

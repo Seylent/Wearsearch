@@ -101,8 +101,8 @@ export default function WishlistsContent({ className }: { className?: string }) 
             </div>
             <div className="shrink-0 text-left sm:text-right">
               <Button
-                variant="outline"
-                size="sm"
+                variant="pillOutline"
+                size="pill"
                 onClick={() => setShowSettings(!showSettings)}
                 className="gap-2 w-full sm:w-auto"
               >
@@ -151,7 +151,7 @@ export default function WishlistsContent({ className }: { className?: string }) 
                 {t('collections.empty', 'Create a wishlist to get started')}
               </div>
             ) : collectionItemsLoading ? (
-              <div className="text-center py-12 text-muted-foreground">Loading...</div>
+              <div className="text-center py-12 text-muted-foreground">{t('common.loading')}</div>
             ) : mappedItems && mappedItems.length > 0 ? (
               <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
                 {mappedItems.map((item, index) => {

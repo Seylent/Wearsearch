@@ -304,13 +304,19 @@ function SettingsContent({ storeId, isOwner }: { storeId: string; isOwner: boole
 
             {!readOnly && (
               <div className="flex gap-4">
-                <Button type="submit" disabled={updateMutation.isPending || !isDirty}>
+                <Button
+                  type="submit"
+                  disabled={updateMutation.isPending || !isDirty}
+                  variant="pill"
+                  size="pill"
+                >
                   {updateMutation.isPending ? 'Збереження...' : 'Зберегти зміни'}
                 </Button>
                 {isDirty && (
                   <Button
                     type="button"
-                    variant="outline"
+                    variant="pillOutline"
+                    size="pill"
                     onClick={() => {
                       if (settings) {
                         setFormData({
@@ -434,7 +440,7 @@ function SettingsContent({ storeId, isOwner }: { storeId: string; isOwner: boole
             </Card>
 
             <Link href={`/stores/${storeId}`} target="_blank">
-              <Button variant="outline" className="w-full">
+              <Button variant="pillOutline" size="pill" className="w-full">
                 <Eye className="mr-2 h-4 w-4" />
                 Переглянути сторінку магазину
               </Button>

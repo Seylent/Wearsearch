@@ -16,6 +16,7 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { Combobox } from '@/components/ui/combobox';
 import { Plus, Edit, BookTemplate, X } from 'lucide-react';
 import { ImageUploader } from '@/components/ImageUploader';
+import { uploadService } from '@/services/uploadService';
 import { getCategoryTranslation } from '@/utils/translations';
 import { useCatalogFilters } from '@/hooks/useCatalogFilters';
 
@@ -178,6 +179,7 @@ export const AddProductForm: React.FC<AddProductFormProps> = ({
 }) => {
   const { t } = useTranslation();
   const isMounted = useClientOnly();
+  const [resolvedImages, setResolvedImages] = useState<string[]>([]);
   const [storeSizeInputs, setStoreSizeInputs] = useState<Record<string, string>>({});
   const { data: catalogFilters } = useCatalogFilters();
   const isUpdating = !!editingProductId;
@@ -188,6 +190,45 @@ export const AddProductForm: React.FC<AddProductFormProps> = ({
     submitText = isUpdating ? t('admin.updateProduct') : t('admin.createProduct');
   }
   const productSubmitText = submitText;
+
+  const isDirectUrl = (value: string) =>
+    value.startsWith('http://') ||
+    value.startsWith('https://') ||
+    value.startsWith('/') ||
+    value.startsWith('data:') ||
+    value.startsWith('blob:');
+
+  useEffect(() => {
+    let isActive = true;
+
+    const resolveImages = async () => {
+      if (productImages.length === 0) {
+        if (isActive) setResolvedImages([]);
+        return;
+      }
+
+      const resolved = await Promise.all(
+        productImages.map(async image => {
+          if (!image) return '';
+          if (isDirectUrl(image)) return image;
+          try {
+            const result = await uploadService.getImageUrl(image);
+            return result.url;
+          } catch {
+            return '';
+          }
+        })
+      );
+
+      if (isActive) setResolvedImages(resolved);
+    };
+
+    resolveImages();
+
+    return () => {
+      isActive = false;
+    };
+  }, [productImages]);
 
   const handleStoreSizeInputChange = (storeId: string, value: string) => {
     setStoreSizeInputs(prev => ({ ...prev, [storeId]: value }));
@@ -511,11 +552,11 @@ export const AddProductForm: React.FC<AddProductFormProps> = ({
 
               {/* Image Uploader */}
               <ImageUploader
-                onImageUpload={(url: string) => {
+                onImageUpload={image => {
                   if (productImages.length === 0) {
-                    onProductImageUrlChange(url);
+                    onProductImageUrlChange(image.key);
                   }
-                  onProductImagesChange([...productImages, url]);
+                  onProductImagesChange([...productImages, image.key]);
                 }}
               />
 
@@ -534,7 +575,7 @@ export const AddProductForm: React.FC<AddProductFormProps> = ({
                             ? 'border-primary ring-2 ring-primary/20'
                             : 'border-border/50 hover:border-border'
                         }`}
-                        style={{ backgroundImage: `url(${image})` }}
+                        style={{ backgroundImage: `url(${resolvedImages[index] || ''})` }}
                         onClick={() => onPrimaryImageIndexChange(index)}
                         aria-label={`Select image ${index + 1} as primary`}
                       />

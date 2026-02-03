@@ -6,12 +6,13 @@
 import React from 'react';
 import { useTranslation } from 'react-i18next';
 import Link from 'next/link';
-import Image from 'next/image';
 import { Sparkles, TrendingUp, Heart, Eye, Loader2 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useRecommendations } from '@/hooks/useRecommendations';
 import { useIsAuthenticated } from '@/hooks/useIsAuthenticated';
 import { useCurrencyConversion } from '@/hooks/useCurrencyConversion';
+import { usePresignedImages } from '@/hooks/usePresignedImage';
+import { PresignedImage } from '@/components/common/PresignedImage';
 
 interface PersonalizedRecommendationsProps {
   limit?: number;
@@ -33,6 +34,9 @@ const PersonalizedRecommendations: React.FC<PersonalizedRecommendationsProps> = 
   const { formatPrice } = useCurrencyConversion();
   const { recommendations, isLoading, isEnabled } = useRecommendations(limit);
   const isLoggedIn = useIsAuthenticated();
+  const resolvedImages = usePresignedImages(
+    recommendations.map(product => product.image || product.image_url || '')
+  );
 
   // Don't show for non-authenticated users
   if (!isLoggedIn) {
@@ -76,7 +80,7 @@ const PersonalizedRecommendations: React.FC<PersonalizedRecommendationsProps> = 
           if (!product.id && product.id !== 0) return null;
 
           const ReasonIcon = product.reason ? reasonIcons[product.reason] : Sparkles;
-          const imageUrl = product.image || product.image_url || '/placeholder.png';
+          const imageUrl = resolvedImages[index] || product.image || product.image_url || '';
 
           return (
             <Link
@@ -85,7 +89,7 @@ const PersonalizedRecommendations: React.FC<PersonalizedRecommendationsProps> = 
               className="group block"
             >
               <div className="relative aspect-square rounded-lg overflow-hidden bg-white/5 border border-white/10 transition-all group-hover:border-white/30">
-                <Image
+                <PresignedImage
                   src={imageUrl}
                   alt={product.name}
                   fill

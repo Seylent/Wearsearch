@@ -186,7 +186,7 @@ function AddProductDialog({
         </div>
 
         <DialogFooter>
-          <Button variant="outline" onClick={onClose}>
+          <Button variant="pillOutline" size="pill" onClick={onClose}>
             Скасувати
           </Button>
           <Button
@@ -197,6 +197,8 @@ function AddProductDialog({
               addMutation.isPending ||
               !brandAccess.isAllowed
             }
+            variant="pill"
+            size="pill"
           >
             {addMutation.isPending ? 'Додавання...' : 'Додати'}
           </Button>

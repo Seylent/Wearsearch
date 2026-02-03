@@ -297,7 +297,7 @@ export const UserRoleManagement = () => {
             </div>
           )}
 
-          <Button type="submit" disabled={loading}>
+          <Button type="submit" disabled={loading} variant="pill" size="pill">
             {loading ? t('common.saving', 'Saving...') : t('admin.rolesSave', 'Save')}
           </Button>
         </form>

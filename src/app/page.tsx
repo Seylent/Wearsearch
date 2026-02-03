@@ -48,7 +48,7 @@ export default async function HomePage() {
           <div className="min-h-screen bg-black text-white flex items-center justify-center">
             <div className="text-center">
               <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-white mx-auto mb-4"></div>
-              <p className="text-white/80">Loading homepage...</p>
+              <p className="text-white/80">Завантаження головної...</p>
             </div>
           </div>
         }
@@ -72,13 +72,13 @@ export default async function HomePage() {
     return (
       <div className="min-h-screen bg-black text-white flex items-center justify-center">
         <div className="text-center">
-          <h1 className="text-3xl font-bold text-white mb-4">Welcome to WearSearch</h1>
-          <p className="text-white/80 mb-6">Something went wrong loading the homepage.</p>
+          <h1 className="text-3xl font-bold text-white mb-4">Ласкаво просимо до Wearsearch</h1>
+          <p className="text-white/80 mb-6">Виникла помилка під час завантаження головної.</p>
           <a
             href="/products"
-            className="bg-white text-black px-6 py-2 rounded-lg transition-colors hover:bg-gray-100"
+            className="inline-flex w-full sm:w-auto items-center justify-center px-6 sm:px-8 py-3 text-[10px] sm:text-xs uppercase tracking-[0.2em] sm:tracking-[0.3em] rounded-full bg-white text-black transition-colors hover:bg-gray-100"
           >
-            Browse Products
+            Переглянути товари
           </a>
         </div>
       </div>

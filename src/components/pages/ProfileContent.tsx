@@ -208,7 +208,7 @@ const Profile = () => {
 
   if (authLoading) {
     return (
-      <div className="min-h-screen bg-black text-white flex items-center justify-center">
+      <div className="min-h-screen bg-white text-foreground flex items-center justify-center">
         <div className="flex flex-col items-center gap-4">
           <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-white"></div>
           <p className="text-muted-foreground">{t('common.loading')}</p>
@@ -222,7 +222,7 @@ const Profile = () => {
   }
 
   return (
-    <div className="min-h-screen bg-black text-white">
+    <div className="min-h-screen bg-white text-foreground">
       {/* Hero Section */}
       <section className="relative min-h-[35vh] flex items-center justify-center overflow-hidden pt-28 pb-8">
         <NeonAbstractions />
@@ -231,7 +231,7 @@ const Profile = () => {
           <div className="inline-flex items-center gap-2 px-5 py-2.5 glass-card-strong rounded-full mb-6">
             <Sparkles className="w-3 h-3" />
             <span className="text-xs text-foreground/80 tracking-wider uppercase font-medium">
-              Account Settings
+              {t('profile.accountSettings', 'Account Settings')}
             </span>
           </div>
 
@@ -248,9 +248,10 @@ const Profile = () => {
           {/* Logout Button */}
           <div className="flex justify-end mb-6">
             <Button
-              variant="outline"
+              variant="pillOutline"
               onClick={handleLogout}
-              className="rounded-full border-border/50 hover:bg-destructive/10 hover:text-destructive hover:border-destructive/50"
+              size="pill"
+              className="border-border/50 hover:bg-destructive/10 hover:text-destructive hover:border-destructive/50"
             >
               <LogOut className="w-4 h-4 mr-2" />
               {t('common.logout')}
@@ -339,7 +340,9 @@ const Profile = () => {
                   <Button
                     type="submit"
                     disabled={loading}
-                    className="h-12 px-8 rounded-full bg-white text-black hover:bg-zinc-100"
+                    variant="pill"
+                    size="pill"
+                    className="w-full sm:w-auto"
                   >
                     {loading ? t('profile.saving') : t('profile.saveChanges')}
                   </Button>
@@ -403,7 +406,9 @@ const Profile = () => {
                   <Button
                     type="submit"
                     disabled={loading}
-                    className="h-12 px-8 rounded-full bg-white text-black hover:bg-zinc-100"
+                    variant="pill"
+                    size="pill"
+                    className="w-full sm:w-auto"
                   >
                     {loading ? t('profile.changing') : t('profile.changePasswordBtn')}
                   </Button>
@@ -420,7 +425,11 @@ const Profile = () => {
 
                 <AlertDialog open={showDeleteDialog} onOpenChange={setShowDeleteDialog}>
                   <AlertDialogTrigger asChild>
-                    <Button variant="destructive" className="h-12 px-8 rounded-full">
+                    <Button
+                      variant="destructive"
+                      size="pill"
+                      className="h-12 px-8 rounded-full w-full sm:w-auto"
+                    >
                       <Trash2 className="w-4 h-4 mr-2" />
                       {t('profile.deleteMyAccount')}
                     </Button>

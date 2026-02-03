@@ -6,10 +6,11 @@
  * Mobile-first design with bottom sheet for phones
  */
 
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import Image from 'next/image';
 import { createPortal } from 'react-dom';
 import { useTranslation } from 'react-i18next';
+import { lockBodyScroll, unlockBodyScroll } from '@/lib/scrollLock';
 import { Share2, Copy, Check, X, Link2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
@@ -108,6 +109,7 @@ const ShareButton: React.FC<ShareButtonProps> = ({
   const [copied, setCopied] = useState(false);
   const [isAnimating, setIsAnimating] = useState(false);
   const [isMobile, setIsMobile] = useState(false);
+  const closeTimeoutRef = useRef<number | null>(null);
 
   // Check for mobile on mount and resize
   useEffect(() => {
@@ -120,13 +122,19 @@ const ShareButton: React.FC<ShareButtonProps> = ({
   // Handle body scroll lock when modal is open
   useEffect(() => {
     if (isOpen) {
-      document.body.style.overflow = 'hidden';
+      lockBodyScroll();
       setIsAnimating(true);
     } else {
-      document.body.style.overflow = '';
+      unlockBodyScroll();
     }
     return () => {
-      document.body.style.overflow = '';
+      if (closeTimeoutRef.current) {
+        window.clearTimeout(closeTimeoutRef.current);
+        closeTimeoutRef.current = null;
+      }
+      if (isOpen) {
+        unlockBodyScroll();
+      }
     };
   }, [isOpen]);
 
@@ -296,7 +304,7 @@ const ShareButton: React.FC<ShareButtonProps> = ({
             role="dialog"
             aria-modal="true"
             aria-labelledby="share-dialog-title"
-            style={{ touchAction: 'none' }}
+            data-scroll-lock-root
           >
             {/* Backdrop with blur */}
             <button

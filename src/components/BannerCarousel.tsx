@@ -11,6 +11,7 @@ import Link from 'next/link';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
 import type { Banner } from '@/types/banner';
 import { bannerService } from '@/services/bannerService';
+import { usePresignedImage } from '@/hooks/usePresignedImage';
 
 interface BannerCarouselProps {
   banners: Banner[];
@@ -69,11 +70,12 @@ export function BannerCarousel({
     bannerService.trackClick(banner.id);
   };
 
+  const currentBanner = banners[currentIndex];
+  const bannerImage = usePresignedImage(currentBanner?.image_url);
+
   if (!banners || banners.length === 0) {
     return null;
   }
-
-  const currentBanner = banners[currentIndex];
 
   return (
     <div className="relative w-full max-w-[1200px] mx-auto overflow-hidden bg-black rounded-xl shadow-lg">
@@ -83,7 +85,7 @@ export function BannerCarousel({
         {/* Background Image */}
         <div className="absolute inset-0 flex items-center justify-center">
           <Image
-            src={currentBanner.image_url}
+            src={bannerImage || '/placeholder.svg'}
             alt={currentBanner.title || 'Banner'}
             fill
             priority={currentIndex === 0}

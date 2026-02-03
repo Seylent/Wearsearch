@@ -77,6 +77,7 @@ export const SearchDropdownView: React.FC<Readonly<SearchDropdownViewProps>> = R
         aria-modal="true"
         className="fixed inset-0 z-[100] bg-white/80 backdrop-blur-sm flex items-start justify-center pt-4 sm:pt-8 px-4 pb-6"
         aria-label={t('aria.searchResults')}
+        data-scroll-lock-root
         initial={reduceMotion ? { opacity: 1 } : { opacity: 0 }}
         animate={{ opacity: 1 }}
         exit={reduceMotion ? { opacity: 1 } : { opacity: 0 }}

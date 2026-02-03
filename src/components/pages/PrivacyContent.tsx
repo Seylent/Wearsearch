@@ -8,7 +8,7 @@ const PrivacyContent = () => {
   const { t } = useTranslation();
 
   return (
-    <div className="min-h-screen bg-black text-white">
+    <div className="min-h-screen bg-white text-foreground">
       <main className="pt-24 pb-16">
         <div className="max-w-[1200px] mx-auto px-6 md:px-12">
           {/* Back Button */}

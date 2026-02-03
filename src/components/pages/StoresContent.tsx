@@ -188,7 +188,7 @@ const StoresContent: React.FC<StoresContentProps> = ({ storeId }) => {
 
       {/* Stores Grid */}
       <section className="py-24 relative">
-        <div className="max-w-[1800px] mx-auto px-6 md:px-12 lg:px-16" id="main-content">
+        <div className="max-w-[1800px] mx-auto px-6 md:px-12 lg:px-16">
           {(() => {
             if (loading) {
               return <StoreGridSkeleton count={9} />;
@@ -197,8 +197,11 @@ const StoresContent: React.FC<StoresContentProps> = ({ storeId }) => {
             if (error) {
               return (
                 <ErrorState
-                  title="Failed to load stores"
-                  description="We couldn't load the stores. Please check your connection and try again."
+                  title={t('errors.storesLoadFailed', 'Failed to load stores')}
+                  description={t(
+                    'errors.storesLoadDescription',
+                    "We couldn't load the stores. Please check your connection and try again."
+                  )}
                   onRetry={() => globalThis.location.reload()}
                   technicalDetails={error instanceof Error ? error.message : String(error)}
                 />
@@ -341,9 +344,9 @@ const StoresContent: React.FC<StoresContentProps> = ({ storeId }) => {
 
                           {/* View Button */}
                           <Button
-                            variant="ghost"
-                            size="sm"
-                            className="opacity-0 md:group-hover:opacity-100 transition-opacity"
+                            variant="pillOutline"
+                            size="pill"
+                            className="mt-3 w-full md:mt-0 md:w-auto opacity-100 md:opacity-0 md:group-hover:opacity-100 transition-opacity"
                             onClick={e => {
                               e.stopPropagation();
                               router.push(`/products?store_id=${store.id}`);
@@ -368,24 +371,30 @@ const StoresContent: React.FC<StoresContentProps> = ({ storeId }) => {
 
           {/* Pagination */}
           {!!pagination && (pagination as PaginationInfo).totalPages > 1 && (
-            <div className="flex items-center justify-center gap-4 mt-12">
+            <div className="flex flex-col items-center justify-center gap-3 mt-12 sm:flex-row sm:gap-4">
               <Button
-                variant="outline"
+                variant="pillOutline"
+                size="pill"
+                className="w-full sm:w-auto"
                 onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
                 disabled={!(pagination as PaginationInfo).hasPrev || isFetching}
               >
-                Prev
+                {t('common.previous')}
               </Button>
               <span className="text-sm text-muted-foreground">
-                Page {(pagination as PaginationInfo).page} of{' '}
-                {(pagination as PaginationInfo).totalPages}
+                {t('common.pageOf', 'Page {{page}} of {{total}}', {
+                  page: (pagination as PaginationInfo).page,
+                  total: (pagination as PaginationInfo).totalPages,
+                })}
               </span>
               <Button
-                variant="outline"
+                variant="pillOutline"
+                size="pill"
+                className="w-full sm:w-auto"
                 onClick={() => setCurrentPage(p => p + 1)}
                 disabled={!(pagination as PaginationInfo).hasNext || isFetching}
               >
-                Next
+                {t('common.next')}
               </Button>
             </div>
           )}

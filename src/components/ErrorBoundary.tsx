@@ -1,8 +1,9 @@
 import React, { Component, ErrorInfo, ReactNode } from 'react';
 import { Button } from '@/components/ui/button';
 import { AlertTriangle } from 'lucide-react';
+import { withTranslation, type WithTranslation } from 'react-i18next';
 
-interface Props {
+interface Props extends WithTranslation {
   children: ReactNode;
   fallback?: ReactNode;
 }
@@ -31,6 +32,7 @@ class ErrorBoundary extends Component<Props, State> {
   }
 
   render() {
+    const { t } = this.props;
     if (this.state.hasError) {
       if (this.props.fallback) {
         return this.props.fallback;
@@ -44,9 +46,14 @@ class ErrorBoundary extends Component<Props, State> {
             </div>
 
             <div className="space-y-2">
-              <h2 className="text-2xl font-bold text-foreground">Something went wrong</h2>
+              <h2 className="text-2xl font-bold text-foreground">
+                {t('errors.somethingWentWrong', 'Something went wrong')}
+              </h2>
               <p className="text-muted-foreground">
-                We&apos;re sorry, but something unexpected happened. Please try refreshing the page.
+                {t(
+                  'errors.unexpectedError',
+                  "We're sorry, but something unexpected happened. Please try refreshing the page."
+                )}
               </p>
             </div>
 
@@ -58,12 +65,22 @@ class ErrorBoundary extends Component<Props, State> {
               </div>
             )}
 
-            <div className="flex gap-4 justify-center">
-              <Button onClick={() => globalThis.location.reload()} variant="default">
-                Refresh Page
+            <div className="flex flex-col sm:flex-row gap-3 justify-center">
+              <Button
+                onClick={() => globalThis.location.reload()}
+                variant="pill"
+                size="pill"
+                className="w-full sm:w-auto"
+              >
+                {t('errors.refreshPage', 'Refresh Page')}
               </Button>
-              <Button onClick={() => (globalThis.location.href = '/')} variant="outline">
-                Go Home
+              <Button
+                onClick={() => (globalThis.location.href = '/')}
+                variant="pillOutline"
+                size="pill"
+                className="w-full sm:w-auto"
+              >
+                {t('common.goHome', 'Go Home')}
               </Button>
             </div>
           </div>
@@ -75,4 +92,4 @@ class ErrorBoundary extends Component<Props, State> {
   }
 }
 
-export default ErrorBoundary;
+export default withTranslation()(ErrorBoundary);

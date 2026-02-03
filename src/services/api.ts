@@ -155,6 +155,9 @@ async function handleLegacyFallback(
   }
 
   config.__wearsearchTriedLegacy = true;
+  if (typeof config.url === 'string' && config.url.includes('/api/v1/')) {
+    config.url = config.url.replace('/api/v1/', '/api/');
+  }
   return fallback.fallbackClient.request(config);
 }
 
@@ -394,14 +397,14 @@ const attachInterceptors = (client: AxiosInstance, fallback?: FallbackConfig) =>
 /**
  * Create axios instances with default configuration
  */
-export const api: AxiosInstance = createClient(API_CONFIG.BASE_URL);
-export const apiLegacy: AxiosInstance = createClient(API_CONFIG.LEGACY_BASE_URL);
+export const api: AxiosInstance = createClient(API_CONFIG.API_URL);
+export const apiLegacy: AxiosInstance = createClient(API_CONFIG.API_URL);
 
 // API client for banner endpoints (without /v1 suffix)
-export const apiBanners: AxiosInstance = createClient('/api');
+export const apiBanners: AxiosInstance = createClient(`${API_CONFIG.API_URL}/api`);
 
 // API client for image upload endpoints
-export const apiUpload: AxiosInstance = createClient('/api');
+export const apiUpload: AxiosInstance = createClient(`${API_CONFIG.API_URL}/api`);
 
 attachInterceptors(api, ENABLE_LEGACY_FALLBACK ? { fallbackClient: apiLegacy } : undefined);
 attachInterceptors(apiLegacy);

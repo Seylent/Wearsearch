@@ -212,7 +212,7 @@ export const StoreManagement = ({
           modal={false}
         >
           <DialogTrigger asChild>
-            <Button>
+            <Button variant="pill" size="pill">
               <Plus className="w-4 h-4 mr-2" />
               {t('admin.addStore')}
             </Button>
@@ -308,7 +308,8 @@ export const StoreManagement = ({
               <div className="flex justify-end space-x-2 pt-4">
                 <Button
                   type="button"
-                  variant="outline"
+                  variant="pillOutline"
+                  size="pill"
                   onClick={() => {
                     setIsAddDialogOpen(false);
                     resetForm();
@@ -316,7 +317,7 @@ export const StoreManagement = ({
                 >
                   {t('common.cancel')}
                 </Button>
-                <Button type="submit" disabled={submitting}>
+                <Button type="submit" disabled={submitting} variant="pill" size="pill">
                   {(() => {
                     if (submitting) return t('common.saving');
                     return editingStore ? t('common.save') : t('common.create');

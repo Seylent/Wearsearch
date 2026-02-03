@@ -4,10 +4,13 @@ import { AxiosResponse } from 'axios';
 
 // Type definitions for file uploads
 export interface UploadResponse {
+  key: string;
   url: string;
-  filename: string;
-  size: number;
-  mimetype: string;
+  expiresAt?: number;
+  expiresIn?: number;
+  filename?: string;
+  size?: number;
+  mimetype?: string;
 }
 
 export interface MultipleUploadResponse {
@@ -162,6 +165,25 @@ export const uploadService = {
       valid: errors.length === 0,
       errors,
     };
+  },
+
+  /**
+   * Get a fresh presigned URL for a stored key
+   */
+  async getImageUrl(key: string): Promise<UploadResponse> {
+    try {
+      const response: AxiosResponse<UploadResponse> = await apiUpload.get(
+        `/v1/upload/image/${encodeURIComponent(key)}`
+      );
+      return response.data;
+    } catch (error: unknown) {
+      const apiError = handleApiError(error);
+      const errorMessage =
+        typeof apiError === 'string'
+          ? apiError
+          : (apiError as { message?: string } | null)?.message || 'Failed to refresh image URL';
+      throw new Error(errorMessage);
+    }
   },
 };
 

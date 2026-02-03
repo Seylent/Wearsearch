@@ -19,8 +19,7 @@ export const useImageUpload = () => {
       }
 
       const result = await uploadService.uploadImage(file);
-      // Return just the URL string for easier handling
-      return result.url;
+      return result;
     },
     onSuccess: () => {
       toast({
@@ -30,7 +29,7 @@ export const useImageUpload = () => {
     },
     onError: (error: Error) => {
       console.error('Upload error details:', error);
-      
+
       // Check if upload endpoint is not configured
       if (error.message.includes('404') || error.message.includes('Not Found')) {
         toast({

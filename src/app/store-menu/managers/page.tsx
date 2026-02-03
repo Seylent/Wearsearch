@@ -114,10 +114,15 @@ function AddManagerDialog({
         </div>
 
         <DialogFooter>
-          <Button variant="outline" onClick={onClose}>
+          <Button variant="pillOutline" size="pill" onClick={onClose}>
             Скасувати
           </Button>
-          <Button onClick={handleAdd} disabled={!email || addMutation.isPending}>
+          <Button
+            onClick={handleAdd}
+            disabled={!email || addMutation.isPending}
+            variant="pill"
+            size="pill"
+          >
             {addMutation.isPending ? 'Додавання...' : 'Додати менеджера'}
           </Button>
         </DialogFooter>
@@ -162,10 +167,15 @@ function DeleteManagerDialog({
           </DialogDescription>
         </DialogHeader>
         <DialogFooter>
-          <Button variant="outline" onClick={onClose}>
+          <Button variant="pillOutline" size="pill" onClick={onClose}>
             Скасувати
           </Button>
-          <Button variant="destructive" onClick={handleDelete} disabled={removeMutation.isPending}>
+          <Button
+            variant="destructive"
+            size="pill"
+            onClick={handleDelete}
+            disabled={removeMutation.isPending}
+          >
             {removeMutation.isPending ? 'Видалення...' : 'Видалити'}
           </Button>
         </DialogFooter>
@@ -231,7 +241,7 @@ function ManagersContent({ storeId, isOwner }: { storeId: string; isOwner: boole
           <h1 className="text-2xl font-bold">Менеджери</h1>
           <p className="text-muted-foreground">Керуйте доступом менеджерів до вашого магазину</p>
         </div>
-        <Button onClick={() => setIsAddDialogOpen(true)}>
+        <Button onClick={() => setIsAddDialogOpen(true)} variant="pill" size="pill">
           <Plus className="mr-2 h-4 w-4" />
           Додати менеджера
         </Button>

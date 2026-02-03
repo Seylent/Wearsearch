@@ -216,7 +216,7 @@ export const StoreOwnerManagement = () => {
               />
             </div>
             <div className="flex items-end">
-              <Button type="submit" disabled={loading}>
+              <Button type="submit" disabled={loading} variant="pill" size="pill">
                 {t('store.addManager', 'Add manager')}
               </Button>
             </div>
@@ -233,7 +233,7 @@ export const StoreOwnerManagement = () => {
               />
             </div>
             <div className="flex items-end">
-              <Button type="submit" variant="outline" disabled={loading}>
+              <Button type="submit" variant="pillOutline" size="pill" disabled={loading}>
                 {t('store.removeManager', 'Remove manager')}
               </Button>
             </div>
@@ -299,7 +299,7 @@ export const StoreOwnerManagement = () => {
                     placeholder="uuid, uuid"
                   />
                 </div>
-                <Button type="submit" disabled={loading}>
+                <Button type="submit" disabled={loading} variant="pill" size="pill">
                   {t('store.addExistingProduct', 'Add product')}
                 </Button>
               </form>
@@ -449,7 +449,7 @@ export const StoreOwnerManagement = () => {
                     placeholder="uuid, uuid"
                   />
                 </div>
-                <Button type="submit" disabled={loading}>
+                <Button type="submit" disabled={loading} variant="pill" size="pill">
                   {t('store.createStoreProduct', 'Create product')}
                 </Button>
               </form>

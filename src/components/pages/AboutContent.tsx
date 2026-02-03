@@ -55,7 +55,7 @@ const AboutContent = () => {
             className="mb-8 text-muted-foreground hover:text-foreground"
           >
             <ArrowLeft className="w-4 h-4 mr-2" />
-            Back
+            {t('common.back')}
           </Button>
 
           <div className="max-w-3xl mx-auto text-center">
@@ -129,16 +129,22 @@ const AboutContent = () => {
         </div>
 
         <div className="max-w-[1800px] mx-auto px-6 md:px-12 lg:px-16 relative z-10 text-center">
-          <h2 className="font-display text-3xl sm:text-4xl font-bold mb-6">Ready to Explore?</h2>
+          <h2 className="font-display text-3xl sm:text-4xl font-bold mb-6">
+            {t('about.ctaTitle', 'Ready to Explore?')}
+          </h2>
           <p className="text-lg text-muted-foreground max-w-xl mx-auto mb-8 font-serif">
-            Discover our curated collection of exceptional fashion pieces.
+            {t(
+              'about.ctaDescription',
+              'Discover our curated collection of exceptional fashion pieces.'
+            )}
           </p>
           <Button
-            size="lg"
-            className="px-8 h-14 text-base rounded-full"
+            variant="pill"
+            size="pill"
             onClick={() => router.push('/products')}
+            className="w-full sm:w-auto"
           >
-            Browse Collections
+            {t('about.ctaButton', 'Browse Collections')}
           </Button>
         </div>
       </section>

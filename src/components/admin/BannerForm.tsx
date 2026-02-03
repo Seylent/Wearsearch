@@ -89,7 +89,7 @@ export function BannerForm({
             Завантажити зображення
           </label>
           <ImageUploader
-            onImageUpload={url => handleChange('image_url', url)}
+            onImageUpload={image => handleChange('image_url', image.key)}
             currentImage={formData.image_url}
           />
         </div>

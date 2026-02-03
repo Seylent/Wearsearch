@@ -13,6 +13,7 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { useTranslation } from 'react-i18next';
 import { Package, Edit, Trash2, Search, LayoutGrid, Table as TableIcon } from 'lucide-react';
 import { getCategoryTranslation, getColorTranslation } from '@/utils/translations';
+import { usePresignedImages } from '@/hooks/usePresignedImage';
 
 type NormalizedProduct = {
   id: string;
@@ -108,6 +109,7 @@ export const ProductList: React.FC<ProductListProps> = ({
       product.brand.toLowerCase().includes(searchLower) ||
       product.category.toLowerCase().includes(searchLower)
   );
+  const resolvedImages = usePresignedImages(filteredProducts.map(product => product.image));
 
   return (
     <div className="p-8 rounded-2xl border border-border/50 bg-card/40 backdrop-blur-sm overflow-visible">
@@ -199,7 +201,7 @@ export const ProductList: React.FC<ProductListProps> = ({
 
           return viewMode === 'grid' ? (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 overflow-visible">
-              {filteredProducts.map(product => (
+              {filteredProducts.map((product, index) => (
                 <div
                   key={product.id || product.name}
                   className="group p-4 rounded-xl border border-border/30 bg-card/30 backdrop-blur-sm hover:bg-card/50 transition-colors overflow-visible"
@@ -214,9 +216,9 @@ export const ProductList: React.FC<ProductListProps> = ({
                       )}
 
                       <div className="w-12 h-12 rounded-lg overflow-hidden bg-muted flex-shrink-0">
-                        {product.image ? (
+                        {resolvedImages[index] || product.image ? (
                           <Image
-                            src={product.image}
+                            src={resolvedImages[index] || product.image || '/placeholder.svg'}
                             alt={product.name}
                             width={48}
                             height={48}
@@ -302,7 +304,7 @@ export const ProductList: React.FC<ProductListProps> = ({
                   </tr>
                 </thead>
                 <tbody>
-                  {filteredProducts.map(product => (
+                  {filteredProducts.map((product, index) => (
                     <tr
                       key={product.id || product.name}
                       className="border-b border-border/20 hover:bg-card/20 transition-colors group"
@@ -318,9 +320,9 @@ export const ProductList: React.FC<ProductListProps> = ({
                       <td className="p-4">
                         <div className="flex items-center gap-3">
                           <div className="w-10 h-10 rounded-lg overflow-hidden bg-muted flex-shrink-0">
-                            {product.image ? (
+                            {resolvedImages[index] || product.image ? (
                               <Image
-                                src={product.image}
+                                src={resolvedImages[index] || product.image || '/placeholder.svg'}
                                 alt={product.name}
                                 width={40}
                                 height={40}

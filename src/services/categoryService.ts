@@ -2,6 +2,8 @@
  * Category Service for WearSearch
  */
 
+import { API_CONFIG } from '@/config/api.config';
+
 export interface Category {
   id: string;
   name: string;
@@ -27,6 +29,7 @@ export interface CategoryFilter {
   isActive?: boolean;
   sortBy?: 'name' | 'productCount' | 'createdAt' | 'sortOrder';
   sortOrder?: 'asc' | 'desc';
+  lang?: string;
 }
 
 export interface CategoryAPIResponse {
@@ -44,7 +47,27 @@ class CategoryService {
   private readonly baseUrl: string;
 
   constructor() {
-    this.baseUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000';
+    this.baseUrl = API_CONFIG.API_URL;
+  }
+
+  private async fetchWithFallback(path: string, init?: RequestInit): Promise<Response | null> {
+    const v1Url = `${this.baseUrl}/api/v1${path}`;
+    const legacyUrl = `${this.baseUrl}/api${path}`;
+
+    try {
+      const response = await fetch(v1Url, init);
+      if (response.ok || (response.status !== 404 && response.status !== 405)) {
+        return response;
+      }
+    } catch {
+      // ignore and try legacy
+    }
+
+    try {
+      return await fetch(legacyUrl, init);
+    } catch {
+      return null;
+    }
   }
 
   /**
@@ -62,17 +85,16 @@ class CategoryService {
         searchParams.set('isActive', filters.isActive.toString());
       if (filters?.sortBy) searchParams.set('sortBy', filters.sortBy);
       if (filters?.sortOrder) searchParams.set('sortOrder', filters.sortOrder);
+      if (filters?.lang) searchParams.set('lang', filters.lang);
 
-      const url = `${this.baseUrl}/api/categories?${searchParams.toString()}`;
-
-      const response = await fetch(url, {
+      const response = await this.fetchWithFallback(`/categories?${searchParams.toString()}`, {
         next: { revalidate: 3600 }, // 1 hour cache
         headers: {
           'Content-Type': 'application/json',
         },
       });
 
-      if (!response.ok) {
+      if (!response || !response.ok) {
         console.warn(`Categories API error: ${response.status}`);
         return this.getFallbackCategories();
       }
@@ -93,11 +115,11 @@ class CategoryService {
    */
   async getCategoryById(id: string): Promise<Category | null> {
     try {
-      const response = await fetch(`${this.baseUrl}/api/categories/${id}`, {
+      const response = await this.fetchWithFallback(`/categories/${id}`, {
         next: { revalidate: 1800 }, // 30 min cache
       });
 
-      if (!response.ok) {
+      if (!response || !response.ok) {
         return null;
       }
 
@@ -114,11 +136,11 @@ class CategoryService {
    */
   async getCategoryBySlug(slug: string): Promise<Category | null> {
     try {
-      const response = await fetch(`${this.baseUrl}/api/categories/slug/${slug}`, {
+      const response = await this.fetchWithFallback(`/categories/slug/${slug}`, {
         next: { revalidate: 1800 }, // 30 min cache
       });
 
-      if (!response.ok) {
+      if (!response || !response.ok) {
         return null;
       }
 
@@ -212,17 +234,19 @@ class CategoryService {
   /**
    * Get category tree (hierarchical structure)
    */
-  async getCategoryTree(): Promise<Category[]> {
+  async getCategoryTree(lang?: string): Promise<Category[]> {
     try {
-      const treeUrl = `${this.baseUrl}/api/categories?tree=1`;
-      const response = await fetch(treeUrl, {
+      const searchParams = new URLSearchParams();
+      searchParams.set('tree', '1');
+      if (lang) searchParams.set('lang', lang);
+      const response = await this.fetchWithFallback(`/categories?${searchParams.toString()}`, {
         next: { revalidate: 3600 },
         headers: {
           'Content-Type': 'application/json',
         },
       });
 
-      if (response.ok) {
+      if (response?.ok) {
         const data = await response.json();
         const tree =
           data?.tree ?? data?.data?.tree ?? data?.data?.items?.tree ?? data?.items?.tree ?? null;
@@ -232,7 +256,7 @@ class CategoryService {
         }
       }
 
-      const allCategories = await this.getCategories({ isActive: true });
+      const allCategories = await this.getCategories({ isActive: true, lang });
 
       // Build tree structure from flat list
       const categoryMap = new Map<string, Category>();
@@ -282,10 +306,17 @@ class CategoryService {
             : undefined,
     };
 
-    if (includeChildren && Array.isArray(record.subcategories)) {
-      normalized.subcategories = record.subcategories.map(child =>
-        this.normalizeCategory(child as Category, true)
-      );
+    if (includeChildren) {
+      const rawChildren = Array.isArray(record.subcategories)
+        ? record.subcategories
+        : Array.isArray(record.children)
+          ? record.children
+          : [];
+      if (rawChildren.length > 0) {
+        normalized.subcategories = rawChildren.map(child =>
+          this.normalizeCategory(child as Category, true)
+        );
+      }
     }
 
     return normalized;

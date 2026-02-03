@@ -7,7 +7,6 @@
 
 import { ReactNode, Suspense } from 'react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import { ThemeProvider } from 'next-themes';
 import { TooltipProvider } from '@/components/ui/tooltip';
 import { Toaster } from '@/components/ui/toaster';
 import { Toaster as Sonner } from '@/components/ui/sonner';
@@ -77,25 +76,18 @@ export const AppProviders = ({ children, initialCurrency }: AppProvidersProps) =
   return (
     <QueryClientProvider client={queryClient}>
       <Suspense fallback={null}>
-        <ThemeProvider
-          attribute="class"
-          defaultTheme="light"
-          enableSystem={false}
-          disableTransitionOnChange
-        >
-          <CurrencyProvider initialCurrency={initialCurrency}>
-            <FavoritesProvider>
-              <TooltipProvider>
-                <AuthErrorBoundary>
-                  <ClientInitializer />
-                  {children}
-                </AuthErrorBoundary>
-                <Toaster />
-                <Sonner />
-              </TooltipProvider>
-            </FavoritesProvider>
-          </CurrencyProvider>
-        </ThemeProvider>
+        <CurrencyProvider initialCurrency={initialCurrency}>
+          <FavoritesProvider>
+            <TooltipProvider>
+              <AuthErrorBoundary>
+                <ClientInitializer />
+                {children}
+              </AuthErrorBoundary>
+              <Toaster />
+              <Sonner />
+            </TooltipProvider>
+          </FavoritesProvider>
+        </CurrencyProvider>
       </Suspense>
     </QueryClientProvider>
   );

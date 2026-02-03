@@ -289,7 +289,7 @@ export default function AuthPage() {
               <Button
                 type="submit"
                 disabled={isLoading}
-                className="w-full h-12 text-base font-medium bg-black text-white hover:bg-black/90 disabled:opacity-50 rounded-none"
+                className="w-full h-12 text-base font-medium bg-black text-white hover:bg-black/90 disabled:opacity-50 rounded-full"
               >
                 {(() => {
                   if (isLoading) {

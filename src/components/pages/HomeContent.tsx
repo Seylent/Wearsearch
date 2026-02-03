@@ -1,8 +1,9 @@
 'use client';
 
-import { useRouter } from 'next/navigation';
 import { useTranslation } from 'react-i18next';
 import ProductCard from '@/components/ProductCard';
+import { ScrollButton } from '@/components/home/ScrollButton';
+import { ViewAllButton } from '@/components/home/ViewAllButton';
 import { NeonAbstractions } from '@/components/NeonAbstractions';
 import { ProductGridSkeleton } from '@/components/common/SkeletonLoader';
 import dynamic from 'next/dynamic';
@@ -21,13 +22,12 @@ interface HomeContentProps {
 }
 
 export function HomeContent({ products, seoData, isLoading }: Readonly<HomeContentProps>) {
-  const router = useRouter();
   const { t } = useTranslation();
 
   return (
-    <div className="min-h-screen bg-black text-white">
+    <div className="min-h-screen bg-white text-foreground">
       {/* Hero Section */}
-      <main id="main-content">
+      <div>
         <section className="relative min-h-screen flex items-center justify-center overflow-hidden pt-16 sm:pt-20">
           {/* NeonAbstractions background */}
           <div className="absolute inset-0 z-0" aria-hidden="true">
@@ -61,34 +61,13 @@ export function HomeContent({ products, seoData, isLoading }: Readonly<HomeConte
               </p>
 
               {/* Scroll down button */}
-              <div className="flex justify-center mb-6 sm:mb-10">
-                <button
-                  onClick={() => {
-                    const productsSection = document.getElementById('products-section');
-                    productsSection?.scrollIntoView({ behavior: 'smooth', block: 'start' });
-                  }}
-                  className="relative w-12 h-12 sm:w-16 sm:h-16 rounded-full border-2 border-white/30 bg-white/5 backdrop-blur-md hover:bg-white/10 hover:border-white/40 transition-all duration-300 flex items-center justify-center group cursor-pointer"
-                  aria-label="Scroll to products"
-                >
-                  <svg
-                    className="w-6 h-6 text-white "
-                    fill="none"
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth="2"
-                    viewBox="0 0 24 24"
-                    stroke="currentColor"
-                  >
-                    <path d="M19 14l-7 7m0 0l-7-7m7 7V3"></path>
-                  </svg>
-                </button>
-              </div>
+              <ScrollButton targetId="products-section" variant="glass" />
             </div>
           </div>
         </section>
 
         {/* New Arrivals Section */}
-        <section id="products-section" className="py-12 sm:py-16 md:py-20 bg-black">
+        <section id="products-section" className="py-12 sm:py-16 md:py-20 bg-white">
           <div className="max-w-[1800px] mx-auto px-6 md:px-12 lg:px-16">
             {/* Section Header */}
             <header className="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-4 sm:gap-6 mb-6 sm:mb-10">
@@ -134,24 +113,17 @@ export function HomeContent({ products, seoData, isLoading }: Readonly<HomeConte
             )}
 
             {/* View All Button - Glassmorphism */}
-            <nav className="text-center mt-12">
-              <button
-                onClick={() => router.push('/products')}
-                className="relative px-8 py-3 rounded-full border border-white/20 bg-white/5 backdrop-blur-[30px] text-white font-medium text-sm hover:bg-white/10 hover:border-white/30 transition-all duration-300 overflow-hidden group"
-              >
-                <span className="relative">{t('home.viewAllProducts')}</span>
-              </button>
-            </nav>
+            <ViewAllButton label={t('home.viewAllProducts')} variant="glass" />
           </div>
         </section>
 
         {/* Recently Viewed Section */}
-        <section className="py-8 sm:py-12 bg-black border-t border-white/5">
+        <section className="py-8 sm:py-12 bg-white border-t border-border">
           <div className="max-w-[1800px] mx-auto px-6 md:px-12 lg:px-16">
             <RecentlyViewedProducts maxItems={8} showClearButton={true} />
           </div>
         </section>
-      </main>
+      </div>
     </div>
   );
 }

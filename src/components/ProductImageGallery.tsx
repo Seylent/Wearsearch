@@ -4,6 +4,7 @@ import { useState, useEffect, useCallback } from 'react';
 import Image from 'next/image';
 import { motion, AnimatePresence } from 'framer-motion';
 import { X, ChevronLeft, ChevronRight } from 'lucide-react';
+import { usePresignedImages } from '@/hooks/usePresignedImage';
 
 interface Props {
   images: string[];
@@ -13,11 +14,17 @@ interface Props {
 export const ProductImageGallery = ({ images, productName }: Props) => {
   const [selected, setSelected] = useState(0);
   const [isOpen, setIsOpen] = useState(false);
+  const resolvedImages = usePresignedImages(images);
+  const hasResolved = resolvedImages.some(Boolean);
+  const activeImages = hasResolved ? resolvedImages : images;
 
-  const next = useCallback(() => setSelected(p => (p + 1) % images.length), [images.length]);
+  const next = useCallback(
+    () => setSelected(p => (p + 1) % activeImages.length),
+    [activeImages.length]
+  );
   const prev = useCallback(
-    () => setSelected(p => (p - 1 + images.length) % images.length),
-    [images.length]
+    () => setSelected(p => (p - 1 + activeImages.length) % activeImages.length),
+    [activeImages.length]
   );
 
   useEffect(() => {
@@ -31,13 +38,13 @@ export const ProductImageGallery = ({ images, productName }: Props) => {
     return () => window.removeEventListener('keydown', handle);
   }, [isOpen, next, prev]);
 
-  if (!images.length) return null;
+  if (!activeImages.length) return null;
 
   return (
     <>
       <div className="flex flex-col-reverse lg:flex-row gap-4">
         <div className="flex lg:flex-col gap-3 overflow-x-auto lg:overflow-y-auto lg:w-24 scrollbar-hide">
-          {images.map((img, i) => (
+          {activeImages.map((img, i) => (
             <button
               key={`${img}-${i}`}
               onClick={() => setSelected(i)}
@@ -58,7 +65,7 @@ export const ProductImageGallery = ({ images, productName }: Props) => {
         >
           <div className="relative w-full h-[420px] lg:h-[620px]">
             <Image
-              src={images[selected]}
+              src={activeImages[selected]}
               alt={productName}
               fill
               priority={selected === 0}
@@ -68,7 +75,7 @@ export const ProductImageGallery = ({ images, productName }: Props) => {
             />
           </div>
           <div className="absolute bottom-4 right-4 bg-white/90 border border-border px-3 py-1 text-xs rounded-full">
-            {selected + 1} / {images.length}
+            {selected + 1} / {activeImages.length}
           </div>
         </div>
       </div>
@@ -121,7 +128,7 @@ export const ProductImageGallery = ({ images, productName }: Props) => {
               }}
             >
               <Image
-                src={images[selected]}
+                src={activeImages[selected]}
                 alt={productName}
                 fill
                 className="object-contain"
