@@ -1,11 +1,11 @@
 import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
 
-export function middleware(request: NextRequest) {
-  const nonce = btoa(crypto.randomUUID()).slice(0, 16);
+export function proxy(_request: NextRequest) {
   const isDev = process.env.NODE_ENV !== 'production';
   const connectSrc = [
     "'self'",
+    'https://*.supabase.co',
     'https://api.wearsearch.com',
     'https://www.google-analytics.com',
     'https://www.googletagmanager.com',
@@ -26,9 +26,9 @@ export function middleware(request: NextRequest) {
 
   const cspHeader = `
     default-src 'self';
-    script-src 'self' 'nonce-${nonce}' https://www.googletagmanager.com https://www.google-analytics.com;
+    script-src 'self' 'unsafe-inline' https://www.googletagmanager.com https://www.google-analytics.com;
     style-src 'self' 'unsafe-inline';
-    img-src 'self' https://*.amazonaws.com https://*.cloudfront.net https://www.google-analytics.com data: blob:;
+    img-src 'self' https://*.supabase.co https://*.amazonaws.com https://*.cloudfront.net https://www.google-analytics.com https://wearsearch.com https://images.wearsearch.com data: blob:;
     connect-src ${connectSrc.join(' ')};
     font-src 'self';
     frame-src 'self' https://www.googletagmanager.com;
@@ -41,17 +41,22 @@ export function middleware(request: NextRequest) {
     .replace(/\s{2,}/g, ' ')
     .trim();
 
-  const requestHeaders = new Headers(request.headers);
-  requestHeaders.set('x-nonce', nonce);
+  const response = NextResponse.next();
 
-  const response = NextResponse.next({
-    request: { headers: requestHeaders },
-  });
-
+  response.headers.set('X-Frame-Options', 'DENY');
+  response.headers.set('X-Content-Type-Options', 'nosniff');
+  response.headers.set('Referrer-Policy', 'strict-origin-when-cross-origin');
+  response.headers.set('X-DNS-Prefetch-Control', 'on');
+  response.headers.set(
+    'Permissions-Policy',
+    'accelerometer=(), autoplay=(), camera=(), clipboard-read=(), clipboard-write=(self), fullscreen=(self), geolocation=(), gyroscope=(), magnetometer=(), microphone=(), payment=(), usb=()'
+  );
   response.headers.set('Content-Security-Policy', cspHeader);
 
   return response;
 }
+
+export const middleware = proxy;
 
 export const config = {
   matcher: ['/((?!api|_next/static|_next/image|favicon.ico|sitemap.xml|robots.txt).*)'],

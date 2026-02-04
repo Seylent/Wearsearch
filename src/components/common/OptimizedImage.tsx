@@ -7,7 +7,6 @@
 
 import Image from 'next/image';
 import { useState } from 'react';
-import { usePresignedImage } from '@/hooks/usePresignedImage';
 
 interface OptimizedImageProps {
   src: string;
@@ -34,8 +33,7 @@ export function OptimizedImage({
 }: OptimizedImageProps) {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState(false);
-  const resolvedSrc = usePresignedImage(src);
-  const displaySrc = resolvedSrc || src;
+  const displaySrc = src;
 
   // Fallback placeholder
   const placeholderSrc =

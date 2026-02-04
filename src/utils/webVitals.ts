@@ -86,8 +86,11 @@ function handleMetric(metric: Metric) {
 
   // Send to analytics in production
   if (process.env.NODE_ENV === 'production') {
-    // Send to analytics service (Google Analytics, Sentry, custom endpoint, etc.)
-    sendToAnalytics(vital);
+    const sent = trySendToAnalytics(vital);
+    if (!sent) {
+      pendingVitals.push(vital);
+      if (pendingVitals.length > 20) pendingVitals.shift();
+    }
   }
 }
 
@@ -95,9 +98,26 @@ function handleMetric(metric: Metric) {
  * Send metrics to analytics service
  * Replace with your analytics implementation
  */
-function sendToAnalytics(metric: VitalMetric) {
-  // Example: Google Analytics 4
-  if (typeof window !== 'undefined' && hasGtag(window)) {
+const pendingVitals: VitalMetric[] = [];
+
+function trySendToAnalytics(metric: VitalMetric): boolean {
+  if (typeof window === 'undefined') return false;
+
+  const dataLayer = (window as Window & { dataLayer?: unknown[] }).dataLayer;
+  if (Array.isArray(dataLayer)) {
+    dataLayer.push({
+      event: 'web_vital',
+      metric_name: metric.name,
+      metric_value: metric.value,
+      metric_rating: metric.rating,
+      metric_delta: metric.delta,
+      metric_id: metric.id,
+      page: window.location.pathname,
+    });
+    return true;
+  }
+
+  if (hasGtag(window)) {
     window.gtag('event', metric.name, {
       event_category: 'Web Vitals',
       value: Math.round(metric.value),
@@ -106,26 +126,21 @@ function sendToAnalytics(metric: VitalMetric) {
       metric_id: metric.id,
       non_interaction: true,
     });
+    return true;
   }
 
-  // Example: Custom API endpoint
-  if (typeof navigator !== 'undefined' && 'sendBeacon' in navigator) {
-    JSON.stringify({
-      metric: metric.name,
-      value: metric.value,
-      rating: metric.rating,
-      url: window.location.href,
-      timestamp: Date.now(),
-    });
+  return false;
+}
 
-    // Uncomment to send to your API
-    // navigator.sendBeacon('/api/analytics/vitals', body);
+export function flushPendingVitals(): void {
+  if (pendingVitals.length === 0) return;
+
+  const remaining: VitalMetric[] = [];
+  for (const metric of pendingVitals) {
+    if (!trySendToAnalytics(metric)) remaining.push(metric);
   }
-
-  // Example: Sentry performance monitoring
-  // if (typeof Sentry !== 'undefined') {
-  //   Sentry.metrics.set(metric.name, metric.value);
-  // }
+  pendingVitals.length = 0;
+  pendingVitals.push(...remaining);
 }
 
 /**

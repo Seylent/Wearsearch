@@ -19,7 +19,7 @@ function PageLoader({ message = 'Loading...' }: Readonly<{ message?: string }>) 
 
 // Placeholder favorites component
 const FavoritesComponent = () => (
-  <div className="min-h-screen bg-black text-white flex items-center justify-center p-4">
+  <div className="min-h-screen text-foreground flex items-center justify-center p-4">
     <div className="text-center">
       <h1 className="text-3xl font-bold mb-4">Favorites</h1>
       <p className="text-gray-400">Your favorite products will appear here.</p>

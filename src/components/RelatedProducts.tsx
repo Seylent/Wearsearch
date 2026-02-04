@@ -13,7 +13,6 @@ import { useRelatedProducts } from '@/hooks/useApi';
 import { convertS3UrlToHttps } from '@/lib/utils';
 import { useCurrencyConversion } from '@/hooks/useCurrencyConversion';
 import { useLazyLoad } from '@/hooks/useIntersectionObserver';
-import { usePresignedImages } from '@/hooks/usePresignedImage';
 import { PresignedImage } from '@/components/common/PresignedImage';
 
 const isRecord = (value: unknown): value is Record<string, unknown> =>
@@ -67,7 +66,7 @@ export const RelatedProducts = memo(
         }),
       [resolvedProducts]
     );
-    const resolvedImages = usePresignedImages(imageSources);
+    const resolvedImages = imageSources;
 
     // Don't show section if no products or still loading
     if (!hasProvidedProducts && isLoading) {

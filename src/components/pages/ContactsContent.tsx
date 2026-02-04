@@ -3,7 +3,6 @@
 import { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Send, Mail, Video, Store, Lightbulb } from 'lucide-react';
-import { NeonAbstractions } from '@/components/NeonAbstractions';
 import api from '@/services/api';
 
 interface ContactInfo {
@@ -69,11 +68,9 @@ const ContactsContent = () => {
   }, []);
 
   return (
-    <div className="min-h-screen bg-white text-foreground overflow-x-hidden font-sans">
+    <div className="min-h-screen text-foreground overflow-x-hidden font-sans">
       {/* Hero Section */}
       <section className="relative min-h-[40vh] flex items-center justify-center overflow-hidden pt-28 pb-12">
-        <NeonAbstractions />
-
         <div className="max-w-[1800px] mx-auto px-6 md:px-12 lg:px-16 relative z-10 text-center">
           <h1 className="font-display text-5xl sm:text-6xl md:text-7xl font-bold mb-4 tracking-tight">
             <span className="neon-text">{t('contacts.title', 'Contact Us')}</span>

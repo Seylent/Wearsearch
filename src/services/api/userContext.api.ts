@@ -63,7 +63,7 @@ export const userContextApi = {
    */
   getContext: async (): Promise<UserContext> => {
     try {
-      const response = await api.get<UserContextResponse>('/users/me/context');
+      const response = await api.get<UserContextResponse>('/api/v1/users/me/context');
       return response.data.data;
     } catch (error) {
       return handleApiError(error, 'Failed to fetch user context');

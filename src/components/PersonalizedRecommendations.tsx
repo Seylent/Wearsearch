@@ -11,7 +11,6 @@ import { cn } from '@/lib/utils';
 import { useRecommendations } from '@/hooks/useRecommendations';
 import { useIsAuthenticated } from '@/hooks/useIsAuthenticated';
 import { useCurrencyConversion } from '@/hooks/useCurrencyConversion';
-import { usePresignedImages } from '@/hooks/usePresignedImage';
 import { PresignedImage } from '@/components/common/PresignedImage';
 
 interface PersonalizedRecommendationsProps {
@@ -34,9 +33,7 @@ const PersonalizedRecommendations: React.FC<PersonalizedRecommendationsProps> = 
   const { formatPrice } = useCurrencyConversion();
   const { recommendations, isLoading, isEnabled } = useRecommendations(limit);
   const isLoggedIn = useIsAuthenticated();
-  const resolvedImages = usePresignedImages(
-    recommendations.map(product => product.image || product.image_url || '')
-  );
+  const resolvedImages = recommendations.map(product => product.image || product.image_url || '');
 
   // Don't show for non-authenticated users
   if (!isLoggedIn) {

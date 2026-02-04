@@ -7,7 +7,6 @@ import { useTranslation } from 'react-i18next';
 import { getPublicWishlist, type PublicWishlist } from '@/services/wishlistService';
 import { useCurrency } from '@/contexts/CurrencyContext';
 import { cn } from '@/lib/utils';
-import { usePresignedImages } from '@/hooks/usePresignedImage';
 
 interface PublicWishlistContentProps {
   shareId: string;
@@ -68,10 +67,10 @@ export default function PublicWishlistContent({ shareId, className }: PublicWish
   }, [shareId, currency]);
 
   const items = useMemo(() => data?.items ?? [], [data]);
-  const resolvedImages = usePresignedImages(items.map(item => item.image_url ?? ''));
+  const resolvedImages = items.map(item => item.image_url ?? '');
 
   return (
-    <div className={cn('min-h-screen bg-background text-foreground', className)}>
+    <div className={cn('min-h-screen text-foreground', className)}>
       <main className="max-w-[1800px] mx-auto px-6 md:px-12 lg:px-16 pt-24 sm:pt-28 pb-16">
         <div className="mb-10">
           <div className="inline-flex items-center gap-2 mb-3 select-none">

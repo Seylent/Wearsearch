@@ -1,5 +1,4 @@
 import type { Metadata } from 'next';
-import { headers } from 'next/headers';
 import { notFound } from 'next/navigation';
 import StoresContent from '@/components/pages/StoresContent';
 import { fetchBackendJson } from '@/lib/backendFetch';
@@ -104,7 +103,6 @@ export async function generateMetadata({ params }: StorePageProps): Promise<Meta
 
 export default async function StoreDetailPage({ params }: StorePageProps) {
   const { id } = params;
-  const nonce = (await headers()).get('x-nonce') || undefined;
   let storeStructuredData: Record<string, unknown> | null = null;
   let breadcrumbData: Record<string, unknown> | null = null;
 
@@ -171,8 +169,8 @@ export default async function StoreDetailPage({ params }: StorePageProps) {
 
   return (
     <>
-      {storeStructuredData ? <JsonLd data={storeStructuredData} nonce={nonce} /> : null}
-      {breadcrumbData ? <JsonLd data={breadcrumbData} nonce={nonce} /> : null}
+      {storeStructuredData ? <JsonLd data={storeStructuredData} /> : null}
+      {breadcrumbData ? <JsonLd data={breadcrumbData} /> : null}
       <StoresContent storeId={id} />
     </>
   );

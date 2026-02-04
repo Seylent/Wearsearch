@@ -14,7 +14,7 @@ export default function AdminBannersPage() {
 
   if (!permissions.canManageBanners) {
     return (
-      <div className="min-h-screen bg-black text-white flex items-center justify-center">
+      <div className="min-h-screen text-foreground flex items-center justify-center">
         <div className="text-center max-w-md px-6">
           <p className="text-lg mb-2">Доступ заборонено</p>
           <p className="text-sm text-muted-foreground">
@@ -26,7 +26,7 @@ export default function AdminBannersPage() {
   }
 
   return (
-    <div className="min-h-screen bg-black text-white">
+    <div className="min-h-screen text-foreground">
       <div className="max-w-[1800px] mx-auto px-6 md:px-12 lg:px-16 py-8">
         <BannerManager />
       </div>

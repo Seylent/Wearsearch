@@ -4,7 +4,6 @@ import { useState, useEffect, useMemo, useRef, type ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
 import type { TFunction } from 'i18next';
 import { useSearchParams } from 'next/navigation';
-import { NeonAbstractions } from '@/components/NeonAbstractions';
 import ProductCard from '@/components/ProductCard';
 import { ProductGridSkeleton } from '@/components/common/SkeletonLoader';
 import {
@@ -111,6 +110,12 @@ type PaginationMeta = {
   totalItems: number;
   hasNext: boolean;
   hasPrev: boolean;
+};
+
+type ProductsContentProps = {
+  initialPageData?: Record<string, unknown> | null;
+  initialPage?: number;
+  initialCurrency?: string;
 };
 
 function selectServerPagination(
@@ -848,7 +853,11 @@ function FiltersDialogContent(props: FiltersDialogProps) {
   );
 }
 
-export function ProductsContent() {
+export function ProductsContent({
+  initialPageData,
+  initialPage = 1,
+  initialCurrency = 'UAH',
+}: ProductsContentProps) {
   const { t } = useTranslation();
   const searchParamsHook = useSearchParams();
   const { currency } = useCurrency();
@@ -1027,7 +1036,7 @@ export function ProductsContent() {
   const itemsPerPage = 24;
 
   // Server-driven pagination
-  const [currentPage, setCurrentPage] = useState(1);
+  const [currentPage, setCurrentPage] = useState(initialPage);
   const [filterOpen, setFilterOpen] = useState(false);
 
   // Defer data fetching until after initial render
@@ -1035,7 +1044,7 @@ export function ProductsContent() {
   const searchLogRef = useRef<string | null>(null);
 
   useEffect(() => {
-    // Immediate fetch for better UX
+    // Immediate fetch for better UX (initial data is still used)
     setShouldFetchData(true);
   }, []);
 
@@ -1054,6 +1063,8 @@ export function ProductsContent() {
   );
 
   // Use aggregated hook for better performance with enhanced caching
+  const shouldSeedInitial =
+    Boolean(initialPageData) && !storeIdParam && currency === initialCurrency;
   const {
     data: pageData,
     isLoading: pageLoading,
@@ -1064,6 +1075,11 @@ export function ProductsContent() {
     gcTime: 5 * 60 * 1000, // 5 minutes
     refetchOnWindowFocus: false,
     refetchOnMount: false,
+    ...(shouldSeedInitial
+      ? {
+          initialData: initialPageData ?? undefined,
+        }
+      : {}),
   });
 
   const pageSeo = useMemo(() => {
@@ -1217,12 +1233,8 @@ export function ProductsContent() {
   });
 
   return (
-    <div className="min-h-screen bg-background">
-      <div className="fixed inset-0 z-0 pointer-events-none opacity-20">
-        <NeonAbstractions />
-      </div>
-
-      <main className="w-full px-6 md:px-12 lg:px-16 py-8 relative z-10 pt-24 sm:pt-28">
+    <div className="min-h-screen">
+      <main className="w-full px-6 md:px-12 lg:px-16 py-8 pt-24 sm:pt-28">
         <div className="max-w-[1800px] mx-auto">
           <div className="flex flex-col md:flex-row justify-between items-start md:items-end gap-6 mb-8">
             <div>

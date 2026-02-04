@@ -5,7 +5,6 @@
 
 import { Suspense } from 'react';
 import { Metadata } from 'next';
-import { headers } from 'next/headers';
 import { notFound } from 'next/navigation';
 import {
   JsonLd,
@@ -149,7 +148,6 @@ export async function generateMetadata({ params }: CategoryPageProps): Promise<M
 // Основний компонент сторінки
 export default async function CategoryPage({ params }: Readonly<CategoryPageProps>) {
   const { slug } = params;
-  const nonce = (await headers()).get('x-nonce') || undefined;
 
   try {
     const lang = await getServerLanguage();
@@ -161,10 +159,10 @@ export default async function CategoryPage({ params }: Readonly<CategoryPageProp
     if (!categoryRes) {
       // Backend unavailable (network/5xx). Render a non-crashing fallback.
       return (
-        <div className="min-h-screen bg-black text-white pt-24 px-4">
+        <div className="min-h-screen text-foreground pt-24 px-4">
           <div className="max-w-3xl mx-auto">
             <h1 className="text-3xl md:text-4xl font-bold mb-3">Категорія тимчасово недоступна</h1>
-            <p className="text-gray-300">Спробуйте оновити сторінку пізніше.</p>
+            <p className="text-muted-foreground">Спробуйте оновити сторінку пізніше.</p>
           </div>
         </div>
       );
@@ -227,29 +225,29 @@ export default async function CategoryPage({ params }: Readonly<CategoryPageProp
     return (
       <>
         {/* JSON-LD для хлібних крихт */}
-        <JsonLd data={breadcrumbData} nonce={nonce} />
-        <JsonLd data={itemListData} nonce={nonce} />
+        <JsonLd data={breadcrumbData} />
+        <JsonLd data={itemListData} />
 
-        <div className="min-h-screen bg-black text-white">
+        <div className="min-h-screen text-foreground">
           {/* Hero секція з H1 */}
           <section className="pt-24 pb-12 px-4">
             <div className="max-w-7xl mx-auto">
               {/* Хлібні крихти */}
               <nav className="mb-6 text-sm" aria-label="Навігація">
-                <ol className="flex items-center space-x-2 text-gray-400">
+                <ol className="flex items-center space-x-2 text-muted-foreground">
                   <li>
-                    <a href="/" className="hover:text-white transition-colors">
+                    <a href="/" className="hover:text-foreground transition-colors">
                       Головна
                     </a>
                   </li>
                   <li>/</li>
                   <li>
-                    <a href="/categories" className="hover:text-white transition-colors">
+                    <a href="/categories" className="hover:text-foreground transition-colors">
                       Категорії
                     </a>
                   </li>
                   <li>/</li>
-                  <li className="text-white">{categoryName}</li>
+                  <li className="text-foreground">{categoryName}</li>
                 </ol>
               </nav>
 
@@ -257,7 +255,7 @@ export default async function CategoryPage({ params }: Readonly<CategoryPageProp
               <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold mb-4">{categoryName}</h1>
 
               {categoryDescription && (
-                <p className="text-xl text-gray-300 max-w-3xl">{categoryDescription}</p>
+                <p className="text-xl text-muted-foreground max-w-3xl">{categoryDescription}</p>
               )}
             </div>
           </section>
@@ -297,7 +295,7 @@ export default async function CategoryPage({ params }: Readonly<CategoryPageProp
                             className="w-full h-48 object-cover rounded-lg mb-4"
                           />
                           <h3 className="font-semibold text-lg mb-2">{product.name}</h3>
-                          <p className="text-gray-400 text-sm mb-2">{product.brand}</p>
+                          <p className="text-muted-foreground text-sm mb-2">{product.brand}</p>
                           <p className="text-xl font-bold">{product.price} ₴</p>
                         </a>
                       </div>

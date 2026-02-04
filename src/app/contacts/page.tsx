@@ -1,6 +1,5 @@
 ﻿import { Suspense } from 'react';
 import { Metadata } from 'next';
-import { headers } from 'next/headers';
 import ContactsContent from '@/components/pages/ContactsContent';
 import { JsonLd, generateBreadcrumbSchema } from '@/lib/seo/structured-data';
 
@@ -60,12 +59,11 @@ export const metadata: Metadata = {
 };
 
 export default async function ContactsPage() {
-  const nonce = (await headers()).get('x-nonce') || undefined;
   return (
     <Suspense
       fallback={
-        <div className="min-h-screen bg-black flex items-center justify-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-white"></div>
+        <div className="min-h-screen flex items-center justify-center text-foreground">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-earth"></div>
         </div>
       }
     >
@@ -77,7 +75,6 @@ export default async function ContactsPage() {
             url: `${process.env.NEXT_PUBLIC_SITE_URL || 'https://wearsearch.com'}/contacts`,
           },
         ])}
-        nonce={nonce}
       />
       <ContactsContent />
     </Suspense>

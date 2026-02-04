@@ -7,7 +7,6 @@ import { useTranslation } from 'react-i18next';
 import FavoriteButton from './FavoriteButton';
 import { ProductDescription } from './ProductDescription';
 import { useCurrencyConversion } from '@/hooks/useCurrencyConversion';
-import { usePresignedImage } from '@/hooks/usePresignedImage';
 import type { CurrencyCode } from '@/utils/currencyStorage';
 
 // Skeleton loader component
@@ -72,9 +71,7 @@ const ProductCard: React.FC<ProductCardProps> = memo(
     };
 
     // Handle both 'image' and 'image_url' from different API responses
-    const imgSrc = image || '/placeholder-product.jpg';
-    const resolvedImage = usePresignedImage(imgSrc);
-    const displayImage = resolvedImage || '/placeholder-product.jpg';
+    const displayImage = image || '/placeholder-product.jpg';
 
     // Safety checks
     if (!id || !name) {

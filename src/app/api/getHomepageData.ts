@@ -283,7 +283,7 @@ export function getMockHomepageData(): HomepageAPIResponse {
       canonicalUrl: process.env.NEXT_PUBLIC_SITE_URL || 'https://wearsearch.com',
       ogTitle: 'WearSearch - Find Your Perfect Style',
       ogDescription: 'Discover the latest fashion trends and products from top brands.',
-      ogImage: `${process.env.NEXT_PUBLIC_SITE_URL || ''}/images/og-homepage.jpg`,
+      ogImage: `${process.env.NEXT_PUBLIC_SITE_URL || ''}/images/og-homepage.svg`,
     },
     stats: {
       totalProducts: 0,

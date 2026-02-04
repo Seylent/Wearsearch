@@ -13,7 +13,6 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { useTranslation } from 'react-i18next';
 import { Package, Edit, Trash2, Search, LayoutGrid, Table as TableIcon } from 'lucide-react';
 import { getCategoryTranslation, getColorTranslation } from '@/utils/translations';
-import { usePresignedImages } from '@/hooks/usePresignedImage';
 
 type NormalizedProduct = {
   id: string;
@@ -109,7 +108,7 @@ export const ProductList: React.FC<ProductListProps> = ({
       product.brand.toLowerCase().includes(searchLower) ||
       product.category.toLowerCase().includes(searchLower)
   );
-  const resolvedImages = usePresignedImages(filteredProducts.map(product => product.image));
+  const resolvedImages = filteredProducts.map(product => product.image || '');
 
   return (
     <div className="p-8 rounded-2xl border border-border/50 bg-card/40 backdrop-blur-sm overflow-visible">

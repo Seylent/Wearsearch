@@ -2,63 +2,19 @@
 
 /* Global font definitions and typography baseline */
 :root {
-  --font-base: 'Helvetica Neue', 'Arial Black', Arial, sans-serif;
-  --font-heading: 'Helvetica Neue', 'Arial Black', Arial, sans-serif;
+  --font-base: var(--font-montserrat);
+  --font-heading: var(--font-montserrat);
   --foreground: #111;
   --background: #ffffff;
 }
 
 body {
   font-family: var(--font-base);
+  font-weight: 700;
   color: #111;
   -webkit-overflow-scrolling: touch;
 }
 
-/* Headings should be bold and uppercase */
-h1,
-h2,
-h3,
-h4,
-h5,
-h6 {
-  font-family: var(--font-heading);
-  font-weight: 700; /* Bold / Heavy */
-  text-transform: uppercase;
-  color: #000;
-  letter-spacing: 0.02em;
-}
-
-/* Menu and navigation should follow heading typography */
-a,
-.nav-link,
-.menu a,
-nav a {
-  font-family: var(--font-heading);
-  font-weight: 700;
-  text-transform: uppercase;
-  color: #000;
-}
-
-/* Common card/section titles */
-.card-title,
-.section-title,
-.product-name,
-.brand-name,
-.logo-title,
-.title-block {
-  font-family: var(--font-heading);
-  font-weight: 700;
-  text-transform: uppercase;
-}
-
-/* Generic button/text controls that should be bold uppercase */
-.btn,
-.button,
-.pill {
-  font-family: var(--font-heading);
-  font-weight: 700;
-  text-transform: uppercase;
-}
 /* Additional explicit font utilities for uniform typography */
 .font-helvetica700 {
   font-family: var(--font-heading);
@@ -69,37 +25,6 @@ nav a {
   font-family: var(--font-heading);
   font-weight: 800;
   text-transform: uppercase;
-}
-.font-serif {
-  font-family: var(--font-heading) !important;
-  font-weight: 700 !important;
-  text-transform: uppercase !important;
-}
-/* Global Helvetica Neue Bold/Heavy with fallbacks */
-:root {
-  --font-heading: 'Helvetica Neue', 'Arial Black', Arial, sans-serif;
-}
-body {
-  font-family: 'Helvetica Neue', 'Arial Black', Arial, sans-serif;
-}
-h1,
-h2,
-h3,
-h4,
-h5,
-h6 {
-  font-family: var(--font-heading);
-  font-weight: 700;
-  text-transform: uppercase;
-  color: #000;
-}
-a,
-header nav a,
-.menu a {
-  font-family: var(--font-heading);
-  font-weight: 700;
-  text-transform: uppercase;
-  color: #000;
 }
 
 /* Custom logo font - Youre Gone */
@@ -444,8 +369,7 @@ body[style*='padding-right'] {
     font-feature-settings:
       'rlig' 1,
       'calt' 1;
-    background-color: #ffffff !important;
-    color: #000000;
+    background-color: transparent;
   }
 
   /* Light theme overrides for hardcoded dark utility classes */
@@ -586,9 +510,47 @@ body[style*='padding-right'] {
   h4,
   h5,
   h6 {
-    @apply font-serif;
-    font-weight: 400;
-    letter-spacing: -0.02em;
+    @apply font-display;
+    letter-spacing: -0.01em;
+  }
+
+  h1,
+  h2 {
+    font-weight: 900;
+  }
+
+  h3,
+  h4,
+  h5,
+  h6 {
+    font-weight: 900;
+  }
+
+  p,
+  span,
+  li,
+  a,
+  label,
+  input,
+  textarea,
+  select {
+    font-weight: 700;
+  }
+
+  button,
+  [role='button'],
+  .btn,
+  .button {
+    font-weight: 900;
+  }
+
+  .card-title,
+  .section-title,
+  .product-name,
+  .brand-name,
+  .logo-title,
+  .title-block {
+    font-weight: 900;
   }
 
   /* Remove text cursor where not needed */

@@ -91,6 +91,11 @@ type DetailData = {
   seo?: unknown;
 };
 
+type ProductDetailProps = {
+  initialDetailData?: DetailData | null;
+  initialCurrency?: string;
+};
+
 type NormalizedStore = Record<string, unknown> & {
   id: string;
   name: string;
@@ -191,7 +196,7 @@ const normalizeProductRecord = (raw: unknown): Product | null => {
   } as Product;
 };
 
-const ProductDetail = () => {
+const ProductDetail = ({ initialDetailData, initialCurrency = 'UAH' }: ProductDetailProps) => {
   const params = useParams();
   const id = params?.id as string | undefined;
   const { toast } = useToast();
@@ -217,11 +222,23 @@ const ProductDetail = () => {
   const storesPerPage = 3;
 
   // Use aggregated hook for better performance (3 requests → 1 request)
+  const shouldSeedInitial = Boolean(initialDetailData) && currency === initialCurrency;
   const {
     data: detailData,
     isLoading: detailLoading,
     error: productError,
-  } = useProductDetailData(id || '', currency);
+  } = useProductDetailData(
+    id || '',
+    currency,
+    shouldSeedInitial
+      ? {
+          initialData: initialDetailData ?? undefined,
+          refetchOnMount: false,
+          refetchOnWindowFocus: false,
+          staleTime: 5 * 60 * 1000,
+        }
+      : undefined
+  );
 
   const detail = detailData && typeof detailData === 'object' ? (detailData as DetailData) : {};
 
@@ -626,7 +643,7 @@ const ProductDetail = () => {
   // Loading state
   if (productLoading) {
     return (
-      <div className="min-h-screen bg-white text-earth flex items-center justify-center">
+      <div className="min-h-screen text-earth flex items-center justify-center">
         <div className="animate-spin w-12 h-12 border-2 border-earth border-t-transparent rounded-full" />
       </div>
     );
@@ -634,7 +651,7 @@ const ProductDetail = () => {
 
   if (!product) {
     return (
-      <div className="min-h-screen bg-white text-earth flex flex-col items-center justify-center">
+      <div className="min-h-screen text-earth flex flex-col items-center justify-center">
         <h2 className="font-serif text-3xl mb-4">
           {t('productDetail.notFoundTitle', 'Product Not Found')}
         </h2>
@@ -651,7 +668,7 @@ const ProductDetail = () => {
   }
 
   return (
-    <div className="min-h-screen bg-white text-earth font-sans">
+    <div className="min-h-screen text-earth font-sans">
       <div className="max-w-[1800px] mx-auto px-6 md:px-12 lg:px-16 py-20 pt-28">
         {/* Breadcrumbs */}
         <Breadcrumbs

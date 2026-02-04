@@ -5,6 +5,17 @@ const withBundleAnalyzer = bundleAnalyzer({
   enabled: process.env.ANALYZE === 'true',
 });
 
+const imageRemotePatterns = [
+  { protocol: 'https', hostname: 'wearsearch.com' },
+  { protocol: 'https', hostname: 'images.wearsearch.com' },
+  { protocol: 'https', hostname: 'wearsearchs3.s3.eu-north-1.amazonaws.com' },
+  { protocol: 'https', hostname: 'uehupppclvnmkuualmum.supabase.co' },
+];
+
+if (process.env.NODE_ENV !== 'production') {
+  imageRemotePatterns.push({ protocol: 'http', hostname: 'localhost' });
+}
+
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   // Performance optimizations
@@ -27,14 +38,7 @@ const nextConfig = {
 
   // Image optimization
   images: {
-    remotePatterns: [
-      { protocol: 'https', hostname: 'wearsearch.com' },
-      { protocol: 'https', hostname: 'images.wearsearch.com' },
-      { protocol: 'https', hostname: 'wearsearchs3.s3.eu-north-1.amazonaws.com' },
-      { protocol: 'https', hostname: 'uehupppclvnmkuualmum.supabase.co' },
-      { protocol: 'https', hostname: 'example.com' },
-      { protocol: 'http', hostname: 'localhost' },
-    ],
+    remotePatterns: imageRemotePatterns,
     formats: ['image/webp', 'image/avif'],
     qualities: [75, 90],
     minimumCacheTTL: 60 * 60 * 24 * 30, // 30 days

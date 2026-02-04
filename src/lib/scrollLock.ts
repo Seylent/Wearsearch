@@ -36,4 +36,20 @@ export const resetBodyScroll = () => {
   state.count = 0;
   document.body.style.overflow = state.overflow;
   document.body.style.touchAction = '';
+  document.body.style.position = '';
+  document.body.style.top = '';
+  document.body.style.left = '';
+  document.body.style.right = '';
+  document.body.style.width = '';
+  document.body.style.paddingRight = '';
+  document.documentElement.style.overflow = '';
+  document.documentElement.style.touchAction = '';
+  document.documentElement.style.position = '';
+  document.body.classList.remove('overflow-hidden', 'overflow-y-hidden', 'touch-none', 'fixed');
+  document.documentElement.classList.remove(
+    'overflow-hidden',
+    'overflow-y-hidden',
+    'touch-none',
+    'fixed'
+  );
 };

@@ -9,7 +9,7 @@ const TermsContent: React.FC = () => {
   const { t } = useTranslation();
 
   return (
-    <div className="min-h-screen bg-white text-foreground">
+    <div className="min-h-screen text-foreground">
       <main className="pt-24 pb-16">
         <div className="max-w-[1200px] mx-auto px-6 md:px-12">
           {/* Back Button */}
@@ -33,7 +33,7 @@ const TermsContent: React.FC = () => {
           </div>
 
           {/* Terms Content */}
-          <div className="prose prose-invert max-w-none">
+          <div className="prose max-w-none">
             {/* Section 1 */}
             <section className="mb-8">
               <h2 className="text-2xl font-semibold mb-4 text-foreground">

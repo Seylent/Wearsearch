@@ -8,7 +8,6 @@
 import Image from 'next/image';
 import { Edit2, Trash2, Eye, EyeOff, TrendingUp } from 'lucide-react';
 import type { Banner } from '@/types/banner';
-import { usePresignedImage } from '@/hooks/usePresignedImage';
 
 interface BannerCardProps {
   banner: Banner;
@@ -17,7 +16,7 @@ interface BannerCardProps {
 }
 
 export function BannerCard({ banner, onEdit, onDelete }: BannerCardProps) {
-  const bannerImage = usePresignedImage(banner.image_url);
+  const bannerImage = banner.image_url || '';
   return (
     <div className="bg-card/30 text-foreground rounded-xl overflow-hidden border border-border/50 backdrop-blur-sm hover:bg-card/40 transition-colors">
       <div className="flex flex-col md:flex-row">

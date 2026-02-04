@@ -22,7 +22,6 @@ import {
   AlertDialogTrigger,
 } from '@/components/ui/alert-dialog';
 import { useToast } from '@/hooks/use-toast';
-import { NeonAbstractions } from '@/components/NeonAbstractions';
 import { User, Lock, LogOut, Sparkles, Trash2 } from 'lucide-react';
 import { useSEO } from '@/hooks/useSEO';
 import { getErrorMessage } from '@/utils/errorUtils';
@@ -208,9 +207,9 @@ const Profile = () => {
 
   if (authLoading) {
     return (
-      <div className="min-h-screen bg-white text-foreground flex items-center justify-center">
+      <div className="min-h-screen text-foreground flex items-center justify-center">
         <div className="flex flex-col items-center gap-4">
-          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-white"></div>
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-earth"></div>
           <p className="text-muted-foreground">{t('common.loading')}</p>
         </div>
       </div>
@@ -222,11 +221,9 @@ const Profile = () => {
   }
 
   return (
-    <div className="min-h-screen bg-white text-foreground">
+    <div className="min-h-screen text-foreground">
       {/* Hero Section */}
       <section className="relative min-h-[35vh] flex items-center justify-center overflow-hidden pt-28 pb-8">
-        <NeonAbstractions />
-
         <div className="max-w-[1800px] mx-auto px-6 md:px-12 lg:px-16 relative z-10 text-center">
           <div className="inline-flex items-center gap-2 px-5 py-2.5 glass-card-strong rounded-full mb-6">
             <Sparkles className="w-3 h-3" />

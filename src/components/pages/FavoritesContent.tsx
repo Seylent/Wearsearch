@@ -117,7 +117,7 @@ function FavoritesWithParams() {
     : [];
 
   return (
-    <div className="min-h-screen bg-background text-foreground">
+    <div className="min-h-screen text-foreground">
       <main className="max-w-[1800px] mx-auto px-6 md:px-12 lg:px-16 pt-24 sm:pt-28 pb-16">
         {/* Header */}
         <div className="mb-10">
@@ -311,7 +311,7 @@ export default function Favorites() {
   return (
     <Suspense
       fallback={
-        <div className="min-h-screen bg-background text-foreground flex items-center justify-center">
+        <div className="min-h-screen text-foreground flex items-center justify-center">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-foreground"></div>
         </div>
       }

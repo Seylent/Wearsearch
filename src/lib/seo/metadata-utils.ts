@@ -273,7 +273,7 @@ export function generateHomeMetadata(): Metadata {
       url: SITE_URL,
       images: [
         {
-          url: `${SITE_URL}/og-image.jpg`,
+          url: `${SITE_URL}/og-image.svg`,
           width: 1200,
           height: 630,
           alt: SITE_NAME,
@@ -284,7 +284,7 @@ export function generateHomeMetadata(): Metadata {
       card: 'summary_large_image',
       title: `${SITE_NAME} — Порівняння цін на моду`,
       description: 'Знайди найкращі ціни на одяг, взуття та аксесуари',
-      images: [`${SITE_URL}/og-image.jpg`],
+      images: [`${SITE_URL}/og-image.svg`],
     },
     robots: {
       index: true,

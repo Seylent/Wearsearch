@@ -4,7 +4,6 @@ import { useState, useEffect, useCallback } from 'react';
 import Image from 'next/image';
 import { motion, AnimatePresence } from 'framer-motion';
 import { X, ChevronLeft, ChevronRight } from 'lucide-react';
-import { usePresignedImages } from '@/hooks/usePresignedImage';
 
 interface Props {
   images: string[];
@@ -14,7 +13,7 @@ interface Props {
 export const ProductImageGallery = ({ images, productName }: Props) => {
   const [selected, setSelected] = useState(0);
   const [isOpen, setIsOpen] = useState(false);
-  const resolvedImages = usePresignedImages(images);
+  const resolvedImages = images;
   const hasResolved = resolvedImages.some(Boolean);
   const activeImages = hasResolved ? resolvedImages : images;
 

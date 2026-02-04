@@ -5,7 +5,14 @@
 
 // Environment variable helpers
 export const getApiUrl = (): string => {
-  return process.env.NEXT_PUBLIC_API_URL || process.env.BACKEND_URL || 'http://localhost:3000';
+  const envUrl = process.env.NEXT_PUBLIC_API_URL || process.env.BACKEND_URL;
+  if (envUrl) return envUrl;
+
+  const siteUrl = process.env.NEXT_PUBLIC_SITE_URL;
+  if (siteUrl) return siteUrl;
+
+  if (process.env.NODE_ENV !== 'production') return 'http://localhost:3000';
+  return '';
 };
 
 export const getApiBaseUrl = (): string => {

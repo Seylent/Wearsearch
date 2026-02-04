@@ -51,8 +51,7 @@ class ErrorLogger {
       console.error(logEntry.message, context);
     }
 
-    // Future: Send to remote service (Sentry, LogRocket, etc.)
-    // this.sendToRemoteService(logEntry);
+    void logEntry;
   }
 
   /**
@@ -183,24 +182,8 @@ class ErrorLogger {
    * Send error to remote logging service
    * Example integration points: Sentry, LogRocket, DataDog, etc.
    */
-  private sendToRemoteService(): void {
-    // Example Sentry integration:
-    // if (window.Sentry) {
-    //   window.Sentry.captureException(new Error(logEntry.message), {
-    //     contexts: {
-    //       custom: logEntry.context,
-    //     },
-    //     level: logEntry.level,
-    //   });
-    // }
-    // Example custom API integration:
-    // fetch('/api/logs', {
-    //   method: 'POST',
-    //   headers: { 'Content-Type': 'application/json' },
-    //   body: JSON.stringify(logEntry),
-    // }).catch(() => {
-    //   // Silently fail - don't create infinite loop
-    // });
+  private async sendToRemoteService(_logEntry: LoggedError): Promise<void> {
+    // Optional: integrate with Sentry/Datadog/LogRocket later.
   }
 }
 

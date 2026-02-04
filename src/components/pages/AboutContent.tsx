@@ -4,7 +4,6 @@ import { useRouter } from 'next/navigation';
 import { useTranslation } from 'react-i18next';
 import { Button } from '@/components/ui/button';
 import { ArrowLeft, Sparkles, Shield, Globe, Heart } from 'lucide-react';
-import { NeonAbstractions } from '@/components/NeonAbstractions';
 
 const AboutContent = () => {
   const router = useRouter();
@@ -34,20 +33,9 @@ const AboutContent = () => {
   ];
 
   return (
-    <div className="min-h-screen bg-background text-foreground">
+    <div className="min-h-screen text-foreground">
       {/* Hero Section */}
       <section className="relative pt-32 pb-20 overflow-hidden">
-        {/* NeonAbstractions background - stars and round objects ONLY */}
-        <div className="absolute inset-0 z-0">
-          <NeonAbstractions />
-        </div>
-
-        {/* Background Effects */}
-        <div className="absolute inset-0 opacity-30 z-[1]">
-          <div className="absolute top-1/4 left-1/4 w-96 h-96 bg-white/5 rounded-full blur-3xl" />
-          <div className="absolute bottom-1/4 right-1/4 w-80 h-80 bg-white/3 rounded-full blur-3xl" />
-        </div>
-
         <div className="max-w-[1800px] mx-auto px-6 md:px-12 lg:px-16 relative z-10">
           <Button
             variant="ghost"

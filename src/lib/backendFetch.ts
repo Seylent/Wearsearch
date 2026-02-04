@@ -37,6 +37,7 @@ export async function fetchBackendJson<T = unknown>(
   options: FetchBackendOptions = {}
 ): Promise<{ data: T; url: string; status: number } | null> {
   const origin = getBackendOrigin();
+  if (!origin) return null;
   const preferV1 = options.preferV1 ?? true;
 
   const candidates = preferV1

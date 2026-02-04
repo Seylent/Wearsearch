@@ -1,6 +1,5 @@
 import { Suspense } from 'react';
 import { Metadata } from 'next';
-import { headers } from 'next/headers';
 import { notFound } from 'next/navigation';
 import ProductDetail from '@/components/ProductDetail';
 import { generateProductMetadata } from '@/lib/seo/metadata-utils';
@@ -18,6 +17,12 @@ const getRecord = (value: unknown, key: string): Record<string, unknown> | undef
   if (!isRecord(value)) return undefined;
   const nested = value[key];
   return isRecord(nested) ? nested : undefined;
+};
+
+const getArray = (value: unknown, key: string): unknown[] | undefined => {
+  if (!isRecord(value)) return undefined;
+  const nested = value[key];
+  return Array.isArray(nested) ? nested : undefined;
 };
 
 const toOptionalString = (value: unknown): string | undefined =>
@@ -197,23 +202,35 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
 // Server Component for product details
 export default async function ProductDetailPage({ params }: PageProps) {
   const { id } = await params;
-  const nonce = (await headers()).get('x-nonce') || undefined;
   let structuredData: Record<string, unknown> | null = null;
   let breadcrumbData: Record<string, unknown> | null = null;
   let hasProduct = false;
+  let initialDetailData: {
+    product: unknown | null;
+    stores: unknown[];
+    brand: unknown | null;
+    reviews: unknown[];
+    seo: Record<string, unknown> | null;
+    relatedProducts: unknown[];
+  } | null = null;
 
   try {
     const lang = await getServerLanguage();
-    const res = await fetchBackendJson<unknown>(`/products/${id}?lang=${lang}`, {
-      next: { revalidate: 3600 },
-    });
+    const currency = 'UAH';
+    const res = await fetchBackendJson<unknown>(
+      `/products/${id}/detail?lang=${encodeURIComponent(lang)}&currency=${currency}`,
+      {
+        next: { revalidate: 3600 },
+      }
+    );
     const payload = isRecord(res) ? res.data : undefined;
+    const detail = getRecord(payload, 'data') ?? getRecord(payload, 'item') ?? payload;
     const product =
-      getRecord(payload, 'product') ??
-      getRecord(payload, 'item') ??
-      getRecord(getRecord(payload, 'data'), 'product') ??
-      getRecord(getRecord(payload, 'data'), 'item') ??
-      payload;
+      getRecord(detail, 'product') ??
+      getRecord(detail, 'item') ??
+      getRecord(getRecord(detail, 'data'), 'product') ??
+      getRecord(getRecord(detail, 'data'), 'item') ??
+      detail;
 
     if (product) {
       hasProduct = true;
@@ -251,6 +268,29 @@ export default async function ProductDetailPage({ params }: PageProps) {
           },
         ].filter(Boolean) as Array<{ name: string; url: string }>
       );
+
+      const storesArray =
+        getArray(detail, 'stores') ??
+        getArray(detail, 'items') ??
+        getArray(getRecord(detail, 'data'), 'stores') ??
+        [];
+      const relatedProducts = Array.isArray((detail as Record<string, unknown>)?.relatedProducts)
+        ? ((detail as Record<string, unknown>).relatedProducts as unknown[])
+        : Array.isArray((detail as Record<string, unknown>)?.related_products)
+          ? ((detail as Record<string, unknown>).related_products as unknown[])
+          : [];
+
+      initialDetailData = {
+        product: product ?? null,
+        stores: storesArray,
+        brand: isRecord(detail) ? (detail.brand ?? null) : null,
+        reviews: Array.isArray((detail as Record<string, unknown>)?.reviews)
+          ? ((detail as Record<string, unknown>).reviews as unknown[])
+          : [],
+        seo:
+          isRecord(detail) && isRecord(detail.seo) ? (detail.seo as Record<string, unknown>) : null,
+        relatedProducts,
+      };
     }
   } catch (error) {
     console.error('Error fetching product for structured data:', error);
@@ -263,8 +303,8 @@ export default async function ProductDetailPage({ params }: PageProps) {
   return (
     <Suspense
       fallback={
-        <div className="min-h-screen bg-black flex items-center justify-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-white"></div>
+        <div className="min-h-screen flex items-center justify-center text-foreground">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-earth"></div>
         </div>
       }
     >
@@ -272,17 +312,15 @@ export default async function ProductDetailPage({ params }: PageProps) {
         <script
           type="application/ld+json"
           dangerouslySetInnerHTML={{ __html: JSON.stringify(structuredData) }}
-          nonce={nonce}
         />
       )}
       {breadcrumbData && (
         <script
           type="application/ld+json"
           dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbData) }}
-          nonce={nonce}
         />
       )}
-      <ProductDetail />
+      <ProductDetail initialDetailData={initialDetailData ?? undefined} initialCurrency="UAH" />
     </Suspense>
   );
 }

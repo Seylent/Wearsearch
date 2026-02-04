@@ -81,7 +81,7 @@ export default function WishlistsContent({ className }: { className?: string }) 
   }, [collectionItems, currency]);
 
   return (
-    <div className={cn('min-h-screen bg-background text-foreground', className)}>
+    <div className={cn('min-h-screen text-foreground', className)}>
       <main className="max-w-[1800px] mx-auto px-6 md:px-12 lg:px-16 pt-24 sm:pt-28 pb-16">
         <div className="mb-10">
           <div className="flex flex-col gap-6 sm:flex-row sm:items-start sm:justify-between">

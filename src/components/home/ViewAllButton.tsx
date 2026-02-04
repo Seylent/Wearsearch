@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation';
 type ViewAllVariant = 'dark' | 'glass';
 
 const baseClass =
-  'inline-flex items-center justify-center w-full sm:w-auto px-8 py-3 rounded-full text-[10px] sm:text-xs uppercase tracking-[0.2em] sm:tracking-[0.3em] transition-all duration-300';
+  'inline-flex items-center justify-center w-full sm:w-auto px-8 py-3 rounded-full text-[10px] sm:text-xs uppercase tracking-[0.2em] sm:tracking-[0.3em] transition-all duration-300 font-black';
 
 const variants: Record<ViewAllVariant, string> = {
   dark: 'border border-border bg-black text-white hover:bg-black/90',

@@ -8,7 +8,7 @@ const PrivacyContent = () => {
   const { t } = useTranslation();
 
   return (
-    <div className="min-h-screen bg-white text-foreground">
+    <div className="min-h-screen text-foreground">
       <main className="pt-24 pb-16">
         <div className="max-w-[1200px] mx-auto px-6 md:px-12">
           {/* Back Button */}
@@ -25,18 +25,18 @@ const PrivacyContent = () => {
             <h1 className="text-4xl md:text-5xl font-bold mb-4 neon-text-strong">
               {t('privacy.title')}
             </h1>
-            <p className="text-lg text-zinc-300 mb-6">{t('privacy.subtitle')}</p>
-            <p className="text-sm text-zinc-500">{t('privacy.lastUpdated')}</p>
+            <p className="text-lg text-muted-foreground mb-6">{t('privacy.subtitle')}</p>
+            <p className="text-sm text-muted-foreground/70">{t('privacy.lastUpdated')}</p>
           </div>
 
           {/* Content */}
-          <div className="prose prose-invert prose-zinc max-w-none">
+          <div className="prose max-w-none">
             {/* Section 1 */}
             <section className="mb-12">
-              <h2 className="text-2xl font-semibold mb-6 text-white border-b border-zinc-800 pb-3">
+              <h2 className="text-2xl font-semibold mb-6 text-foreground border-b border-border pb-3">
                 1. {t('privacy.section1.title')}
               </h2>
-              <div className="space-y-3 text-zinc-300">
+              <div className="space-y-3 text-muted-foreground">
                 <p className="leading-relaxed">{t('privacy.section1.p1')}</p>
                 <p className="leading-relaxed">{t('privacy.section1.p2')}</p>
               </div>
@@ -44,11 +44,13 @@ const PrivacyContent = () => {
 
             {/* Section 2 */}
             <section className="mb-12">
-              <h2 className="text-2xl font-semibold mb-6 text-white border-b border-zinc-800 pb-3">
+              <h2 className="text-2xl font-semibold mb-6 text-foreground border-b border-border pb-3">
                 2. {t('privacy.section2.title')}
               </h2>
-              <p className="text-zinc-300 mb-4 leading-relaxed">{t('privacy.section2.intro')}</p>
-              <ul className="space-y-2 text-zinc-300 ml-6">
+              <p className="text-muted-foreground mb-4 leading-relaxed">
+                {t('privacy.section2.intro')}
+              </p>
+              <ul className="space-y-2 text-muted-foreground ml-6">
                 <li className="flex items-start">
                   <span className="text-blue-400 mr-2">•</span>
                   {t('privacy.section2.li1')}
@@ -70,16 +72,18 @@ const PrivacyContent = () => {
 
             {/* Section 3 */}
             <section className="mb-12">
-              <h2 className="text-2xl font-semibold mb-6 text-white border-b border-zinc-800 pb-3">
+              <h2 className="text-2xl font-semibold mb-6 text-foreground border-b border-border pb-3">
                 3. {t('privacy.section3.title')}
               </h2>
-              <p className="text-zinc-300 mb-4 leading-relaxed">{t('privacy.section3.intro')}</p>
+              <p className="text-muted-foreground mb-4 leading-relaxed">
+                {t('privacy.section3.intro')}
+              </p>
 
               <div className="mb-4">
-                <h4 className="text-lg font-medium text-white mb-2">
+                <h4 className="text-lg font-medium text-foreground mb-2">
                   {t('privacy.section3.subsection1.title')}
                 </h4>
-                <ul className="space-y-2 text-zinc-300 ml-6">
+                <ul className="space-y-2 text-muted-foreground ml-6">
                   <li className="flex items-start">
                     <span className="text-blue-400 mr-2">•</span>
                     {t('privacy.section3.subsection1.li1')}
@@ -92,10 +96,10 @@ const PrivacyContent = () => {
               </div>
 
               <div className="mb-4">
-                <h4 className="text-lg font-medium text-white mb-2">
+                <h4 className="text-lg font-medium text-foreground mb-2">
                   {t('privacy.section3.subsection2.title')}
                 </h4>
-                <ul className="space-y-2 text-zinc-300 ml-6">
+                <ul className="space-y-2 text-muted-foreground ml-6">
                   <li className="flex items-start">
                     <span className="text-blue-400 mr-2">•</span>
                     {t('privacy.section3.subsection2.li1')}
@@ -119,16 +123,20 @@ const PrivacyContent = () => {
                 </ul>
               </div>
 
-              <p className="text-zinc-300 leading-relaxed italic">{t('privacy.section3.note')}</p>
+              <p className="text-muted-foreground leading-relaxed italic">
+                {t('privacy.section3.note')}
+              </p>
             </section>
 
             {/* Section 4 */}
             <section className="mb-12">
-              <h2 className="text-2xl font-semibold mb-6 text-white border-b border-zinc-800 pb-3">
+              <h2 className="text-2xl font-semibold mb-6 text-foreground border-b border-border pb-3">
                 4. {t('privacy.section4.title')}
               </h2>
-              <p className="text-zinc-300 mb-4 leading-relaxed">{t('privacy.section4.intro')}</p>
-              <ul className="space-y-2 text-zinc-300 ml-6">
+              <p className="text-muted-foreground mb-4 leading-relaxed">
+                {t('privacy.section4.intro')}
+              </p>
+              <ul className="space-y-2 text-muted-foreground ml-6">
                 <li className="flex items-start">
                   <span className="text-blue-400 mr-2">•</span>
                   {t('privacy.section4.li1')}
@@ -150,11 +158,13 @@ const PrivacyContent = () => {
 
             {/* Section 5 */}
             <section className="mb-12">
-              <h2 className="text-2xl font-semibold mb-6 text-white border-b border-zinc-800 pb-3">
+              <h2 className="text-2xl font-semibold mb-6 text-foreground border-b border-border pb-3">
                 5. {t('privacy.section5.title')}
               </h2>
-              <p className="text-zinc-300 mb-4 leading-relaxed">{t('privacy.section5.intro')}</p>
-              <ul className="space-y-2 text-zinc-300 ml-6">
+              <p className="text-muted-foreground mb-4 leading-relaxed">
+                {t('privacy.section5.intro')}
+              </p>
+              <ul className="space-y-2 text-muted-foreground ml-6">
                 <li className="flex items-start">
                   <span className="text-blue-400 mr-2">•</span>
                   {t('privacy.section5.li1')}
@@ -180,13 +190,13 @@ const PrivacyContent = () => {
 
             {/* Section 6 */}
             <section className="mb-12">
-              <h2 className="text-2xl font-semibold mb-6 text-white border-b border-zinc-800 pb-3">
+              <h2 className="text-2xl font-semibold mb-6 text-foreground border-b border-border pb-3">
                 6. {t('privacy.section6.title')}
               </h2>
-              <div className="space-y-3 text-zinc-300">
+              <div className="space-y-3 text-muted-foreground">
                 <p className="leading-relaxed">{t('privacy.section6.p1')}</p>
                 <p className="leading-relaxed">{t('privacy.section6.p2')}</p>
-                <ul className="space-y-2 text-zinc-300 ml-6">
+                <ul className="space-y-2 text-muted-foreground ml-6">
                   <li className="flex items-start">
                     <span className="text-blue-400 mr-2">•</span>
                     {t('privacy.section6.li1')}
@@ -207,13 +217,13 @@ const PrivacyContent = () => {
 
             {/* Section 7 */}
             <section className="mb-12">
-              <h2 className="text-2xl font-semibold mb-6 text-white border-b border-zinc-800 pb-3">
+              <h2 className="text-2xl font-semibold mb-6 text-foreground border-b border-border pb-3">
                 7. {t('privacy.section7.title')}
               </h2>
-              <div className="space-y-3 text-zinc-300">
+              <div className="space-y-3 text-muted-foreground">
                 <p className="leading-relaxed">{t('privacy.section7.p1')}</p>
                 <p className="leading-relaxed">{t('privacy.section7.intro')}</p>
-                <ul className="space-y-2 text-zinc-300 ml-6">
+                <ul className="space-y-2 text-muted-foreground ml-6">
                   <li className="flex items-start">
                     <span className="text-blue-400 mr-2">•</span>
                     {t('privacy.section7.li1')}
@@ -228,10 +238,10 @@ const PrivacyContent = () => {
 
             {/* Section 8 */}
             <section className="mb-12">
-              <h2 className="text-2xl font-semibold mb-6 text-white border-b border-zinc-800 pb-3">
+              <h2 className="text-2xl font-semibold mb-6 text-foreground border-b border-border pb-3">
                 8. {t('privacy.section8.title')}
               </h2>
-              <div className="space-y-3 text-zinc-300">
+              <div className="space-y-3 text-muted-foreground">
                 <p className="leading-relaxed">{t('privacy.section8.p1')}</p>
                 <p className="leading-relaxed">{t('privacy.section8.p2')}</p>
                 <p className="leading-relaxed">{t('privacy.section8.p3')}</p>
@@ -240,12 +250,12 @@ const PrivacyContent = () => {
 
             {/* Section 9 */}
             <section className="mb-12">
-              <h2 className="text-2xl font-semibold mb-6 text-white border-b border-zinc-800 pb-3">
+              <h2 className="text-2xl font-semibold mb-6 text-foreground border-b border-border pb-3">
                 9. {t('privacy.section9.title')}
               </h2>
-              <div className="space-y-3 text-zinc-300">
+              <div className="space-y-3 text-muted-foreground">
                 <p className="leading-relaxed">{t('privacy.section9.intro')}</p>
-                <ul className="space-y-2 text-zinc-300 ml-6">
+                <ul className="space-y-2 text-muted-foreground ml-6">
                   <li className="flex items-start">
                     <span className="text-blue-400 mr-2">•</span>
                     {t('privacy.section9.li1')}
@@ -265,12 +275,12 @@ const PrivacyContent = () => {
 
             {/* Section 10 */}
             <section className="mb-12">
-              <h2 className="text-2xl font-semibold mb-6 text-white border-b border-zinc-800 pb-3">
+              <h2 className="text-2xl font-semibold mb-6 text-foreground border-b border-border pb-3">
                 10. {t('privacy.section10.title')}
               </h2>
-              <div className="space-y-3 text-zinc-300">
+              <div className="space-y-3 text-muted-foreground">
                 <p className="leading-relaxed">{t('privacy.section10.intro')}</p>
-                <ul className="space-y-2 text-zinc-300 ml-6">
+                <ul className="space-y-2 text-muted-foreground ml-6">
                   <li className="flex items-start">
                     <span className="text-blue-400 mr-2">•</span>
                     {t('privacy.section10.li1')}
@@ -290,10 +300,10 @@ const PrivacyContent = () => {
 
             {/* Section 11 */}
             <section className="mb-12">
-              <h2 className="text-2xl font-semibold mb-6 text-white border-b border-zinc-800 pb-3">
+              <h2 className="text-2xl font-semibold mb-6 text-foreground border-b border-border pb-3">
                 11. {t('privacy.section11.title')}
               </h2>
-              <div className="space-y-3 text-zinc-300">
+              <div className="space-y-3 text-muted-foreground">
                 <p className="leading-relaxed">{t('privacy.section11.p1')}</p>
                 <p className="leading-relaxed">{t('privacy.section11.p2')}</p>
                 <p className="leading-relaxed">{t('privacy.section11.p3')}</p>
@@ -302,10 +312,12 @@ const PrivacyContent = () => {
 
             {/* Section 12 - Contact */}
             <section className="mb-12 glass-card p-8">
-              <h2 className="text-2xl font-semibold mb-6 text-white border-b border-zinc-800 pb-3">
+              <h2 className="text-2xl font-semibold mb-6 text-foreground border-b border-border pb-3">
                 12. {t('privacy.section12.title')}
               </h2>
-              <p className="text-zinc-300 mb-6 leading-relaxed">{t('privacy.section12.p1')}</p>
+              <p className="text-muted-foreground mb-6 leading-relaxed">
+                {t('privacy.section12.p1')}
+              </p>
               <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4">
                 <Link
                   href="/contacts"
@@ -313,7 +325,7 @@ const PrivacyContent = () => {
                 >
                   {t('nav.contacts')}
                 </Link>
-                <span className="text-sm text-zinc-400">
+                <span className="text-sm text-muted-foreground">
                   Контактна інформація доступна на сторінці контактів
                 </span>
               </div>
@@ -321,8 +333,8 @@ const PrivacyContent = () => {
           </div>
 
           {/* Last Updated */}
-          <div className="mt-12 pt-8 border-t border-zinc-800">
-            <p className="text-sm text-zinc-500">{t('privacy.lastUpdated')}</p>
+          <div className="mt-12 pt-8 border-t border-border">
+            <p className="text-sm text-muted-foreground/70">{t('privacy.lastUpdated')}</p>
           </div>
         </div>
       </main>

@@ -67,16 +67,9 @@ export default {
         'off-white': '#FFFFFF',
       },
       fontFamily: {
-        sans: ['var(--font-inter)', 'Inter', 'system-ui', 'sans-serif'],
-        serif: ['Times New Roman', 'Georgia', 'serif'],
-        display: [
-          'var(--font-montserrat)',
-          'Montserrat',
-          'Futura',
-          'Avenir',
-          'Century Gothic',
-          'sans-serif',
-        ],
+        sans: ['var(--font-montserrat)', 'Montserrat', 'system-ui', 'sans-serif'],
+        serif: ['var(--font-montserrat)', 'Montserrat', 'system-ui', 'sans-serif'],
+        display: ['var(--font-montserrat)', 'Montserrat', 'system-ui', 'sans-serif'],
       },
       backgroundImage: {
         'gradient-radial': 'radial-gradient(var(--tw-gradient-stops))',

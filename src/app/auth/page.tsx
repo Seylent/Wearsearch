@@ -134,7 +134,7 @@ export default function AuthPage() {
   };
 
   return (
-    <div className="min-h-screen bg-white text-black">
+    <div className="min-h-screen text-foreground">
       <section className="relative flex items-center justify-center min-h-screen px-4 py-20">
         <div className="w-full max-w-md relative z-10">
           <div className="bg-white border border-border rounded-none p-8 shadow-[0_20px_60px_rgba(0,0,0,0.08)]">

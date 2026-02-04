@@ -25,7 +25,7 @@ interface SEOProps {
   structuredData?: object;
 }
 
-const DEFAULT_IMAGE = 'https://wearsearch.com/og-image.jpg';
+const DEFAULT_IMAGE = 'https://wearsearch.com/og-image.svg';
 const DEFAULT_SITE_NAME = 'Wearsearch';
 const DEFAULT_TWITTER_HANDLE = '@wearsearch';
 

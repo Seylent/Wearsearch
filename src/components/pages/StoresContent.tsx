@@ -4,7 +4,6 @@ import { useState, useMemo, useEffect } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useTranslation } from 'react-i18next';
 import Image from 'next/image';
-import { NeonAbstractions } from '@/components/NeonAbstractions';
 import { NoStoresFound, ErrorState } from '@/components/common/EmptyState';
 import { StoreGridSkeleton } from '@/components/common/SkeletonLoader';
 import { Input } from '@/components/ui/input';
@@ -116,11 +115,9 @@ const StoresContent: React.FC<StoresContentProps> = ({ storeId }) => {
   const filteredStores = storeId ? stores.filter(store => String(store.id) === storeId) : stores;
 
   return (
-    <div className="min-h-screen bg-background text-foreground font-sans">
+    <div className="min-h-screen text-foreground font-sans">
       {/* Hero Section */}
       <section className="relative min-h-[70vh] flex items-center justify-center overflow-hidden pt-28">
-        <NeonAbstractions />
-
         <div className="max-w-[1800px] mx-auto px-6 md:px-12 lg:px-16 relative z-10 text-center">
           <h1
             className="font-display text-5xl sm:text-6xl md:text-7xl lg:text-8xl font-bold mb-6 tracking-tight animate-fade-in-up"

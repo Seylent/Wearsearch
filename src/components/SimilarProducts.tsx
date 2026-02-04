@@ -12,7 +12,6 @@ import { Sparkles, Loader2 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useSimilarProducts } from '@/hooks/useRecommendations';
 import { useCurrencyConversion } from '@/hooks/useCurrencyConversion';
-import { usePresignedImages } from '@/hooks/usePresignedImage';
 import { PresignedImage } from '@/components/common/PresignedImage';
 
 interface SimilarProductsProps {
@@ -25,9 +24,7 @@ const SimilarProducts: React.FC<SimilarProductsProps> = ({ productId, limit = 6,
   const { t } = useTranslation();
   const { formatPrice } = useCurrencyConversion();
   const { similarProducts, isLoading } = useSimilarProducts(productId, limit);
-  const resolvedImages = usePresignedImages(
-    similarProducts.map(product => product.image || product.image_url || '')
-  );
+  const resolvedImages = similarProducts.map(product => product.image || product.image_url || '');
 
   // Show loading state
   if (isLoading) {

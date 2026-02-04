@@ -69,10 +69,14 @@ export default function HomeContentClient({
   const { currency } = useCurrencyConversion();
   const [isMounted, setIsMounted] = useState(false);
   const [products, setProducts] = useState<Product[]>(initialProducts);
-  const [productsCurrency, setProductsCurrency] = useState<'UAH' | 'USD'>('UAH');
+  const [productsCurrency, setProductsCurrency] = useState<'UAH' | 'USD'>(
+    initialProducts.length > 0 ? 'UAH' : 'USD'
+  );
   const [isLoading, setIsLoading] = useState(false);
   const [popularProducts, setPopularProducts] = useState<Product[]>(initialPopularProducts);
-  const [popularCurrency, setPopularCurrency] = useState<'UAH' | 'USD'>('UAH');
+  const [popularCurrency, setPopularCurrency] = useState<'UAH' | 'USD'>(
+    initialPopularProducts.length > 0 ? 'UAH' : 'USD'
+  );
   const [heroSeo, setHeroSeo] = useState<SEOData | null>(seoData ?? null);
   const reduceMotion = useReducedMotion();
   const isTouchDevice = useIsTouchDevice();
@@ -140,12 +144,10 @@ export default function HomeContentClient({
   }, [seoData]);
 
   useEffect(() => {
-    // Always fetch with current currency to ensure correct prices
+    // Fetch only when currency differs from initial server currency (UAH)
     const fetchProductsWithCurrency = async () => {
-      // Use UAH as default if currency not loaded yet
       const currentCurrency = currency || 'UAH';
 
-      // If UAH and SSR provided products, use them directly.
       if (currentCurrency === 'UAH' && initialProducts.length > 0) {
         setProducts(initialProducts);
         setProductsCurrency('UAH');
@@ -154,14 +156,11 @@ export default function HomeContentClient({
 
       setIsLoading(true);
       try {
-        // Use canonical items endpoint for product lists.
-        // Next rewrites proxy this to backend: http://localhost:3000
         const response = await fetch(
           `/api/v1/items?limit=12&sort=newest&currency=${encodeURIComponent(currentCurrency)}&lang=${encodeURIComponent(lang)}`
         );
 
         if (!response.ok) {
-          console.error('Failed to fetch products with currency');
           setProducts(initialProducts);
           setProductsCurrency(currentCurrency === 'USD' ? 'USD' : 'UAH');
           return;
@@ -185,7 +184,6 @@ export default function HomeContentClient({
           setProducts(items);
           setProductsCurrency(topCurrency);
         } else {
-          console.warn('Unexpected items response shape:', data);
           setProducts(initialProducts);
           setProductsCurrency(currentCurrency === 'USD' ? 'USD' : 'UAH');
         }
@@ -261,7 +259,7 @@ export default function HomeContentClient({
   };
 
   return (
-    <div className="min-h-screen bg-white text-black" suppressHydrationWarning>
+    <div className="min-h-screen text-foreground" suppressHydrationWarning>
       <div>
         {/* Hero Section */}
         <HomeHero

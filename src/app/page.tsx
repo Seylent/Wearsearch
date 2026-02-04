@@ -1,6 +1,5 @@
 import { Suspense } from 'react';
 import { Metadata } from 'next';
-import { headers } from 'next/headers';
 
 // Data fetching
 import { getHomepageData } from './api/getHomepageData';
@@ -17,7 +16,6 @@ export const metadata: Metadata = generateHomeMetadata();
 
 // Server Component with proper data fetching
 export default async function HomePage() {
-  const nonce = (await headers()).get('x-nonce') || undefined;
   try {
     // Fetch data on the server
     const homepageData = await getHomepageData();
@@ -45,15 +43,15 @@ export default async function HomePage() {
     return (
       <Suspense
         fallback={
-          <div className="min-h-screen bg-black text-white flex items-center justify-center">
+          <div className="min-h-screen flex items-center justify-center text-foreground">
             <div className="text-center">
-              <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-white mx-auto mb-4"></div>
-              <p className="text-white/80">Завантаження головної...</p>
+              <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-earth mx-auto mb-4"></div>
+              <p className="text-muted-foreground">Завантаження головної...</p>
             </div>
           </div>
         }
       >
-        <JsonLd data={itemListData} nonce={nonce} />
+        <JsonLd data={itemListData} />
         <HomeContent
           featuredProducts={homepageData.featuredProducts}
           newProducts={homepageData.newProducts}
@@ -70,13 +68,15 @@ export default async function HomePage() {
 
     // Error fallback
     return (
-      <div className="min-h-screen bg-black text-white flex items-center justify-center">
+      <div className="min-h-screen flex items-center justify-center text-foreground">
         <div className="text-center">
-          <h1 className="text-3xl font-bold text-white mb-4">Ласкаво просимо до Wearsearch</h1>
-          <p className="text-white/80 mb-6">Виникла помилка під час завантаження головної.</p>
+          <h1 className="text-3xl font-bold mb-4">Ласкаво просимо до Wearsearch</h1>
+          <p className="text-muted-foreground mb-6">
+            Виникла помилка під час завантаження головної.
+          </p>
           <a
             href="/products"
-            className="inline-flex w-full sm:w-auto items-center justify-center px-6 sm:px-8 py-3 text-[10px] sm:text-xs uppercase tracking-[0.2em] sm:tracking-[0.3em] rounded-full bg-white text-black transition-colors hover:bg-gray-100"
+            className="inline-flex w-full sm:w-auto items-center justify-center px-6 sm:px-8 py-3 text-[10px] sm:text-xs uppercase tracking-[0.2em] sm:tracking-[0.3em] rounded-full bg-white text-black transition-colors hover:bg-gray-100 font-black"
           >
             Переглянути товари
           </a>

@@ -3,7 +3,6 @@
 import Link from 'next/link';
 import { useTranslation } from 'react-i18next';
 import { ScrollButton } from './ScrollButton';
-import { CircleAbstractions } from './CircleAbstractions';
 
 interface HomeHeroProps {
   h1Title?: string;
@@ -36,10 +35,9 @@ export function HomeHero({
     Boolean(primaryCtaLabel && primaryCtaHref) || Boolean(secondaryCtaLabel && secondaryCtaHref);
 
   return (
-    <section className="relative min-h-[82svh] sm:min-h-[90svh] md:min-h-[100svh] w-full overflow-hidden bg-white text-earth">
-      <CircleAbstractions />
-      <div className="relative z-10 h-full flex flex-col justify-start md:justify-end">
-        <div className="max-w-[1800px] mx-auto w-full px-6 md:px-12 lg:px-16 pt-16 pb-10 sm:pt-20 sm:pb-16 md:py-20 md:pb-32">
+    <section className="relative min-h-[76svh] sm:min-h-[84svh] md:min-h-[92svh] w-full overflow-hidden text-earth">
+      <div className="relative z-10 h-full flex flex-col justify-end">
+        <div className="max-w-[1800px] mx-auto w-full px-6 md:px-12 lg:px-16 pt-10 pb-16 sm:pt-12 sm:pb-20 md:pt-14 md:pb-24 mt-20 sm:mt-32 md:mt-48">
           <p className="text-base md:text-lg text-earth/70 max-w-2xl mb-6 md:mb-8 font-medium leading-relaxed">
             {contentText ||
               t(
@@ -65,7 +63,7 @@ export function HomeHero({
               {primaryCtaLabel && primaryCtaHref && (
                 <Link
                   href={primaryCtaHref}
-                  className="inline-flex items-center justify-center w-full sm:w-auto px-6 sm:px-8 py-3 text-[10px] sm:text-xs uppercase tracking-[0.2em] sm:tracking-[0.3em] bg-earth text-cream hover:bg-warm-gray transition-colors rounded-full"
+                  className="inline-flex items-center justify-center w-full sm:w-auto px-6 sm:px-8 py-3 text-[10px] sm:text-xs uppercase tracking-[0.2em] sm:tracking-[0.3em] bg-earth text-cream hover:bg-warm-gray transition-colors rounded-full font-black"
                 >
                   {primaryCtaLabel}
                 </Link>
@@ -73,7 +71,7 @@ export function HomeHero({
               {secondaryCtaLabel && secondaryCtaHref && (
                 <Link
                   href={secondaryCtaHref}
-                  className="inline-flex items-center justify-center w-full sm:w-auto px-6 sm:px-8 py-3 text-[10px] sm:text-xs uppercase tracking-[0.2em] sm:tracking-[0.3em] border border-earth text-earth hover:bg-earth hover:text-cream transition-colors rounded-full"
+                  className="inline-flex items-center justify-center w-full sm:w-auto px-6 sm:px-8 py-3 text-[10px] sm:text-xs uppercase tracking-[0.2em] sm:tracking-[0.3em] border border-earth text-earth hover:bg-earth hover:text-cream transition-colors rounded-full font-black"
                 >
                   {secondaryCtaLabel}
                 </Link>

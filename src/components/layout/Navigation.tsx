@@ -52,6 +52,32 @@ const Navigation: React.FC = () => {
   useEffect(() => {
     let isActive = true;
     const lang = (i18n.language || 'uk').split('-')[0];
+    const cacheKey = `nav-categories-${lang}`;
+
+    const applyCached = () => {
+      try {
+        const raw = sessionStorage.getItem(cacheKey);
+        if (!raw) return false;
+        const cached = JSON.parse(raw) as {
+          tree: Category[];
+          categories: Category[];
+          savedAt: number;
+        };
+        if (!cached?.savedAt || Date.now() - cached.savedAt > 10 * 60 * 1000) return false;
+        setCategoryTree(cached.tree || []);
+        setFlatCategories(cached.categories || []);
+        return true;
+      } catch {
+        return false;
+      }
+    };
+
+    if (typeof window !== 'undefined' && applyCached()) {
+      return () => {
+        isActive = false;
+      };
+    }
+
     Promise.all([
       categoryService.getCategoryTree(lang),
       categoryService.getCategories({ isActive: true, lang }),
@@ -62,6 +88,16 @@ const Navigation: React.FC = () => {
         const activeFlat = all.filter(category => category.isActive !== false);
         setCategoryTree(activeTree);
         setFlatCategories(activeFlat);
+        if (typeof window !== 'undefined') {
+          sessionStorage.setItem(
+            cacheKey,
+            JSON.stringify({
+              tree: activeTree,
+              categories: activeFlat,
+              savedAt: Date.now(),
+            })
+          );
+        }
       })
       .catch(() => {
         if (!isActive) return;
@@ -72,7 +108,7 @@ const Navigation: React.FC = () => {
     return () => {
       isActive = false;
     };
-  }, []);
+  }, [i18n.language]);
 
   useEffect(() => {
     const handleScroll = () => {

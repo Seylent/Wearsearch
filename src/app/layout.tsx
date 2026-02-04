@@ -1,28 +1,23 @@
 import type { Metadata, Viewport } from 'next';
-import { headers } from 'next/headers';
-import { Inter, Montserrat } from 'next/font/google';
+import { Montserrat } from 'next/font/google';
 import { NextProviders } from './providers';
-import { getServerCurrency } from '@/utils/currencyStorage';
 import Navigation from '@/components/layout/Navigation';
 import Footer from '@/components/layout/Footer';
+import { GlobalBackground } from '@/components/layout/GlobalBackground';
 import { ResourceHintsInitializer } from '@/components/ResourceHintsInitializer';
 import { Analytics } from '@/components/Analytics';
 import { ClientOnlyOverlays } from '@/components/ClientOnlyOverlays';
 import { CookieBanner } from '@/components/CookieBanner';
 import './globals.css';
 
-const inter = Inter({
-  subsets: ['latin', 'cyrillic'],
-  display: 'swap',
-  variable: '--font-inter',
-});
-
 const montserrat = Montserrat({
   subsets: ['latin', 'cyrillic'],
-  weight: ['400', '500', '600', '700', '800'],
+  weight: ['400', '500', '600', '700', '800', '900'],
   display: 'swap',
   variable: '--font-montserrat',
 });
+
+const metadataBaseUrl = new URL(process.env.NEXT_PUBLIC_SITE_URL || 'https://wearsearch.com');
 
 // Basic metadata - pages will override this
 export const metadata: Metadata = {
@@ -41,14 +36,14 @@ export const metadata: Metadata = {
     'brands',
     'online shopping',
   ],
-  metadataBase: new URL('https://wearsearch.com'), // Replace with actual domain
+  metadataBase: metadataBaseUrl,
   robots: {
     index: true,
     follow: true,
   },
   icons: {
     icon: '/favicon.ico',
-    apple: '/favicon.png',
+    apple: '/favicon.ico',
   },
 };
 
@@ -58,18 +53,27 @@ export const viewport: Viewport = {
   maximumScale: 5,
 };
 
-export default async function RootLayout({ children }: { readonly children: React.ReactNode }) {
+export default function RootLayout({ children }: { readonly children: React.ReactNode }) {
   // Keep SSR deterministic; client updates <html lang> after hydration.
   const htmlLang = 'uk';
-  const initialCurrency = await getServerCurrency();
   const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://wearsearch.com';
-  const nonce = (await headers()).get('x-nonce') || undefined;
+  const gtmId = process.env.NEXT_PUBLIC_GTM_ID;
+  const preconnectOrigins = new Set<string>();
+  const apiUrl = process.env.NEXT_PUBLIC_API_URL;
+  if (apiUrl && apiUrl.startsWith('http')) {
+    try {
+      preconnectOrigins.add(new URL(apiUrl).origin);
+    } catch {
+      // Ignore invalid URL
+    }
+  }
+  preconnectOrigins.add('https://images.wearsearch.com');
   const organizationSchema = {
     '@context': 'https://schema.org',
     '@type': 'Organization',
     name: 'Wearsearch',
     url: siteUrl,
-    logo: `${siteUrl}/favicon.png`,
+    logo: `${siteUrl}/logow1.webp`,
   };
   const websiteSchema = {
     '@context': 'https://schema.org',
@@ -85,11 +89,26 @@ export default async function RootLayout({ children }: { readonly children: Reac
 
   return (
     <html lang={htmlLang} suppressHydrationWarning>
-      <head>{nonce ? <meta name="csp-nonce" content={nonce} /> : null}</head>
+      <head>
+        {[...preconnectOrigins].map(origin => (
+          <link key={origin} rel="preconnect" href={origin} />
+        ))}
+      </head>
       <body
-        className={`min-h-screen bg-background text-foreground font-sans antialiased overflow-x-hidden selection:bg-foreground/20 ${inter.variable} ${montserrat.variable}`}
+        className={`relative min-h-screen bg-transparent text-foreground font-sans antialiased overflow-x-hidden selection:bg-foreground/20 ${montserrat.variable}`}
         suppressHydrationWarning
       >
+        {gtmId ? (
+          <noscript>
+            <iframe
+              src={`https://www.googletagmanager.com/ns.html?id=${gtmId}`}
+              height="0"
+              width="0"
+              style={{ display: 'none', visibility: 'hidden' }}
+              title="gtm"
+            />
+          </noscript>
+        ) : null}
         {/* Skip to main content link for accessibility */}
         <a
           href="#main-content"
@@ -98,7 +117,8 @@ export default async function RootLayout({ children }: { readonly children: Reac
           Skip to main content
         </a>
 
-        <NextProviders initialCurrency={initialCurrency}>
+        <GlobalBackground />
+        <NextProviders>
           <ResourceHintsInitializer />
           <ClientOnlyOverlays />
           <Navigation />
@@ -107,12 +127,10 @@ export default async function RootLayout({ children }: { readonly children: Reac
           <script
             type="application/ld+json"
             dangerouslySetInnerHTML={{ __html: JSON.stringify(organizationSchema) }}
-            nonce={nonce}
           />
           <script
             type="application/ld+json"
             dangerouslySetInnerHTML={{ __html: JSON.stringify(websiteSchema) }}
-            nonce={nonce}
           />
           <main id="main-content" className="flex-1 w-full min-h-screen">
             {children}

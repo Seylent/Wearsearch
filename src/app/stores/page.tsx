@@ -1,6 +1,5 @@
 ﻿import { Suspense } from 'react';
 import { Metadata } from 'next';
-import { headers } from 'next/headers';
 import StoresContent from '@/components/pages/StoresContent';
 import {
   JsonLd,
@@ -30,7 +29,7 @@ export const metadata: Metadata = {
     url: '/stores',
     images: [
       {
-        url: '/images/stores-og.jpg',
+        url: '/images/stores-og.svg',
         width: 1200,
         height: 630,
         alt: 'Магазини та бренди на Wearsearch',
@@ -41,7 +40,7 @@ export const metadata: Metadata = {
     card: 'summary_large_image',
     title: 'Магазини та бренди - Wearsearch',
     description: 'Найкращі магазини та бренди в одному місці. Порівнюйте ціни!',
-    images: ['/images/stores-og.jpg'],
+    images: ['/images/stores-og.svg'],
   },
   robots: {
     index: true,
@@ -64,12 +63,11 @@ export const metadata: Metadata = {
 };
 
 export default async function StoresPage() {
-  const nonce = (await headers()).get('x-nonce') || undefined;
   return (
     <Suspense
       fallback={
-        <div className="min-h-screen bg-black flex items-center justify-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-white"></div>
+        <div className="min-h-screen flex items-center justify-center text-foreground">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-earth"></div>
         </div>
       }
     >
@@ -81,14 +79,12 @@ export default async function StoresPage() {
             url: `${process.env.NEXT_PUBLIC_SITE_URL || 'https://wearsearch.com'}/stores`,
           },
         ])}
-        nonce={nonce}
       />
       <JsonLd
         data={generateItemListSchema([], {
           name: 'Магазини',
           description: 'Список магазинів на Wearsearch',
         })}
-        nonce={nonce}
       />
       <StoresContent />
     </Suspense>

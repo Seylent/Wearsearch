@@ -11,7 +11,6 @@ import Link from 'next/link';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
 import type { Banner } from '@/types/banner';
 import { bannerService } from '@/services/bannerService';
-import { usePresignedImage } from '@/hooks/usePresignedImage';
 
 interface BannerCarouselProps {
   banners: Banner[];
@@ -71,7 +70,7 @@ export function BannerCarousel({
   };
 
   const currentBanner = banners[currentIndex];
-  const bannerImage = usePresignedImage(currentBanner?.image_url);
+  const bannerImage = currentBanner?.image_url || '';
 
   if (!banners || banners.length === 0) {
     return null;

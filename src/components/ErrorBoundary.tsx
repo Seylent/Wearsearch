@@ -2,6 +2,7 @@ import React, { Component, ErrorInfo, ReactNode } from 'react';
 import { Button } from '@/components/ui/button';
 import { AlertTriangle } from 'lucide-react';
 import { withTranslation, type WithTranslation } from 'react-i18next';
+import { logError } from '@/services/logger';
 
 interface Props extends WithTranslation {
   children: ReactNode;
@@ -28,7 +29,11 @@ class ErrorBoundary extends Component<Props, State> {
   }
 
   componentDidCatch(error: Error, errorInfo: ErrorInfo) {
-    console.error('Error caught by boundary:', error, errorInfo);
+    logError(error, {
+      component: 'ErrorBoundary',
+      action: 'COMPONENT_DID_CATCH',
+      metadata: { errorInfo },
+    });
   }
 
   render() {
@@ -39,7 +44,7 @@ class ErrorBoundary extends Component<Props, State> {
       }
 
       return (
-        <div className="min-h-screen bg-background flex items-center justify-center p-6">
+        <div className="min-h-screen flex items-center justify-center p-6">
           <div className="max-w-md w-full text-center space-y-6">
             <div className="w-16 h-16 rounded-full bg-destructive/10 flex items-center justify-center mx-auto">
               <AlertTriangle className="w-8 h-8 text-destructive" />
