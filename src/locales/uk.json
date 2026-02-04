@@ -6,6 +6,9 @@
     "cancel": "Скасувати",
     "confirm": "Підтвердити",
     "save": "Зберегти",
+    "fieldRequired": "Це поле обов'язкове",
+    "saving": "Збереження...",
+    "saved": "Збережено",
     "delete": "Видалити",
     "edit": "Редагувати",
     "close": "Закрити",
@@ -28,7 +31,12 @@
     "country": "Країна",
     "description": "Опис",
     "create": "Створити",
-    "products": "товарів"
+    "products": "товарів",
+    "add": "Додати",
+    "refresh": "Оновити",
+    "remove": "Видалити",
+    "info": "Інформація",
+    "warning": "Попередження"
   },
   "errors": {
     "somethingWentWrong": "Щось пішло не так",
@@ -41,7 +49,15 @@
     "loadDataFailed": "Під час завантаження даних сталася помилка. Спробуйте ще раз.",
     "productLoadFailed": "Не вдалося завантажити товар. Спробуйте ще раз.",
     "storesLoadFailed": "Не вдалося завантажити магазини",
-    "storesLoadDescription": "Не вдалося завантажити магазини. Перевірте з'єднання та спробуйте ще раз."
+    "storesLoadDescription": "Не вдалося завантажити магазини. Перевірте з'єднання та спробуйте ще раз.",
+    "authError": "Помилка автентифікації",
+    "serverError": "Помилка сервера",
+    "networkError": "Помилка мережі",
+    "unexpected": "Неочікувана помилка"
+  },
+  "seo": {
+    "adminTitle": "Адмін-панель",
+    "adminDescription": "Керуйте вашим магазином або брендом"
   },
   "theme": {
     "label": "Тема"
@@ -57,7 +73,10 @@
     "viewProduct": "Переглянути деталі товару",
     "uploadImage": "Завантажити зображення",
     "loadingProducts": "Завантаження товарів",
-    "loadingStores": "Завантаження магазинів"
+    "loadingStores": "Завантаження магазинів",
+    "searchResults": "Результати пошуку",
+    "searchInput": "Поле пошуку",
+    "closeSearch": "Закрити пошук"
   },
   "auth": {
     "signIn": "Увійти",
@@ -82,7 +101,35 @@
     "logoutSuccess": "Успішно вийшли!",
     "accountCreated": "Обліковий запис успішно створено!",
     "username": "Ім'я користувача",
-    "displayName": "Відображуване ім'я"
+    "displayName": "Відображуване ім'я",
+    "welcomeBack": "З поверненням!",
+    "passwordMismatch": "Паролі не співпадають",
+    "passwordMismatchDesc": "Переконайтеся, що паролі однакові",
+    "signupSuccess": "Реєстрація успішна",
+    "pleaseLogin": "Тепер ви можете увійти",
+    "invalidCredentials": "Невірний email/нікнейм або пароль",
+    "signupFailed": "Не вдалося зареєструватися",
+    "login": "Вхід",
+    "signup": "Реєстрація",
+    "loginSubtitle": "Увійдіть у свій акаунт",
+    "signupSubtitle": "Створіть новий акаунт",
+    "displayNamePlaceholder": "Ваше ім'я",
+    "usernamePlaceholder": "Ваш нікнейм",
+    "emailOrUsername": "Email або нікнейм",
+    "emailOrUsernamePlaceholder": "your@email.com або username",
+    "passwordRequirement": "Мінімум 6 символів",
+    "signingIn": "Входимо...",
+    "signingUp": "Реєструємо...",
+    "loginButton": "Увійти",
+    "signupButton": "Зареєструватися",
+    "noAccount": "Немає акаунту?",
+    "haveAccount": "Вже є акаунт?",
+    "terms": "Входячи, ви погоджуєтесь з",
+    "termsLink": "Умовами використання",
+    "and": "та",
+    "privacyLink": "Політикою конфіденційності",
+    "signOut": "Вийти",
+    "pleaseLoginAgain": "Будь ласка, увійдіть ще раз"
   },
   "nav": {
     "menu": "Меню",
@@ -97,13 +144,17 @@
     "admin": "Адмін",
     "brands": "Бренди",
     "signIn": "Увійти",
-    "signOut": "Вийти"
+    "signOut": "Вийти",
+    "product": "Товар",
+    "products": "Товари",
+    "storeMenu": "Мій магазин"
   },
   "mega": {
     "categories": "Категорії",
     "featureTitle": "Добірка",
     "featureCopy": "Відкрийте нові надходження та базові речі від перевірених магазинів.",
-    "viewAllCategory": "Всі {{name}}"
+    "viewAllCategory": "Всі {{name}}",
+    "featureSubtitle": "Редакційна добірка"
   },
   "footer": {
     "allClothing": "Весь одяг",
@@ -113,6 +164,7 @@
     "shop": "Магазин",
     "company": "Компанія",
     "contact": "Контакти",
+    "careers": "Вакансії",
     "contactUs": "Зв'яжіться з нами",
     "contactDescription": "Зв'яжіться з нами будь-яким зручним способом",
     "allItems": "Всі товари",
@@ -120,6 +172,7 @@
     "wishlists": "Списки бажань",
     "about": "Про нас",
     "madeFor": "Створено для зручних покупок",
+    "legal": "Правова інформація",
     "privacyPolicy": "Політика конфіденційності",
     "termsOfService": "Умови використання"
   },
@@ -179,8 +232,33 @@
     "uploadSuccessDescription": "Зображення завантажено",
     "change": "Змінити"
   },
+  "brand": {
+    "accessTab": "Доступ бренду",
+    "permissionsLoadError": "Не вдалося завантажити доступи",
+    "permissionStoreRequired": "Бренд і магазин обов'язкові",
+    "permissionAdded": "Доступ магазину надано",
+    "permissionAddError": "Не вдалося надати доступ",
+    "permissionRemoved": "Доступ магазину видалено",
+    "permissionRemoveError": "Не вдалося видалити доступ",
+    "officialStoreRequired": "Бренд і магазин обов'язкові",
+    "officialStoreLinked": "Офіційний магазин прив'язано",
+    "officialStoreLinkError": "Не вдалося прив'язати офіційний магазин",
+    "permissionsTitle": "Дозволені магазини",
+    "brandId": "ID бренду",
+    "storeId": "ID магазину",
+    "addStorePermission": "Надати доступ",
+    "permissionsList": "Магазини з доступом до цього закритого бренду",
+    "permissionsEmpty": "Ще немає схвалених магазинів",
+    "officialStoreTitle": "Офіційний магазин бренду",
+    "officialStoreId": "ID магазину",
+    "linkOfficialStore": "Прив'язати магазин"
+  },
   "admin": {
     "title": "Адмін",
+    "banners": "Банери",
+    "userRoles": "Ролі користувачів",
+    "team": "Команда",
+    "notAuthenticated": "Увійдіть, щоб отримати доступ до адмін-панелі",
     "storeOwnerPanelDescription": "Керуйте товарами вашого магазину",
     "addNewProduct": "Додати новий товар",
     "addProduct": "Додати товар",
@@ -306,7 +384,31 @@
     "logoUrl": "Логотип (URL)",
     "contactEmail": "Контактний email",
     "contactPhone": "Контактний телефон",
-    "activeStore": "Активний магазин"
+    "activeStore": "Активний магазин",
+    "confirmDeleteBrand": "Видалити бренд {{name}}?",
+    "brandClosedLabel": "Закритий бренд",
+    "brandClosedHint": "Лише схвалені магазини можуть продавати товари",
+    "noBrands": "Брендів не знайдено",
+    "createFirstBrand": "Створіть перший бренд",
+    "deleteStore": "Видалити магазин",
+    "noStoresFound": "Магазини не знайдено",
+    "noStores": "Немає доступних магазинів",
+    "tryDifferentSearch": "Спробуйте інший запит",
+    "addFirstStore": "Додайте перший магазин",
+    "clearSearch": "Очистити пошук",
+    "rolesStoreRequired": "Магазин обов'язковий для ролей магазину",
+    "rolesBrandRequired": "Бренд обов'язковий для ролі brand_owner",
+    "rolesStoreLabel": "Магазин",
+    "rolesStorePlaceholder": "Оберіть магазин",
+    "rolesStoreEmpty": "Немає доступних магазинів",
+    "rolesBrandLabel": "Бренд",
+    "rolesBrandPlaceholder": "Оберіть бренд",
+    "rolesBrandEmpty": "Немає доступних брендів",
+    "noAccess": "У вас немає доступу до цього розділу",
+    "productListDescription": "Керуйте товарами",
+    "storeManagementPlaceholder": "Тут буде відображатися керування магазинами",
+    "brandManagementPlaceholder": "Тут буде відображатися керування брендами",
+    "contactsSaveFailed": "Не вдалося зберегти на сервері. Контакти збережено локально."
   },
   "filters": {
     "activeFilters": "Активні фільтри",
@@ -329,12 +431,13 @@
       "men": "Чоловіче",
       "women": "Жіноче",
       "unisex": "Унісекс"
-    }
+    },
+    "noBrands": "Немає доступних брендів"
   },
   "products": {
     "allProducts": "Всі товари",
     "searchPlaceholder": "Шукати товари...",
-    "sortBy": "Сортувати",
+    "sortBy": "Сортувати за",
     "noResults": "Товари не знайдено",
     "clearFilters": "Очистити фільтри",
     "applyFilters": "Застосувати фільтри",
@@ -362,7 +465,19 @@
     "filtersDescription": "Оберіть параметри для фільтрації товарів",
     "priceAsc": "Ціна: від низької до високої",
     "priceDesc": "Ціна: від високої до низької",
-    "newest": "Спочатку нові"
+    "newest": "Спочатку нові",
+    "materials": "Матеріали",
+    "technologies": "Технології",
+    "sizes": "Розміри",
+    "saved": "Збережено",
+    "save": "Зберегти",
+    "unknown": "Невідомий товар",
+    "priceUnavailable": "Ціна недоступна",
+    "similarProducts": "Схожі товари",
+    "sort": {
+      "placeholder": "Сортувати",
+      "label": "Сортування товарів"
+    }
   },
   "emptyStates": {
     "noProductsAvailable": "Немає доступних товарів",
@@ -384,10 +499,6 @@
     "noFavoritesDescription": "Додавайте улюблені товари, щоб вони з'являлися тут.",
     "browseProducts": "Переглянути товари"
   },
-  "product": {
-    "seoTitle": "Товар",
-    "seoDescription": "Перегляньте деталі товару та порівняйте ціни в магазинах."
-  },
   "collections": {
     "title": "Списки бажань",
     "subtitle": "Групуйте улюблені речі в колекції",
@@ -400,7 +511,32 @@
     "quickStart": "Швидкий старт",
     "namePlaceholder": "Моя колекція",
     "createButton": "Створити колекцію",
-    "createdAndAdded": "Колекцію створено"
+    "createdAndAdded": "Колекцію створено",
+    "addToCollection": "Додати до колекції",
+    "addToWishlist": "Додати до списку бажань",
+    "added": "Додано",
+    "addedTo": "Додано до",
+    "addedToDesc": "було додано до",
+    "chooseWishlistHelp": "Оберіть список бажань, щоб зберегти товар.",
+    "collectionDescription": "Створіть колекцію для організації товарів",
+    "createFirst": "Створіть першу колекцію",
+    "createdDesc": "успішно створено",
+    "deletedDesc": "було видалено",
+    "empty": "Поки немає списків бажань",
+    "emptyHint": "Створіть першу колекцію, щоб організувати товари",
+    "icon": "Іконка",
+    "name": "Назва",
+    "nameRequired": "Назва обов'язкова",
+    "newName": "Нова назва колекції",
+    "noCollections": "Немає колекцій",
+    "or": "або створіть власну",
+    "removed": "Видалено зі списку бажань",
+    "removedFrom": "Видалено з колекції",
+    "removedFromDesc": "було видалено з",
+    "save": "Зберегти",
+    "saveToCollection": "Зберегти до колекції",
+    "selectCollection": "Оберіть колекцію для додавання товару",
+    "selectWishlist": "Оберіть список бажань"
   },
   "categories": {
     "clothing": "Одяг",
@@ -515,7 +651,10 @@
     "noProductsDescription": "Підключіть backend сервер для завантаження продуктів.",
     "noProductsHint": "Перевірте NEXT_PUBLIC_API_URL в .env файлі.",
     "noProductsExpected": "Очікується:",
-    "noProductsBackend": "Або запустіть backend:"
+    "noProductsBackend": "Або запустіть backend:",
+    "discover": "Відкрийте",
+    "exceptional": "Виняткове",
+    "fashion": "Модне"
   },
   "recentlyViewed": {
     "title": "Нещодавно переглянуті",
@@ -528,7 +667,9 @@
     "price": "Ціна",
     "availableAt": "Доступно в",
     "addToCart": "Додати в кошик",
-    "viewDetails": "Деталі"
+    "viewDetails": "Деталі",
+    "seoTitle": "Товар",
+    "seoDescription": "Перегляньте деталі товару та порівняйте ціни в магазинах."
   },
   "sort": {
     "newest": "Спочатку нові",
@@ -570,7 +711,94 @@
     "settingsSaved": "Налаштування збережено",
     "nowPublic": "Список став публічним",
     "nowPrivate": "Список став приватним",
-    "settingsError": "Не вдалося зберегти налаштування"
+    "settingsError": "Не вдалося зберегти налаштування",
+    "publicTitle": "Публічний список бажань",
+    "sharedList": "Спільний список",
+    "publicSubtitle": "Товари, збережені в цьому списку",
+    "emptyPublic": "У цьому списку ще немає товарів"
+  },
+  "search": {
+    "placeholder": "Пошук товарів, брендів...",
+    "clear": "Очистити пошук",
+    "recentSearches": "Нещодавні пошуки",
+    "clearHistory": "Очистити",
+    "suggestions": "Підказки",
+    "popular": "Популярне",
+    "searchFor": "Шукати",
+    "removeFromHistory": "Видалити з історії",
+    "mostSearched": "Найпопулярніші запити",
+    "startTyping": "Почніть вводити, щоб шукати товари та магазини...",
+    "hint": "Шукайте за назвою товару, брендом, категорією або магазином",
+    "clearShort": "Очистити",
+    "searching": "Пошук...",
+    "noResults": "Немає результатів для ",
+    "tryDifferent": "Спробуйте інший запит",
+    "suggestedProducts": "Рекомендовані товари",
+    "suggestedStores": "Магазини",
+    "products": "товари",
+    "viewStore": "Переглянути магазин",
+    "viewAll": "Переглянути всі результати для "
+  },
+  "pagination": {
+    "navigation": "Навігація сторінками",
+    "previous": "Попередня",
+    "next": "Наступна",
+    "info": "Сторінка {{current}} з {{total}}"
+  },
+  "mobileActions": {
+    "zoom": "Збільшити",
+    "saved": "Збережено",
+    "save": "Зберегти",
+    "share": "Поділитися",
+    "viewStores": "Переглянути магазини",
+    "stores": "Магазини"
+  },
+  "share": {
+    "linkCopied": "Посилання скопійовано!",
+    "linkCopiedDesc": "Посилання скопійовано в буфер обміну.",
+    "shareProduct": "Поділитися товаром",
+    "share": "Поділитися",
+    "copied": "Скопійовано",
+    "copy": "Копіювати"
+  },
+  "recommendations": {
+    "title": "Рекомендовано для вас"
+  },
+  "reviews": {
+    "submitted": "Відгук надіслано",
+    "submittedDesc": "Дякуємо за відгук!",
+    "submitError": "Не вдалося надіслати відгук",
+    "ratingRequired": "Будь ласка, оберіть рейтинг",
+    "contentRequired": "Напишіть щонайменше 10 символів",
+    "title": "Відгуки",
+    "reviews": "Відгуків",
+    "writeReview": "Написати відгук",
+    "yourReview": "Ваш відгук",
+    "yourRating": "Ваш рейтинг",
+    "stars": "зірок",
+    "yourFeedback": "Ваш відгук",
+    "placeholder": "Поділіться враженнями про товар...",
+    "characters": "символів",
+    "submitting": "Надсилаємо...",
+    "submit": "Надіслати відгук",
+    "loginToReview": "Увійдіть, щоб залишити відгук",
+    "noReviews": "Поки немає відгуків",
+    "beFirst": "Станьте першим, хто залишить відгук!",
+    "helpfulError": "Не вдалося позначити як корисний",
+    "loginToHelp": "Увійдіть, щоб відзначати відгуки як корисні",
+    "verified": "Перевірено",
+    "helpful": "Корисно"
+  },
+  "quickView": {
+    "availableIn": "Доступно в"
+  },
+  "currency": {
+    "updated": "Оновлено",
+    "pricesInDollarsNBU": "Ціни в доларах (курс НБУ)",
+    "convertedPrices": "Конвертовані ціни"
+  },
+  "dataSource": {
+    "partialResults": "Показано результати з {{available}} із {{total}} джерел"
   },
   "about": {
     "ourStory": "Наша історія",
@@ -598,7 +826,18 @@
     "description": "Досліджуйте нашу добірку онлайн-магазинів моди. Знайдіть найкращі магазини для вашого стилю.",
     "searchPlaceholder": "Пошук магазинів...",
     "storesLabel": "Магазини",
-    "viewProducts": "Переглянути товари"
+    "viewProducts": "Переглянути товари",
+    "products": "Товари",
+    "recommended": "Рекомендовані",
+    "saved": "Збережено",
+    "savedButton": "Збережено",
+    "saveButton": "Зберегти",
+    "removed": "Видалено",
+    "removedDescription": "Магазин видалено зі збережених",
+    "savedDescription": "Магазин додано до збережених",
+    "savedStores": "Збережені магазини",
+    "startSaving": "Почніть зберігати магазини, щоб вони були тут",
+    "noSavedStores": "Поки немає збережених магазинів"
   },
   "productDetail": {
     "notFoundTitle": "Товар не знайдено",
@@ -825,5 +1064,44 @@
     "BAD_REQUEST": "Неправильний запит. Перевірте введені дані.",
     "SERVER_ERROR": "Помилка сервера. Спробуйте пізніше.",
     "NETWORK_ERROR": "Помилка мережі. Перевірте підключення до інтернету."
+  },
+  "store": {
+    "managersRequired": "Магазин і email обов'язкові",
+    "managerAdded": "Менеджера додано",
+    "managerAddError": "Не вдалося додати менеджера",
+    "managerRemoveRequired": "Магазин і ID користувача обов'язкові",
+    "managerRemoved": "Менеджера видалено",
+    "managerRemoveError": "Не вдалося видалити менеджера",
+    "productRequired": "Магазин і ID товару обов'язкові",
+    "productLinked": "Товар додано до магазину",
+    "productLinkError": "Не вдалося додати товар",
+    "productCreateRequired": "Магазин і назва товару обов'язкові",
+    "productCreated": "Товар реселера створено",
+    "productCreateError": "Не вдалося створити товар",
+    "managersTitle": "Менеджери магазину",
+    "storeId": "ID магазину",
+    "managerEmail": "Email менеджера",
+    "addManager": "Додати менеджера",
+    "managerUserId": "ID користувача менеджера",
+    "removeManager": "Видалити менеджера",
+    "productsTitle": "Додати товар до магазину",
+    "existingProduct": "Існуючий товар",
+    "newProduct": "Новий товар реселера",
+    "productId": "ID товару",
+    "price": "Ціна",
+    "sizes": "Розміри (через кому)",
+    "sizeIds": "ID розмірів (через кому)",
+    "addExistingProduct": "Додати товар",
+    "productName": "Назва",
+    "productType": "Тип",
+    "brandId": "ID бренду (необов'язково)",
+    "color": "Колір",
+    "gender": "Стать",
+    "category": "Категорія",
+    "imageUrl": "URL зображення",
+    "description": "Опис",
+    "materialIds": "ID матеріалів (через кому)",
+    "technologyIds": "ID технологій (через кому)",
+    "createStoreProduct": "Створити товар"
   }
 }

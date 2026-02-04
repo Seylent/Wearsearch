@@ -1,6 +1,5 @@
 import HomeContentClient from './HomeContentClient';
 import type { Product } from '@/types';
-import type { Banner } from '@/types/banner';
 
 interface SEOData {
   title?: string;
@@ -27,7 +26,6 @@ interface HomeContentProps {
     imageUrl?: string;
     productCount: number;
   }>;
-  banners?: Banner[];
   seoData: SEOData | null;
   stats: {
     totalProducts: number;
@@ -40,7 +38,6 @@ interface HomeContentProps {
 export default function HomeContent({
   featuredProducts,
   popularProducts,
-  banners = [],
   seoData,
   categories,
 }: Readonly<HomeContentProps>) {
@@ -48,7 +45,6 @@ export default function HomeContent({
     <HomeContentClient
       initialProducts={featuredProducts}
       initialPopularProducts={popularProducts}
-      banners={banners}
       seoData={seoData}
       categories={categories}
     />

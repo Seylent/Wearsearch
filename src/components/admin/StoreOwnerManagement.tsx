@@ -10,6 +10,13 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
 
 const isRecord = (value: unknown): value is Record<string, unknown> =>
   typeof value === 'object' && value !== null;
@@ -26,7 +33,16 @@ const parseIds = (value: string) =>
     .map(id => id.trim())
     .filter(Boolean);
 
-export const StoreOwnerManagement = () => {
+type StoreOption = {
+  id: string | number;
+  name: string;
+};
+
+type StoreOwnerManagementProps = {
+  stores?: StoreOption[];
+};
+
+export const StoreOwnerManagement = ({ stores = [] }: StoreOwnerManagementProps) => {
   const { t } = useTranslation();
   const { user } = useAuth();
   const [storeId, setStoreId] = useState('');
@@ -54,6 +70,14 @@ export const StoreOwnerManagement = () => {
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
+
+  const storeOptions = useMemo(
+    () =>
+      stores
+        .map(store => ({ id: String(store.id), name: store.name }))
+        .filter(store => store.id.length > 0 && store.name.length > 0),
+    [stores]
+  );
 
   const resolvedStoreId = useMemo(() => {
     const userStoreId = isRecord(user) ? user.store_id : undefined;
@@ -195,13 +219,28 @@ export const StoreOwnerManagement = () => {
         </CardHeader>
         <CardContent className="space-y-4">
           <div className="grid gap-2">
-            <Label htmlFor="store-id">{t('store.storeId', 'Store ID')}</Label>
-            <Input
-              id="store-id"
-              value={storeId}
-              onChange={event => setStoreId(event.target.value)}
-              placeholder="store_id"
-            />
+            <Label htmlFor="store-id">{t('store.storeId', 'Store')}</Label>
+            {storeOptions.length > 0 ? (
+              <Select value={storeId} onValueChange={setStoreId}>
+                <SelectTrigger id="store-id">
+                  <SelectValue placeholder={t('store.selectStore', 'Select store')} />
+                </SelectTrigger>
+                <SelectContent>
+                  {storeOptions.map(store => (
+                    <SelectItem key={store.id} value={store.id}>
+                      {store.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            ) : (
+              <Input
+                id="store-id"
+                value={storeId}
+                onChange={event => setStoreId(event.target.value)}
+                placeholder="store_id"
+              />
+            )}
           </div>
 
           <form onSubmit={handleAddManager} className="grid gap-3 md:grid-cols-[1fr_auto]">

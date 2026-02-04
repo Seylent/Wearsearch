@@ -5,7 +5,7 @@
 
 'use client';
 
-import { lazy, Suspense, useState } from 'react';
+import { lazy, Suspense, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { ShieldCheck, Plus, Package, Store, Tag, Mail, ImageIcon, Users } from 'lucide-react';
@@ -13,6 +13,8 @@ import { useAuth } from '@/features/auth/hooks/useAuth';
 import { useSEO } from '@/hooks/useSEO';
 import { useAdmin } from '@/hooks/useAdmin';
 import { Card, CardContent } from '@/components/ui/card';
+import { useToast } from '@/hooks/use-toast';
+import { adminApi } from '@/services/api/admin.api';
 
 // Lazy load all components
 const AddProductForm = lazy(() =>
@@ -30,8 +32,11 @@ const BannerManager = lazy(() =>
 const UserRoleManagement = lazy(() =>
   import('@/components/admin/UserRoleManagement').then(m => ({ default: m.UserRoleManagement }))
 );
-const BrandOwnerManagement = lazy(() =>
-  import('@/components/admin/BrandOwnerManagement').then(m => ({ default: m.BrandOwnerManagement }))
+const StoreManagement = lazy(() =>
+  import('@/components/admin/StoreManagement').then(m => ({ default: m.StoreManagement }))
+);
+const BrandManagement = lazy(() =>
+  import('@/components/admin/BrandManagement').then(m => ({ default: m.BrandManagement }))
 );
 const StoreOwnerManagement = lazy(() =>
   import('@/components/admin/StoreOwnerManagement').then(m => ({ default: m.StoreOwnerManagement }))
@@ -49,6 +54,204 @@ const AdminContent = () => {
   const { isAuthenticated, canAccessAdminPanel } = useAuth();
   const admin = useAdmin();
   const [activeTab, setActiveTab] = useState('add-product');
+  const { toast } = useToast();
+  const [isSavingStore, setIsSavingStore] = useState(false);
+  const [isSavingBrand, setIsSavingBrand] = useState(false);
+  const normalizedStores = useMemo(() => {
+    type VerificationStatus = 'pending' | 'verified' | 'rejected';
+    const resolveVerificationStatus = (value: unknown): VerificationStatus =>
+      value === 'verified' || value === 'rejected' ? value : 'pending';
+    return (admin.stores || []).map(store => {
+      const record = store as Record<string, unknown>;
+      const rawId = record.id ?? '';
+      return {
+        id: typeof rawId === 'string' || typeof rawId === 'number' ? rawId : String(rawId),
+        name: typeof record.name === 'string' ? record.name : '',
+        website_url: typeof record.website_url === 'string' ? record.website_url : undefined,
+        telegram_url: typeof record.telegram_url === 'string' ? record.telegram_url : undefined,
+        instagram_url: typeof record.instagram_url === 'string' ? record.instagram_url : undefined,
+        tiktok_url: typeof record.tiktok_url === 'string' ? record.tiktok_url : undefined,
+        shipping_info: typeof record.shipping_info === 'string' ? record.shipping_info : undefined,
+        is_active: typeof record.is_active === 'boolean' ? record.is_active : true,
+        verification_status: resolveVerificationStatus(record.verification_status),
+      };
+    });
+  }, [admin.stores]);
+
+  const normalizedBrands = useMemo(() => {
+    return (admin.brands || []).map(brand => {
+      const record = brand as Record<string, unknown>;
+      const rawId = record.id ?? '';
+      return {
+        id: typeof rawId === 'string' || typeof rawId === 'number' ? String(rawId) : '',
+        name: typeof record.name === 'string' ? record.name : '',
+        description: typeof record.description === 'string' ? record.description : undefined,
+        website: typeof record.website_url === 'string' ? record.website_url : undefined,
+        logo_url: typeof record.logo_url === 'string' ? record.logo_url : undefined,
+        is_active: typeof record.is_active === 'boolean' ? record.is_active : true,
+        is_closed: typeof record.is_closed === 'boolean' ? record.is_closed : undefined,
+        products_count:
+          typeof record.products_count === 'number' ? record.products_count : undefined,
+      };
+    });
+  }, [admin.brands]);
+
+  const handleStoreCreate = async (storeData: {
+    name: string;
+    website_url?: string;
+    telegram_url?: string;
+    instagram_url?: string;
+    tiktok_url?: string;
+    shipping_info?: string;
+    is_active?: boolean;
+    verification_status?: 'pending' | 'verified' | 'rejected';
+  }) => {
+    setIsSavingStore(true);
+    try {
+      await adminApi.createStore(
+        storeData as unknown as Parameters<typeof adminApi.createStore>[0]
+      );
+      await admin.loadDashboard();
+      toast({ title: t('admin.storeCreated', 'Store created') });
+    } catch (error) {
+      toast({
+        variant: 'destructive',
+        title: t('admin.storeCreateFailed', 'Failed to create store'),
+        description: error instanceof Error ? error.message : undefined,
+      });
+    } finally {
+      setIsSavingStore(false);
+    }
+  };
+
+  const handleStoreUpdate = async (
+    id: string | number,
+    storeData: Partial<{
+      name: string;
+      website_url?: string;
+      telegram_url?: string;
+      instagram_url?: string;
+      tiktok_url?: string;
+      shipping_info?: string;
+      is_active?: boolean;
+      verification_status?: 'pending' | 'verified' | 'rejected';
+    }>
+  ) => {
+    setIsSavingStore(true);
+    try {
+      await adminApi.updateStore(
+        String(id),
+        storeData as unknown as Parameters<typeof adminApi.updateStore>[1]
+      );
+      await admin.loadDashboard();
+      toast({ title: t('admin.storeUpdated', 'Store updated') });
+    } catch (error) {
+      toast({
+        variant: 'destructive',
+        title: t('admin.storeUpdateFailed', 'Failed to update store'),
+        description: error instanceof Error ? error.message : undefined,
+      });
+    } finally {
+      setIsSavingStore(false);
+    }
+  };
+
+  const handleStoreDelete = async (id: string | number) => {
+    setIsSavingStore(true);
+    try {
+      await adminApi.deleteStore(String(id));
+      await admin.loadDashboard();
+      toast({ title: t('admin.storeDeleted', 'Store deleted') });
+    } catch (error) {
+      toast({
+        variant: 'destructive',
+        title: t('admin.storeDeleteFailed', 'Failed to delete store'),
+        description: error instanceof Error ? error.message : undefined,
+      });
+    } finally {
+      setIsSavingStore(false);
+    }
+  };
+
+  const handleBrandCreate = async (brandData: {
+    name: string;
+    description?: string;
+    website?: string;
+    logo_url?: string;
+    is_active: boolean;
+    is_closed?: boolean;
+  }) => {
+    setIsSavingBrand(true);
+    try {
+      await adminApi.createBrand({
+        name: brandData.name,
+        description: brandData.description,
+        website_url: brandData.website,
+        logo_url: brandData.logo_url,
+        is_closed: brandData.is_closed,
+      });
+      await admin.loadDashboard();
+      toast({ title: t('admin.brandCreated', 'Brand created') });
+    } catch (error) {
+      toast({
+        variant: 'destructive',
+        title: t('admin.brandCreateFailed', 'Failed to create brand'),
+        description: error instanceof Error ? error.message : undefined,
+      });
+    } finally {
+      setIsSavingBrand(false);
+    }
+  };
+
+  const handleBrandUpdate = async (
+    id: string,
+    brandData: Partial<{
+      name: string;
+      description?: string;
+      website?: string;
+      logo_url?: string;
+      is_active: boolean;
+      is_closed?: boolean;
+    }>
+  ) => {
+    setIsSavingBrand(true);
+    try {
+      await adminApi.updateBrand(id, {
+        name: brandData.name,
+        description: brandData.description,
+        website_url: brandData.website,
+        logo_url: brandData.logo_url,
+        is_closed: brandData.is_closed,
+      });
+      await admin.loadDashboard();
+      toast({ title: t('admin.brandUpdated', 'Brand updated') });
+    } catch (error) {
+      toast({
+        variant: 'destructive',
+        title: t('admin.brandUpdateFailed', 'Failed to update brand'),
+        description: error instanceof Error ? error.message : undefined,
+      });
+    } finally {
+      setIsSavingBrand(false);
+    }
+  };
+
+  const handleBrandDelete = async (id: string) => {
+    setIsSavingBrand(true);
+    try {
+      await adminApi.deleteBrand(id);
+      await admin.loadDashboard();
+      toast({ title: t('admin.brandDeleted', 'Brand deleted') });
+    } catch (error) {
+      toast({
+        variant: 'destructive',
+        title: t('admin.brandDeleteFailed', 'Failed to delete brand'),
+        description: error instanceof Error ? error.message : undefined,
+      });
+    } finally {
+      setIsSavingBrand(false);
+    }
+  };
 
   // SEO setup
   useSEO({
@@ -70,11 +273,6 @@ const AdminContent = () => {
     },
     { value: 'stores', icon: <Store className="w-4 h-4" />, label: t('admin.stores', 'Магазини') },
     { value: 'brands', icon: <Tag className="w-4 h-4" />, label: t('admin.brands', 'Бренди') },
-    {
-      value: 'brand-access',
-      icon: <Tag className="w-4 h-4" />,
-      label: t('brand.accessTab', 'Доступ бренду'),
-    },
     {
       value: 'banners',
       icon: <ImageIcon className="w-4 h-4" />,
@@ -131,7 +329,7 @@ const AdminContent = () => {
               className="flex items-center gap-1.5 data-[state=active]:bg-foreground data-[state=active]:text-background rounded-lg transition-all text-xs md:text-sm px-3 py-2.5 min-h-[44px]"
             >
               {tab.icon}
-              <span className="hidden md:inline">{tab.label}</span>
+              <span className="inline truncate max-w-[140px] sm:max-w-[180px]">{tab.label}</span>
             </TabsTrigger>
           ))}
         </TabsList>
@@ -194,9 +392,9 @@ const AdminContent = () => {
               onUpdateStorePrice={admin.updateStorePrice}
               onAddStoreSize={admin.addStoreSize}
               onRemoveStoreSize={admin.removeStoreSize}
-              onSaveAsTemplate={() => {}}
-              onLoadTemplate={() => {}}
-              onDeleteTemplate={() => {}}
+              onSaveAsTemplate={admin.saveAsTemplate}
+              onLoadTemplate={admin.loadTemplate}
+              onDeleteTemplate={admin.deleteTemplate}
               onToggleTemplates={() => admin.setShowTemplates(!admin.showTemplates)}
               onAutoTranslateDescriptionChange={admin.setAutoTranslateDescription}
               autoTranslateDescription={admin.autoTranslateDescription}
@@ -229,7 +427,10 @@ const AdminContent = () => {
               onToggleSelectMode={admin.toggleSelectMode}
               onToggleProductSelection={admin.toggleProductSelection}
               onSelectAllProducts={admin.selectAllProducts}
-              onEditProduct={product => admin.setEditingProductId(product.id as string)}
+              onEditProduct={product => {
+                admin.setEditingProductId(product.id as string);
+                setActiveTab('add-product');
+              }}
               onDeleteProduct={() => {}}
               onBulkDelete={() => {}}
               onExportToCSV={() => {}}
@@ -240,52 +441,29 @@ const AdminContent = () => {
           </Suspense>
         </TabsContent>
 
-        {/* STORES TAB - Simplified */}
+        {/* STORES TAB */}
         <TabsContent value="stores" className="space-y-4">
           <Suspense fallback={<AdminTabSkeleton />}>
-            {/* 
-              TODO: StoreManagement requires stores and handler props.
-              Currently rendering without props - needs implementation.
-            */}
-            <Card>
-              <CardContent className="py-6">
-                <p className="text-muted-foreground">
-                  {t(
-                    'admin.storeManagementPlaceholder',
-                    'Store management component will be rendered here'
-                  )}
-                </p>
-                {/* StoreManagement requires: stores, onStoreCreate, onStoreUpdate, onStoreDelete */}
-              </CardContent>
-            </Card>
+            <StoreManagement
+              stores={normalizedStores}
+              onStoreCreate={handleStoreCreate}
+              onStoreUpdate={handleStoreUpdate}
+              onStoreDelete={handleStoreDelete}
+              loading={isSavingStore}
+            />
           </Suspense>
         </TabsContent>
 
-        {/* BRANDS TAB - Simplified */}
+        {/* BRANDS TAB */}
         <TabsContent value="brands" className="space-y-4">
           <Suspense fallback={<AdminTabSkeleton />}>
-            {/* 
-              TODO: BrandManagement requires brands and handler props.
-              Currently rendering without props - needs implementation.
-            */}
-            <Card>
-              <CardContent className="py-6">
-                <p className="text-muted-foreground">
-                  {t(
-                    'admin.brandManagementPlaceholder',
-                    'Brand management component will be rendered here'
-                  )}
-                </p>
-                {/* BrandManagement requires: brands, onBrandCreate, onBrandUpdate, onBrandDelete */}
-              </CardContent>
-            </Card>
-          </Suspense>
-        </TabsContent>
-
-        {/* BRAND ACCESS TAB */}
-        <TabsContent value="brand-access" className="space-y-4">
-          <Suspense fallback={<AdminTabSkeleton />}>
-            <BrandOwnerManagement />
+            <BrandManagement
+              brands={normalizedBrands}
+              onBrandCreate={handleBrandCreate}
+              onBrandUpdate={handleBrandUpdate}
+              onBrandDelete={handleBrandDelete}
+              loading={isSavingBrand}
+            />
           </Suspense>
         </TabsContent>
 
@@ -315,7 +493,9 @@ const AdminContent = () => {
           <Suspense fallback={<AdminTabSkeleton />}>
             <Card>
               <CardContent className="py-6">
-                <StoreOwnerManagement />
+                <StoreOwnerManagement
+                  stores={normalizedStores.map(store => ({ id: store.id, name: store.name }))}
+                />
                 {/* StoreOwnerManagement doesn't accept readOnly prop */}
               </CardContent>
             </Card>

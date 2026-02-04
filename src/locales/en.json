@@ -6,6 +6,9 @@
     "cancel": "Cancel",
     "confirm": "Confirm",
     "save": "Save",
+    "fieldRequired": "This field is required",
+    "saving": "Saving...",
+    "saved": "Saved",
     "delete": "Delete",
     "edit": "Edit",
     "close": "Close",
@@ -28,7 +31,12 @@
     "country": "Country",
     "description": "Description",
     "create": "Create",
-    "products": "products"
+    "products": "products",
+    "add": "Add",
+    "refresh": "Refresh",
+    "remove": "Remove",
+    "info": "common.info",
+    "warning": "common.warning"
   },
   "errors": {
     "somethingWentWrong": "Something went wrong",
@@ -41,7 +49,15 @@
     "loadDataFailed": "We encountered an error while loading the data. Please try again.",
     "productLoadFailed": "Failed to load product. Please try again.",
     "storesLoadFailed": "Failed to load stores",
-    "storesLoadDescription": "We couldn't load the stores. Please check your connection and try again."
+    "storesLoadDescription": "We couldn't load the stores. Please check your connection and try again.",
+    "authError": "errors.authError",
+    "serverError": "errors.serverError",
+    "networkError": "errors.networkError",
+    "unexpected": "errors.unexpected"
+  },
+  "seo": {
+    "adminTitle": "Admin Panel",
+    "adminDescription": "Manage your store or brand"
   },
   "theme": {
     "label": "Theme"
@@ -57,7 +73,10 @@
     "viewProduct": "View product details",
     "uploadImage": "Upload image",
     "loadingProducts": "Loading products",
-    "loadingStores": "Loading stores"
+    "loadingStores": "Loading stores",
+    "searchResults": "aria.searchResults",
+    "searchInput": "aria.searchInput",
+    "closeSearch": "aria.closeSearch"
   },
   "auth": {
     "signIn": "Sign In",
@@ -82,7 +101,35 @@
     "logoutSuccess": "Successfully logged out!",
     "accountCreated": "Account created successfully!",
     "username": "Username",
-    "displayName": "Display Name"
+    "displayName": "Display Name",
+    "welcomeBack": "auth.welcomeBack",
+    "passwordMismatch": "auth.passwordMismatch",
+    "passwordMismatchDesc": "auth.passwordMismatchDesc",
+    "signupSuccess": "auth.signupSuccess",
+    "pleaseLogin": "auth.pleaseLogin",
+    "invalidCredentials": "auth.invalidCredentials",
+    "signupFailed": "auth.signupFailed",
+    "login": "auth.login",
+    "signup": "auth.signup",
+    "loginSubtitle": "auth.loginSubtitle",
+    "signupSubtitle": "auth.signupSubtitle",
+    "displayNamePlaceholder": "auth.displayNamePlaceholder",
+    "usernamePlaceholder": "auth.usernamePlaceholder",
+    "emailOrUsername": "auth.emailOrUsername",
+    "emailOrUsernamePlaceholder": "auth.emailOrUsernamePlaceholder",
+    "passwordRequirement": "auth.passwordRequirement",
+    "signingIn": "auth.signingIn",
+    "signingUp": "auth.signingUp",
+    "loginButton": "auth.loginButton",
+    "signupButton": "auth.signupButton",
+    "noAccount": "auth.noAccount",
+    "haveAccount": "auth.haveAccount",
+    "terms": "auth.terms",
+    "termsLink": "auth.termsLink",
+    "and": "auth.and",
+    "privacyLink": "auth.privacyLink",
+    "signOut": "Sign Out",
+    "pleaseLoginAgain": "auth.pleaseLoginAgain"
   },
   "nav": {
     "allItems": "All Items",
@@ -96,13 +143,18 @@
     "admin": "Admin",
     "brands": "Brands",
     "signIn": "Sign In",
-    "signOut": "Sign Out"
+    "signOut": "Sign Out",
+    "storeMenu": "nav.storeMenu",
+    "menu": "Menu",
+    "products": "Products",
+    "product": "Product"
   },
   "mega": {
     "categories": "Categories",
     "featureTitle": "Curated picks",
     "featureCopy": "Discover new drops and essentials from trusted stores.",
-    "viewAllCategory": "All {{name}}"
+    "viewAllCategory": "All {{name}}",
+    "featureSubtitle": "Editorial Selection"
   },
   "footer": {
     "allClothing": "All clothing",
@@ -111,14 +163,17 @@
     "shop": "Shop",
     "company": "Company",
     "contact": "Contacts",
+    "careers": "Careers",
     "contactUs": "Contact Us",
     "contactDescription": "Get in touch with us using any convenient method",
     "allItems": "All items",
     "saved": "Saved",
     "wishlists": "Wishlists",
     "about": "About",
+    "legal": "Legal",
     "privacyPolicy": "Privacy policy",
-    "termsOfService": "Terms of service"
+    "termsOfService": "Terms of service",
+    "brandDescription": "© 2026 Wearsearch. Made for easier shopping."
   },
   "profile": {
     "accountSettings": "Account Settings",
@@ -176,8 +231,33 @@
     "uploadSuccessDescription": "Image uploaded successfully",
     "change": "Change"
   },
+  "brand": {
+    "accessTab": "Brand access",
+    "permissionsLoadError": "Failed to load permissions",
+    "permissionStoreRequired": "Brand and store are required",
+    "permissionAdded": "Store access granted",
+    "permissionAddError": "Failed to grant access",
+    "permissionRemoved": "Store access removed",
+    "permissionRemoveError": "Failed to remove access",
+    "officialStoreRequired": "Brand and store are required",
+    "officialStoreLinked": "Official store linked",
+    "officialStoreLinkError": "Failed to link official store",
+    "permissionsTitle": "Allowed stores",
+    "brandId": "Brand ID",
+    "storeId": "Store ID",
+    "addStorePermission": "Grant access",
+    "permissionsList": "Stores with access to this closed brand",
+    "permissionsEmpty": "No stores approved yet",
+    "officialStoreTitle": "Official brand store",
+    "officialStoreId": "Store ID",
+    "linkOfficialStore": "Link store"
+  },
   "admin": {
     "title": "Admin",
+    "banners": "Banners",
+    "userRoles": "User roles",
+    "team": "Team",
+    "notAuthenticated": "Please sign in to access the admin panel",
     "storeOwnerPanelDescription": "Manage your store products",
     "addNewProduct": "Add New Product",
     "addProduct": "Add Product",
@@ -217,8 +297,8 @@
     "storeManagement": "Store Management",
     "manageStoresDescription": "Manage store profiles and contact channels",
     "searchStores": "Search stores",
-    "addStoreDescription": "Provide store details and contact channels.",
-    "editStoreDescription": "Update store details and contact channels.",
+    "addStoreDescription": "Provide store details and verification status.",
+    "editStoreDescription": "Update store details and verification status.",
     "active": "Active",
     "inactive": "Inactive",
     "visitWebsite": "Visit website",
@@ -291,8 +371,6 @@
       "moderator": "Moderator",
       "store_owner": "Store owner"
     },
-    "addStoreDescription": "Provide store details and verification status.",
-    "editStoreDescription": "Update store details and verification status.",
     "domain": "Domain",
     "verificationStatus": "Verification status",
     "pending": "Pending",
@@ -303,7 +381,31 @@
     "logoUrl": "Logo URL",
     "contactEmail": "Contact email",
     "contactPhone": "Contact phone",
-    "activeStore": "Active store"
+    "activeStore": "Active store",
+    "confirmDeleteBrand": "Delete brand {{name}}?",
+    "brandClosedLabel": "Closed brand",
+    "brandClosedHint": "Only approved stores can sell products",
+    "noBrands": "No brands found",
+    "createFirstBrand": "Create your first brand",
+    "deleteStore": "Delete store",
+    "noStoresFound": "No stores found",
+    "noStores": "No stores available",
+    "tryDifferentSearch": "Try a different search",
+    "addFirstStore": "Add your first store",
+    "clearSearch": "Clear search",
+    "rolesStoreRequired": "Store is required for store roles",
+    "rolesBrandRequired": "Brand is required for brand_owner",
+    "rolesStoreLabel": "Store",
+    "rolesStorePlaceholder": "Select store",
+    "rolesStoreEmpty": "No stores available",
+    "rolesBrandLabel": "Brand",
+    "rolesBrandPlaceholder": "Select brand",
+    "rolesBrandEmpty": "No brands available",
+    "noAccess": "You do not have access to this section",
+    "productListDescription": "Manage your products",
+    "storeManagementPlaceholder": "Store management component will be rendered here",
+    "brandManagementPlaceholder": "Brand management component will be rendered here",
+    "contactsSaveFailed": "Failed to save on server. Contacts were saved locally."
   },
   "filters": {
     "activeFilters": "Active Filters",
@@ -326,7 +428,8 @@
       "men": "Men",
       "women": "Women",
       "unisex": "Unisex"
-    }
+    },
+    "noBrands": "No brands available"
   },
   "products": {
     "allProducts": "All Products",
@@ -359,7 +462,19 @@
     "filtersDescription": "Select parameters to filter products",
     "priceAsc": "Price: Low to High",
     "priceDesc": "Price: High to Low",
-    "newest": "Newest First"
+    "newest": "Newest First",
+    "materials": "Materials",
+    "technologies": "Technologies",
+    "sizes": "Sizes",
+    "saved": "products.saved",
+    "save": "products.save",
+    "unknown": "Unknown product",
+    "priceUnavailable": "Price unavailable",
+    "similarProducts": "Similar Products",
+    "sort": {
+      "placeholder": "Sort by",
+      "label": "Sort products"
+    }
   },
   "emptyStates": {
     "noProductsAvailable": "No products available",
@@ -382,6 +497,11 @@
     "browseProducts": "Browse Products"
   },
   "product": {
+    "commonFrom": "from",
+    "price": "Price",
+    "availableAt": "Available at",
+    "addToCart": "Add to Cart",
+    "viewDetails": "View Details",
     "seoTitle": "Product",
     "seoDescription": "View product details and compare prices across stores."
   },
@@ -397,7 +517,32 @@
     "quickStart": "Quick Start",
     "namePlaceholder": "My Collection",
     "createButton": "Create Collection",
-    "createdAndAdded": "Collection created"
+    "createdAndAdded": "Collection created",
+    "removedFrom": "Removed from collection",
+    "removedFromDesc": "was removed from",
+    "addedTo": "Added to collection",
+    "addedToDesc": "was added to",
+    "addToCollection": "Add to collection",
+    "save": "Save",
+    "saveToCollection": "Save to Collection",
+    "selectCollection": "Select a collection to add this product",
+    "noCollections": "You don",
+    "createFirst": "Create your first collection",
+    "newName": "New collection name",
+    "removed": "Removed from wishlist",
+    "added": "Added to wishlist",
+    "addToWishlist": "Add to wishlist",
+    "selectWishlist": "Choose wishlist",
+    "chooseWishlistHelp": "Select a wishlist to save this product.",
+    "empty": "No wishlists yet",
+    "nameRequired": "Name is required",
+    "createdDesc": "has been created successfully",
+    "deletedDesc": "has been removed",
+    "collectionDescription": "Create a collection to organize your products",
+    "or": "or create custom",
+    "name": "Name",
+    "icon": "Icon",
+    "emptyHint": "Create your first collection to organize products"
   },
   "categories": {
     "clothing": "Clothing",
@@ -424,18 +569,18 @@
   "colors": {
     "black": "Black",
     "white": "White",
-    "red": "Red",
-    "blue": "Blue",
-    "green": "Green",
-    "yellow": "Yellow",
     "gray": "Gray",
     "brown": "Brown",
+    "beige": "Beige",
+    "navy": "Navy",
+    "blue": "Blue",
+    "green": "Green",
+    "red": "Red",
     "pink": "Pink",
     "purple": "Purple",
+    "yellow": "Yellow",
     "orange": "Orange",
-    "navy": "Navy",
-    "beige": "Beige",
-    "multicolor": "Multicolor"
+    "multicolor": "colors.multicolor"
   },
   "genders": {
     "male": "Male",
@@ -512,20 +657,16 @@
     "noProductsDescription": "Connect the backend server to load products.",
     "noProductsHint": "Check NEXT_PUBLIC_API_URL in your .env file.",
     "noProductsExpected": "Expected:",
-    "noProductsBackend": "Or start the backend:"
+    "noProductsBackend": "Or start the backend:",
+    "discover": "home.discover",
+    "exceptional": "home.exceptional",
+    "fashion": "home.fashion"
   },
   "recentlyViewed": {
     "title": "Recently Viewed",
     "clearAll": "Clear all",
     "remove": "Remove from recently viewed",
     "empty": "No recently viewed products"
-  },
-  "product": {
-    "commonFrom": "from",
-    "price": "Price",
-    "availableAt": "Available at",
-    "addToCart": "Add to Cart",
-    "viewDetails": "View Details"
   },
   "sort": {
     "newest": "Newest first",
@@ -534,21 +675,6 @@
     "priceDesc": "Price: High to Low",
     "nameAsc": "Name: A-Z",
     "nameDesc": "Name: Z-A"
-  },
-  "colors": {
-    "black": "Black",
-    "white": "White",
-    "gray": "Gray",
-    "brown": "Brown",
-    "beige": "Beige",
-    "navy": "Navy",
-    "blue": "Blue",
-    "green": "Green",
-    "red": "Red",
-    "pink": "Pink",
-    "purple": "Purple",
-    "yellow": "Yellow",
-    "orange": "Orange"
   },
   "favorites": {
     "yourCollection": "Your collection",
@@ -582,7 +708,11 @@
     "settingsSaved": "Settings saved",
     "nowPublic": "Wishlist is now public",
     "nowPrivate": "Wishlist is now private",
-    "settingsError": "Failed to save settings"
+    "settingsError": "Failed to save settings",
+    "publicTitle": "Public wishlist",
+    "sharedList": "Shared list",
+    "publicSubtitle": "Items saved in this wishlist",
+    "emptyPublic": "No products in this wishlist yet"
   },
   "about": {
     "ourStory": "Our Story",
@@ -610,7 +740,18 @@
     "description": "Explore our curated collection of online fashion stores. Find the best shops for your style.",
     "searchPlaceholder": "Search stores...",
     "storesLabel": "Stores",
-    "viewProducts": "View Products"
+    "viewProducts": "View Products",
+    "recommended": "Recommended",
+    "products": "Products",
+    "noSavedStores": "stores.noSavedStores",
+    "startSaving": "stores.startSaving",
+    "savedStores": "stores.savedStores",
+    "removed": "stores.removed",
+    "saved": "stores.saved",
+    "removedDescription": "stores.removedDescription",
+    "savedDescription": "stores.savedDescription",
+    "savedButton": "stores.savedButton",
+    "saveButton": "stores.saveButton"
   },
   "productDetail": {
     "notFoundTitle": "Product Not Found",
@@ -837,5 +978,127 @@
     "BAD_REQUEST": "Invalid request. Please check your input.",
     "SERVER_ERROR": "Server error. Please try again later.",
     "NETWORK_ERROR": "Network error. Please check your internet connection."
+  },
+  "store": {
+    "managersRequired": "Store and email are required",
+    "managerAdded": "Manager added",
+    "managerAddError": "Failed to add manager",
+    "managerRemoveRequired": "Store and user ID are required",
+    "managerRemoved": "Manager removed",
+    "managerRemoveError": "Failed to remove manager",
+    "productRequired": "Store and product ID are required",
+    "productLinked": "Product added to store",
+    "productLinkError": "Failed to add product",
+    "productCreateRequired": "Store and product name are required",
+    "productCreated": "Reseller product created",
+    "productCreateError": "Failed to create product",
+    "managersTitle": "Store managers",
+    "storeId": "Store ID",
+    "managerEmail": "Manager email",
+    "addManager": "Add manager",
+    "managerUserId": "Manager user ID",
+    "removeManager": "Remove manager",
+    "productsTitle": "Add product to store",
+    "existingProduct": "Existing product",
+    "newProduct": "New reseller product",
+    "productId": "Product ID",
+    "price": "Price",
+    "sizes": "Sizes (comma separated)",
+    "sizeIds": "Size IDs (comma separated)",
+    "addExistingProduct": "Add product",
+    "productName": "Name",
+    "productType": "Type",
+    "brandId": "Brand ID (optional)",
+    "color": "Color",
+    "gender": "Gender",
+    "category": "Category",
+    "imageUrl": "Image URL",
+    "description": "Description",
+    "materialIds": "Material IDs (comma separated)",
+    "technologyIds": "Technology IDs (comma separated)",
+    "createStoreProduct": "Create product"
+  },
+  "currency": {
+    "updated": "Updated",
+    "pricesInDollarsNBU": "currency.pricesInDollarsNBU",
+    "convertedPrices": "currency.convertedPrices"
+  },
+  "dataSource": {
+    "partialResults": "Showing results from {{available}} of {{total}} sources"
+  },
+  "search": {
+    "placeholder": "Search products, brands...",
+    "clear": "Clear search",
+    "recentSearches": "Recent Searches",
+    "clearHistory": "Clear",
+    "suggestions": "Suggestions",
+    "popular": "Popular",
+    "searchFor": "Search for",
+    "removeFromHistory": "Remove from history",
+    "mostSearched": "Most searched",
+    "startTyping": "Start typing to search products and stores...",
+    "hint": "Search by product name, brand, category, or store name",
+    "clearShort": "Clear",
+    "searching": "Searching...",
+    "noResults": "No products or stores found for ",
+    "tryDifferent": "Try a different search term",
+    "suggestedProducts": "Suggested products",
+    "suggestedStores": "Stores",
+    "products": "products",
+    "viewStore": "View store",
+    "viewAll": "View All Results for "
+  },
+  "mobileActions": {
+    "zoom": "mobileActions.zoom",
+    "saved": "mobileActions.saved",
+    "save": "mobileActions.save",
+    "share": "mobileActions.share",
+    "viewStores": "mobileActions.viewStores",
+    "stores": "mobileActions.stores"
+  },
+  "pagination": {
+    "navigation": "Pagination navigation",
+    "previous": "Previous",
+    "next": "Next",
+    "info": "Page {{current}} of {{total}}"
+  },
+  "recommendations": {
+    "title": "Recommended for You"
+  },
+  "quickView": {
+    "availableIn": "quickView.availableIn"
+  },
+  "reviews": {
+    "submitted": "Review submitted",
+    "submittedDesc": "Thank you for your feedback!",
+    "submitError": "Failed to submit review",
+    "ratingRequired": "Please select a rating",
+    "contentRequired": "Please write at least 10 characters",
+    "title": "Reviews",
+    "reviews": "reviews",
+    "writeReview": "Write a Review",
+    "yourReview": "Your Review",
+    "yourRating": "Your Rating",
+    "stars": "stars",
+    "yourFeedback": "Your Feedback",
+    "placeholder": "Share your experience with this product...",
+    "characters": "characters",
+    "submitting": "Submitting...",
+    "submit": "Submit Review",
+    "loginToReview": "Please log in to write a review",
+    "noReviews": "No reviews yet",
+    "beFirst": "Be the first to review this product!",
+    "helpfulError": "Failed to mark as helpful",
+    "loginToHelp": "Please log in to mark reviews as helpful",
+    "verified": "Verified",
+    "helpful": "Helpful"
+  },
+  "share": {
+    "linkCopied": "Link copied!",
+    "linkCopiedDesc": "The link has been copied to your clipboard.",
+    "shareProduct": "Share product",
+    "share": "Share",
+    "copied": "Copied",
+    "copy": "Copy"
   }
 }

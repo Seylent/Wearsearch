@@ -95,7 +95,8 @@ class CategoryService {
       });
 
       if (!response || !response.ok) {
-        console.warn(`Categories API error: ${response.status}`);
+        const status = response?.status ?? 'unknown';
+        console.warn(`Categories API error: ${status}`);
         return this.getFallbackCategories();
       }
 

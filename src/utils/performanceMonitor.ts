@@ -133,7 +133,8 @@ class PerformanceMonitor {
   /**
    * Log metric with color coding
    */
-  private logMetric(name: string, value: number, threshold: number) {
+  private logMetric(name: string, value: number | undefined, threshold: number) {
+    if (typeof value !== 'number' || !Number.isFinite(value)) return;
     const status = value <= threshold ? 'GOOD' : 'NEEDS_IMPROVEMENT';
     logInfo(`[Performance] ${name}: ${value.toFixed(2)}ms ${status}`, {
       component: 'performanceMonitor',

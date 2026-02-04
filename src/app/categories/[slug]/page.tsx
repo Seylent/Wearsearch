@@ -16,6 +16,8 @@ import { fetchBackendJson } from '@/lib/backendFetch';
 import { PresignedImage } from '@/components/common/PresignedImage';
 import { getServerLanguage } from '@/utils/languageStorage';
 
+export const revalidate = 3600;
+
 const isRecord = (value: unknown): value is Record<string, unknown> =>
   typeof value === 'object' && value !== null;
 

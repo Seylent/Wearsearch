@@ -8,6 +8,7 @@ import { ResourceHintsInitializer } from '@/components/ResourceHintsInitializer'
 import { Analytics } from '@/components/Analytics';
 import { ClientOnlyOverlays } from '@/components/ClientOnlyOverlays';
 import { CookieBanner } from '@/components/CookieBanner';
+import { getServerLanguage } from '@/utils/languageStorage';
 import './globals.css';
 
 const montserrat = Montserrat({
@@ -53,9 +54,8 @@ export const viewport: Viewport = {
   maximumScale: 5,
 };
 
-export default function RootLayout({ children }: { readonly children: React.ReactNode }) {
-  // Keep SSR deterministic; client updates <html lang> after hydration.
-  const htmlLang = 'uk';
+export default async function RootLayout({ children }: { readonly children: React.ReactNode }) {
+  const htmlLang = await getServerLanguage();
   const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://wearsearch.com';
   const gtmId = process.env.NEXT_PUBLIC_GTM_ID;
   const preconnectOrigins = new Set<string>();
@@ -118,7 +118,7 @@ export default function RootLayout({ children }: { readonly children: React.Reac
         </a>
 
         <GlobalBackground />
-        <NextProviders>
+        <NextProviders initialLanguage={htmlLang}>
           <ResourceHintsInitializer />
           <ClientOnlyOverlays />
           <Navigation />

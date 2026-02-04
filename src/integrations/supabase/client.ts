@@ -11,6 +11,9 @@ const SUPABASE_PUBLISHABLE_KEY =
   process.env.VITE_SUPABASE_PUBLISHABLE_KEY ||
   process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY;
 
+const supabaseUrl = SUPABASE_URL ?? '';
+const supabaseKey = SUPABASE_PUBLISHABLE_KEY ?? '';
+
 // Import the supabase client like this:
 // import { supabase } from "@/integrations/supabase/client";
 
@@ -28,7 +31,7 @@ const SUPABASE_PUBLISHABLE_KEY =
 // All migrations must be run on the BACKEND or through Supabase Dashboard.
 // Running migrations from the frontend causes conflicts and errors.
 
-export const supabase = createClient<Database>(SUPABASE_URL, SUPABASE_PUBLISHABLE_KEY, {
+export const supabase = createClient<Database>(supabaseUrl, supabaseKey, {
   auth: {
     storage: localStorage,
     persistSession: true,

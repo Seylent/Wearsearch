@@ -99,10 +99,16 @@ NEXT_PUBLIC_SITE_URL=https://yourdomain.com
 ## 🔒 Security Checklist
 
 - [ ] No API keys in frontend code
-- [ ] No sensitive data in localStorage
+- [ ] No sensitive data in localStorage (auth tokens must be in httpOnly cookies)
 - [ ] HTTPS enabled
 - [ ] CSP headers configured
 - [ ] XSS protection enabled
+
+### Auth Cookies (Required for Production)
+
+- Set `NEXT_PUBLIC_AUTH_COOKIE_MODE=true`
+- Backend must set session cookies with `HttpOnly`, `Secure`, and `SameSite=Lax` (or stricter)
+- Backend should set a `csrf_token` cookie for non-GET requests
 
 ## 📊 Performance
 

@@ -1,5 +1,7 @@
-﻿import { Suspense } from 'react';
+import { Suspense } from 'react';
 import AboutContent from '@/components/pages/AboutContent';
+
+export const revalidate = 86400;
 
 export default function AboutPage() {
   return (

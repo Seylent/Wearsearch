@@ -1,6 +1,6 @@
 'use client';
 
-import React, { memo } from 'react';
+import React, { memo, useCallback, useState } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
 import { useTranslation } from 'react-i18next';
@@ -63,6 +63,7 @@ const ProductCard: React.FC<ProductCardProps> = memo(
   }) => {
     const { t } = useTranslation();
     const { currency, formatPrice } = useCurrencyConversion();
+    const [imageScale, setImageScale] = useState(1);
 
     const toNumber = (value?: string | number): number | null => {
       if (value === undefined || value === null) return null;
@@ -71,12 +72,7 @@ const ProductCard: React.FC<ProductCardProps> = memo(
     };
 
     // Handle both 'image' and 'image_url' from different API responses
-    const displayImage = image || '/placeholder-product.jpg';
-
-    // Safety checks
-    if (!id || !name) {
-      return null;
-    }
+    const displayImage = image && image.trim() ? image : '/placeholder-product.jpg';
 
     const resolveCurrency = (value?: CurrencyCode | string): CurrencyCode => {
       if (value === 'USD' || value === 'UAH') return value;
@@ -99,6 +95,23 @@ const ProductCard: React.FC<ProductCardProps> = memo(
     const showPriceRange =
       displayMinPrice !== null && displayMaxPrice !== null && displayMinPrice !== displayMaxPrice;
 
+    const handleImageLoad = useCallback((img: HTMLImageElement) => {
+      if (!img?.naturalWidth || !img?.naturalHeight) return;
+      const ratio = img.naturalWidth / img.naturalHeight;
+      const target = 3 / 4;
+      const diff = ratio > target ? ratio / target : target / ratio;
+      let nextScale = 1.04;
+      if (diff > 1.2) nextScale = 1.1;
+      if (diff > 1.5) nextScale = 1.18;
+      if (diff > 1.9) nextScale = 1.26;
+      setImageScale(nextScale);
+    }, []);
+
+    // Safety checks
+    if (!id || !name) {
+      return null;
+    }
+
     return (
       <Link
         href={`/products/${id}`}
@@ -111,16 +124,22 @@ const ProductCard: React.FC<ProductCardProps> = memo(
           aria-labelledby={`product-name-${id}`}
         >
           <div className="relative aspect-[3/4] overflow-hidden bg-white">
-            <Image
-              src={displayImage}
-              alt={name}
-              fill
-              sizes="(max-width: 640px) 50vw, (max-width: 768px) 33vw, (max-width: 1024px) 25vw, 20vw"
-              className="object-cover transition-transform duration-700 ease-[cubic-bezier(0.4,0,0.2,1)] group-hover:scale-105"
-              loading={priority ? undefined : 'lazy'}
-              quality={75}
-              priority={priority}
-            />
+            <div
+              className="absolute inset-2 sm:inset-3"
+              style={{ ['--image-scale' as string]: imageScale } as React.CSSProperties}
+            >
+              <Image
+                src={displayImage}
+                alt={name}
+                fill
+                sizes="(max-width: 640px) 50vw, (max-width: 768px) 33vw, (max-width: 1024px) 25vw, 20vw"
+                className="product-card-image object-contain object-center transition-transform duration-700 ease-[cubic-bezier(0.4,0,0.2,1)]"
+                onLoadingComplete={handleImageLoad}
+                loading={priority ? undefined : 'lazy'}
+                quality={75}
+                priority={priority}
+              />
+            </div>
 
             {isNew && (
               <div className="absolute top-3 left-3 px-2 py-1 text-[10px] uppercase tracking-[0.2em] bg-white text-earth border border-border">

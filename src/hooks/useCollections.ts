@@ -43,7 +43,7 @@ const DEFAULT_COLLECTION_TEMPLATES = [
  * Get collections from localStorage (fallback for non-authenticated users)
  */
 const getStoredCollections = (): Collection[] => {
-  return safeGetItem<Collection[]>(STORAGE_KEY, []);
+  return safeGetItem<Collection[]>(STORAGE_KEY, []) ?? [];
 };
 
 /**
@@ -57,7 +57,7 @@ const saveCollections = (collections: Collection[]): void => {
  * Get collection items mapping from localStorage (for API users)
  */
 const getStoredItems = (): Record<string, CollectionItem[]> => {
-  return safeGetItem<Record<string, CollectionItem[]>>(ITEMS_STORAGE_KEY, {});
+  return safeGetItem<Record<string, CollectionItem[]>>(ITEMS_STORAGE_KEY, {}) ?? {};
 };
 
 /**

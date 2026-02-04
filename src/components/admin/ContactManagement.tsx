@@ -11,16 +11,27 @@ import api from '@/services/api';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Globe, Save, Send, Instagram, Video, Mail, Facebook, Twitter } from 'lucide-react';
+import { Globe, Save, Send, Instagram, Video, Mail } from 'lucide-react';
 
 interface ContactInfo {
   telegram?: string;
   instagram?: string;
   tiktok?: string;
   email?: string;
-  facebook?: string;
-  twitter?: string;
 }
+
+const requiredFields: Array<keyof ContactInfo> = ['telegram', 'instagram', 'tiktok', 'email'];
+
+const getValidationErrors = (value: ContactInfo) => {
+  const errors: Partial<Record<keyof ContactInfo, string>> = {};
+  requiredFields.forEach(field => {
+    const entry = value[field];
+    if (!entry || entry.trim() === '') {
+      errors[field] = 'required';
+    }
+  });
+  return errors;
+};
 
 export const ContactManagement: React.FC = () => {
   const { t } = useTranslation();
@@ -32,6 +43,12 @@ export const ContactManagement: React.FC = () => {
   });
   const [loading, setLoading] = useState(false);
   const [isSaved, setIsSaved] = useState(false);
+  const [touched, setTouched] = useState<Partial<Record<keyof ContactInfo, boolean>>>({});
+  const [hasTriedSave, setHasTriedSave] = useState(false);
+  const [saveError, setSaveError] = useState<string | null>(null);
+
+  const validationErrors = getValidationErrors(contactInfo);
+  const isValid = Object.keys(validationErrors).length === 0;
 
   // Load contact info from localStorage
   useEffect(() => {
@@ -47,21 +64,27 @@ export const ContactManagement: React.FC = () => {
   }, []);
 
   const handleSave = async () => {
+    setHasTriedSave(true);
+    if (!isValid) return;
+    setSaveError(null);
     setLoading(true);
     try {
       // Save to localStorage for immediate use
       localStorage.setItem('site_contacts', JSON.stringify(contactInfo));
+      window.dispatchEvent(new Event('contacts:updated'));
 
       try {
         await api.put('/api/v1/contacts', contactInfo, {
           headers: { 'Content-Type': 'application/json' },
         });
+        setIsSaved(true);
+        setTimeout(() => setIsSaved(false), 3000);
       } catch (error) {
         console.warn('Failed to persist contacts to backend:', error);
+        setSaveError(
+          t('admin.contactsSaveFailed', 'Failed to save on server. Contacts were saved locally.')
+        );
       }
-
-      setIsSaved(true);
-      setTimeout(() => setIsSaved(false), 3000);
     } catch (error) {
       console.error('Error saving contact info:', error);
     } finally {
@@ -74,7 +97,9 @@ export const ContactManagement: React.FC = () => {
       ...prev,
       [field]: value,
     }));
+    setTouched(prev => ({ ...prev, [field]: true }));
     setIsSaved(false);
+    setSaveError(null);
   };
 
   return (
@@ -87,7 +112,7 @@ export const ContactManagement: React.FC = () => {
 
         <Button
           onClick={handleSave}
-          disabled={loading}
+          disabled={loading || !isValid}
           variant="pill"
           size="pill"
           className={isSaved ? 'bg-green-600 hover:bg-green-700' : ''}
@@ -118,6 +143,7 @@ export const ContactManagement: React.FC = () => {
           })()}
         </Button>
       </div>
+      {saveError && <p className="text-sm text-destructive">{saveError}</p>}
 
       {/* Social Media */}
       <Card>
@@ -142,8 +168,20 @@ export const ContactManagement: React.FC = () => {
                 type="text"
                 value={contactInfo.telegram || ''}
                 onChange={e => handleChange('telegram', e.target.value)}
+                onBlur={() => setTouched(prev => ({ ...prev, telegram: true }))}
+                variant={
+                  (touched.telegram || hasTriedSave) && validationErrors.telegram
+                    ? 'error'
+                    : 'default'
+                }
+                aria-invalid={(touched.telegram || hasTriedSave) && !!validationErrors.telegram}
                 placeholder="@wearsearch"
               />
+              {(touched.telegram || hasTriedSave) && validationErrors.telegram && (
+                <p className="mt-2 text-xs text-destructive">
+                  {t('common.fieldRequired', 'This field is required')}
+                </p>
+              )}
             </div>
 
             <div>
@@ -159,8 +197,20 @@ export const ContactManagement: React.FC = () => {
                 type="text"
                 value={contactInfo.instagram || ''}
                 onChange={e => handleChange('instagram', e.target.value)}
+                onBlur={() => setTouched(prev => ({ ...prev, instagram: true }))}
+                variant={
+                  (touched.instagram || hasTriedSave) && validationErrors.instagram
+                    ? 'error'
+                    : 'default'
+                }
+                aria-invalid={(touched.instagram || hasTriedSave) && !!validationErrors.instagram}
                 placeholder="@wearsearch"
               />
+              {(touched.instagram || hasTriedSave) && validationErrors.instagram && (
+                <p className="mt-2 text-xs text-destructive">
+                  {t('common.fieldRequired', 'This field is required')}
+                </p>
+              )}
             </div>
 
             <div>
@@ -176,8 +226,18 @@ export const ContactManagement: React.FC = () => {
                 type="text"
                 value={contactInfo.tiktok || ''}
                 onChange={e => handleChange('tiktok', e.target.value)}
+                onBlur={() => setTouched(prev => ({ ...prev, tiktok: true }))}
+                variant={
+                  (touched.tiktok || hasTriedSave) && validationErrors.tiktok ? 'error' : 'default'
+                }
+                aria-invalid={(touched.tiktok || hasTriedSave) && !!validationErrors.tiktok}
                 placeholder="@wearsearch"
               />
+              {(touched.tiktok || hasTriedSave) && validationErrors.tiktok && (
+                <p className="mt-2 text-xs text-destructive">
+                  {t('common.fieldRequired', 'This field is required')}
+                </p>
+              )}
             </div>
 
             <div>
@@ -193,42 +253,18 @@ export const ContactManagement: React.FC = () => {
                 type="email"
                 value={contactInfo.email || ''}
                 onChange={e => handleChange('email', e.target.value)}
+                onBlur={() => setTouched(prev => ({ ...prev, email: true }))}
+                variant={
+                  (touched.email || hasTriedSave) && validationErrors.email ? 'error' : 'default'
+                }
+                aria-invalid={(touched.email || hasTriedSave) && !!validationErrors.email}
                 placeholder="support@wearsearch.com"
               />
-            </div>
-
-            <div>
-              <label
-                htmlFor="facebook"
-                className="block text-sm font-medium mb-2 flex items-center gap-2"
-              >
-                <Facebook className="w-4 h-4" />
-                {t('contacts.facebook', 'Facebook')}
-              </label>
-              <Input
-                id="facebook"
-                type="text"
-                value={contactInfo.facebook || ''}
-                onChange={e => handleChange('facebook', e.target.value)}
-                placeholder="wearsearch"
-              />
-            </div>
-
-            <div>
-              <label
-                htmlFor="twitter"
-                className="block text-sm font-medium mb-2 flex items-center gap-2"
-              >
-                <Twitter className="w-4 h-4" />
-                {t('contacts.twitter', 'Twitter / X')}
-              </label>
-              <Input
-                id="twitter"
-                type="text"
-                value={contactInfo.twitter || ''}
-                onChange={e => handleChange('twitter', e.target.value)}
-                placeholder="@wearsearch"
-              />
+              {(touched.email || hasTriedSave) && validationErrors.email && (
+                <p className="mt-2 text-xs text-destructive">
+                  {t('common.fieldRequired', 'This field is required')}
+                </p>
+              )}
             </div>
           </div>
 

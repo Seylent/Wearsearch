@@ -283,6 +283,8 @@ const PUBLIC_ENDPOINT_PATTERNS: Array<string | RegExp> = [
   '/search',
   '/seo/',
   '/pages/',
+  '/api/v1/contacts',
+  /^\/api\/v1\/products\/[^/]+\/detail$/, // GET /api/v1/products/:id/detail
   /^\/items\/[^/]+$/, // GET /items/:id
   /^\/items\/[^/]+\/similar$/, // GET /items/:id/similar
   /^\/items\/[^/]+\/stores$/, // GET /items/:id/stores

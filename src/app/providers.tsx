@@ -16,6 +16,8 @@ import { CurrencyProvider } from '@/contexts/CurrencyContext';
 import { CurrencyCode } from '@/utils/currencyStorage';
 import { AuthErrorBoundary } from '@/components/auth/AuthErrorBoundary';
 import { ClientInitializer } from '@/components/ClientInitializer';
+import i18n from '@/i18n';
+import type { LanguageCode } from '@/utils/languageStorage';
 
 /**
  * Rate limit error check
@@ -68,9 +70,13 @@ const queryClient = new QueryClient({
 interface AppProvidersProps {
   children: ReactNode;
   initialCurrency?: CurrencyCode;
+  initialLanguage?: LanguageCode;
 }
 
-export const AppProviders = ({ children, initialCurrency }: AppProvidersProps) => {
+export const AppProviders = ({ children, initialCurrency, initialLanguage }: AppProvidersProps) => {
+  if (initialLanguage && i18n.language !== initialLanguage) {
+    i18n.changeLanguage(initialLanguage);
+  }
   // Resource hints будуть додані через окремий компонент в layout
 
   return (

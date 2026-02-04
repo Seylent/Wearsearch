@@ -5,6 +5,7 @@ import { shouldIndexPage } from '@/lib/seo/helpers';
 import { fetchBackendJson } from '@/lib/backendFetch';
 import { JsonLd, generateBreadcrumbSchema } from '@/lib/seo/structured-data';
 import { getServerLanguage } from '@/utils/languageStorage';
+import type { Banner } from '@/types/banner';
 
 const isRecord = (value: unknown): value is Record<string, unknown> =>
   typeof value === 'object' && value !== null;
@@ -31,6 +32,8 @@ const toOptionalString = (value: unknown): string | undefined =>
 
 // Components
 import { ProductsContent } from '@/components/ProductsContent';
+
+export const revalidate = 120;
 
 // Динамічний metadata залежно від фільтрів
 export async function generateMetadata({
@@ -128,6 +131,18 @@ export default async function ProductsPage({
   const pageParam = Array.isArray(searchParams.page) ? searchParams.page[0] : searchParams.page;
   const initialPage = asNumber(pageParam, 1);
   let initialPageData: Record<string, unknown> | undefined;
+  let banners: Banner[] = [];
+
+  const bannersRes = await fetchBackendJson<unknown>(`/banners`, {
+    next: { revalidate: 600 },
+  });
+  if (bannersRes) {
+    const bannersPayload = isRecord(bannersRes) ? bannersRes.data : undefined;
+    banners = (getArray(getRecord(bannersPayload, 'data'), 'banners') ??
+      getArray(bannersPayload, 'banners') ??
+      getArray(bannersPayload, 'items') ??
+      (Array.isArray(bannersPayload) ? bannersPayload : [])) as Banner[];
+  }
 
   if (!storeIdParam) {
     const params = new URLSearchParams();
@@ -227,6 +242,7 @@ export default async function ProductsPage({
         initialPageData={initialPageData}
         initialPage={initialPage}
         initialCurrency="UAH"
+        banners={banners}
       />
     </Suspense>
   );

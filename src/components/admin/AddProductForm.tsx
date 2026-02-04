@@ -19,6 +19,7 @@ import { ImageUploader } from '@/components/ImageUploader';
 import { uploadService } from '@/services/uploadService';
 import { getCategoryTranslation } from '@/utils/translations';
 import { useCatalogFilters } from '@/hooks/useCatalogFilters';
+import api from '@/services/api';
 
 interface AddProductFormProps {
   // Form data
@@ -259,11 +260,14 @@ export const AddProductForm: React.FC<AddProductFormProps> = ({
   useEffect(() => {
     const fetchCategories = async () => {
       try {
-        const response = await fetch('/api/categories?lang=uk');
-        const data = await response.json();
-        // Backend повертає {success: true, categories: [...]}
-        if (data.success && Array.isArray(data.categories)) {
-          setBackendCategories(data.categories);
+        const response = await api.get('/api/v1/catalog/categories', {
+          params: { lang: 'uk' },
+        });
+        const data = response.data as { success?: boolean; categories?: unknown };
+        if (data?.success && Array.isArray(data.categories)) {
+          setBackendCategories(
+            data.categories as Array<{ id?: string; slug?: string; name: string }>
+          );
         }
       } catch (error) {
         console.error('Failed to load categories:', error);
@@ -846,36 +850,41 @@ export const AddProductForm: React.FC<AddProductFormProps> = ({
 
             {showTemplates && (
               <div className="mt-3 space-y-2">
-                {savedTemplates.map(template => (
-                  <div
-                    key={template.id}
-                    className="flex items-center gap-2 p-3 rounded-lg bg-card/50 border border-border/50"
-                  >
-                    <button
-                      type="button"
-                      onClick={() => onLoadTemplate(template)}
-                      className="flex-1 text-left hover:text-primary transition-colors"
+                {savedTemplates.map(template => {
+                  const categoryValue =
+                    typeof template.data.category === 'string' ? template.data.category : undefined;
+                  const brandId =
+                    typeof template.data.brand_id === 'string' ? template.data.brand_id : undefined;
+                  const brandName = brandId ? brands.find(b => b.id === brandId)?.name : undefined;
+
+                  return (
+                    <div
+                      key={template.id}
+                      className="flex items-center gap-2 p-3 rounded-lg bg-card/50 border border-border/50"
                     >
-                      <span className="font-medium">{template.name}</span>
-                      <p className="text-xs text-muted-foreground">
-                        {typeof template.data.category === 'string' &&
-                          getCategoryTranslation(template.data.category)}
-                        {template.data.brand_id &&
-                          brands.find(b => b.id === template.data.brand_id)?.name &&
-                          ` • ${brands.find(b => b.id === template.data.brand_id)?.name}`}
-                      </p>
-                    </button>
-                    <Button
-                      type="button"
-                      onClick={() => onDeleteTemplate(template.id)}
-                      variant="ghost"
-                      size="sm"
-                      className="text-destructive hover:text-destructive"
-                    >
-                      <X className="w-4 h-4" />
-                    </Button>
-                  </div>
-                ))}
+                      <button
+                        type="button"
+                        onClick={() => onLoadTemplate?.(template)}
+                        className="flex-1 text-left hover:text-primary transition-colors"
+                      >
+                        <span className="font-medium">{template.name}</span>
+                        <p className="text-xs text-muted-foreground">
+                          {categoryValue && getCategoryTranslation(categoryValue)}
+                          {brandName && ` • ${brandName}`}
+                        </p>
+                      </button>
+                      <Button
+                        type="button"
+                        onClick={() => onDeleteTemplate(template.id)}
+                        variant="ghost"
+                        size="sm"
+                        className="text-destructive hover:text-destructive"
+                      >
+                        <X className="w-4 h-4" />
+                      </Button>
+                    </div>
+                  );
+                })}
               </div>
             )}
           </div>

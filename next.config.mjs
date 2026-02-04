@@ -117,6 +117,53 @@ const nextConfig = {
     ];
   },
 
+  async headers() {
+    const isDev = process.env.NODE_ENV !== 'production';
+    const baseCsp =
+      "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob: https://*.supabase.co https://*.amazonaws.com https://*.cloudfront.net https://wearsearch.com https://images.wearsearch.com; connect-src 'self' https://*.supabase.co https://api.wearsearch.com; font-src 'self'; frame-ancestors 'none'; base-uri 'self'; object-src 'none'";
+    const devCsp =
+      "default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob: https://*.supabase.co https://*.amazonaws.com https://*.cloudfront.net https://wearsearch.com https://images.wearsearch.com; connect-src 'self' https://*.supabase.co https://api.wearsearch.com ws:; font-src 'self'; frame-ancestors 'none'; base-uri 'self'; object-src 'none'";
+    const csp = isDev ? devCsp : baseCsp;
+    return [
+      {
+        source: '/admin/:path*',
+        headers: [
+          {
+            key: 'Content-Security-Policy',
+            value: csp,
+          },
+          { key: 'X-Frame-Options', value: 'DENY' },
+          { key: 'X-Content-Type-Options', value: 'nosniff' },
+          { key: 'Referrer-Policy', value: 'strict-origin-when-cross-origin' },
+          {
+            key: 'Permissions-Policy',
+            value:
+              'accelerometer=(), autoplay=(), camera=(), clipboard-read=(), clipboard-write=(self), fullscreen=(self), geolocation=(), gyroscope=(), magnetometer=(), microphone=(), payment=(), usb=()',
+          },
+          { key: 'X-DNS-Prefetch-Control', value: 'on' },
+        ],
+      },
+      {
+        source: '/checkout/:path*',
+        headers: [
+          {
+            key: 'Content-Security-Policy',
+            value: csp,
+          },
+          { key: 'X-Frame-Options', value: 'DENY' },
+          { key: 'X-Content-Type-Options', value: 'nosniff' },
+          { key: 'Referrer-Policy', value: 'strict-origin-when-cross-origin' },
+          {
+            key: 'Permissions-Policy',
+            value:
+              'accelerometer=(), autoplay=(), camera=(), clipboard-read=(), clipboard-write=(self), fullscreen=(self), geolocation=(), gyroscope=(), magnetometer=(), microphone=(), payment=(), usb=()',
+          },
+          { key: 'X-DNS-Prefetch-Control', value: 'on' },
+        ],
+      },
+    ];
+  },
+
   typescript: {
     ignoreBuildErrors: false,
   },

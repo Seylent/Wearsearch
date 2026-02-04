@@ -126,17 +126,18 @@ const Navigation: React.FC = () => {
 
   // Use navigation state hook
   const nav = useNavigationState();
+  const { mobileMenuOpen, closeAll } = nav;
 
   useEffect(() => {
-    if (!nav.mobileMenuOpen) {
+    if (!mobileMenuOpen) {
       setMobileCategoriesOpen(false);
       setOpenMobileCategoryIds({});
     }
-  }, [nav.mobileMenuOpen]);
+  }, [mobileMenuOpen]);
 
   useEffect(() => {
-    nav.closeAll();
-  }, [pathname, nav, nav.closeAll]);
+    closeAll();
+  }, [pathname, closeAll]);
 
   const handleLogoClick = () => {
     if (pathname === '/') {
@@ -153,7 +154,7 @@ const Navigation: React.FC = () => {
   ];
 
   const navLinkBaseClass =
-    'min-h-[40px] px-4 rounded-full flex items-center justify-center border border-earth/20 text-xs uppercase tracking-[0.28em] font-medium transition-all duration-150 touch-manipulation hover:border-earth/40 active:scale-95 font-helvetica700';
+    'min-h-[40px] px-4 rounded-full flex items-center justify-center border border-earth/20 text-xs uppercase tracking-[0.28em] font-semibold transition-all duration-150 touch-manipulation hover:border-earth/40 active:scale-95 font-helvetica700';
 
   const categoryColumns = useMemo(() => {
     const topCategories = categoryTree.slice(0, 4);
@@ -342,7 +343,7 @@ const Navigation: React.FC = () => {
       >
         {/* Left Section - Logo */}
         <button
-          className="flex items-center gap-2 group px-2 sm:px-3 py-2 transition-colors focus-visible:ring-2 focus-visible:ring-earth/40 focus-visible:ring-offset-2 focus-visible:ring-offset-cream"
+          className="flex items-center gap-1.5 sm:gap-2 group px-1.5 sm:px-3 py-2 transition-colors focus-visible:ring-2 focus-visible:ring-earth/40 focus-visible:ring-offset-2 focus-visible:ring-offset-cream"
           onClick={handleLogoClick}
           aria-label={t('aria.navigateToHomepage')}
           suppressHydrationWarning
@@ -352,10 +353,10 @@ const Navigation: React.FC = () => {
             alt="Wearsearch"
             width={36}
             height={36}
-            className="h-8 w-8 sm:h-9 sm:w-9 object-contain"
+            className="h-7 w-7 sm:h-9 sm:w-9 object-contain"
             priority
           />
-          <span className="font-helvetica700 flex items-center leading-none text-earth text-base sm:text-lg md:text-xl uppercase tracking-[0.05em]">
+          <span className="font-logo flex items-center leading-none text-earth text-[13px] sm:text-lg md:text-xl uppercase tracking-[0.04em] sm:tracking-[0.05em] whitespace-nowrap">
             Wearsearch
           </span>
         </button>
@@ -438,13 +439,11 @@ const Navigation: React.FC = () => {
             <LanguageSelector />
           </div>
 
-          {/* Currency Selector */}
           <div className="sm:hidden">
-            <CurrencySwitch
-              variant="ghost"
-              size="sm"
-              display="emoji"
-              className="min-w-[40px] min-h-[40px] w-10 h-10 rounded-full border border-earth/20 text-earth hover:text-earth hover:border-earth/40 hover:bg-sand/60"
+            <LanguageSelector
+              labelLayout="stacked"
+              showCurrencyToggle
+              triggerClassName="min-w-[40px] min-h-[40px] w-10 h-10 px-1.5"
             />
           </div>
 

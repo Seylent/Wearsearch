@@ -15,6 +15,8 @@ import { SEOTextSection } from '@/components/seo/SEOTextSection';
 import { fetchBackendJson } from '@/lib/backendFetch';
 import { PresignedImage } from '@/components/common/PresignedImage';
 
+export const revalidate = 3600;
+
 const isRecord = (value: unknown): value is Record<string, unknown> =>
   typeof value === 'object' && value !== null;
 

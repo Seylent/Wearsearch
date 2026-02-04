@@ -48,7 +48,7 @@ import { Switch } from '@/components/ui/switch';
 type VerificationStatus = 'pending' | 'verified' | 'rejected';
 
 interface Store {
-  id: number;
+  id: string | number;
   name: string;
   domain?: string;
   logo_url?: string;
@@ -73,8 +73,8 @@ interface Store {
 interface StoreManagementProps {
   stores: Store[];
   onStoreCreate: (store: Omit<Store, 'id'>) => Promise<void>;
-  onStoreUpdate: (id: number, store: Partial<Store>) => Promise<void>;
-  onStoreDelete: (id: number) => Promise<void>;
+  onStoreUpdate: (id: string | number, store: Partial<Store>) => Promise<void>;
+  onStoreDelete: (id: string | number) => Promise<void>;
   loading?: boolean;
 }
 
@@ -183,7 +183,7 @@ export const StoreManagement = ({
   };
 
   // Handle delete
-  const handleDelete = async (id: number) => {
+  const handleDelete = async (id: string | number) => {
     setSubmitting(true);
     try {
       await onStoreDelete(id);

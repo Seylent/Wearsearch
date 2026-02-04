@@ -8,6 +8,8 @@ import {
   generateStoreStructuredData,
 } from '@/lib/seo/structured-data';
 
+export const revalidate = 3600;
+
 const isRecord = (value: unknown): value is Record<string, unknown> =>
   typeof value === 'object' && value !== null;
 

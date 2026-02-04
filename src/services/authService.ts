@@ -124,10 +124,10 @@ export const authService = {
         }
 
         // Sync guest favorites after successful login
-        await this.syncGuestFavorites(token);
+        await this.syncGuestFavorites();
 
         if (isCookieAuthMode()) {
-          setCookieSessionActive(true);
+          setCookieSessionActive();
         }
         if (globalThis.window !== undefined) {
           globalThis.window.dispatchEvent(new Event('auth:login'));
@@ -142,7 +142,7 @@ export const authService = {
           action: 'LOGIN_NO_TOKEN',
         });
         if (isCookieAuthMode()) {
-          setCookieSessionActive(true);
+          setCookieSessionActive();
           if (globalThis.window !== undefined) {
             globalThis.window.dispatchEvent(new Event('auth:login'));
           }
@@ -198,18 +198,18 @@ export const authService = {
         // Store user data for profile display
 
         // Sync guest favorites after successful registration
-        await this.syncGuestFavorites(token);
+        await this.syncGuestFavorites();
         if (data.user) {
           localStorage.setItem('user', JSON.stringify(data.user));
         }
         if (isCookieAuthMode()) {
-          setCookieSessionActive(true);
+          setCookieSessionActive();
         }
         if (globalThis.window !== undefined) {
           globalThis.window.dispatchEvent(new Event('auth:login'));
         }
       } else if (isCookieAuthMode()) {
-        setCookieSessionActive(true);
+        setCookieSessionActive();
         if (globalThis.window !== undefined) {
           globalThis.window.dispatchEvent(new Event('auth:login'));
         }

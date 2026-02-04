@@ -52,11 +52,11 @@ const RecentlyViewedProducts: React.FC<RecentlyViewedProductsProps> = ({
     <section className={cn('py-6 sm:py-8', className)}>
       <div className="flex items-center justify-between mb-4 sm:mb-6">
         <div className="flex items-center gap-2">
-          <History className="w-5 h-5 text-white/60" aria-hidden="true" />
-          <h2 className="font-display text-lg sm:text-xl font-semibold text-white">
+          <History className="w-5 h-5 text-earth/60" aria-hidden="true" />
+          <h2 className="font-display text-lg sm:text-xl font-semibold text-earth">
             {title || t('recentlyViewed.title', 'Recently Viewed')}
           </h2>
-          <span className="text-sm text-white/40">({filteredItems.length})</span>
+          <span className="text-sm text-earth/50">({filteredItems.length})</span>
         </div>
 
         {showClearButton && (
@@ -64,7 +64,7 @@ const RecentlyViewedProducts: React.FC<RecentlyViewedProductsProps> = ({
             variant="ghost"
             size="sm"
             onClick={clearAll}
-            className="text-white/40 hover:text-white hover:bg-white/10"
+            className="text-earth/50 hover:text-earth hover:bg-sand/40"
             aria-label={t('recentlyViewed.clearAll', 'Clear all')}
           >
             <Trash2 className="w-4 h-4 mr-1" />
@@ -92,6 +92,20 @@ interface RecentlyViewedCardProps {
 
 const RecentlyViewedCard: React.FC<RecentlyViewedCardProps> = ({ item, onRemove }) => {
   const { t } = useTranslation();
+  const { currency, exchangeRate } = useCurrency();
+  const rawPrice =
+    typeof item.price === 'number'
+      ? item.price
+      : typeof item.price === 'string'
+        ? Number.parseFloat(item.price)
+        : undefined;
+  const itemCurrency = item.currency === 'USD' || item.currency === 'UAH' ? item.currency : null;
+  const shouldConvert = itemCurrency && itemCurrency !== currency;
+  let displayPrice = rawPrice;
+  if (shouldConvert && exchangeRate?.rate && rawPrice !== undefined) {
+    displayPrice = currency === 'USD' ? rawPrice / exchangeRate.rate : rawPrice * exchangeRate.rate;
+  }
+  const priceCurrency = shouldConvert && exchangeRate?.rate ? currency : itemCurrency || currency;
   return (
     <div
       className="relative group flex-shrink-0 w-[180px] sm:w-[200px]"
@@ -101,7 +115,8 @@ const RecentlyViewedCard: React.FC<RecentlyViewedCardProps> = ({ item, onRemove 
         id={item.id}
         name={item.name}
         image={item.image_url || item.image || ''}
-        price={item.price}
+        price={displayPrice ?? item.price}
+        priceCurrency={priceCurrency}
         brand={item.brand}
       />
 

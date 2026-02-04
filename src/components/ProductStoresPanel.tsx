@@ -82,7 +82,7 @@ const ProductStoresPanel: React.FC<ProductStoresPanelProps> = ({
     >
       <div className="rounded-3xl border border-border bg-white p-6 shadow-[0_20px_50px_rgba(0,0,0,0.08)]">
         {/* Price Range */}
-        <div className="mb-6 pb-6 border-b border-border/50">
+        <div className="mb-6 pb-6">
           <div className="flex items-baseline gap-2 mb-2">
             {priceRange ? (
               <span className="font-display text-3xl font-semibold text-foreground">
@@ -114,7 +114,7 @@ const ProductStoresPanel: React.FC<ProductStoresPanelProps> = ({
 
         {/* Search & Filters */}
         {stores.length > 0 && (
-          <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 mb-6 pb-6 border-b border-border">
+          <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 mb-6 pb-6">
             <div className="relative flex-1">
               <Filter className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
               <Input

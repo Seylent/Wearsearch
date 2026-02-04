@@ -9,14 +9,43 @@
 import { logError, logInfo, logWarn } from '@/services/logger';
 
 const AUTH_TOKEN_KEY = 'wearsearch.auth';
-const COOKIE_AUTH_MODE = process.env.NEXT_PUBLIC_AUTH_COOKIE_MODE === 'true';
+const COOKIE_AUTH_MODE =
+  process.env.NEXT_PUBLIC_AUTH_COOKIE_MODE === 'true' ||
+  (process.env.NODE_ENV === 'production' && process.env.NEXT_PUBLIC_AUTH_COOKIE_MODE !== 'false');
 let cookieSessionActive = false;
+
+const AUTH_STORAGE_KEYS = [
+  'wearsearch.auth',
+  'access_token',
+  'authToken',
+  'user_id',
+  'refresh_token',
+];
+
+const purgeLegacyAuth = (): void => {
+  if (!isBrowser()) return;
+  try {
+    for (const key of AUTH_STORAGE_KEYS) {
+      localStorage.removeItem(key);
+    }
+  } catch (error) {
+    logWarn('Failed to purge legacy auth storage', {
+      component: 'authStorage',
+      action: 'PURGE_LEGACY_AUTH',
+      metadata: { error },
+    });
+  }
+};
+
+if (COOKIE_AUTH_MODE) {
+  purgeLegacyAuth();
+}
 
 // SSR Safety check
 const isBrowser = (): boolean => typeof window !== 'undefined';
 
 export const isCookieAuthMode = (): boolean => COOKIE_AUTH_MODE;
-export const setCookieSessionActive = (active: boolean): void => {
+export const setCookieSessionActive = (active = true): void => {
   cookieSessionActive = active;
 };
 
@@ -31,7 +60,10 @@ export interface AuthData {
  */
 export const setAuth = (token: string, userId?: string, expiresAt?: number): void => {
   if (!isBrowser()) return;
-  if (COOKIE_AUTH_MODE) return;
+  if (COOKIE_AUTH_MODE) {
+    purgeLegacyAuth();
+    return;
+  }
 
   const authData: AuthData = {
     token,

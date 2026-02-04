@@ -27,7 +27,7 @@ export interface RecentlyViewedItem {
  * Get recently viewed products from localStorage
  */
 const getStoredItems = (): RecentlyViewedItem[] => {
-  return safeGetItem<RecentlyViewedItem[]>(STORAGE_KEY, []);
+  return safeGetItem<RecentlyViewedItem[]>(STORAGE_KEY, []) ?? [];
 };
 
 /**
@@ -97,7 +97,7 @@ export const useRecentlyViewed = () => {
       current.map(async item => {
         try {
           const response = await api.get(
-            `/products/${item.id}/detail?currency=${encodeURIComponent(currency)}`
+            `/api/v1/products/${item.id}/detail?currency=${encodeURIComponent(currency)}`
           );
           const body = response.data;
           const payload = body?.data ?? body?.item ?? body;

@@ -3,7 +3,7 @@
  * Taxonomy filters: categories, sizes, materials, technologies
  */
 
-import { apiLegacy } from '../api';
+import api from '../api';
 
 export type CatalogCategory = {
   id: string;
@@ -48,7 +48,7 @@ const emptyFilters: CatalogFiltersResponse = {
 export const catalogApi = {
   getFilters: async (): Promise<CatalogFiltersResponse> => {
     try {
-      const response = await apiLegacy.get('/catalog/filters');
+      const response = await api.get('/api/v1/catalog/filters');
       const data = response.data as Partial<CatalogFiltersResponse> | undefined;
       return {
         categories: Array.isArray(data?.categories) ? data?.categories : [],

@@ -191,7 +191,23 @@ const ShareButton: React.FC<ShareButtonProps> = ({
   const handleCopyLink = async () => {
     const shareData = getShareData();
     try {
-      await navigator.clipboard.writeText(shareData.url);
+      if (navigator?.clipboard?.writeText) {
+        await navigator.clipboard.writeText(shareData.url);
+      } else {
+        const textArea = document.createElement('textarea');
+        textArea.value = shareData.url;
+        textArea.setAttribute('readonly', '');
+        textArea.style.position = 'fixed';
+        textArea.style.opacity = '0';
+        document.body.appendChild(textArea);
+        textArea.focus();
+        textArea.select();
+        const success = document.execCommand('copy');
+        textArea.remove();
+        if (!success) {
+          throw new Error('Clipboard write failed');
+        }
+      }
       setCopied(true);
       toast({
         title: t('share.linkCopied', 'Link copied!'),
@@ -199,27 +215,7 @@ const ShareButton: React.FC<ShareButtonProps> = ({
       });
       setTimeout(() => setCopied(false), 2000);
     } catch {
-      // Fallback for older browsers
-      const textArea = document.createElement('textarea');
-      textArea.value = shareData.url;
-      document.body.appendChild(textArea);
-      textArea.select();
-      // Use modern Clipboard API with fallback
-      try {
-        if (navigator.clipboard) {
-          await navigator.clipboard.writeText(shareData.url);
-        } else {
-          // Modern clipboard API fallback - no execCommand
-          try {
-            await navigator.clipboard.writeText(shareData.url);
-          } catch (clipError) {
-            console.warn('Clipboard write failed:', clipError);
-          }
-        }
-      } catch (error) {
-        console.error('Failed to copy:', error);
-      }
-      textArea.remove();
+      // Fallback toast when copy fails
       setCopied(true);
       toast({
         title: t('share.linkCopied', 'Link copied!'),

@@ -11,15 +11,10 @@ import { useCurrencyConversion } from '@/hooks/useCurrencyConversion';
 import ProductCard from '@/components/ProductCard';
 import { ViewAllButton } from './ViewAllButton';
 import { HomeHero } from './HomeHero';
-const BannerCarousel = dynamic(
-  () => import('@/components/BannerCarousel').then(mod => mod.BannerCarousel),
-  { ssr: false, loading: () => null }
-);
 const RecentlyViewedProducts = dynamic(() => import('@/components/RecentlyViewedProducts'), {
   ssr: false,
   loading: () => null,
 });
-import type { Banner } from '@/types/banner';
 import { PRODUCT_CATEGORIES, getCategoryDisplayName } from '@/constants/categories';
 import { useIsTouchDevice } from '@/hooks/use-touch-device';
 
@@ -46,7 +41,6 @@ interface SEOData {
 interface HomeContentClientProps {
   initialProducts: Product[];
   initialPopularProducts?: Product[];
-  banners?: Banner[];
   seoData?: SEOData | null;
   categories?: Array<{
     id: string;
@@ -60,7 +54,6 @@ interface HomeContentClientProps {
 export default function HomeContentClient({
   initialProducts,
   initialPopularProducts = [],
-  banners = [],
   seoData,
   categories = [],
 }: Readonly<HomeContentClientProps>) {
@@ -100,6 +93,7 @@ export default function HomeContentClient({
     const nameKey = (category.name || '').toLowerCase().replace(/\s+/g, '-');
     const fallbackName = category.name || getCategoryDisplayName(normalizedSlug);
     const displayName = t(`productTypes.${normalizedSlug}`, { defaultValue: fallbackName });
+    const existingImageUrl = 'imageUrl' in category ? category.imageUrl : undefined;
     const imageMap: Record<string, string> = {
       jackets: '/home/category-jackets.webp',
       puffer: '/home/category-jackets.webp',
@@ -131,7 +125,7 @@ export default function HomeContentClient({
     return {
       ...category,
       name: displayName,
-      imageUrl: localImage || category.imageUrl,
+      imageUrl: localImage || existingImageUrl,
     };
   });
 
@@ -278,16 +272,6 @@ export default function HomeContentClient({
           secondaryCtaLabel={t('home.heroCtaSell', 'Sell clothes')}
           secondaryCtaHref="/contacts"
         />
-
-        {banners.length > 0 && (
-          <ScrollReveal>
-            <section className="py-6 sm:py-8 bg-white">
-              <div className="w-full px-6 md:px-12 lg:px-16">
-                <BannerCarousel banners={banners} />
-              </div>
-            </section>
-          </ScrollReveal>
-        )}
 
         <ScrollReveal>
           <section className="py-10 sm:py-14 bg-white text-foreground border-y border-border">

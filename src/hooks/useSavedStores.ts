@@ -63,7 +63,7 @@ const parseSavedStores = (data: unknown): SavedStore[] => {
  * Get saved stores from localStorage
  */
 const getStoredStores = (): SavedStore[] => {
-  return safeGetItem<SavedStore[]>(STORAGE_KEY, []);
+  return safeGetItem<SavedStore[]>(STORAGE_KEY, []) ?? [];
 };
 
 /**

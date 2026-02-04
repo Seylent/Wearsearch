@@ -60,6 +60,7 @@ import { getColorTranslation, getCategoryTranslation } from '@/utils/translation
 import { seoApi, type SEOData } from '@/services/api/seo.api';
 import PriceRangeFilter from '@/components/PriceRangeFilter';
 import dynamic from 'next/dynamic';
+import type { Banner } from '@/types/banner';
 
 const RecentlyViewedProducts = dynamic(() => import('@/components/RecentlyViewedProducts'), {
   ssr: false,
@@ -68,6 +69,11 @@ const RecentlyViewedProducts = dynamic(() => import('@/components/RecentlyViewed
 
 const PersonalizedRecommendations = dynamic(
   () => import('@/components/PersonalizedRecommendations'),
+  { ssr: false, loading: () => null }
+);
+
+const BannerCarousel = dynamic(
+  () => import('@/components/BannerCarousel').then(mod => mod.BannerCarousel),
   { ssr: false, loading: () => null }
 );
 
@@ -116,6 +122,7 @@ type ProductsContentProps = {
   initialPageData?: Record<string, unknown> | null;
   initialPage?: number;
   initialCurrency?: string;
+  banners?: Banner[];
 };
 
 function selectServerPagination(
@@ -857,6 +864,7 @@ export function ProductsContent({
   initialPageData,
   initialPage = 1,
   initialCurrency = 'UAH',
+  banners = [],
 }: ProductsContentProps) {
   const { t } = useTranslation();
   const searchParamsHook = useSearchParams();
@@ -1247,6 +1255,12 @@ export function ProductsContent({
             </div>
           </div>
 
+          {banners.length > 0 && (
+            <div className="mb-8">
+              <BannerCarousel banners={banners} />
+            </div>
+          )}
+
           <div className="sticky top-[72px] rounded-3xl z-30 bg-background/85 backdrop-blur-xl border border-earth/20 p-4 mb-8 shadow-2xl transition-all duration-300">
             <div className="flex flex-col gap-4">
               <div className="flex flex-col lg:flex-row gap-4 items-stretch lg:items-center justify-between">
@@ -1347,7 +1361,7 @@ export function ProductsContent({
                       setCurrentPage(1);
                     }}
                   >
-                    <SelectTrigger className="w-full sm:w-[180px] h-11 bg-background/60 border-earth/20 rounded-full text-warm-gray hover:text-earth hover:border-earth/40">
+                    <SelectTrigger className="w-full sm:w-[220px] h-11 bg-background/60 border-earth/20 rounded-full text-earth hover:text-earth hover:border-earth/40">
                       <SelectValue placeholder={t('products.sortBy')} />
                     </SelectTrigger>
                     <SelectContent>

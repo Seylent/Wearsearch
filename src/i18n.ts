@@ -1,25 +1,18 @@
+'use client';
+
 import i18n from 'i18next';
 import { initReactI18next } from 'react-i18next';
 import enTranslations from './locales/en.json';
 import ukTranslations from './locales/uk.json';
 import { logError, logInfo, logWarn } from '@/services/logger';
+import { LANGUAGE_CONFIG, type SupportedLanguage } from '@/i18nConfig';
+import { languageStorage } from '@/utils/languageStorage';
 
 /**
  * Supported languages configuration
  */
-export const SUPPORTED_LANGUAGES = {
-  EN: 'en',
-  UK: 'uk',
-} as const;
-
-export type SupportedLanguage = (typeof SUPPORTED_LANGUAGES)[keyof typeof SUPPORTED_LANGUAGES];
-
-export const LANGUAGE_CONFIG = {
-  DEFAULT: SUPPORTED_LANGUAGES.UK,
-  STORAGE_KEY: 'wearsearch_language',
-  EXPLICIT_KEY: 'wearsearch_language_explicit',
-  SUPPORTED: [SUPPORTED_LANGUAGES.UK, SUPPORTED_LANGUAGES.EN],
-} as const;
+export { SUPPORTED_LANGUAGES, LANGUAGE_CONFIG } from '@/i18nConfig';
+export type { SupportedLanguage } from '@/i18nConfig';
 
 /**
  * Centralized language persistence utilities
@@ -102,9 +95,9 @@ const resources = {
   },
 };
 
-// 🔒 ALWAYS use default language on initial load to prevent hydration mismatch.
-// Client-side language switch will happen after mount via useEffect.
-const initialLanguage = LANGUAGE_CONFIG.DEFAULT;
+// Prefer cookie language on client to match SSR output.
+const initialLanguage =
+  typeof window === 'undefined' ? LANGUAGE_CONFIG.DEFAULT : languageStorage.getLanguage();
 
 if (!i18n.isInitialized) {
   i18n.use(initReactI18next).init({

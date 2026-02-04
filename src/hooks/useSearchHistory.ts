@@ -21,7 +21,7 @@ export interface SearchHistoryItem {
  * Get search history from localStorage (fallback for guests)
  */
 const getStoredHistory = (): SearchHistoryItem[] => {
-  return safeGetItem<SearchHistoryItem[]>(HISTORY_KEY, []);
+  return safeGetItem<SearchHistoryItem[]>(HISTORY_KEY, []) ?? [];
 };
 
 /**

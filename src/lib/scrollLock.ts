@@ -10,6 +10,21 @@ const state: LockState = {
 
 const canUseDom = () => typeof document !== 'undefined';
 
+const hasVisibleScrollLockRoot = () => {
+  if (!canUseDom()) return false;
+  return Array.from(
+    document.querySelectorAll('[data-scroll-lock-root], [aria-modal="true"], [role="dialog"]')
+  ).some(node => {
+    const element = node as HTMLElement;
+    const style = window.getComputedStyle(element);
+    if (style.display === 'none' || style.visibility === 'hidden') return false;
+    if (style.opacity === '0' || style.pointerEvents === 'none') return false;
+    if (element.getAttribute('aria-hidden') === 'true') return false;
+    if (style.position === 'static') return false;
+    return element.getClientRects().length > 0;
+  });
+};
+
 export const lockBodyScroll = () => {
   if (!canUseDom()) return;
 
@@ -19,6 +34,14 @@ export const lockBodyScroll = () => {
   }
 
   state.count += 1;
+
+  if (state.count === 1) {
+    window.requestAnimationFrame(() => {
+      if (!hasVisibleScrollLockRoot()) {
+        resetBodyScroll();
+      }
+    });
+  }
 };
 
 export const unlockBodyScroll = () => {
@@ -27,14 +50,16 @@ export const unlockBodyScroll = () => {
   state.count = Math.max(0, state.count - 1);
 
   if (state.count === 0) {
-    document.body.style.overflow = state.overflow;
+    document.body.style.overflow = state.overflow || '';
+    document.documentElement.style.overflow = '';
   }
 };
 
 export const resetBodyScroll = () => {
   if (!canUseDom()) return;
   state.count = 0;
-  document.body.style.overflow = state.overflow;
+  state.overflow = '';
+  document.body.style.overflow = '';
   document.body.style.touchAction = '';
   document.body.style.position = '';
   document.body.style.top = '';

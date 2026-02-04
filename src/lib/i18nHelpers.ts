@@ -3,7 +3,7 @@
  * Utilities for language detection and URL management
  */
 
-import { LANGUAGE_CONFIG, type SupportedLanguage } from '@/i18n';
+import { LANGUAGE_CONFIG, type SupportedLanguage } from '@/i18nConfig';
 
 /**
  * Detect language from URL pathname
@@ -11,11 +11,11 @@ import { LANGUAGE_CONFIG, type SupportedLanguage } from '@/i18n';
 export function detectLanguageFromPath(pathname: string): SupportedLanguage {
   const segments = pathname.split('/');
   const firstSegment = segments.find(segment => segment !== '');
-  
+
   if (firstSegment && LANGUAGE_CONFIG.SUPPORTED.includes(firstSegment as SupportedLanguage)) {
     return firstSegment as SupportedLanguage;
   }
-  
+
   return LANGUAGE_CONFIG.DEFAULT;
 }
 
@@ -25,11 +25,11 @@ export function detectLanguageFromPath(pathname: string): SupportedLanguage {
 export function getPathnameWithoutLocale(pathname: string): string {
   const segments = pathname.split('/').filter(Boolean);
   const firstSegment = segments[0];
-  
+
   if (firstSegment && LANGUAGE_CONFIG.SUPPORTED.includes(firstSegment as SupportedLanguage)) {
     return '/' + segments.slice(1).join('/');
   }
-  
+
   return pathname;
 }
 

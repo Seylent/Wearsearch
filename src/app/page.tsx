@@ -57,7 +57,6 @@ export default async function HomePage() {
           newProducts={homepageData.newProducts}
           popularProducts={homepageData.popularProducts}
           categories={homepageData.categories}
-          banners={homepageData.banners}
           seoData={homepageData.seoData}
           stats={homepageData.stats}
         />

@@ -39,6 +39,7 @@ body {
 /* Logo font class with good fallbacks */
 .font-logo {
   font-family:
+    'Youre Gone',
     'Montserrat',
     'Futura',
     'Avenir',
@@ -46,8 +47,16 @@ body {
     system-ui,
     -apple-system,
     sans-serif;
-  font-weight: 700;
-  letter-spacing: 0.05em;
+  font-weight: 400;
+  letter-spacing: 0.04em;
+}
+
+.product-card-image {
+  transform: scale(var(--image-scale, 1));
+}
+
+.group:hover .product-card-image {
+  transform: scale(calc(var(--image-scale, 1) + 0.02));
 }
 
 @tailwind base;

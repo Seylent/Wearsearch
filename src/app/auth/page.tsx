@@ -8,7 +8,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { ArrowLeft, Lock, Mail, User, Loader2 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
-import { api } from '@/services/api';
+import { authService } from '@/services/authService';
 
 export default function AuthPage() {
   const router = useRouter();
@@ -35,34 +35,20 @@ export default function AuthPage() {
   };
 
   const handleLogin = async () => {
-    const response = await api.post('/api/v1/auth/login', {
+    await authService.login({
       identifier: formData.identifier,
       password: formData.password,
     });
 
-    if (response.data?.success) {
-      localStorage.setItem('access_token', response.data.access_token);
-      localStorage.setItem('refresh_token', response.data.refresh_token);
+    toast({
+      title: t('auth.loginSuccess', 'Успішний вхід'),
+      description: t('auth.welcomeBack', 'Ласкаво просимо назад!'),
+    });
 
-      if (response.data.user) {
-        localStorage.setItem('user', JSON.stringify(response.data.user));
-      }
-
-      // 🚨 Dispatch login event to update auth state across app
-      if (globalThis.window !== undefined) {
-        globalThis.window.dispatchEvent(new Event('auth:login'));
-      }
-
-      toast({
-        title: t('auth.loginSuccess', 'Успішний вхід'),
-        description: t('auth.welcomeBack', 'Ласкаво просимо назад!'),
-      });
-
-      // Small delay to allow state to update before navigation
-      setTimeout(() => {
-        router.push('/');
-      }, 100);
-    }
+    // Small delay to allow state to update before navigation
+    setTimeout(() => {
+      router.push('/');
+    }, 100);
   };
 
   const handleSignup = async () => {
@@ -75,14 +61,14 @@ export default function AuthPage() {
       throw new Error('Password mismatch');
     }
 
-    const response = await api.post('/api/v1/auth/register', {
+    const response = await authService.register({
       email: formData.email,
       password: formData.password,
       display_name: formData.display_name || undefined,
       username: formData.username || undefined,
     });
 
-    if (response.data?.success) {
+    if (response?.success ?? response?.user ?? response?.token) {
       toast({
         title: t('auth.signupSuccess', 'Реєстрація успішна'),
         description: t('auth.pleaseLogin', 'Тепер ви можете увійти'),

@@ -99,15 +99,15 @@ type ProductDetailProps = {
 type NormalizedStore = Record<string, unknown> & {
   id: string;
   name: string;
-  price: number | null;
-  sizes: string[];
-  telegram_url?: string | null;
-  instagram_url?: string | null;
-  store_url?: string | null;
-  affiliate_url?: string | null;
-  shipping_info?: string | null;
+  price?: number;
+  sizes?: string[];
+  telegram_url?: string;
+  instagram_url?: string;
+  store_url?: string;
+  affiliate_url?: string;
+  shipping_info?: string;
   is_recommended?: boolean;
-  logo_url?: string | null;
+  logo_url?: string;
 };
 
 const normalizeProductRecord = (raw: unknown): Product | null => {
@@ -367,7 +367,7 @@ const ProductDetail = ({ initialDetailData, initialCurrency = 'UAH' }: ProductDe
     };
 
     // Helper function to extract price from various field names
-    const extractPrice = (storeRecord: Record<string, unknown>): number | null => {
+    const extractPrice = (storeRecord: Record<string, unknown>): number | undefined => {
       const priceCandidate =
         storeRecord['product_price'] ??
         storeRecord['price'] ??
@@ -389,7 +389,7 @@ const ProductDetail = ({ initialDetailData, initialCurrency = 'UAH' }: ProductDe
           ? Number.parseFloat(String(rawPrice))
           : null;
 
-      return numericPrice != null && !Number.isNaN(numericPrice) ? numericPrice : null;
+      return numericPrice != null && !Number.isNaN(numericPrice) ? numericPrice : undefined;
     };
 
     // The stores from the API might have price in different fields
@@ -415,21 +415,24 @@ const ProductDetail = ({ initialDetailData, initialCurrency = 'UAH' }: ProductDe
         (storesObj ? storesObj['name'] : undefined);
       const name = typeof rawName === 'string' ? rawName : '';
 
-      const basePrice = extractPrice(storeRecord) ?? (storeInfo ? extractPrice(storeInfo) : null);
-      const finalPrice = basePrice;
+      const finalPrice =
+        extractPrice(storeRecord) ?? (storeInfo ? extractPrice(storeInfo) : undefined);
       const rawSizes = storeRecord['sizes'] ?? storeRecord['available_sizes'];
       const sizes = parseSizes(rawSizes);
-      const storeUrl = getFirstString(storeRecord['url'], storeInfo ? storeInfo['url'] : undefined);
+      const storeUrl =
+        getFirstString(storeRecord['url'], storeInfo ? storeInfo['url'] : undefined) ?? undefined;
       const affiliateUrl = getFirstString(
         storeRecord['affiliate_url'],
         storeRecord['affiliateUrl'],
         storeInfo ? storeInfo['affiliate_url'] : undefined,
         storeInfo ? storeInfo['affiliateUrl'] : undefined
       );
-      const normalizedTelegram = storeUrl && /t\.me|telegram/i.test(storeUrl) ? storeUrl : null;
-      const normalizedInstagram = storeUrl && /instagram\.com/i.test(storeUrl) ? storeUrl : null;
+      const normalizedTelegram =
+        storeUrl && /t\.me|telegram/i.test(storeUrl) ? storeUrl : undefined;
+      const normalizedInstagram =
+        storeUrl && /instagram\.com/i.test(storeUrl) ? storeUrl : undefined;
       const normalizedStoreUrl =
-        storeUrl && !normalizedTelegram && !normalizedInstagram ? storeUrl : null;
+        storeUrl && !normalizedTelegram && !normalizedInstagram ? storeUrl : undefined;
 
       return {
         ...storeRecord,
@@ -438,30 +441,33 @@ const ProductDetail = ({ initialDetailData, initialCurrency = 'UAH' }: ProductDe
         price: finalPrice,
         sizes,
         // Normalize URL fields
-        telegram_url: getFirstString(
-          storeRecord['telegram_url'],
-          storeRecord['telegram'],
-          storeInfo ? storeInfo['telegram_url'] : undefined,
-          storeInfo ? storeInfo['telegram'] : undefined,
-          normalizedTelegram
-        ),
-        instagram_url: getFirstString(
-          storeRecord['instagram_url'],
-          storeRecord['instagram'],
-          storeInfo ? storeInfo['instagram_url'] : undefined,
-          storeInfo ? storeInfo['instagram'] : undefined,
-          normalizedInstagram
-        ),
+        telegram_url:
+          getFirstString(
+            storeRecord['telegram_url'],
+            storeRecord['telegram'],
+            storeInfo ? storeInfo['telegram_url'] : undefined,
+            storeInfo ? storeInfo['telegram'] : undefined,
+            normalizedTelegram
+          ) ?? undefined,
+        instagram_url:
+          getFirstString(
+            storeRecord['instagram_url'],
+            storeRecord['instagram'],
+            storeInfo ? storeInfo['instagram_url'] : undefined,
+            storeInfo ? storeInfo['instagram'] : undefined,
+            normalizedInstagram
+          ) ?? undefined,
         store_url: normalizedStoreUrl,
-        affiliate_url: affiliateUrl,
-        shipping_info: getFirstString(
-          storeRecord['shipping_info'],
-          storeRecord['shipping'],
-          storeRecord['location'],
-          storeInfo ? storeInfo['shipping_info'] : undefined,
-          storeInfo ? storeInfo['shipping'] : undefined,
-          storeInfo ? storeInfo['location'] : undefined
-        ),
+        affiliate_url: affiliateUrl ?? undefined,
+        shipping_info:
+          getFirstString(
+            storeRecord['shipping_info'],
+            storeRecord['shipping'],
+            storeRecord['location'],
+            storeInfo ? storeInfo['shipping_info'] : undefined,
+            storeInfo ? storeInfo['shipping'] : undefined,
+            storeInfo ? storeInfo['location'] : undefined
+          ) ?? undefined,
         is_recommended: Boolean(
           storeRecord['is_recommended'] ??
           storeRecord['recommended'] ??
@@ -470,12 +476,13 @@ const ProductDetail = ({ initialDetailData, initialCurrency = 'UAH' }: ProductDe
           (storeInfo ? storeInfo['recommended'] : undefined) ??
           (storeInfo ? storeInfo['isRecommended'] : undefined)
         ),
-        logo_url: getFirstString(
-          storeRecord['logo_url'],
-          storeRecord['logo'],
-          storeInfo ? storeInfo['logo_url'] : undefined,
-          storeInfo ? storeInfo['logo'] : undefined
-        ),
+        logo_url:
+          getFirstString(
+            storeRecord['logo_url'],
+            storeRecord['logo'],
+            storeInfo ? storeInfo['logo_url'] : undefined,
+            storeInfo ? storeInfo['logo'] : undefined
+          ) ?? undefined,
       };
     });
 

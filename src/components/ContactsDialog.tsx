@@ -20,6 +20,39 @@ interface ContactInfo {
   email?: string;
 }
 
+const parseContactInfo = (value: unknown): ContactInfo | null => {
+  if (!value || typeof value !== 'object') return null;
+  const record = value as Record<string, unknown>;
+  const parsed: ContactInfo = {};
+  let hasValue = false;
+
+  (['telegram', 'instagram', 'tiktok', 'email'] as const).forEach(key => {
+    const entry = record[key];
+    if (typeof entry === 'string' && entry.trim() !== '') {
+      parsed[key] = entry;
+      hasValue = true;
+    }
+  });
+
+  return hasValue ? parsed : null;
+};
+
+const mergeContacts = (
+  preferred: ContactInfo | null,
+  fallback: ContactInfo | null
+): ContactInfo => {
+  const merged: ContactInfo = { ...(fallback || {}) };
+  if (!preferred) return merged;
+
+  Object.entries(preferred).forEach(([key, value]) => {
+    if (typeof value === 'string' && value.trim() !== '') {
+      merged[key as keyof ContactInfo] = value;
+    }
+  });
+
+  return merged;
+};
+
 interface ContactsDialogProps {
   contacts?: ContactInfo;
   asFooterLink?: boolean;
@@ -39,29 +72,35 @@ export const ContactsDialog: React.FC<ContactsDialogProps> = ({
 
   useEffect(() => {
     const loadContacts = async () => {
+      const applyLocalContacts = () => {
+        const savedContacts = localStorage.getItem('site_contacts');
+        if (!savedContacts) return null;
+        try {
+          const parsed = parseContactInfo(JSON.parse(savedContacts));
+          if (parsed) {
+            setActiveContacts(parsed);
+          }
+          return parsed;
+        } catch {
+          return null;
+        }
+      };
+
+      let localContacts: ContactInfo | null = null;
+      localContacts = applyLocalContacts();
+
       try {
-        const response = await api.get('/api/v1/contacts', {
-          headers: { 'Cache-Control': 'no-cache' },
-        });
+        const response = await api.get('/api/v1/contacts');
         const payload = response.data?.data ?? response.data?.item ?? response.data;
-        if (payload && typeof payload === 'object') {
-          setActiveContacts(payload as ContactInfo);
-          localStorage.setItem('site_contacts', JSON.stringify(payload));
+        const remoteContacts = parseContactInfo(payload);
+        if (remoteContacts) {
+          const merged = mergeContacts(localContacts, remoteContacts);
+          setActiveContacts(merged);
+          localStorage.setItem('site_contacts', JSON.stringify(merged));
           return;
         }
       } catch {
         // Fallback to localStorage
-      }
-
-      const savedContacts = localStorage.getItem('site_contacts');
-      if (savedContacts) {
-        try {
-          const parsedContacts = JSON.parse(savedContacts);
-          setActiveContacts(parsedContacts);
-          return;
-        } catch {
-          // Silently fail
-        }
       }
 
       if (contacts) {
@@ -70,6 +109,13 @@ export const ContactsDialog: React.FC<ContactsDialogProps> = ({
     };
 
     void loadContacts();
+    const handleContactsUpdate = () => {
+      loadContacts();
+    };
+    globalThis.addEventListener('contacts:updated', handleContactsUpdate);
+    return () => {
+      globalThis.removeEventListener('contacts:updated', handleContactsUpdate);
+    };
   }, [contacts]);
 
   return (

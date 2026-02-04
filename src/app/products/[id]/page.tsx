@@ -75,6 +75,8 @@ interface PageProps {
   }>;
 }
 
+export const revalidate = 3600;
+
 // Generate metadata for SEO
 export async function generateMetadata({ params }: PageProps): Promise<Metadata> {
   try {
@@ -143,7 +145,7 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
             'ціна',
             'порівняння',
             'купити онлайн',
-          ].filter(Boolean);
+          ].filter((value): value is string => typeof value === 'string' && value.length > 0);
 
     const productPriceString =
       typeof productPrice === 'number' && Number.isFinite(productPrice)

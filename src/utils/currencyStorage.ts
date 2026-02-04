@@ -41,6 +41,11 @@ export const currencyStorage = {
   },
 };
 
+export const hasCurrencyCookie = (): boolean => {
+  if (globalThis.window === undefined) return false;
+  return document.cookie.split('; ').some(row => row.startsWith(`${CURRENCY_COOKIE.name}=`));
+};
+
 /**
  * Server-side currency detection (use in server components only)
  */

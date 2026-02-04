@@ -59,7 +59,7 @@ export const CurrencySwitch: React.FC<CurrencySwitchProps> = ({
             <span className="sr-only">{currentName}</span>
           </>
         ) : (
-          <span className="font-medium">
+          <span className="font-bold">
             {currentSymbol} {currentName}
           </span>
         )}

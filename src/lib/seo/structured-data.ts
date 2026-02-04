@@ -18,7 +18,7 @@ export const generateProductStructuredData = (product: {
   id: string;
   name: string;
   description?: string;
-  image_url: string;
+  image_url?: string;
   price?: number;
   currency?: string;
   brand?: string;

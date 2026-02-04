@@ -11,7 +11,6 @@ const Footer = () => {
     company: [
       { name: t('footer.about'), href: '/about' },
       { name: t('footer.contact'), href: '/contacts' },
-      { name: t('footer.careers', 'Careers'), href: '/contacts' },
     ],
     legal: [
       { name: t('footer.privacyPolicy'), href: '/privacy' },
@@ -79,7 +78,7 @@ const Footer = () => {
           </div>
         </div>
 
-        <div className="mt-10 sm:mt-12 pt-6 sm:pt-8 border-t border-clay flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+        <div className="mt-10 sm:mt-12 pt-6 sm:pt-8 flex flex-col md:flex-row md:items-center md:justify-between gap-4">
           <div className="text-[11px] sm:text-xs uppercase tracking-[0.18em] sm:tracking-[0.2em] text-warm-gray">
             © 2026 Wearsearch
           </div>

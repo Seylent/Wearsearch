@@ -198,8 +198,10 @@ export const useAdmin = () => {
   }, [isAuthenticated, canAccessAdminPanel, isAdmin]);
 
   // Derived data
-  const products = useMemo(() => {
-    return dashboardData?.products?.items || [];
+  const products = useMemo<Array<Record<string, unknown>>>(() => {
+    return Array.isArray(dashboardData?.products?.items)
+      ? (dashboardData?.products?.items as Array<Record<string, unknown>>)
+      : [];
   }, [dashboardData]);
 
   const stores = useMemo(() => {
@@ -286,7 +288,7 @@ export const useAdmin = () => {
         .filter(Boolean);
     };
 
-    const base = products.find((p: { id: string }) => p.id === editingProductId) as
+    const base = products.find(product => String(product.id ?? '') === String(editingProductId)) as
       | Record<string, unknown>
       | undefined;
     if (!base) return;
@@ -496,23 +498,30 @@ export const useAdmin = () => {
       };
     }
 
-    const prices = products.map((p: { price: number }) => p.price);
-    const avgPrice = prices.reduce((a: number, b: number) => a + b, 0) / prices.length;
-    const minPrice = Math.min(...prices);
-    const maxPrice = Math.max(...prices);
+    const prices = products
+      .map(product => {
+        const rawPrice = product.price;
+        const value = typeof rawPrice === 'number' ? rawPrice : Number(rawPrice);
+        return Number.isFinite(value) ? value : null;
+      })
+      .filter((value): value is number => typeof value === 'number');
+    const avgPrice = prices.length > 0 ? prices.reduce((a, b) => a + b, 0) / prices.length : 0;
+    const minPrice = prices.length > 0 ? Math.min(...prices) : 0;
+    const maxPrice = prices.length > 0 ? Math.max(...prices) : 0;
 
     const categoriesCount: Record<string, number> = {};
-    products.forEach((p: { type?: string; category?: string }) => {
-      const cat = p.type || p.category || 'uncategorized';
+    products.forEach(product => {
+      const type = typeof product.type === 'string' ? product.type : undefined;
+      const category = typeof product.category === 'string' ? product.category : undefined;
+      const cat = type || category || 'uncategorized';
       categoriesCount[cat] = (categoriesCount[cat] || 0) + 1;
     });
 
     const brandCount: Record<string, { name: string; count: number }> = {};
-    products.forEach((p: { brand?: string }) => {
-      if (p.brand) {
-        brandCount[p.brand] = brandCount[p.brand] || { name: p.brand, count: 0 };
-        brandCount[p.brand].count++;
-      }
+    products.forEach(product => {
+      if (typeof product.brand !== 'string') return;
+      brandCount[product.brand] = brandCount[product.brand] || { name: product.brand, count: 0 };
+      brandCount[product.brand].count++;
     });
 
     const topBrands = Object.values(brandCount)
@@ -772,7 +781,10 @@ export const useAdmin = () => {
     if (selectedProductIds.size === products.length) {
       setSelectedProductIds(new Set());
     } else {
-      setSelectedProductIds(new Set(products.map((p: { id: string }) => p.id)));
+      const ids = products
+        .map(product => String(product.id ?? '').trim())
+        .filter(id => id.length > 0);
+      setSelectedProductIds(new Set(ids));
     }
   }, [selectedProductIds.size, products]);
 
