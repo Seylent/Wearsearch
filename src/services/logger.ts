@@ -129,9 +129,11 @@ class ErrorLogger {
    * Log authentication errors
    */
   authError(error: Error | string, action: string): void {
-    this.error(error, {
+    const errorMessage = error instanceof Error ? error.message : String(error);
+    this.error(`Auth ${action}: ${errorMessage}`, {
       component: 'Auth',
       action,
+      metadata: { originalError: error instanceof Error ? error.message : error },
     });
   }
 

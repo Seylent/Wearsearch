@@ -35,30 +35,30 @@ const AboutContent = () => {
   return (
     <div className="min-h-screen text-foreground">
       {/* Hero Section */}
-      <section className="relative pt-32 pb-20 overflow-hidden">
-        <div className="max-w-[1800px] mx-auto px-6 md:px-12 lg:px-16 relative z-10">
+      <section className="relative pt-24 sm:pt-32 pb-14 sm:pb-20 overflow-hidden">
+        <div className="max-w-[1800px] mx-auto px-4 sm:px-6 md:px-12 lg:px-16 relative z-10">
           <Button
             variant="ghost"
             onClick={() => router.back()}
-            className="mb-8 text-muted-foreground hover:text-foreground"
+            className="mb-6 sm:mb-8 text-muted-foreground hover:text-foreground text-[10px] sm:text-xs uppercase tracking-[0.18em] sm:tracking-[0.2em]"
           >
             <ArrowLeft className="w-4 h-4 mr-2" />
             {t('common.back')}
           </Button>
 
           <div className="max-w-3xl mx-auto text-center">
-            <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full border border-border/50 bg-card/30 backdrop-blur-sm mb-8">
+            <div className="inline-flex items-center gap-2 px-3 sm:px-4 py-2 rounded-full border border-border/50 bg-card/30 backdrop-blur-sm mb-6 sm:mb-8">
               <Sparkles className="w-4 h-4" />
-              <span className="text-xs tracking-wider uppercase">
+              <span className="text-[10px] sm:text-xs tracking-[0.16em] sm:tracking-wider uppercase">
                 {t('about.ourStory', 'Our Story')}
               </span>
             </div>
 
-            <h1 className="font-display text-5xl sm:text-6xl md:text-7xl font-bold mb-6 tracking-tight">
+            <h1 className="font-display text-3xl sm:text-6xl md:text-7xl font-bold mb-4 sm:mb-6 tracking-tight">
               <span className="block">{t('about.title')}</span>
             </h1>
 
-            <p className="text-xl text-muted-foreground leading-relaxed mb-8 font-serif">
+            <p className="text-base sm:text-xl text-muted-foreground leading-relaxed mb-8 font-serif">
               {t('about.description')}
             </p>
           </div>
@@ -66,13 +66,13 @@ const AboutContent = () => {
       </section>
 
       {/* Mission Section */}
-      <section className="py-20 border-y border-border/20">
-        <div className="max-w-[1800px] mx-auto px-6 md:px-12 lg:px-16">
+      <section className="py-14 sm:py-20 border-y border-border/20">
+        <div className="max-w-[1800px] mx-auto px-4 sm:px-6 md:px-12 lg:px-16">
           <div className="max-w-3xl mx-auto text-center">
-            <h2 className="font-display text-3xl sm:text-4xl font-bold mb-6">
+            <h2 className="font-display text-2xl sm:text-4xl font-bold mb-4 sm:mb-6">
               {t('about.missionTitle')}
             </h2>
-            <p className="text-lg text-muted-foreground leading-relaxed font-serif">
+            <p className="text-base sm:text-lg text-muted-foreground leading-relaxed font-serif">
               {t('about.mission')}
             </p>
           </div>
@@ -80,28 +80,30 @@ const AboutContent = () => {
       </section>
 
       {/* Values Section */}
-      <section className="py-20">
-        <div className="max-w-[1800px] mx-auto px-6 md:px-12 lg:px-16">
-          <div className="text-center mb-12">
-            <h2 className="font-display text-3xl sm:text-4xl font-bold mb-4">
+      <section className="py-14 sm:py-20">
+        <div className="max-w-[1800px] mx-auto px-4 sm:px-6 md:px-12 lg:px-16">
+          <div className="text-center mb-8 sm:mb-12">
+            <h2 className="font-display text-2xl sm:text-4xl font-bold mb-3 sm:mb-4">
               {t('about.valuesTitle')}
             </h2>
-            <p className="text-muted-foreground max-w-2xl mx-auto font-serif">
+            <p className="text-muted-foreground max-w-2xl mx-auto font-serif text-sm sm:text-base">
               {t('about.description')}
             </p>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 max-w-4xl mx-auto">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-6 max-w-4xl mx-auto">
             {values.map(value => (
               <div
                 key={value.title}
-                className="p-8 rounded-2xl border border-border/30 bg-card/20 backdrop-blur-sm hover:bg-card/40 transition-all duration-300 group"
+                className="p-5 sm:p-8 rounded-2xl border border-border/30 bg-card/20 backdrop-blur-sm hover:bg-card/40 transition-all duration-300 group"
               >
-                <div className="w-12 h-12 rounded-xl border border-border/50 bg-card/50 flex items-center justify-center mb-5 group-hover:border-foreground/30 transition-colors">
-                  <value.icon className="w-5 h-5 text-muted-foreground group-hover:text-foreground transition-colors" />
+                <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-xl border border-border/50 bg-card/50 flex items-center justify-center mb-4 sm:mb-5 group-hover:border-foreground/30 transition-colors">
+                  <value.icon className="w-4 h-4 sm:w-5 sm:h-5 text-muted-foreground group-hover:text-foreground transition-colors" />
                 </div>
-                <h3 className="font-display font-semibold text-xl mb-3">{value.title}</h3>
-                <p className="text-muted-foreground leading-relaxed font-serif">
+                <h3 className="font-display font-semibold text-lg sm:text-xl mb-2 sm:mb-3">
+                  {value.title}
+                </h3>
+                <p className="text-muted-foreground leading-relaxed font-serif text-sm sm:text-base">
                   {value.description}
                 </p>
               </div>
@@ -111,16 +113,16 @@ const AboutContent = () => {
       </section>
 
       {/* CTA Section */}
-      <section className="py-20 relative overflow-hidden">
+      <section className="py-14 sm:py-20 relative overflow-hidden">
         <div className="absolute inset-0 opacity-20">
           <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] bg-white/5 rounded-full blur-3xl" />
         </div>
 
-        <div className="max-w-[1800px] mx-auto px-6 md:px-12 lg:px-16 relative z-10 text-center">
-          <h2 className="font-display text-3xl sm:text-4xl font-bold mb-6">
+        <div className="max-w-[1800px] mx-auto px-4 sm:px-6 md:px-12 lg:px-16 relative z-10 text-center">
+          <h2 className="font-display text-2xl sm:text-4xl font-bold mb-4 sm:mb-6">
             {t('about.ctaTitle', 'Ready to Explore?')}
           </h2>
-          <p className="text-lg text-muted-foreground max-w-xl mx-auto mb-8 font-serif">
+          <p className="text-base sm:text-lg text-muted-foreground max-w-xl mx-auto mb-6 sm:mb-8 font-serif">
             {t(
               'about.ctaDescription',
               'Discover our curated collection of exceptional fashion pieces.'

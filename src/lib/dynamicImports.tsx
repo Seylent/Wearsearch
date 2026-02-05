@@ -40,3 +40,32 @@ export const DynamicEnhancedSearch = dynamic(() => import('@/components/Enhanced
   loading: () => <PageLoader message="Loading Search..." />,
   ssr: false, // Search is interactive only
 });
+
+// Admin components - lazy loaded to reduce initial bundle
+export const DynamicAdminContent = dynamic(() => import('@/components/AdminContent'), {
+  loading: () => <PageLoader message="Loading Admin Panel..." />,
+  ssr: false, // Admin is client-side only
+});
+
+export const DynamicAddProductForm = dynamic(() => import('@/components/admin/AddProductForm'), {
+  loading: () => <PageLoader message="Loading Product Form..." />,
+  ssr: false,
+});
+
+export const DynamicStoreManagement = dynamic(() => import('@/components/admin/StoreManagement'), {
+  loading: () => <PageLoader message="Loading Store Management..." />,
+  ssr: false,
+});
+
+export const DynamicStoreOwnerManagement = dynamic(
+  () => import('@/components/admin/StoreOwnerManagement'),
+  {
+    loading: () => <PageLoader message="Loading Owner Management..." />,
+    ssr: false,
+  }
+);
+
+export const DynamicProductList = dynamic(() => import('@/components/admin/ProductList'), {
+  loading: () => <PageLoader message="Loading Products..." />,
+  ssr: false,
+});

@@ -111,17 +111,19 @@ export const ProductList: React.FC<ProductListProps> = ({
   const resolvedImages = filteredProducts.map(product => product.image || '');
 
   return (
-    <div className="p-8 rounded-2xl border border-border/50 bg-card/40 backdrop-blur-sm overflow-visible">
-      <div className="flex flex-col md:flex-row gap-4 items-start md:items-center justify-between mb-6">
+    <div className="p-5 sm:p-8 rounded-2xl border border-border/50 bg-card/40 backdrop-blur-sm overflow-visible">
+      <div className="flex flex-col md:flex-row gap-3 sm:gap-4 items-start md:items-center justify-between mb-5 sm:mb-6">
         <div>
-          <h2 className="font-display text-2xl font-bold flex items-center gap-3">
-            <Package className="w-6 h-6" />
+          <h2 className="font-display text-xl sm:text-2xl font-bold flex items-center gap-2 sm:gap-3">
+            <Package className="w-5 h-5 sm:w-6 sm:h-6" />
             {t('admin.manageProducts', { count: filteredProducts.length })}
           </h2>
-          <p className="text-sm text-muted-foreground mt-1">{t('admin.manageProductsSubtitle')}</p>
+          <p className="text-xs sm:text-sm text-muted-foreground mt-1">
+            {t('admin.manageProductsSubtitle')}
+          </p>
         </div>
 
-        <div className="flex items-center gap-2">
+        <div className="flex flex-wrap items-center gap-2">
           <Button
             onClick={onToggleSelectMode}
             variant={isSelectMode ? 'default' : 'outline'}
@@ -154,7 +156,7 @@ export const ProductList: React.FC<ProductListProps> = ({
 
       {/* Bulk Actions Bar */}
       {isSelectMode && selectedProductIds.size > 0 && (
-        <div className="mb-4 p-4 rounded-xl bg-primary/10 border border-primary/20 flex items-center justify-between">
+        <div className="mb-4 p-3 sm:p-4 rounded-xl bg-primary/10 border border-primary/20 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
           <span className="text-sm font-medium">
             {t('admin.selectedCount', { count: selectedProductIds.size })}
           </span>
@@ -180,7 +182,7 @@ export const ProductList: React.FC<ProductListProps> = ({
                 value={searchProducts}
                 onChange={e => onSearchProductsChange(e.target.value)}
                 placeholder={t('admin.searchProducts', 'Search products, brands, categories...')}
-                className="pl-10 bg-card/50 border-border/50"
+                className="pl-10 h-11 bg-card/50 border-border/50"
               />
             </div>
           </div>
@@ -280,7 +282,7 @@ export const ProductList: React.FC<ProductListProps> = ({
               ))}
             </div>
           ) : (
-            <div className="overflow-x-auto">
+            <div className="overflow-x-auto md:overflow-x-visible">
               <table className="w-full">
                 <thead>
                   <tr className="border-b border-border/30">
@@ -389,3 +391,5 @@ export const ProductList: React.FC<ProductListProps> = ({
     </div>
   );
 };
+
+export default ProductList;

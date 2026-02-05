@@ -1,7 +1,7 @@
 /**
  * SEO Data Hooks with React Query caching
  * Replaces direct API calls with cached queries
- * 
+ *
  * Benefits:
  * - Automatic caching and deduplication
  * - Prevents duplicate requests when multiple components need SEO
@@ -11,6 +11,7 @@
 
 import { useQuery, UseQueryOptions } from '@tanstack/react-query';
 import { api } from '@/services/api';
+import { isApiError } from '@/services/api/errorHandler';
 import i18n from '@/i18n';
 
 export interface SEOData {
@@ -27,7 +28,10 @@ export interface SEOResponse {
   item: SEOData;
 }
 
-type QueryOptions = Omit<UseQueryOptions<unknown, Error, unknown, readonly unknown[]>, 'queryKey' | 'queryFn'>;
+type QueryOptions = Omit<
+  UseQueryOptions<unknown, Error, unknown, readonly unknown[]>,
+  'queryKey' | 'queryFn'
+>;
 
 const getCurrentLanguage = (): string => {
   return i18n.language || 'en';
@@ -35,8 +39,33 @@ const getCurrentLanguage = (): string => {
 
 const defaultSEO: SEOData = {
   meta_title: 'Wearsearch - Discover Exceptional Fashion',
-  meta_description: 'Discover and shop the latest fashion trends. Find clothing, footwear, and accessories from top stores with worldwide shipping.',
+  meta_description:
+    'Discover and shop the latest fashion trends. Find clothing, footwear, and accessories from top stores with worldwide shipping.',
   h1_title: 'Discover Exceptional Fashion',
+};
+
+const fetchSeo = async (path: string, lang: string) => {
+  try {
+    return await api.get<SEOResponse>(`/api/v1/seo/${path}`, {
+      params: { lang },
+      headers: { 'X-Skip-Retry': 'true' },
+    });
+  } catch (error) {
+    if (isApiError(error) && error.isNotFound()) {
+      try {
+        return await api.get<SEOResponse>(`/api/seo/${path}`, {
+          params: { lang },
+          headers: { 'X-Skip-Retry': 'true' },
+        });
+      } catch (fallbackError) {
+        if (isApiError(fallbackError) && fallbackError.isNotFound()) {
+          return null;
+        }
+        throw fallbackError;
+      }
+    }
+    throw error;
+  }
 };
 
 /**
@@ -48,10 +77,8 @@ export const useSEOHome = (options?: QueryOptions) => {
     queryFn: async () => {
       try {
         const lang = getCurrentLanguage();
-        const response = await api.get<SEOResponse>('/seo/home/home', {
-          params: { lang }
-        });
-        return response.data.item || defaultSEO;
+        const response = await fetchSeo('home/home', lang);
+        return response?.data.item || defaultSEO;
       } catch (error) {
         console.error('[SEO] Failed to fetch home SEO:', error);
         return defaultSEO;
@@ -73,15 +100,17 @@ export const useSEOCategory = (categorySlug: string, options?: QueryOptions) => 
     queryFn: async () => {
       try {
         const lang = getCurrentLanguage();
-        const response = await api.get<SEOResponse>(`/seo/category/${categorySlug}`, {
-          params: { lang }
-        });
-        return response.data.item || {
-          meta_title: `${categorySlug} - Wearsearch`,
-          meta_description: `Browse our collection of ${categorySlug}. Find the perfect items for your style.`,
-        };
+        const response = await fetchSeo(`category/${categorySlug}`, lang);
+        return (
+          response?.data.item || {
+            meta_title: `${categorySlug} - Wearsearch`,
+            meta_description: `Browse our collection of ${categorySlug}. Find the perfect items for your style.`,
+          }
+        );
       } catch (error) {
-        console.error(`[SEO] Failed to fetch category SEO for ${categorySlug}:`, error);
+        if (!isApiError(error) || !error.isNotFound()) {
+          console.error(`[SEO] Failed to fetch category SEO for ${categorySlug}:`, error);
+        }
         return {
           meta_title: `${categorySlug} - Wearsearch`,
           meta_description: `Browse our collection of ${categorySlug}. Find the perfect items for your style.`,
@@ -105,15 +134,17 @@ export const useSEOColor = (colorSlug: string, options?: QueryOptions) => {
     queryFn: async () => {
       try {
         const lang = getCurrentLanguage();
-        const response = await api.get<SEOResponse>(`/seo/color/${colorSlug}`, {
-          params: { lang }
-        });
-        return response.data.item || {
-          meta_title: `${colorSlug} Products - Wearsearch`,
-          meta_description: `Shop ${colorSlug} fashion items. Browse our curated collection of ${colorSlug} clothing and accessories.`,
-        };
+        const response = await fetchSeo(`color/${colorSlug}`, lang);
+        return (
+          response?.data.item || {
+            meta_title: `${colorSlug} Products - Wearsearch`,
+            meta_description: `Shop ${colorSlug} fashion items. Browse our curated collection of ${colorSlug} clothing and accessories.`,
+          }
+        );
       } catch (error) {
-        console.error(`[SEO] Failed to fetch color SEO for ${colorSlug}:`, error);
+        if (!isApiError(error) || !error.isNotFound()) {
+          console.error(`[SEO] Failed to fetch color SEO for ${colorSlug}:`, error);
+        }
         return {
           meta_title: `${colorSlug} Products - Wearsearch`,
           meta_description: `Shop ${colorSlug} fashion items. Browse our curated collection of ${colorSlug} clothing and accessories.`,
@@ -137,13 +168,13 @@ export const useSEOProduct = (productId: string, options?: QueryOptions) => {
     queryFn: async () => {
       try {
         const lang = getCurrentLanguage();
-        const response = await api.get<SEOResponse>(`/seo/product/${productId}`, {
-          params: { lang }
-        });
-        return response.data.item || {
-          meta_title: 'Product - Wearsearch',
-          meta_description: 'View this product on Wearsearch',
-        };
+        const response = await fetchSeo(`product/${productId}`, lang);
+        return (
+          response?.data.item || {
+            meta_title: 'Product - Wearsearch',
+            meta_description: 'View this product on Wearsearch',
+          }
+        );
       } catch (error) {
         console.error(`[SEO] Failed to fetch product SEO for ${productId}:`, error);
         return {
@@ -169,15 +200,17 @@ export const useSEOBrand = (brandSlug: string, options?: QueryOptions) => {
     queryFn: async () => {
       try {
         const lang = getCurrentLanguage();
-        const response = await api.get<SEOResponse>(`/seo/brand/${brandSlug}`, {
-          params: { lang }
-        });
-        return response.data.item || {
-          meta_title: `${brandSlug} - Wearsearch`,
-          meta_description: `Shop products from ${brandSlug} on Wearsearch`,
-        };
+        const response = await fetchSeo(`brand/${brandSlug}`, lang);
+        return (
+          response?.data.item || {
+            meta_title: `${brandSlug} - Wearsearch`,
+            meta_description: `Shop products from ${brandSlug} on Wearsearch`,
+          }
+        );
       } catch (error) {
-        console.error(`[SEO] Failed to fetch brand SEO for ${brandSlug}:`, error);
+        if (!isApiError(error) || !error.isNotFound()) {
+          console.error(`[SEO] Failed to fetch brand SEO for ${brandSlug}:`, error);
+        }
         return {
           meta_title: `${brandSlug} - Wearsearch`,
           meta_description: `Shop products from ${brandSlug} on Wearsearch`,
@@ -201,15 +234,17 @@ export const useSEOStore = (storeSlug: string, options?: QueryOptions) => {
     queryFn: async () => {
       try {
         const lang = getCurrentLanguage();
-        const response = await api.get<SEOResponse>(`/seo/store/${storeSlug}`, {
-          params: { lang }
-        });
-        return response.data.item || {
-          meta_title: `${storeSlug} - Wearsearch`,
-          meta_description: `Shop at ${storeSlug} on Wearsearch`,
-        };
+        const response = await fetchSeo(`store/${storeSlug}`, lang);
+        return (
+          response?.data.item || {
+            meta_title: `${storeSlug} - Wearsearch`,
+            meta_description: `Shop at ${storeSlug} on Wearsearch`,
+          }
+        );
       } catch (error) {
-        console.error(`[SEO] Failed to fetch store SEO for ${storeSlug}:`, error);
+        if (!isApiError(error) || !error.isNotFound()) {
+          console.error(`[SEO] Failed to fetch store SEO for ${storeSlug}:`, error);
+        }
         return {
           meta_title: `${storeSlug} - Wearsearch`,
           meta_description: `Shop at ${storeSlug} on Wearsearch`,

@@ -10,7 +10,6 @@ import React, { useState, useEffect, useCallback, useRef } from 'react';
 import Image from 'next/image';
 import { createPortal } from 'react-dom';
 import { useTranslation } from 'react-i18next';
-import { lockBodyScroll, unlockBodyScroll } from '@/lib/scrollLock';
 import { Share2, Copy, Check, X, Link2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
@@ -119,21 +118,15 @@ const ShareButton: React.FC<ShareButtonProps> = ({
     return () => window.removeEventListener('resize', checkMobile);
   }, []);
 
-  // Handle body scroll lock when modal is open
+  // Handle modal animation state
   useEffect(() => {
     if (isOpen) {
-      lockBodyScroll();
       setIsAnimating(true);
-    } else {
-      unlockBodyScroll();
     }
     return () => {
       if (closeTimeoutRef.current) {
         window.clearTimeout(closeTimeoutRef.current);
         closeTimeoutRef.current = null;
-      }
-      if (isOpen) {
-        unlockBodyScroll();
       }
     };
   }, [isOpen]);

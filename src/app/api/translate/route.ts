@@ -32,9 +32,12 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
     const { text, from, to } = body;
 
     if (!text?.trim()) {
-      return NextResponse.json({
-        error: 'Text is required',
-      }, { status: 400 });
+      return NextResponse.json(
+        {
+          error: 'Text is required',
+        },
+        { status: 400 }
+      );
     }
 
     if (!from?.trim()) {
@@ -48,10 +51,13 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
     }
 
     if (!to?.trim()) {
-      return NextResponse.json({
-        success: false,
-        message: 'Target language (to) is required',
-      }, { status: 400 });
+      return NextResponse.json(
+        {
+          success: false,
+          message: 'Target language (to) is required',
+        },
+        { status: 400 }
+      );
     }
 
     if (typeof text === 'string' && text.length > 5000) {
@@ -64,7 +70,16 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
       );
     }
 
-    const backendUrl = process.env.NEXT_PUBLIC_API_URL || process.env.BACKEND_URL || 'http://localhost:3000';
+    const backendUrl = process.env.BACKEND_URL || process.env.NEXT_PUBLIC_API_URL;
+    if (!backendUrl) {
+      return NextResponse.json(
+        {
+          success: false,
+          message: 'Backend URL is not configured',
+        },
+        { status: 500 }
+      );
+    }
 
     // Forward auth header if present (needed for /batch in some setups; harmless otherwise)
     const authHeader = request.headers.get('authorization');
@@ -92,12 +107,14 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
     }
 
     return NextResponse.json(data);
-
   } catch (error) {
     console.error('Translation proxy error:', error);
-    return NextResponse.json({
-      success: false,
-      message: 'Translation service unavailable',
-    }, { status: 500 });
+    return NextResponse.json(
+      {
+        success: false,
+        message: 'Translation service unavailable',
+      },
+      { status: 500 }
+    );
   }
 }

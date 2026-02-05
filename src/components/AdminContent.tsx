@@ -293,7 +293,7 @@ const AdminContent = () => {
 
   if (!isAuthenticated) {
     return (
-      <div className="max-w-[1800px] mx-auto px-6 md:px-12 lg:px-16 py-12">
+      <div className="max-w-[1800px] mx-auto px-4 sm:px-6 md:px-12 lg:px-16 py-10 sm:py-12">
         <div className="flex flex-col items-center justify-center space-y-4">
           <ShieldCheck className="w-16 h-16 text-muted-foreground/50" />
           <p className="text-lg text-muted-foreground">{t('admin.notAuthenticated')}</p>
@@ -304,7 +304,7 @@ const AdminContent = () => {
 
   if (!canAccessAdminPanel) {
     return (
-      <div className="max-w-[1800px] mx-auto px-6 md:px-12 lg:px-16 py-12">
+      <div className="max-w-[1800px] mx-auto px-4 sm:px-6 md:px-12 lg:px-16 py-10 sm:py-12">
         <div className="flex flex-col items-center justify-center space-y-4">
           <ShieldCheck className="w-16 h-16 text-muted-foreground/50" />
           <p className="text-lg text-muted-foreground">{t('admin.noAccess')}</p>
@@ -314,19 +314,19 @@ const AdminContent = () => {
   }
 
   return (
-    <div className="max-w-[1800px] mx-auto px-6 md:px-12 lg:px-16 py-6 md:py-8">
+    <div className="max-w-[1800px] mx-auto px-4 sm:px-6 md:px-12 lg:px-16 py-5 sm:py-6 md:py-8">
       {/* Header */}
-      <div className="mb-6">
-        <h1 className="text-2xl md:text-3xl font-bold">{t('admin.title')}</h1>
+      <div className="mb-4 sm:mb-6">
+        <h1 className="text-xl sm:text-2xl md:text-3xl font-bold">{t('admin.title')}</h1>
       </div>
 
       <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-4">
-        <TabsList className="flex flex-wrap h-auto gap-2 justify-start mt-4">
+        <TabsList className="flex flex-nowrap sm:flex-wrap h-auto gap-2 justify-start mt-3 sm:mt-4 overflow-x-auto scrollbar-hide md:flex-wrap md:overflow-x-visible">
           {tabs.map(tab => (
             <TabsTrigger
               key={tab.value}
               value={tab.value}
-              className="flex items-center gap-1.5 data-[state=active]:bg-foreground data-[state=active]:text-background rounded-lg transition-all text-xs md:text-sm px-3 py-2.5 min-h-[44px]"
+              className="flex items-center gap-1.5 data-[state=active]:bg-foreground data-[state=active]:text-background rounded-lg transition-all text-[11px] sm:text-xs md:text-sm px-3 py-2.5 min-h-[40px] sm:min-h-[44px] whitespace-nowrap"
             >
               {tab.icon}
               <span className="inline truncate max-w-[140px] sm:max-w-[180px]">{tab.label}</span>

@@ -2,6 +2,11 @@ import PublicWishlistContent from '@/components/pages/PublicWishlistContent';
 
 export const revalidate = 300;
 
-export default function PublicWishlistSharedPage({ params }: { params: { shareId: string } }) {
-  return <PublicWishlistContent shareId={params.shareId} />;
+interface WishlistPageProps {
+  params: Promise<{ shareId: string }>;
+}
+
+export default async function PublicWishlistSharedPage({ params }: WishlistPageProps) {
+  const { shareId } = await params;
+  return <PublicWishlistContent shareId={shareId} />;
 }

@@ -320,8 +320,8 @@ export const AddProductForm: React.FC<AddProductFormProps> = ({
   }));
 
   return (
-    <div className="p-4 md:p-8 rounded-xl md:rounded-2xl border border-border/50 bg-card/40 backdrop-blur-sm overflow-visible">
-      <div className="flex items-center justify-between mb-2">
+    <div className="p-4 sm:p-6 md:p-8 rounded-xl md:rounded-2xl border border-border/50 bg-card/40 backdrop-blur-sm overflow-visible">
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 mb-2">
         <h2 className="font-display text-lg md:text-2xl font-bold flex items-center gap-2">
           {editingProductId ? (
             <Edit className="w-4 h-4 md:w-6 md:h-6" />
@@ -347,11 +347,11 @@ export const AddProductForm: React.FC<AddProductFormProps> = ({
         )}
       </div>
 
-      <p className="text-sm text-muted-foreground mb-6 md:mb-8">
+      <p className="text-xs sm:text-sm text-muted-foreground mb-5 sm:mb-6 md:mb-8">
         {editingProductId ? t('admin.updateProductDesc') : t('admin.addProductDesc')}
       </p>
 
-      <form onSubmit={onSubmit} className="space-y-6 md:space-y-8 overflow-visible">
+      <form onSubmit={onSubmit} className="space-y-5 sm:space-y-6 md:space-y-8 overflow-visible">
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-8 overflow-visible">
           {/* Left Column */}
           <div className="space-y-4 md:space-y-6 overflow-visible">
@@ -893,3 +893,5 @@ export const AddProductForm: React.FC<AddProductFormProps> = ({
     </div>
   );
 };
+
+export default AddProductForm;

@@ -131,17 +131,17 @@ function SettingsContent({ storeId, isOwner }: { storeId: string; isOwner: boole
   const store = dashboardData?.store;
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-5 sm:space-y-6">
       {/* Header */}
-      <div className="flex items-center gap-4">
+      <div className="flex flex-col sm:flex-row sm:items-center gap-3 sm:gap-4">
         <Link href="/store-menu">
-          <Button variant="ghost" size="icon">
+          <Button variant="ghost" size="icon" className="h-10 w-10">
             <ArrowLeft className="h-4 w-4" />
           </Button>
         </Link>
         <div>
-          <h1 className="text-2xl font-bold">Налаштування магазину</h1>
-          <p className="text-muted-foreground">
+          <h1 className="text-xl sm:text-2xl font-bold">Налаштування магазину</h1>
+          <p className="text-muted-foreground text-sm sm:text-base">
             Керуйте профілем та налаштуваннями вашого магазину
           </p>
         </div>
@@ -158,9 +158,9 @@ function SettingsContent({ storeId, isOwner }: { storeId: string; isOwner: boole
       )}
 
       <form onSubmit={handleSubmit}>
-        <div className="grid gap-6 lg:grid-cols-3">
+        <div className="grid gap-5 sm:gap-6 lg:grid-cols-3">
           {/* Main Settings */}
-          <div className="space-y-6 lg:col-span-2">
+          <div className="space-y-5 sm:space-y-6 lg:col-span-2">
             <Card>
               <CardHeader>
                 <CardTitle>Основна інформація</CardTitle>
@@ -181,7 +181,7 @@ function SettingsContent({ storeId, isOwner }: { storeId: string; isOwner: boole
 
                 <div className="space-y-2">
                   <Label htmlFor="logo">Логотип</Label>
-                  <div className="flex items-center gap-4">
+                  <div className="flex flex-col sm:flex-row sm:items-center gap-4">
                     <div className="h-24 w-24 overflow-hidden rounded-lg border">
                       {formData.logo_url ? (
                         <OptimizedImage

@@ -21,6 +21,26 @@ const getRecord = (value: unknown, key: string): Record<string, unknown> | undef
 const toOptionalString = (value: unknown): string | undefined =>
   typeof value === 'string' ? value : undefined;
 
+const normalizeCanonicalUrl = (value: string | undefined): string | undefined => {
+  if (!value) return undefined;
+  if (value.startsWith('/')) return `${SITE_URL}${value}`;
+
+  if (value.startsWith('http://') || value.startsWith('https://')) {
+    try {
+      const target = new URL(value);
+      const siteOrigin = new URL(SITE_URL);
+      if (target.origin !== siteOrigin.origin) {
+        return `${SITE_URL}${target.pathname}${target.search}`;
+      }
+      return value;
+    } catch {
+      return undefined;
+    }
+  }
+
+  return undefined;
+};
+
 /**
  * Генерує sitemap згідно SEO-ТЗ
  * Використовує дані з бекенду (GET /api/v1/sitemap.xml не потрібен, робимо самі)
@@ -62,6 +82,60 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       changeFrequency: 'monthly',
       priority: 0.3,
     },
+    {
+      url: `${SITE_URL}/gender/men`,
+      lastModified: currentDate,
+      changeFrequency: 'weekly',
+      priority: 0.7,
+    },
+    {
+      url: `${SITE_URL}/gender/women`,
+      lastModified: currentDate,
+      changeFrequency: 'weekly',
+      priority: 0.7,
+    },
+    {
+      url: `${SITE_URL}/gender/unisex`,
+      lastModified: currentDate,
+      changeFrequency: 'weekly',
+      priority: 0.6,
+    },
+    {
+      url: `${SITE_URL}/collections/hoodies`,
+      lastModified: currentDate,
+      changeFrequency: 'weekly',
+      priority: 0.7,
+    },
+    {
+      url: `${SITE_URL}/collections`,
+      lastModified: currentDate,
+      changeFrequency: 'weekly',
+      priority: 0.6,
+    },
+    {
+      url: `${SITE_URL}/collections/sneakers`,
+      lastModified: currentDate,
+      changeFrequency: 'weekly',
+      priority: 0.7,
+    },
+    {
+      url: `${SITE_URL}/collections/jackets`,
+      lastModified: currentDate,
+      changeFrequency: 'weekly',
+      priority: 0.7,
+    },
+    {
+      url: `${SITE_URL}/collections/pants`,
+      lastModified: currentDate,
+      changeFrequency: 'weekly',
+      priority: 0.6,
+    },
+    {
+      url: `${SITE_URL}/collections/accessories`,
+      lastModified: currentDate,
+      changeFrequency: 'weekly',
+      priority: 0.6,
+    },
   ];
 
   try {
@@ -79,7 +153,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       categories = categoriesArray.map(category => {
         const record = isRecord(category) ? category : {};
         const slug = toOptionalString(record.slug) || '';
-        const canonicalUrl = toOptionalString(record.canonical_url);
+        const canonicalUrl = normalizeCanonicalUrl(toOptionalString(record.canonical_url));
         const updatedAt = toOptionalString(record.updated_at);
         return {
           url: canonicalUrl || `${SITE_URL}/products?type=${slug}`,
@@ -107,7 +181,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
         const record = isRecord(brand) ? brand : {};
         const slug = toOptionalString(record.slug);
         const id = toOptionalString(record.id);
-        const canonicalUrl = toOptionalString(record.canonical_url);
+        const canonicalUrl = normalizeCanonicalUrl(toOptionalString(record.canonical_url));
         const updatedAt = toOptionalString(record.updated_at);
         return {
           url: canonicalUrl || `${SITE_URL}/brands/${slug || id || ''}`,
@@ -136,7 +210,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
         const record = isRecord(product) ? product : {};
         const slug = toOptionalString(record.slug);
         const id = toOptionalString(record.id);
-        const canonicalUrl = toOptionalString(record.canonical_url);
+        const canonicalUrl = normalizeCanonicalUrl(toOptionalString(record.canonical_url));
         const updatedAt = toOptionalString(record.updated_at);
         return {
           url: canonicalUrl || `${SITE_URL}/products/${slug || id || ''}`,

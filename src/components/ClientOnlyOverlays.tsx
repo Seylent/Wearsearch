@@ -2,8 +2,8 @@
 
 import dynamic from 'next/dynamic';
 import { useEffect } from 'react';
-import { ScrollLockReset } from '@/components/ScrollLockReset';
 import { flushPendingVitals, initWebVitals } from '@/utils/webVitals';
+import { ScrollWheelChain } from '@/components/ScrollWheelChain';
 
 const NavigationProgress = dynamic(() => import('@/components/NavigationProgress'), {
   ssr: false,
@@ -34,7 +34,7 @@ export const ClientOnlyOverlays = () => {
     <>
       <NavigationProgress />
       <OfflineBanner />
-      <ScrollLockReset />
+      <ScrollWheelChain />
     </>
   );
 };

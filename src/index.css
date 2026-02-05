@@ -12,7 +12,14 @@ body {
   font-family: var(--font-base);
   font-weight: 700;
   color: #111;
-  -webkit-overflow-scrolling: touch;
+  touch-action: pan-y;
+}
+
+@media (pointer: coarse) {
+  body {
+    -webkit-overflow-scrolling: touch;
+    touch-action: pan-y pan-x;
+  }
 }
 
 /* Additional explicit font utilities for uniform typography */
@@ -69,34 +76,14 @@ html {
   /* Performance optimizations for smooth scrolling */
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
-  overflow-x: hidden;
 }
 
-body {
-  overflow-x: hidden;
-}
-
-/* Override Radix UI scroll lock for all states */
-body[data-scroll-locked] {
-  overflow: auto !important;
-  padding-right: 0 !important;
-}
-
-body[style*='overflow: hidden'] {
-  overflow: auto !important;
-}
-
-html[style*='overflow: hidden'] {
-  overflow: auto !important;
-}
-
-html[style*='touch-action: none'],
-body[style*='touch-action: none'] {
-  touch-action: auto !important;
-}
-
-body[style*='padding-right'] {
-  padding-right: 0 !important;
+/* Only hide horizontal overflow on mobile */
+@media (max-width: 767px) {
+  html,
+  body {
+    overflow-x: hidden;
+  }
 }
 
 /* Comprehensive dropdown menu positioning fixes */
@@ -153,6 +140,47 @@ body[style*='padding-right'] {
   .scrollbar-hide {
     -ms-overflow-style: none;
     scrollbar-width: none;
+  }
+
+  /* Mobile: enable horizontal scroll but don't block vertical page scroll */
+  .mobile-x-scroll {
+    overflow-x: auto;
+    overflow-y: visible;
+    -webkit-overflow-scrolling: touch;
+    overscroll-behavior-x: contain;
+    overscroll-behavior-y: auto;
+    touch-action: pan-y;
+    display: flex;
+    flex-wrap: nowrap;
+  }
+
+  /* Desktop: disable horizontal scroll, wrap items */
+  @media (min-width: 768px) {
+    .mobile-x-scroll {
+      overflow-x: visible !important;
+      overflow-y: visible !important;
+      flex-wrap: wrap !important;
+      -webkit-overflow-scrolling: auto !important;
+      overscroll-behavior: auto !important;
+      touch-action: auto !important;
+    }
+
+    /* Ensure horizontal scroll containers don't trap wheel on desktop */
+    .mobile-x-scroll * {
+      overscroll-behavior: auto !important;
+    }
+  }
+
+  /* Prevent horizontal scroll from blocking vertical scroll on mobile */
+  @media (max-width: 767px) {
+    .mobile-x-scroll {
+      touch-action: pan-y;
+    }
+
+    .mobile-x-scroll:active,
+    .mobile-x-scroll:focus {
+      touch-action: pan-x pan-y;
+    }
   }
 
   .animate-pulse-slow {
@@ -254,8 +282,18 @@ body[style*='padding-right'] {
     --background: 0 0% 100%;
     --foreground: 0 0% 0%;
 
+    --earth: 0 0% 0%;
+    --warm-gray: 0 0% 40%;
+    --sand: 0 0% 96%;
+    --clay: 0 0% 90%;
+    --olive: 0 0% 0%;
+    --cream: 0 0% 100%;
+    --off-white: 0 0% 100%;
+
     --card: 0 0% 100%;
     --card-foreground: 0 0% 0%;
+    --card-surface: 0 0% 100%;
+    --card-surface-hover: 0 0% 96%;
 
     --popover: 0 0% 100%;
     --popover-foreground: 0 0% 0%;
@@ -305,6 +343,14 @@ body[style*='padding-right'] {
     --background: 0 0% 4%;
     --foreground: 0 0% 100%;
 
+    --earth: 0 0% 100%;
+    --warm-gray: 0 0% 65%;
+    --sand: 0 0% 12%;
+    --clay: 0 0% 18%;
+    --olive: 0 0% 90%;
+    --cream: 0 0% 4%;
+    --off-white: 0 0% 8%;
+
     --card: 0 0% 7%;
     --card-foreground: 0 0% 100%;
 
@@ -333,8 +379,8 @@ body[style*='padding-right'] {
     --neon-glow: 0 0 40px rgba(255, 255, 255, 0.4);
     --neon-glow-soft: 0 0 60px rgba(255, 255, 255, 0.2);
     --neon-glow-intense: 0 0 80px rgba(255, 255, 255, 0.6);
-    --card-surface: 0 0% 7%;
-    --card-surface-hover: 0 0% 10%;
+    --card-surface: 0 0% 12%;
+    --card-surface-hover: 0 0% 16%;
     --text-secondary: 0 0% 71%;
     --text-tertiary: 0 0% 54%;
     --neon-fg: 0 0% 100%;
@@ -511,6 +557,38 @@ body[style*='padding-right'] {
   }
   .light .text-white\/10 {
     color: hsl(var(--foreground) / 0.1) !important;
+  }
+
+  /* Dark theme overrides for hardcoded light utility classes */
+  .dark .bg-white {
+    background-color: hsl(var(--background)) !important;
+  }
+  .dark .bg-white\/60 {
+    background-color: hsl(var(--background) / 0.6) !important;
+  }
+  .dark .bg-white\/70 {
+    background-color: hsl(var(--background) / 0.7) !important;
+  }
+  .dark .bg-white\/80 {
+    background-color: hsl(var(--background) / 0.8) !important;
+  }
+  .dark .bg-white\/90 {
+    background-color: hsl(var(--background) / 0.9) !important;
+  }
+  .dark .bg-white\/95 {
+    background-color: hsl(var(--background) / 0.95) !important;
+  }
+  .dark .text-black {
+    color: hsl(var(--foreground)) !important;
+  }
+  .dark .border-black\/10 {
+    border-color: hsl(var(--border) / 0.4) !important;
+  }
+  .dark .border-black\/20 {
+    border-color: hsl(var(--border) / 0.6) !important;
+  }
+  .dark .border-black\/30 {
+    border-color: hsl(var(--border) / 0.7) !important;
   }
 
   h1,

@@ -73,10 +73,7 @@ const RecentlyViewedProducts: React.FC<RecentlyViewedProductsProps> = ({
         )}
       </div>
 
-      <div
-        className="flex gap-3 sm:gap-4 overflow-x-auto pb-4 scrollbar-thin scrollbar-thumb-white/20 scrollbar-track-transparent"
-        style={{ scrollSnapType: 'x mandatory' }}
-      >
+      <div className="flex gap-3 sm:gap-4 mobile-x-scroll pb-4 scrollbar-thin scrollbar-thumb-white/20 scrollbar-track-transparent md:flex-wrap md:pb-0">
         {displayItems.map(item => (
           <RecentlyViewedCard key={item.id} item={item} onRemove={() => removeItem(item.id)} />
         ))}
@@ -107,10 +104,7 @@ const RecentlyViewedCard: React.FC<RecentlyViewedCardProps> = ({ item, onRemove 
   }
   const priceCurrency = shouldConvert && exchangeRate?.rate ? currency : itemCurrency || currency;
   return (
-    <div
-      className="relative group flex-shrink-0 w-[180px] sm:w-[200px]"
-      style={{ scrollSnapAlign: 'start' }}
-    >
+    <div className="relative group flex-shrink-0 w-[180px] sm:w-[200px] md:w-[220px]">
       <ProductCard
         id={item.id}
         name={item.name}

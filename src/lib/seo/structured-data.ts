@@ -81,7 +81,7 @@ export const generateOrganizationStructuredData = () => ({
   '@type': 'Organization',
   name: DEFAULT_SITE_NAME,
   url: 'https://wearsearch.com',
-  logo: 'https://wearsearch.com/logo.png',
+  logo: 'https://wearsearch.com/logow1.webp',
   sameAs: ['https://twitter.com/wearsearch', 'https://instagram.com/wearsearch'],
 });
 

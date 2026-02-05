@@ -141,20 +141,20 @@ export const BrandManagement: React.FC<BrandManagementProps> = ({
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <h2 className="text-2xl font-bold flex items-center gap-2">
-          <Tag className="w-6 h-6" />
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+        <h2 className="text-xl sm:text-2xl font-bold flex items-center gap-2">
+          <Tag className="w-5 h-5 sm:w-6 sm:h-6" />
           {t('admin.brandManagement')}
         </h2>
 
         <Dialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen} modal={false}>
           <DialogTrigger asChild>
-            <Button onClick={resetForm} className="flex items-center gap-2">
+            <Button onClick={resetForm} className="flex items-center gap-2 w-full sm:w-auto">
               <Plus className="w-4 h-4" />
               {t('admin.addBrand')}
             </Button>
           </DialogTrigger>
-          <DialogContent className="max-w-md">
+          <DialogContent className="w-[calc(100vw-1.5rem)] sm:max-w-md">
             <DialogHeader>
               <DialogTitle>{editingBrand ? t('admin.editBrand') : t('admin.addBrand')}</DialogTitle>
               <DialogDescription>

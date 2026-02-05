@@ -210,10 +210,10 @@ export const StoreOwnerManagement = ({ stores = [] }: StoreOwnerManagementProps)
   };
 
   return (
-    <div className="grid gap-6">
+    <div className="grid gap-5 sm:gap-6">
       <Card className="border border-border/50 bg-card/40 backdrop-blur-sm">
-        <CardHeader>
-          <CardTitle className="text-xl font-semibold">
+        <CardHeader className="pb-4">
+          <CardTitle className="text-lg sm:text-xl font-semibold">
             {t('store.managersTitle', 'Store managers')}
           </CardTitle>
         </CardHeader>
@@ -281,14 +281,14 @@ export const StoreOwnerManagement = ({ stores = [] }: StoreOwnerManagementProps)
       </Card>
 
       <Card className="border border-border/50 bg-card/40 backdrop-blur-sm">
-        <CardHeader>
-          <CardTitle className="text-xl font-semibold">
+        <CardHeader className="pb-4">
+          <CardTitle className="text-lg sm:text-xl font-semibold">
             {t('store.productsTitle', 'Add product to store')}
           </CardTitle>
         </CardHeader>
         <CardContent>
           <Tabs defaultValue="existing" className="space-y-4">
-            <TabsList className="grid grid-cols-2">
+            <TabsList className="grid grid-cols-2 text-xs sm:text-sm">
               <TabsTrigger value="existing">
                 {t('store.existingProduct', 'Existing product')}
               </TabsTrigger>

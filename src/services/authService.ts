@@ -23,8 +23,18 @@ function isRecord(value: unknown): value is Record<string, unknown> {
 function asError(value: unknown): Error {
   if (value instanceof Error) return value;
   if (typeof value === 'string') return new Error(value);
-  if (value && typeof value === 'object') return new Error(JSON.stringify(value));
-  return new Error(value instanceof Error ? value.message : JSON.stringify(value));
+  if (value && typeof value === 'object') {
+    // Try to extract message from error-like objects
+    const errorObj = value as Record<string, unknown>;
+    const message =
+      typeof errorObj.message === 'string'
+        ? errorObj.message
+        : typeof errorObj.error === 'string'
+          ? errorObj.error
+          : 'Unknown error';
+    return new Error(message);
+  }
+  return new Error('Unknown error');
 }
 
 function getErrorStatus(error: unknown): number | undefined {

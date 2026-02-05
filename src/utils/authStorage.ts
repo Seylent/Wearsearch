@@ -22,6 +22,9 @@ const AUTH_STORAGE_KEYS = [
   'refresh_token',
 ];
 
+// SSR Safety check
+const isBrowser = (): boolean => typeof window !== 'undefined';
+
 const purgeLegacyAuth = (): void => {
   if (!isBrowser()) return;
   try {
@@ -40,9 +43,6 @@ const purgeLegacyAuth = (): void => {
 if (COOKIE_AUTH_MODE) {
   purgeLegacyAuth();
 }
-
-// SSR Safety check
-const isBrowser = (): boolean => typeof window !== 'undefined';
 
 export const isCookieAuthMode = (): boolean => COOKIE_AUTH_MODE;
 export const setCookieSessionActive = (active = true): void => {

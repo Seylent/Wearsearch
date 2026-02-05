@@ -3,6 +3,8 @@
  * Orchestrates smaller UI components
  */
 
+'use client';
+
 import React from 'react';
 import { motion, useReducedMotion } from 'framer-motion';
 import { useTranslation } from 'react-i18next';
@@ -75,7 +77,7 @@ export const SearchDropdownView: React.FC<Readonly<SearchDropdownViewProps>> = R
       <motion.div
         role="dialog"
         aria-modal="true"
-        className="fixed inset-0 z-[100] bg-white/80 backdrop-blur-sm flex items-start justify-center pt-4 sm:pt-8 px-4 pb-6"
+        className="fixed inset-0 z-[100] bg-white/80 backdrop-blur-sm flex items-stretch sm:items-start justify-center pt-3 sm:pt-8 px-3 sm:px-4 pb-4 sm:pb-6"
         aria-label={t('aria.searchResults')}
         data-scroll-lock-root
         initial={reduceMotion ? { opacity: 1 } : { opacity: 0 }}
@@ -85,7 +87,7 @@ export const SearchDropdownView: React.FC<Readonly<SearchDropdownViewProps>> = R
       >
         <motion.div
           ref={dropdownRef}
-          className="w-full max-w-6xl bg-white border border-border shadow-[0_30px_90px_rgba(0,0,0,0.12)] rounded-3xl overflow-hidden"
+          className="w-full max-w-6xl h-full sm:h-auto max-h-[calc(100svh-1.5rem)] sm:max-h-none bg-white border border-border shadow-[0_30px_90px_rgba(0,0,0,0.12)] rounded-2xl sm:rounded-3xl overflow-hidden"
           role="search"
           initial={reduceMotion ? { opacity: 1, y: 0 } : { opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
@@ -107,7 +109,7 @@ export const SearchDropdownView: React.FC<Readonly<SearchDropdownViewProps>> = R
             </div>
           )}
 
-          <div className="grid grid-cols-1 lg:grid-cols-[1.1fr_2fr] gap-6 px-6 pb-6 pt-4 max-h-[70vh] overflow-y-auto">
+          <div className="grid grid-cols-1 lg:grid-cols-[1.1fr_2fr] gap-6 px-4 sm:px-6 pb-5 sm:pb-6 pt-4 max-h-[calc(100svh-220px)] sm:max-h-[70vh] overflow-y-auto">
             <div className="order-2 lg:order-1">
               <SearchHistory
                 query={query}

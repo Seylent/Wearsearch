@@ -104,9 +104,9 @@ export const ContactManagement: React.FC = () => {
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <h2 className="text-2xl font-bold flex items-center gap-2">
-          <Globe className="w-6 h-6" />
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+        <h2 className="text-xl sm:text-2xl font-bold flex items-center gap-2">
+          <Globe className="w-5 h-5 sm:w-6 sm:h-6" />
           {t('contacts.title', 'Контактна інформація')}
         </h2>
 
@@ -115,7 +115,9 @@ export const ContactManagement: React.FC = () => {
           disabled={loading || !isValid}
           variant="pill"
           size="pill"
-          className={isSaved ? 'bg-green-600 hover:bg-green-700' : ''}
+          className={
+            isSaved ? 'bg-green-600 hover:bg-green-700 w-full sm:w-auto' : 'w-full sm:w-auto'
+          }
         >
           {(() => {
             if (loading) {
@@ -147,9 +149,9 @@ export const ContactManagement: React.FC = () => {
 
       {/* Social Media */}
       <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <Globe className="w-5 h-5" />
+        <CardHeader className="pb-4">
+          <CardTitle className="flex items-center gap-2 text-base sm:text-lg">
+            <Globe className="w-4 h-4 sm:w-5 sm:h-5" />
             {t('contacts.title', 'Соціальні мережі та контакти')}
           </CardTitle>
         </CardHeader>

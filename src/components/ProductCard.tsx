@@ -11,7 +11,7 @@ import type { CurrencyCode } from '@/utils/currencyStorage';
 
 // Skeleton loader component
 export const ProductCardSkeleton: React.FC = () => (
-  <div className="relative h-full flex flex-col animate-pulse rounded-2xl border border-earth/10 bg-white overflow-hidden">
+  <div className="relative h-full flex flex-col animate-pulse rounded-2xl border border-border/50 bg-[hsl(var(--card-surface))] overflow-hidden">
     <div className="relative aspect-[3/4] bg-muted" />
     <div className="flex-1 flex flex-col justify-between pt-4">
       <div className="space-y-2">
@@ -119,11 +119,11 @@ const ProductCard: React.FC<ProductCardProps> = memo(
         aria-label={t('aria.viewProduct', { product: name })}
       >
         <div
-          className="relative h-full flex flex-col rounded-2xl border border-earth/30 sm:border-earth/20 bg-white shadow-[0_6px_18px_rgba(15,15,15,0.06)] overflow-hidden transition-all duration-200 hover:border-earth/40 hover:shadow-[0_14px_32px_rgba(15,15,15,0.12)]"
+          className="relative h-full flex flex-col rounded-2xl border border-border/60 bg-[hsl(var(--card-surface))] shadow-[0_6px_18px_rgba(15,15,15,0.06)] overflow-hidden transition-all duration-200 hover:border-border/80 hover:shadow-[0_14px_32px_rgba(15,15,15,0.12)]"
           role="article"
           aria-labelledby={`product-name-${id}`}
         >
-          <div className="relative aspect-[3/4] overflow-hidden bg-white">
+          <div className="relative aspect-[3/4] overflow-hidden bg-[hsl(var(--card-surface))]">
             <div
               className="absolute inset-2 sm:inset-3"
               style={{ ['--image-scale' as string]: imageScale } as React.CSSProperties}
@@ -142,7 +142,7 @@ const ProductCard: React.FC<ProductCardProps> = memo(
             </div>
 
             {isNew && (
-              <div className="absolute top-3 left-3 px-2 py-1 text-[10px] uppercase tracking-[0.2em] bg-white text-earth border border-border">
+              <div className="absolute top-3 left-3 px-2 py-1 text-[10px] uppercase tracking-[0.2em] bg-background/90 text-foreground border border-border">
                 New
               </div>
             )}
@@ -152,7 +152,7 @@ const ProductCard: React.FC<ProductCardProps> = memo(
                 productId={String(id)}
                 variant="ghost"
                 size="icon"
-                className="w-10 h-10 rounded-full bg-white text-earth border border-border hover:bg-muted"
+                className="w-10 h-10 rounded-full bg-background text-foreground border border-border hover:bg-muted"
               />
             </div>
           </div>

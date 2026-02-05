@@ -3,7 +3,11 @@ import { Metadata } from 'next';
 import { generateSearchMetadata } from '@/lib/seo/metadata-utils';
 import { shouldIndexPage } from '@/lib/seo/helpers';
 import { fetchBackendJson } from '@/lib/backendFetch';
-import { JsonLd, generateBreadcrumbSchema } from '@/lib/seo/structured-data';
+import {
+  JsonLd,
+  generateBreadcrumbSchema,
+  generateItemListSchema,
+} from '@/lib/seo/structured-data';
 import { getServerLanguage } from '@/utils/languageStorage';
 import type { Banner } from '@/types/banner';
 
@@ -30,6 +34,13 @@ const asNumber = (value: unknown, fallback: number): number => {
 const toOptionalString = (value: unknown): string | undefined =>
   typeof value === 'string' ? value : undefined;
 
+const normalizeCanonicalUrl = (siteUrl: string, value?: string): string | undefined => {
+  if (!value) return undefined;
+  if (value.startsWith('http://') || value.startsWith('https://')) return value;
+  if (value.startsWith('/')) return `${siteUrl}${value}`;
+  return undefined;
+};
+
 // Components
 import { ProductsContent } from '@/components/ProductsContent';
 
@@ -39,12 +50,14 @@ export const revalidate = 120;
 export async function generateMetadata({
   searchParams,
 }: {
-  searchParams: { [key: string]: string | string[] | undefined };
+  searchParams: Promise<{ [key: string]: string | string[] | undefined }>;
 }): Promise<Metadata> {
+  const searchParamsData = await searchParams;
   const params = new URLSearchParams();
+  const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://wearsearch.com';
 
   // Конвертуємо searchParams в URLSearchParams
-  Object.entries(searchParams).forEach(([key, value]) => {
+  Object.entries(searchParamsData).forEach(([key, value]) => {
     if (value) {
       if (Array.isArray(value)) {
         value.forEach(v => params.append(key, v));
@@ -55,7 +68,8 @@ export async function generateMetadata({
   });
 
   const shouldIndex = shouldIndexPage('/products', params);
-  const categoryType = typeof searchParams.type === 'string' ? searchParams.type : undefined;
+  const categoryType =
+    typeof searchParamsData.type === 'string' ? searchParamsData.type : undefined;
 
   // Якщо це SEO сторінка категорії - отримуємо дані з API
   if (shouldIndex && categoryType) {
@@ -91,9 +105,9 @@ export async function generateMetadata({
         const categoryDescription = toOptionalString(
           isRecord(category) ? category.description : undefined
         );
-        const canonicalUrl = toOptionalString(
-          isRecord(category) ? category.canonical_url : undefined
-        );
+        const canonicalUrl =
+          toOptionalString(isRecord(category) ? category.canonical_url : undefined) ||
+          `${siteUrl}/products?type=${encodeURIComponent(categoryType)}`;
 
         return {
           title: categorySeoTitle || `${categoryName} | Wearsearch`,
@@ -109,6 +123,14 @@ export async function generateMetadata({
             title: categorySeoTitle || categoryName,
             description: categorySeoDescription || categoryDescription,
             type: 'website',
+            url: canonicalUrl,
+            images: [`${siteUrl}/og-image.svg`],
+          },
+          twitter: {
+            card: 'summary_large_image',
+            title: categorySeoTitle || categoryName,
+            description: categorySeoDescription || categoryDescription,
+            images: [`${siteUrl}/og-image.svg`],
           },
         };
       }
@@ -125,10 +147,15 @@ export async function generateMetadata({
 export default async function ProductsPage({
   searchParams,
 }: {
-  searchParams: { [key: string]: string | string[] | undefined };
+  searchParams: Promise<{ [key: string]: string | string[] | undefined }>;
 }) {
-  const storeIdParam = typeof searchParams.store_id === 'string' ? searchParams.store_id : null;
-  const pageParam = Array.isArray(searchParams.page) ? searchParams.page[0] : searchParams.page;
+  const searchParamsData = await searchParams;
+  const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://wearsearch.com';
+  const storeIdParam =
+    typeof searchParamsData.store_id === 'string' ? searchParamsData.store_id : null;
+  const pageParam = Array.isArray(searchParamsData.page)
+    ? searchParamsData.page[0]
+    : searchParamsData.page;
   const initialPage = asNumber(pageParam, 1);
   let initialPageData: Record<string, unknown> | undefined;
   let banners: Banner[] = [];
@@ -159,26 +186,26 @@ export default async function ProductsPage({
 
     params.set('page', String(initialPage));
     params.set('limit', '24');
-    if (typeof searchParams.q === 'string' && searchParams.q.trim()) {
-      params.set('search', searchParams.q.trim());
+    if (typeof searchParamsData.q === 'string' && searchParamsData.q.trim()) {
+      params.set('search', searchParamsData.q.trim());
     }
-    appendMany('type', searchParams.type);
-    appendMany('color', searchParams.color);
-    appendMany('gender', searchParams.gender);
-    appendMany('material', searchParams.material || searchParams.material_id);
-    appendMany('technology', searchParams.technology || searchParams.technology_id);
-    appendMany('size', searchParams.size || searchParams.size_id);
-    if (typeof searchParams.brand === 'string' && searchParams.brand.trim()) {
-      params.set('brandId', searchParams.brand.trim());
+    appendMany('type', searchParamsData.type);
+    appendMany('color', searchParamsData.color);
+    appendMany('gender', searchParamsData.gender);
+    appendMany('material', searchParamsData.material || searchParamsData.material_id);
+    appendMany('technology', searchParamsData.technology || searchParamsData.technology_id);
+    appendMany('size', searchParamsData.size || searchParamsData.size_id);
+    if (typeof searchParamsData.brand === 'string' && searchParamsData.brand.trim()) {
+      params.set('brandId', searchParamsData.brand.trim());
     }
-    if (typeof searchParams.price_min === 'string' && searchParams.price_min.trim()) {
-      params.set('minPrice', searchParams.price_min.trim());
+    if (typeof searchParamsData.price_min === 'string' && searchParamsData.price_min.trim()) {
+      params.set('minPrice', searchParamsData.price_min.trim());
     }
-    if (typeof searchParams.price_max === 'string' && searchParams.price_max.trim()) {
-      params.set('maxPrice', searchParams.price_max.trim());
+    if (typeof searchParamsData.price_max === 'string' && searchParamsData.price_max.trim()) {
+      params.set('maxPrice', searchParamsData.price_max.trim());
     }
-    if (typeof searchParams.sort === 'string' && searchParams.sort.trim()) {
-      params.set('sort', searchParams.sort.trim());
+    if (typeof searchParamsData.sort === 'string' && searchParamsData.sort.trim()) {
+      params.set('sort', searchParamsData.sort.trim());
     }
     params.set('currency', 'UAH');
 
@@ -221,6 +248,15 @@ export default async function ProductsPage({
     }
   }
 
+  const productsForSchema = Array.isArray(initialPageData?.products)
+    ? (initialPageData.products as Array<{
+        id?: string;
+        name?: string;
+        canonical_url?: string;
+        slug?: string;
+      }>)
+    : [];
+
   return (
     <Suspense
       fallback={
@@ -231,13 +267,34 @@ export default async function ProductsPage({
     >
       <JsonLd
         data={generateBreadcrumbSchema([
-          { name: 'Головна', url: process.env.NEXT_PUBLIC_SITE_URL || 'https://wearsearch.com' },
+          { name: 'Головна', url: siteUrl },
           {
             name: 'Товари',
-            url: `${process.env.NEXT_PUBLIC_SITE_URL || 'https://wearsearch.com'}/products`,
+            url: `${siteUrl}/products`,
           },
         ])}
       />
+      {productsForSchema.length > 0 && (
+        <JsonLd
+          data={generateItemListSchema(
+            productsForSchema.slice(0, 20).map(item => {
+              const canonicalUrl = normalizeCanonicalUrl(
+                siteUrl,
+                toOptionalString(item.canonical_url)
+              );
+              const fallbackUrl = `${siteUrl}/products/${item.slug || item.id || ''}`;
+              return {
+                name: item.name || 'Product',
+                url: canonicalUrl || fallbackUrl,
+              };
+            }),
+            {
+              name: 'Products',
+              description: 'Browse products on Wearsearch',
+            }
+          )}
+        />
+      )}
       <ProductsContent
         initialPageData={initialPageData}
         initialPage={initialPage}

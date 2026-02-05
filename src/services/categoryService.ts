@@ -191,7 +191,7 @@ class CategoryService {
   /**
    * Fallback categories for when API is not available
    */
-  private getFallbackCategories(): Category[] {
+  public getFallbackCategories(): Category[] {
     return [
       {
         id: '1',
@@ -201,6 +201,48 @@ class CategoryService {
         productCount: 0,
         isActive: true,
         sortOrder: 1,
+        subcategories: [
+          {
+            id: '1-1',
+            name: 'Jackets',
+            slug: 'jackets',
+            description: 'Outerwear and jackets',
+            productCount: 0,
+            isActive: true,
+            sortOrder: 1,
+            parentId: '1',
+          },
+          {
+            id: '1-2',
+            name: 'Hoodies',
+            slug: 'hoodies',
+            description: 'Hoodies and sweatshirts',
+            productCount: 0,
+            isActive: true,
+            sortOrder: 2,
+            parentId: '1',
+          },
+          {
+            id: '1-3',
+            name: 'T-shirts',
+            slug: 't-shirts',
+            description: 'T-shirts and tops',
+            productCount: 0,
+            isActive: true,
+            sortOrder: 3,
+            parentId: '1',
+          },
+          {
+            id: '1-4',
+            name: 'Pants',
+            slug: 'pants',
+            description: 'Pants and trousers',
+            productCount: 0,
+            isActive: true,
+            sortOrder: 4,
+            parentId: '1',
+          },
+        ],
       },
       {
         id: '2',
@@ -210,6 +252,28 @@ class CategoryService {
         productCount: 0,
         isActive: true,
         sortOrder: 2,
+        subcategories: [
+          {
+            id: '2-1',
+            name: 'Sneakers',
+            slug: 'sneakers',
+            description: 'Casual sneakers',
+            productCount: 0,
+            isActive: true,
+            sortOrder: 1,
+            parentId: '2',
+          },
+          {
+            id: '2-2',
+            name: 'Boots',
+            slug: 'boots',
+            description: 'Boots and ankle boots',
+            productCount: 0,
+            isActive: true,
+            sortOrder: 2,
+            parentId: '2',
+          },
+        ],
       },
       {
         id: '3',
@@ -219,6 +283,28 @@ class CategoryService {
         productCount: 0,
         isActive: true,
         sortOrder: 3,
+        subcategories: [
+          {
+            id: '3-1',
+            name: 'Bags',
+            slug: 'bags',
+            description: 'Handbags and backpacks',
+            productCount: 0,
+            isActive: true,
+            sortOrder: 1,
+            parentId: '3',
+          },
+          {
+            id: '3-2',
+            name: 'Hats',
+            slug: 'hats',
+            description: 'Caps and hats',
+            productCount: 0,
+            isActive: true,
+            sortOrder: 2,
+            parentId: '3',
+          },
+        ],
       },
       {
         id: '4',

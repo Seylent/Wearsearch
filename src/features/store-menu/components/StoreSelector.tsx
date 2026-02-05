@@ -19,7 +19,7 @@ export function StoreSelector() {
     return (
       <div className="space-y-4">
         <Skeleton className="h-10" />
-        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+        <div className="grid gap-3 sm:gap-4 md:grid-cols-2 lg:grid-cols-3">
           {[...Array(3)].map((_, i) => (
             <Skeleton key={i} className="h-48" />
           ))}
@@ -31,10 +31,10 @@ export function StoreSelector() {
   if (hasNoStores) {
     return (
       <Card>
-        <CardContent className="flex flex-col items-center justify-center p-12 text-center">
-          <Store className="h-16 w-16 text-muted-foreground" />
-          <h2 className="mt-4 text-xl font-semibold">У вас ще немає магазинів</h2>
-          <p className="mt-2 text-muted-foreground">
+        <CardContent className="flex flex-col items-center justify-center p-8 sm:p-12 text-center">
+          <Store className="h-14 w-14 sm:h-16 sm:w-16 text-muted-foreground" />
+          <h2 className="mt-4 text-lg sm:text-xl font-semibold">У вас ще немає магазинів</h2>
+          <p className="mt-2 text-muted-foreground text-sm sm:text-base">
             Зв&apos;яжіться з адміністрацією для створення магазину
           </p>
         </CardContent>
@@ -47,8 +47,8 @@ export function StoreSelector() {
     const store = stores[0];
     return (
       <Card>
-        <CardContent className="flex flex-col items-center justify-center p-12 text-center">
-          <div className="h-20 w-20 overflow-hidden rounded-lg border">
+        <CardContent className="flex flex-col items-center justify-center p-8 sm:p-12 text-center">
+          <div className="h-16 w-16 sm:h-20 sm:w-20 overflow-hidden rounded-lg border">
             {store.logo_url ? (
               <OptimizedImage
                 src={store.logo_url}
@@ -61,7 +61,7 @@ export function StoreSelector() {
               </div>
             )}
           </div>
-          <h2 className="mt-4 text-xl font-semibold">{store.name}</h2>
+          <h2 className="mt-4 text-lg sm:text-xl font-semibold">{store.name}</h2>
         </CardContent>
       </Card>
     );
@@ -71,11 +71,13 @@ export function StoreSelector() {
   return (
     <div className="space-y-4">
       <div>
-        <h2 className="text-2xl font-bold">Виберіть магазин</h2>
-        <p className="text-muted-foreground">У вас є доступ до кількох магазинів</p>
+        <h2 className="text-xl sm:text-2xl font-bold">Виберіть магазин</h2>
+        <p className="text-muted-foreground text-sm sm:text-base">
+          У вас є доступ до кількох магазинів
+        </p>
       </div>
 
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+      <div className="grid gap-3 sm:gap-4 md:grid-cols-2 lg:grid-cols-3">
         {stores.map(store => (
           <Card
             key={store.id}
@@ -86,9 +88,9 @@ export function StoreSelector() {
             }`}
             onClick={() => setSelectedStore(store.id)}
           >
-            <CardContent className="p-6">
-              <div className="flex items-start gap-4">
-                <div className="h-16 w-16 overflow-hidden rounded-lg border">
+            <CardContent className="p-4 sm:p-6">
+              <div className="flex items-start gap-3 sm:gap-4">
+                <div className="h-12 w-12 sm:h-16 sm:w-16 overflow-hidden rounded-lg border">
                   {store.logo_url ? (
                     <OptimizedImage
                       src={store.logo_url}

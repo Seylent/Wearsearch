@@ -55,10 +55,6 @@ export const metadata: Metadata = {
   },
   alternates: {
     canonical: '/stores',
-    languages: {
-      uk: '/stores',
-      en: '/en/stores',
-    },
   },
 };
 

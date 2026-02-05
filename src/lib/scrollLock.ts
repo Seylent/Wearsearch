@@ -1,28 +1,37 @@
 type LockState = {
   count: number;
   overflow: string;
+  paddingRight: string;
 };
 
 const state: LockState = {
   count: 0,
   overflow: '',
+  paddingRight: '',
 };
 
 const canUseDom = () => typeof document !== 'undefined';
 
-const hasVisibleScrollLockRoot = () => {
-  if (!canUseDom()) return false;
-  return Array.from(
-    document.querySelectorAll('[data-scroll-lock-root], [aria-modal="true"], [role="dialog"]')
-  ).some(node => {
-    const element = node as HTMLElement;
-    const style = window.getComputedStyle(element);
-    if (style.display === 'none' || style.visibility === 'hidden') return false;
-    if (style.opacity === '0' || style.pointerEvents === 'none') return false;
-    if (element.getAttribute('aria-hidden') === 'true') return false;
-    if (style.position === 'static') return false;
-    return element.getClientRects().length > 0;
-  });
+const getScrollbarWidth = () => {
+  if (!canUseDom()) return 0;
+  return window.innerWidth - document.documentElement.clientWidth;
+};
+
+const applyScrollLock = () => {
+  const scrollbarWidth = getScrollbarWidth();
+  document.body.style.overflow = 'hidden';
+  document.documentElement.style.overflow = 'hidden';
+  document.body.setAttribute('data-scroll-locked', 'true');
+  if (scrollbarWidth > 0) {
+    document.body.style.paddingRight = `${scrollbarWidth}px`;
+  }
+};
+
+const removeScrollLock = () => {
+  document.body.style.overflow = state.overflow || '';
+  document.documentElement.style.overflow = '';
+  document.body.style.paddingRight = state.paddingRight || '';
+  document.body.removeAttribute('data-scroll-locked');
 };
 
 export const lockBodyScroll = () => {
@@ -30,18 +39,11 @@ export const lockBodyScroll = () => {
 
   if (state.count === 0) {
     state.overflow = document.body.style.overflow;
-    document.body.style.overflow = 'hidden';
+    state.paddingRight = document.body.style.paddingRight;
+    applyScrollLock();
   }
 
   state.count += 1;
-
-  if (state.count === 1) {
-    window.requestAnimationFrame(() => {
-      if (!hasVisibleScrollLockRoot()) {
-        resetBodyScroll();
-      }
-    });
-  }
 };
 
 export const unlockBodyScroll = () => {
@@ -50,8 +52,7 @@ export const unlockBodyScroll = () => {
   state.count = Math.max(0, state.count - 1);
 
   if (state.count === 0) {
-    document.body.style.overflow = state.overflow || '';
-    document.documentElement.style.overflow = '';
+    removeScrollLock();
   }
 };
 
@@ -59,6 +60,7 @@ export const resetBodyScroll = () => {
   if (!canUseDom()) return;
   state.count = 0;
   state.overflow = '';
+  state.paddingRight = '';
   document.body.style.overflow = '';
   document.body.style.touchAction = '';
   document.body.style.position = '';
@@ -77,4 +79,5 @@ export const resetBodyScroll = () => {
     'touch-none',
     'fixed'
   );
+  document.body.removeAttribute('data-scroll-locked');
 };

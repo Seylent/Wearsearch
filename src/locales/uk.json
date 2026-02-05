@@ -151,6 +151,7 @@
   },
   "mega": {
     "categories": "Категорії",
+    "collections": "Колекції",
     "featureTitle": "Добірка",
     "featureCopy": "Відкрийте нові надходження та базові речі від перевірених магазинів.",
     "viewAllCategory": "Всі {{name}}",
@@ -161,9 +162,12 @@
     "styleNotesTitle": "Нотатки стилю",
     "styleNotesBody": "Надходження, сезонні добірки та позачасові речі в одному місці. Ми фокусуємось на посадці, тканинах і довговічності, щоб вибір був свідомим.",
     "brandDescription": "© 2026 Wearsearch. Створено для зручних покупок.",
+    "collections": "Колекції",
     "shop": "Магазин",
     "company": "Компанія",
     "contact": "Контакти",
+    "stores": "Магазини",
+    "brands": "Бренди",
     "careers": "Вакансії",
     "contactUs": "Зв'яжіться з нами",
     "contactDescription": "Зв'яжіться з нами будь-яким зручним способом",
@@ -408,7 +412,19 @@
     "productListDescription": "Керуйте товарами",
     "storeManagementPlaceholder": "Тут буде відображатися керування магазинами",
     "brandManagementPlaceholder": "Тут буде відображатися керування брендами",
-    "contactsSaveFailed": "Не вдалося зберегти на сервері. Контакти збережено локально."
+    "contactsSaveFailed": "Не вдалося зберегти на сервері. Контакти збережено локально.",
+    "brandCreated": "Бренд створено",
+    "brandCreateFailed": "Не вдалося створити бренд",
+    "brandUpdated": "Бренд оновлено",
+    "brandUpdateFailed": "Не вдалося оновити бренд",
+    "brandDeleted": "Бренд видалено",
+    "brandDeleteFailed": "Не вдалося видалити бренд",
+    "storeCreated": "Магазин створено",
+    "storeCreateFailed": "Не вдалося створити магазин",
+    "storeUpdated": "Магазин оновлено",
+    "storeUpdateFailed": "Не вдалося оновити магазин",
+    "storeDeleted": "Магазин видалено",
+    "storeDeleteFailed": "Не вдалося видалити магазин"
   },
   "filters": {
     "activeFilters": "Активні фільтри",
@@ -432,6 +448,7 @@
       "women": "Жіноче",
       "unisex": "Унісекс"
     },
+    "genderLabel": "Стать",
     "noBrands": "Немає доступних брендів"
   },
   "products": {
@@ -615,6 +632,10 @@
     "shopByGender": "Підбір за настроєм",
     "genderPicks": "Знайди свій стиль",
     "genderHint": "Добірки для кожного силуету та настрою",
+    "genderLabel": "Добірки за статтю",
+    "genderMen": "Чоловіки",
+    "genderWomen": "Жінки",
+    "genderUnisex": "Унісекс",
     "women": "Жінки",
     "womenTag": "Витончена сила",
     "men": "Чоловіки",
@@ -793,6 +814,7 @@
     "availableIn": "Доступно в"
   },
   "currency": {
+    "currency": "Валюта",
     "updated": "Оновлено",
     "pricesInDollarsNBU": "Ціни в доларах (курс НБУ)",
     "convertedPrices": "Конвертовані ціни"
@@ -1066,6 +1088,7 @@
     "NETWORK_ERROR": "Помилка мережі. Перевірте підключення до інтернету."
   },
   "store": {
+    "selectStore": "Оберіть магазин",
     "managersRequired": "Магазин і email обов'язкові",
     "managerAdded": "Менеджера додано",
     "managerAddError": "Не вдалося додати менеджера",

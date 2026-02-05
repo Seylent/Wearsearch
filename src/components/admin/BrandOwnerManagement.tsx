@@ -149,10 +149,10 @@ export const BrandOwnerManagement = () => {
   };
 
   return (
-    <div className="grid gap-6">
+    <div className="grid gap-5 sm:gap-6">
       <Card className="border border-border/50 bg-card/40 backdrop-blur-sm">
-        <CardHeader>
-          <CardTitle className="text-xl font-semibold">
+        <CardHeader className="pb-4">
+          <CardTitle className="text-lg sm:text-xl font-semibold">
             {t('brand.permissionsTitle', 'Allowed stores')}
           </CardTitle>
         </CardHeader>
@@ -224,8 +224,8 @@ export const BrandOwnerManagement = () => {
       </Card>
 
       <Card className="border border-border/50 bg-card/40 backdrop-blur-sm">
-        <CardHeader>
-          <CardTitle className="text-xl font-semibold">
+        <CardHeader className="pb-4">
+          <CardTitle className="text-lg sm:text-xl font-semibold">
             {t('brand.officialStoreTitle', 'Official brand store')}
           </CardTitle>
         </CardHeader>

@@ -245,7 +245,7 @@ function ProductsContent({ storeId }: { storeId: string }) {
         <CardContent className="p-0">
           {products.length > 0 ? (
             <>
-              <div className="overflow-x-auto">
+              <div className="overflow-x-auto md:overflow-x-visible">
                 <Table>
                   <TableHeader>
                     <TableRow>

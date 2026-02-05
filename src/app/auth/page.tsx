@@ -121,25 +121,29 @@ export default function AuthPage() {
 
   return (
     <div className="min-h-screen text-foreground">
-      <section className="relative flex items-center justify-center min-h-screen px-4 py-20">
+      <section className="relative flex items-center justify-center min-h-screen px-4 py-10 sm:py-20">
+        <div className="absolute inset-0 pointer-events-none">
+          <div className="absolute inset-0 bg-[radial-gradient(70%_60%_at_50%_0%,hsl(var(--foreground)/0.08),transparent_60%)]" />
+          <div className="absolute inset-0 bg-[radial-gradient(40%_40%_at_15%_20%,hsl(var(--foreground)/0.06),transparent_55%)]" />
+        </div>
         <div className="w-full max-w-md relative z-10">
-          <div className="bg-white border border-border rounded-none p-8 shadow-[0_20px_60px_rgba(0,0,0,0.08)]">
+          <div className="bg-card/90 border border-border/70 rounded-3xl p-6 sm:p-10 shadow-[0_24px_70px_rgba(0,0,0,0.18)] backdrop-blur-xl">
             {/* Back button */}
             <Button
               variant="ghost"
               onClick={() => router.push('/')}
-              className="mb-6 -ml-2 text-muted-foreground hover:text-foreground text-xs uppercase tracking-[0.2em]"
+              className="mb-5 sm:mb-6 -ml-2 text-muted-foreground hover:text-foreground text-[10px] sm:text-xs uppercase tracking-[0.18em] sm:tracking-[0.2em]"
             >
               <ArrowLeft className="w-4 h-4 mr-2" />
               {t('common.back', 'Назад')}
             </Button>
 
             {/* Header */}
-            <div className="text-center mb-8">
-              <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-muted border border-border mb-4">
-                <Lock className="w-8 h-8" />
+            <div className="text-center mb-6 sm:mb-8">
+              <div className="inline-flex items-center justify-center w-12 h-12 sm:w-16 sm:h-16 rounded-full bg-gradient-to-br from-foreground/10 via-foreground/5 to-transparent border border-border mb-4">
+                <Lock className="w-6 h-6 sm:w-8 sm:h-8 text-foreground" />
               </div>
-              <h1 className="text-3xl font-serif mb-2">
+              <h1 className="text-2xl sm:text-3xl font-serif mb-2 text-foreground">
                 {isLogin ? t('auth.login', 'Вхід') : t('auth.signup', 'Реєстрація')}
               </h1>
               <p className="text-muted-foreground">
@@ -150,7 +154,7 @@ export default function AuthPage() {
             </div>
 
             {/* Form */}
-            <form className="space-y-5" onSubmit={handleSubmit}>
+            <form className="space-y-4 sm:space-y-5" onSubmit={handleSubmit}>
               {!isLogin && (
                 <div className="space-y-2">
                   <Label htmlFor="display_name" className="text-sm font-medium">
@@ -164,7 +168,7 @@ export default function AuthPage() {
                       value={formData.display_name}
                       onChange={handleInputChange}
                       placeholder={t('auth.displayNamePlaceholder', "Ваше ім'я")}
-                      className="pl-10 bg-transparent border-b border-border rounded-none focus:border-foreground h-12"
+                      className="pl-10 h-11 sm:h-12 rounded-full bg-background/60 border border-border/70 focus:border-foreground/80"
                       maxLength={50}
                     />
                   </div>
@@ -185,7 +189,7 @@ export default function AuthPage() {
                       value={formData.username}
                       onChange={handleInputChange}
                       placeholder={t('auth.usernamePlaceholder', 'Ваш нікнейм')}
-                      className="pl-10 bg-transparent border-b border-border rounded-none focus:border-foreground h-12"
+                      className="pl-10 h-11 sm:h-12 rounded-full bg-background/60 border border-border/70 focus:border-foreground/80"
                       pattern="[a-zA-Z0-9_]{3,30}"
                       title="3-30 символів, лише літери, цифри та _"
                     />
@@ -211,7 +215,7 @@ export default function AuthPage() {
                         ? t('auth.emailOrUsernamePlaceholder', 'your@email.com або username')
                         : 'your@email.com'
                     }
-                    className="pl-10 bg-transparent border-b border-border rounded-none focus:border-foreground h-12"
+                    className="pl-10 h-11 sm:h-12 rounded-full bg-background/60 border border-border/70 focus:border-foreground/80"
                     required
                   />
                 </div>
@@ -229,7 +233,7 @@ export default function AuthPage() {
                     value={formData.password}
                     onChange={handleInputChange}
                     placeholder="••••••••"
-                    className="pl-10 bg-transparent border-b border-border rounded-none focus:border-foreground h-12"
+                    className="pl-10 h-11 sm:h-12 rounded-full bg-background/60 border border-border/70 focus:border-foreground/80"
                     minLength={6}
                     required
                   />
@@ -254,7 +258,7 @@ export default function AuthPage() {
                       value={formData.confirmPassword}
                       onChange={handleInputChange}
                       placeholder="••••••••"
-                      className="pl-10 bg-transparent border-b border-border rounded-none focus:border-foreground h-12"
+                      className="pl-10 h-11 sm:h-12 rounded-full bg-background/60 border border-border/70 focus:border-foreground/80"
                       required={!isLogin}
                     />
                   </div>
@@ -275,7 +279,7 @@ export default function AuthPage() {
               <Button
                 type="submit"
                 disabled={isLoading}
-                className="w-full h-12 text-base font-medium bg-black text-white hover:bg-black/90 disabled:opacity-50 rounded-full"
+                className="w-full h-11 sm:h-12 text-base font-medium bg-foreground text-background hover:bg-foreground/90 disabled:opacity-50 rounded-full"
               >
                 {(() => {
                   if (isLoading) {
@@ -296,11 +300,11 @@ export default function AuthPage() {
             </form>
 
             {/* Toggle Login/Signup */}
-            <div className="mt-6 text-center">
+            <div className="mt-5 sm:mt-6 text-center">
               <button
                 type="button"
                 onClick={() => setIsLogin(!isLogin)}
-                className="text-sm text-muted-foreground hover:text-foreground transition-colors"
+                className="text-xs sm:text-sm text-muted-foreground hover:text-foreground transition-colors"
               >
                 {isLogin
                   ? t('auth.noAccount', 'Немає акаунту?') + ' '
@@ -313,7 +317,7 @@ export default function AuthPage() {
           </div>
 
           {/* Footer note */}
-          <p className="mt-6 text-center text-xs text-muted-foreground">
+          <p className="mt-5 sm:mt-6 text-center text-[10px] sm:text-xs text-muted-foreground">
             {t('auth.terms', 'Входячи, ви погоджуєтесь з')}{' '}
             <button className="underline hover:text-foreground transition-colors">
               {t('auth.termsLink', 'Умовами використання')}

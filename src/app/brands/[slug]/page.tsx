@@ -14,6 +14,7 @@ import {
 import { SEOTextSection } from '@/components/seo/SEOTextSection';
 import { fetchBackendJson } from '@/lib/backendFetch';
 import { PresignedImage } from '@/components/common/PresignedImage';
+import { getServerLanguage } from '@/utils/languageStorage';
 
 export const revalidate = 3600;
 
@@ -67,17 +68,17 @@ const resolvePresignedUrl = async (value?: string): Promise<string | undefined> 
 };
 
 interface BrandPageProps {
-  params: {
+  params: Promise<{
     slug: string;
-  };
+  }>;
 }
 
 // Генерація metadata для SEO
 export async function generateMetadata({ params }: BrandPageProps): Promise<Metadata> {
-  const { slug } = params;
+  const { slug } = await params;
 
   try {
-    const lang = 'uk';
+    const lang = await getServerLanguage();
     const res = await fetchBackendJson<unknown>(`/brands/${slug}?lang=${lang}`, {
       next: { revalidate: 3600 },
     });
@@ -116,7 +117,7 @@ export async function generateMetadata({ params }: BrandPageProps): Promise<Meta
       openGraph: {
         title: brandSeoTitle || brandName,
         description: brandSeoDescription || brandDescription,
-        images: brandLogoUrl ? [brandLogoUrl] : [],
+        images: brandLogoUrl ? [brandLogoUrl] : [`${siteUrl}/og-image.svg`],
         type: 'website',
         siteName: 'Wearsearch',
         url: canonicalUrl,
@@ -125,7 +126,7 @@ export async function generateMetadata({ params }: BrandPageProps): Promise<Meta
         card: 'summary_large_image',
         title: brandSeoTitle || brandName,
         description: brandSeoDescription || brandDescription,
-        images: brandLogoUrl ? [brandLogoUrl] : [],
+        images: brandLogoUrl ? [brandLogoUrl] : [`${siteUrl}/og-image.svg`],
       },
       robots: {
         index: true,
@@ -144,7 +145,7 @@ export async function generateMetadata({ params }: BrandPageProps): Promise<Meta
 
 // Основний компонент сторінки
 export default async function BrandPage({ params }: Readonly<BrandPageProps>) {
-  const { slug } = params;
+  const { slug } = await params;
 
   try {
     // Отримуємо дані бренду

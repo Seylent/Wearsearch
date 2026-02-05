@@ -54,7 +54,7 @@ class BrandService {
   private readonly baseUrl: string;
 
   constructor() {
-    this.baseUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000';
+    this.baseUrl = process.env.NEXT_PUBLIC_API_URL || '';
   }
 
   /**
@@ -63,18 +63,20 @@ class BrandService {
   async getBrands(filters?: BrandFilter): Promise<Brand[]> {
     try {
       const searchParams = new URLSearchParams();
-      
+
       if (filters?.page) searchParams.set('page', filters.page.toString());
       if (filters?.limit) searchParams.set('limit', filters.limit.toString());
       if (filters?.search) searchParams.set('search', filters.search);
-      if (filters?.isActive !== undefined) searchParams.set('isActive', filters.isActive.toString());
-      if (filters?.isFeatured !== undefined) searchParams.set('isFeatured', filters.isFeatured.toString());
+      if (filters?.isActive !== undefined)
+        searchParams.set('isActive', filters.isActive.toString());
+      if (filters?.isFeatured !== undefined)
+        searchParams.set('isFeatured', filters.isFeatured.toString());
       if (filters?.countryOfOrigin) searchParams.set('countryOfOrigin', filters.countryOfOrigin);
       if (filters?.sortBy) searchParams.set('sortBy', filters.sortBy);
       if (filters?.sortOrder) searchParams.set('sortOrder', filters.sortOrder);
 
       const url = `${this.baseUrl}/api/brands?${searchParams.toString()}`;
-      
+
       const response = await fetch(url, {
         next: { revalidate: 3600 }, // 1 hour cache
         headers: {
@@ -141,12 +143,12 @@ class BrandService {
    * Get featured brands
    */
   async getFeaturedBrands(limit = 12): Promise<Brand[]> {
-    return this.getBrands({ 
-      isFeatured: true, 
-      isActive: true, 
+    return this.getBrands({
+      isFeatured: true,
+      isActive: true,
       limit,
       sortBy: 'sortOrder',
-      sortOrder: 'asc'
+      sortOrder: 'asc',
     });
   }
 
@@ -154,11 +156,11 @@ class BrandService {
    * Get popular brands (by product count)
    */
   async getPopularBrands(limit = 20): Promise<Brand[]> {
-    return this.getBrands({ 
-      isActive: true, 
+    return this.getBrands({
+      isActive: true,
       limit,
       sortBy: 'productCount',
-      sortOrder: 'desc'
+      sortOrder: 'desc',
     });
   }
 
@@ -166,12 +168,12 @@ class BrandService {
    * Search brands
    */
   async searchBrands(query: string, limit = 10): Promise<Brand[]> {
-    return this.getBrands({ 
-      search: query, 
+    return this.getBrands({
+      search: query,
       limit,
       isActive: true,
       sortBy: 'name',
-      sortOrder: 'asc'
+      sortOrder: 'asc',
     });
   }
 
@@ -179,12 +181,12 @@ class BrandService {
    * Get brands by country
    */
   async getBrandsByCountry(countryOfOrigin: string, limit = 50): Promise<Brand[]> {
-    return this.getBrands({ 
-      countryOfOrigin, 
-      isActive: true, 
+    return this.getBrands({
+      countryOfOrigin,
+      isActive: true,
       limit,
       sortBy: 'name',
-      sortOrder: 'asc'
+      sortOrder: 'asc',
     });
   }
 
@@ -281,12 +283,14 @@ class BrandService {
       }
 
       const data = await response.json();
-      return data?.data || {
-        totalBrands: 0,
-        activeBrands: 0,
-        featuredBrands: 0,
-        countsByCountry: {},
-      };
+      return (
+        data?.data || {
+          totalBrands: 0,
+          activeBrands: 0,
+          featuredBrands: 0,
+          countsByCountry: {},
+        }
+      );
     } catch (error) {
       console.error('Error fetching brand stats:', error);
       const fallbackBrands = this.getFallbackBrands();
@@ -329,13 +333,7 @@ export const getBrandDescription = (brand: Brand): string => {
 
 // Type guards
 export const isBrand = (obj: unknown): obj is Brand => {
-  return (
-    typeof obj === 'object' &&
-    obj !== null &&
-    'id' in obj &&
-    'name' in obj &&
-    'slug' in obj
-  );
+  return typeof obj === 'object' && obj !== null && 'id' in obj && 'name' in obj && 'slug' in obj;
 };
 
 // Sorting functions

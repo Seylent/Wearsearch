@@ -119,6 +119,7 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
     const canonicalUrl =
       toOptionalString(isRecord(product) ? product.canonical_url : undefined) ||
       `${process.env.NEXT_PUBLIC_SITE_URL || 'https://wearsearch.com'}/products/${id}`;
+    const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://wearsearch.com';
 
     const productName = toOptionalString(isRecord(product) ? product.name : undefined) ?? 'Product';
     const productBrand = toOptionalString(isRecord(product) ? product.brand : undefined) ?? '';
@@ -126,7 +127,7 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
       toOptionalString(isRecord(product) ? product.seo_description : undefined) ||
       toOptionalString(isRecord(product) ? product.description : undefined);
     const rawImageUrl = toOptionalString(isRecord(product) ? product.image_url : undefined);
-    const productImageUrl = await resolvePresignedUrl(rawImageUrl);
+    const productImageUrl = (await resolvePresignedUrl(rawImageUrl)) || `${siteUrl}/og-image.svg`;
     const productPrice = toOptionalNumber(isRecord(product) ? product.price : undefined);
     const productCurrency =
       toOptionalString(isRecord(product) ? product.currency : undefined) || 'UAH';

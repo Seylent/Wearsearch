@@ -12,6 +12,7 @@ import { usePathname } from 'next/navigation';
 import { LayoutDashboard, Package, PlusCircle, Globe, Users, Settings, Store } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
+import { ThemeToggle } from '@/components/common/ThemeToggle';
 import {
   Sidebar,
   SidebarContent,
@@ -299,68 +300,73 @@ export function StoreMenuLayout({ children }: StoreMenuLayoutProps) {
               </div>
             </div>
 
-            <Sheet open={mobileMenuOpen} onOpenChange={setMobileMenuOpen}>
-              <SheetTrigger asChild>
-                <Button variant="ghost" size="icon">
-                  <LayoutDashboard className="h-5 w-5" />
-                </Button>
-              </SheetTrigger>
-              <SheetContent side="bottom" className="h-[70vh]">
-                <nav className="flex flex-col gap-4 pt-4">
-                  {/* Store Switcher for mobile */}
-                  {stores.length > 1 && (
-                    <div className="border-b pb-4">
-                      <p className="mb-2 px-3 text-xs font-medium text-muted-foreground">Магазин</p>
-                      {stores.map(store => (
-                        <button
-                          key={store.id}
-                          onClick={() => {
-                            setSelectedStore(store.id);
-                            setMobileMenuOpen(false);
-                          }}
-                          className={cn(
-                            'flex w-full items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-colors',
-                            selectedStoreId === store.id
-                              ? 'bg-primary/10 text-primary'
-                              : 'hover:bg-muted'
-                          )}
-                        >
-                          <Store className="h-4 w-4" />
-                          {store.name}
-                        </button>
-                      ))}
-                    </div>
-                  )}
-
-                  {menuSections.map(section => (
-                    <div key={section.label} className="space-y-2">
-                      <p className="px-3 text-xs font-medium uppercase tracking-wider text-muted-foreground">
-                        {section.label}
-                      </p>
-                      <div className="flex flex-col gap-2">
-                        {section.items.map(item => (
-                          <Link
-                            key={item.href}
-                            href={item.href}
-                            onClick={() => setMobileMenuOpen(false)}
+            <div className="flex items-center gap-2">
+              <ThemeToggle className="h-9 w-9" />
+              <Sheet open={mobileMenuOpen} onOpenChange={setMobileMenuOpen}>
+                <SheetTrigger asChild>
+                  <Button variant="ghost" size="icon">
+                    <LayoutDashboard className="h-5 w-5" />
+                  </Button>
+                </SheetTrigger>
+                <SheetContent side="bottom" className="h-[70vh]">
+                  <nav className="flex flex-col gap-4 pt-4">
+                    {/* Store Switcher for mobile */}
+                    {stores.length > 1 && (
+                      <div className="border-b pb-4">
+                        <p className="mb-2 px-3 text-xs font-medium text-muted-foreground">
+                          Магазин
+                        </p>
+                        {stores.map(store => (
+                          <button
+                            key={store.id}
+                            onClick={() => {
+                              setSelectedStore(store.id);
+                              setMobileMenuOpen(false);
+                            }}
                             className={cn(
-                              'flex items-center gap-3 rounded-lg px-3 py-3 text-sm font-medium transition-colors',
-                              pathname === item.href ||
-                                (!item.exact && pathname.startsWith(item.href))
+                              'flex w-full items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-colors',
+                              selectedStoreId === store.id
                                 ? 'bg-primary/10 text-primary'
                                 : 'hover:bg-muted'
                             )}
                           >
-                            <item.icon className="h-5 w-5" />
-                            {item.label}
-                          </Link>
+                            <Store className="h-4 w-4" />
+                            {store.name}
+                          </button>
                         ))}
                       </div>
-                    </div>
-                  ))}
-                </nav>
-              </SheetContent>
-            </Sheet>
+                    )}
+
+                    {menuSections.map(section => (
+                      <div key={section.label} className="space-y-2">
+                        <p className="px-3 text-xs font-medium uppercase tracking-wider text-muted-foreground">
+                          {section.label}
+                        </p>
+                        <div className="flex flex-col gap-2">
+                          {section.items.map(item => (
+                            <Link
+                              key={item.href}
+                              href={item.href}
+                              onClick={() => setMobileMenuOpen(false)}
+                              className={cn(
+                                'flex items-center gap-3 rounded-lg px-3 py-3 text-sm font-medium transition-colors',
+                                pathname === item.href ||
+                                  (!item.exact && pathname.startsWith(item.href))
+                                  ? 'bg-primary/10 text-primary'
+                                  : 'hover:bg-muted'
+                              )}
+                            >
+                              <item.icon className="h-5 w-5" />
+                              {item.label}
+                            </Link>
+                          ))}
+                        </div>
+                      </div>
+                    ))}
+                  </nav>
+                </SheetContent>
+              </Sheet>
+            </div>
           </div>
         </header>
 

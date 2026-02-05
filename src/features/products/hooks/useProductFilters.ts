@@ -9,6 +9,7 @@
 import { useCallback, useEffect, useMemo, useState, useRef } from 'react';
 import { useSearchParams, useRouter, usePathname } from 'next/navigation';
 import type { Brand, Product } from '@/types';
+import { getCollectionType } from '@/constants/collections';
 
 export interface ProductFiltersState {
   searchQuery: string;
@@ -50,7 +51,13 @@ export const useProductFilters = () => {
 
   // Parse initial values from URL
   const getInitialColors = () => searchParams?.getAll(URL_PARAMS.COLORS) || [];
-  const getInitialTypes = () => searchParams?.getAll(URL_PARAMS.TYPES) || [];
+  const getInitialTypes = () => {
+    const values = searchParams?.getAll(URL_PARAMS.TYPES) || [];
+    if (values.length > 0) return values;
+    const collectionSlug = pathname?.match(/^\/collections\/(.+?)(?:\/|$)/)?.[1];
+    const collectionType = getCollectionType(collectionSlug);
+    return collectionType ? [collectionType] : [];
+  };
   const getInitialMaterials = () => {
     const values = searchParams?.getAll(URL_PARAMS.MATERIALS) || [];
     if (values.length > 0) return values;
@@ -66,7 +73,12 @@ export const useProductFilters = () => {
     if (values.length > 0) return values;
     return searchParams?.getAll(URL_PARAMS.SIZE_IDS) || [];
   };
-  const getInitialGenders = () => searchParams?.getAll(URL_PARAMS.GENDERS) || [];
+  const getInitialGenders = () => {
+    const values = searchParams?.getAll(URL_PARAMS.GENDERS) || [];
+    if (values.length > 0) return values;
+    const pathMatch = pathname?.match(/^\/gender\/(men|women|unisex)(?:\/|$)/);
+    return pathMatch ? [pathMatch[1]] : [];
+  };
   const getInitialSearch = () => searchParams?.get(URL_PARAMS.SEARCH) || '';
   const getInitialBrand = () => searchParams?.get(URL_PARAMS.BRAND) || '';
   const getInitialPriceMin = () => {

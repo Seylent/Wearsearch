@@ -51,13 +51,13 @@ export const SearchHistory: React.FC<SearchHistoryProps> = React.memo(
     }
 
     return (
-      <div className="rounded-2xl border border-border bg-muted/30 p-5">
+      <div className="rounded-2xl border border-border bg-muted/30 p-4 sm:p-5">
         {/* Popular Searches */}
         {popularQueries.length > 0 && (
           <div className="mb-6">
-            <div className="flex items-center gap-2 mb-4">
+            <div className="flex items-center gap-2 mb-3 sm:mb-4">
               <TrendingUp className="w-4 h-4 text-muted-foreground" />
-              <span className="text-xs font-medium text-muted-foreground uppercase tracking-[0.3em]">
+              <span className="text-xs font-medium text-muted-foreground uppercase tracking-[0.2em] sm:tracking-[0.3em]">
                 {t('search.mostSearched', 'Most searched')}
               </span>
             </div>
@@ -66,7 +66,7 @@ export const SearchHistory: React.FC<SearchHistoryProps> = React.memo(
                 <button
                   key={popularQuery}
                   onClick={() => onHistoryClick?.(popularQuery)}
-                  className="inline-flex items-center gap-2 px-3 py-2 rounded-full text-xs uppercase tracking-[0.2em] bg-white border border-border text-muted-foreground hover:text-foreground hover:border-foreground/40 transition-colors"
+                  className="inline-flex items-center gap-2 px-3 py-2 rounded-full text-[10px] sm:text-xs uppercase tracking-[0.16em] sm:tracking-[0.2em] bg-white border border-border text-muted-foreground hover:text-foreground hover:border-foreground/40 transition-colors"
                 >
                   {popularQuery}
                 </button>
@@ -78,8 +78,8 @@ export const SearchHistory: React.FC<SearchHistoryProps> = React.memo(
         {/* Search History */}
         {searchHistory.length > 0 && (
           <div>
-            <div className="flex items-center justify-between mb-4">
-              <span className="text-xs font-medium text-muted-foreground uppercase tracking-[0.3em] flex items-center gap-2">
+            <div className="flex items-center justify-between mb-3 sm:mb-4">
+              <span className="text-xs font-medium text-muted-foreground uppercase tracking-[0.2em] sm:tracking-[0.3em] flex items-center gap-2">
                 <History className="w-3 h-3" />
                 {t('search.recentSearches', 'Recent Searches')}
               </span>
@@ -118,7 +118,7 @@ export const SearchHistory: React.FC<SearchHistoryProps> = React.memo(
                         e.stopPropagation();
                         onRemoveHistory(item.query);
                       }}
-                      className="opacity-0 group-hover:opacity-100 text-muted-foreground hover:text-foreground p-1 transition-opacity"
+                      className="opacity-100 sm:opacity-0 sm:group-hover:opacity-100 text-muted-foreground hover:text-foreground p-1 transition-opacity"
                       aria-label={t('search.removeFromHistory', 'Remove from history')}
                     >
                       <X className="w-4 h-4" />

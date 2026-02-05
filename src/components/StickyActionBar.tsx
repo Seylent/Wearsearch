@@ -26,7 +26,7 @@ export const StickyActionBar = ({
       setShowScrollTop(window.scrollY > 500);
     };
 
-    window.addEventListener('scroll', handleScroll);
+    window.addEventListener('scroll', handleScroll, { passive: true });
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
 
@@ -48,7 +48,7 @@ export const StickyActionBar = ({
           <ArrowUp className="h-5 w-5" />
         </Button>
       )}
-      
+
       {onCancel && (
         <Button
           onClick={onCancel}
@@ -59,7 +59,7 @@ export const StickyActionBar = ({
           {cancelLabel}
         </Button>
       )}
-      
+
       {onSave && (
         <Button
           onClick={onSave}

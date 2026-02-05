@@ -3,10 +3,12 @@
  * Integration with backend advanced endpoints
  */
 
+import { API_CONFIG } from '@/config/api.config';
 import { getAuth, isCookieAuthMode } from '@/utils/authStorage';
 
-const API_BASE = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000';
-const ADVANCED_BASE = `${API_BASE}/api/v1/advanced`;
+const apiOrigin = API_CONFIG.API_URL?.replace(/\/+$/, '');
+const apiBase = apiOrigin ? `${apiOrigin}/api/v1` : API_CONFIG.BASE_URL;
+const ADVANCED_BASE = `${apiBase}/advanced`;
 
 const readCookie = (name: string): string | null => {
   if (typeof document === 'undefined') return null;
@@ -213,7 +215,7 @@ export const getPriceHistory = async (productId: string, storeId?: string, limit
   const params = new URLSearchParams({ limit: limit.toString() });
   if (storeId) params.append('store_id', storeId);
 
-  const response = await fetch(`${API_BASE}/api/v1/items/${productId}/price-history?${params}`, {
+  const response = await fetch(`${apiBase}/items/${productId}/price-history?${params}`, {
     headers: getAuthHeaders(),
   });
 
@@ -229,7 +231,7 @@ export const getStorePriceHistory = async (
   const params = new URLSearchParams({ limit: limit.toString() });
 
   const response = await fetch(
-    `${API_BASE}/api/v1/items/${productId}/stores/${storeId}/price-history?${params}`,
+    `${apiBase}/items/${productId}/stores/${storeId}/price-history?${params}`,
     {
       headers: getAuthHeaders(),
     }
@@ -253,7 +255,7 @@ export const getActivityLog = async (params?: {
   if (params?.limit) searchParams.append('limit', params.limit.toString());
   if (params?.offset) searchParams.append('offset', params.offset.toString());
 
-  const response = await fetch(`${API_BASE}/api/v1/audit-log?${searchParams}`, {
+  const response = await fetch(`${apiBase}/audit-log?${searchParams}`, {
     headers: getAuthHeaders(),
   });
 
@@ -267,7 +269,7 @@ export const createManualLogEntry = async (data: {
   action: string;
   changes: Record<string, unknown>;
 }) => {
-  const response = await fetch(`${API_BASE}/api/v1/audit-log`, {
+  const response = await fetch(`${apiBase}/audit-log`, {
     method: 'POST',
     headers: getAuthHeaders(),
     body: JSON.stringify(data),
@@ -284,7 +286,7 @@ export const getRelatedProducts = async (
   type?: 'similar' | 'bundle' | 'frequently_bought'
 ) => {
   const params = type ? `?type=${type}` : '';
-  const response = await fetch(`${API_BASE}/api/v1/items/${productId}/related${params}`, {
+  const response = await fetch(`${apiBase}/items/${productId}/related${params}`, {
     headers: getAuthHeaders(),
   });
 
@@ -300,7 +302,7 @@ export const addProductRelation = async (
     strength?: number;
   }
 ) => {
-  const response = await fetch(`${API_BASE}/api/v1/items/${productId}/relations`, {
+  const response = await fetch(`${apiBase}/items/${productId}/relations`, {
     method: 'POST',
     headers: getAuthHeaders(),
     body: JSON.stringify(data),
@@ -311,7 +313,7 @@ export const addProductRelation = async (
 };
 
 export const deleteProductRelation = async (productId: string, relationId: string) => {
-  const response = await fetch(`${API_BASE}/api/v1/items/${productId}/relations/${relationId}`, {
+  const response = await fetch(`${apiBase}/items/${productId}/relations/${relationId}`, {
     method: 'DELETE',
     headers: getAuthHeaders(),
   });

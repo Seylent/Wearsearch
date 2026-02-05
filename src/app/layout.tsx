@@ -38,6 +38,29 @@ export const metadata: Metadata = {
     'online shopping',
   ],
   metadataBase: metadataBaseUrl,
+  openGraph: {
+    title: 'Wearsearch - Discover Exceptional Fashion',
+    description:
+      'Discover and shop the latest fashion trends. Find clothing, footwear, and accessories from top stores with worldwide shipping.',
+    type: 'website',
+    siteName: 'Wearsearch',
+    url: metadataBaseUrl,
+    images: [
+      {
+        url: '/og-image.svg',
+        width: 1200,
+        height: 630,
+        alt: 'Wearsearch',
+      },
+    ],
+  },
+  twitter: {
+    card: 'summary_large_image',
+    title: 'Wearsearch - Discover Exceptional Fashion',
+    description:
+      'Discover and shop the latest fashion trends. Find clothing, footwear, and accessories from top stores with worldwide shipping.',
+    images: ['/og-image.svg'],
+  },
   robots: {
     index: true,
     follow: true,
@@ -52,6 +75,7 @@ export const viewport: Viewport = {
   width: 'device-width',
   initialScale: 1,
   maximumScale: 5,
+  userScalable: true,
 };
 
 export default async function RootLayout({ children }: { readonly children: React.ReactNode }) {
@@ -95,7 +119,7 @@ export default async function RootLayout({ children }: { readonly children: Reac
         ))}
       </head>
       <body
-        className={`relative min-h-screen bg-transparent text-foreground font-sans antialiased overflow-x-hidden selection:bg-foreground/20 ${montserrat.variable}`}
+        className={`relative min-h-screen bg-transparent text-foreground font-sans antialiased selection:bg-foreground/20 ${montserrat.variable}`}
         suppressHydrationWarning
       >
         {gtmId ? (
@@ -112,7 +136,7 @@ export default async function RootLayout({ children }: { readonly children: Reac
         {/* Skip to main content link for accessibility */}
         <a
           href="#main-content"
-          className="sr-only focus:not-sr-only focus:absolute focus:top-4 focus:left-4 focus:z-50 focus:px-4 focus:py-2 focus:bg-white focus:text-black focus:rounded-md focus:outline-none focus:ring-2 focus:ring-white"
+          className="sr-only focus:not-sr-only focus:absolute focus:top-4 focus:left-4 focus:z-50 focus:px-4 focus:py-2 focus:bg-background focus:text-foreground focus:rounded-md focus:outline-none focus:ring-2 focus:ring-foreground"
         >
           Skip to main content
         </a>

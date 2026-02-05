@@ -194,11 +194,15 @@ function logApiError(apiError: ApiError): void {
   // Don't log rate limit errors (handled separately)
   if (apiError.status === 429) return;
 
-  logError('API Error', {
+  // Get a meaningful error message
+  const errorMessage = apiError.message || apiError.getUserMessage() || 'Unknown API error';
+
+  logError(`API Error: ${errorMessage}`, {
     component: 'api',
     action: 'API_ERROR',
     metadata: {
       message: apiError.message,
+      userMessage: apiError.getUserMessage(),
       status: apiError.status,
       code: apiError.code,
       url: apiError.config?.url,
@@ -295,11 +299,12 @@ const PUBLIC_ENDPOINT_PATTERNS: Array<string | RegExp> = [
 ];
 
 const isPublicEndpoint = (url: string): boolean => {
+  const pathOnly = url.split('?')[0];
   return PUBLIC_ENDPOINT_PATTERNS.some(pattern => {
     if (typeof pattern === 'string') {
-      return url.includes(pattern);
+      return pathOnly.includes(pattern);
     }
-    return pattern.test(url);
+    return pattern.test(pathOnly);
   });
 };
 

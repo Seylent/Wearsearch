@@ -275,7 +275,7 @@ export default function HomeContentClient({
 
         <ScrollReveal>
           <section className="py-10 sm:py-14 bg-white text-foreground border-y border-border">
-            <div className="w-full px-6 md:px-12 lg:px-16">
+            <div className="w-full px-4 sm:px-6 md:px-12 lg:px-16">
               <header className="flex items-end justify-between gap-4 mb-6 sm:mb-8">
                 <div className="text-left">
                   <div className="inline-flex items-center gap-2 mb-2">
@@ -341,75 +341,48 @@ export default function HomeContentClient({
         </ScrollReveal>
 
         <ScrollReveal>
-          <section className="py-12 sm:py-16 bg-white text-foreground border-y border-border">
-            <div className="w-full px-6 md:px-12 lg:px-16">
-              <header className="flex items-end justify-between gap-4 mb-6 sm:mb-8">
-                <div className="text-left">
+          <section className="py-10 sm:py-14 bg-white text-foreground border-b border-border">
+            <div className="w-full px-4 sm:px-6 md:px-12 lg:px-16">
+              <header className="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-4 mb-6">
+                <div>
                   <div className="inline-flex items-center gap-2 mb-2">
                     <div
                       className="w-1.5 h-1.5 rounded-full bg-muted-foreground"
                       aria-hidden="true"
                     />
                     <span className="text-xs sm:text-sm text-muted-foreground/80 uppercase tracking-[0.18em]">
-                      {t('home.shopByGender', 'Shop by vibe')}
+                      {t('home.genderLabel', 'Gender edits')}
                     </span>
                   </div>
-                  <h2 className="font-display text-2xl sm:text-3xl md:text-4xl font-bold">
-                    {t('home.genderPicks', 'Find your lane')}
+                  <h2 className="font-display text-2xl sm:text-3xl md:text-4xl font-bold text-foreground">
+                    {t('home.shopByGender', 'Shop by gender')}
                   </h2>
                   <p className="text-sm sm:text-base text-muted-foreground/80 mt-2 font-serif">
-                    {t('home.genderHint', 'Curated edits for every silhouette and mood')}
+                    {t('home.genderHint', 'Curated essentials for every style')}
                   </p>
                 </div>
               </header>
 
-              <div className="flex items-center justify-between text-xs text-muted-foreground mb-3 sm:mb-4">
-                <span>{t('home.scrollHint', 'Swipe to explore')}</span>
-              </div>
-
-              <div className="relative">
-                <div className="pointer-events-none absolute inset-y-0 left-0 w-8 bg-gradient-to-r from-white to-transparent" />
-                <div className="pointer-events-none absolute inset-y-0 right-0 w-8 bg-gradient-to-l from-white to-transparent" />
-
-                <div className="flex gap-6 overflow-x-auto pb-4 -mx-1 px-1 snap-x snap-mandatory">
-                  {[
-                    {
-                      label: t('home.women', 'Women'),
-                      sub: t('home.womenTag', 'Soft power tailoring'),
-                      href: '/products?gender=women',
-                      accent: 'from-fuchsia-500/60 via-fuchsia-400/30 to-transparent',
-                    },
-                    {
-                      label: t('home.men', 'Men'),
-                      sub: t('home.menTag', 'Utility with edge'),
-                      href: '/products?gender=men',
-                      accent: 'from-cyan-500/60 via-sky-400/30 to-transparent',
-                    },
-                    {
-                      label: t('home.unisex', 'Unisex'),
-                      sub: t('home.unisexTag', 'Fluid essentials'),
-                      href: '/products?gender=unisex',
-                      accent: 'from-emerald-500/60 via-lime-400/30 to-transparent',
-                    },
-                  ].map(card => (
-                    <Link
-                      key={card.label}
-                      href={card.href}
-                      className="group relative min-w-[280px] sm:min-w-[360px] min-h-[220px] snap-start rounded-3xl bg-muted p-8 transition"
-                    >
-                      <div className="relative z-10 flex h-full flex-col gap-4">
-                        <div className="text-2xl sm:text-3xl font-serif text-foreground">
-                          {card.label}
-                        </div>
-                        <div className="text-sm text-muted-foreground font-serif">{card.sub}</div>
-                        <div className="mt-auto inline-flex items-center gap-2 text-sm text-foreground">
-                          {t('home.browse', 'Browse')}
-                          <ArrowUpRight className="h-4 w-4" />
-                        </div>
-                      </div>
-                    </Link>
-                  ))}
-                </div>
+              <div className="grid gap-4 sm:grid-cols-3">
+                {[
+                  { slug: 'men', label: t('home.genderMen', 'Men') },
+                  { slug: 'women', label: t('home.genderWomen', 'Women') },
+                  { slug: 'unisex', label: t('home.genderUnisex', 'Unisex') },
+                ].map(item => (
+                  <Link
+                    key={item.slug}
+                    href={`/gender/${item.slug}`}
+                    className="group rounded-3xl border border-foreground/10 p-6 sm:p-8 bg-muted/60 hover:bg-muted transition"
+                  >
+                    <div className="text-lg sm:text-xl font-semibold text-foreground">
+                      {item.label}
+                    </div>
+                    <div className="mt-2 text-sm text-muted-foreground inline-flex items-center gap-2">
+                      {t('home.browse', 'Browse')}
+                      <ArrowUpRight className="h-4 w-4" />
+                    </div>
+                  </Link>
+                ))}
               </div>
             </div>
           </section>
@@ -420,7 +393,7 @@ export default function HomeContentClient({
             id="categories-section"
             className="py-10 sm:py-16 bg-white text-foreground border-b border-border"
           >
-            <div className="w-full px-6 md:px-12 lg:px-16">
+            <div className="w-full px-4 sm:px-6 md:px-12 lg:px-16">
               <header className="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-4 mb-6">
                 <div>
                   <div className="inline-flex items-center gap-2 mb-2">
@@ -449,15 +422,15 @@ export default function HomeContentClient({
               </header>
 
               <div className="relative">
-                <div className="pointer-events-none absolute inset-y-0 left-0 w-8 bg-gradient-to-r from-white to-transparent" />
-                <div className="pointer-events-none absolute inset-y-0 right-0 w-8 bg-gradient-to-l from-white to-transparent" />
+                <div className="pointer-events-none absolute inset-y-0 left-0 w-8 bg-gradient-to-r from-background to-transparent" />
+                <div className="pointer-events-none absolute inset-y-0 right-0 w-8 bg-gradient-to-l from-background to-transparent" />
 
-                <div className="flex gap-6 overflow-x-auto pb-4 -mx-1 px-1 snap-x snap-mandatory">
+                <div className="flex gap-4 sm:gap-6 mobile-x-scroll pb-4 -mx-1 px-1 md:flex-wrap md:pb-0 md:mx-0 md:px-0">
                   {categoryCards.map(category => (
                     <Link
                       key={category.id}
                       href={`/products?type=${encodeURIComponent(category.slug)}`}
-                      className="group relative min-w-[260px] sm:min-w-[340px] min-h-[180px] snap-start rounded-3xl bg-muted p-8 transition"
+                      className="group relative min-w-[220px] sm:min-w-[340px] min-h-[160px] sm:min-h-[180px] rounded-3xl bg-muted p-6 sm:p-8 transition md:min-w-0"
                     >
                       <div className="absolute right-6 top-6 text-xs text-muted-foreground opacity-0 transition group-hover:opacity-100">
                         {t('home.open', 'Open')}
@@ -474,8 +447,8 @@ export default function HomeContentClient({
         </ScrollReveal>
 
         <ScrollReveal>
-          <section className="py-24 md:py-32 bg-white border-b border-border">
-            <div className="w-full px-6 md:px-12 lg:px-16">
+          <section className="py-14 sm:py-20 md:py-32 bg-white border-b border-border">
+            <div className="w-full px-4 sm:px-6 md:px-12 lg:px-16">
               <header className="flex flex-col sm:flex-row items-start sm:items-end sm:justify-between gap-4 sm:gap-6 mb-10 md:mb-14 text-left">
                 <div>
                   <div className="inline-flex items-center gap-2 mb-3">
@@ -484,10 +457,10 @@ export default function HomeContentClient({
                       {t('home.topSavedLabel', 'Top saved')}
                     </span>
                   </div>
-                  <h2 className="font-serif text-4xl md:text-5xl lg:text-6xl text-earth">
+                  <h2 className="font-serif text-2xl sm:text-4xl md:text-5xl lg:text-6xl text-earth">
                     {t('home.topSavedTitle', 'Most saved right now')}
                   </h2>
-                  <p className="text-sm md:text-base text-warm-gray mt-3 max-w-xl">
+                  <p className="text-sm sm:text-base text-warm-gray mt-3 max-w-xl">
                     {t('home.topSavedHint', 'The top 5 picks loved by the community')}
                   </p>
                 </div>
@@ -503,15 +476,15 @@ export default function HomeContentClient({
 
             {shouldAnimate ? (
               <motion.div
-                className="w-full px-6 md:px-12 lg:px-16"
+                className="w-full px-4 sm:px-6 md:px-12 lg:px-16"
                 variants={gridVariants}
                 initial="hidden"
                 whileInView="show"
                 viewport={{ once: true, margin: '-100px' }}
               >
-                <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-x-6 gap-y-10 md:gap-y-14">
+                <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-x-4 sm:gap-x-6 gap-y-8 sm:gap-y-10 md:gap-y-14">
                   {popularProducts.length > 0 ? (
-                    popularProducts.slice(0, 5).map(product => (
+                    popularProducts.slice(0, 5).map((product, index) => (
                       <motion.div
                         key={product.id}
                         variants={itemVariants}
@@ -530,6 +503,7 @@ export default function HomeContentClient({
                               ? product.currency
                               : popularCurrency
                           }
+                          priority={index < 2}
                         />
                       </motion.div>
                     ))
@@ -541,10 +515,10 @@ export default function HomeContentClient({
                 </div>
               </motion.div>
             ) : (
-              <div className="w-full px-6 md:px-12 lg:px-16">
-                <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-x-6 gap-y-10 md:gap-y-14">
+              <div className="w-full px-4 sm:px-6 md:px-12 lg:px-16">
+                <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-x-4 sm:gap-x-6 gap-y-8 sm:gap-y-10 md:gap-y-14">
                   {popularProducts.length > 0 ? (
-                    popularProducts.slice(0, 5).map(product => (
+                    popularProducts.slice(0, 5).map((product, index) => (
                       <div
                         key={product.id}
                         className="transition-transform duration-300 hover:-translate-y-1"
@@ -562,6 +536,7 @@ export default function HomeContentClient({
                               ? product.currency
                               : popularCurrency
                           }
+                          priority={index < 2}
                         />
                       </div>
                     ))
@@ -578,8 +553,8 @@ export default function HomeContentClient({
 
         {/* New Arrivals Section */}
         <ScrollReveal>
-          <section id="products-section" className="py-24 md:py-32 bg-white">
-            <div className="w-full px-6 md:px-12 lg:px-16">
+          <section id="products-section" className="py-14 sm:py-20 md:py-32 bg-white">
+            <div className="w-full px-4 sm:px-6 md:px-12 lg:px-16">
               <header className="flex flex-col sm:flex-row items-start sm:items-end sm:justify-between gap-4 sm:gap-6 mb-10 md:mb-14 text-left">
                 <div>
                   <div className="inline-flex items-center gap-2 mb-3">
@@ -588,10 +563,10 @@ export default function HomeContentClient({
                       {t('home.justIn', 'Just In')}
                     </span>
                   </div>
-                  <h2 className="font-serif text-4xl md:text-5xl lg:text-6xl text-earth">
+                  <h2 className="font-serif text-2xl sm:text-4xl md:text-5xl lg:text-6xl text-earth">
                     {t('home.newArrivals', 'New Arrivals')}
                   </h2>
-                  <p className="text-sm md:text-base text-warm-gray mt-3 max-w-xl">
+                  <p className="text-sm sm:text-base text-warm-gray mt-3 max-w-xl">
                     {t('home.freshPieces', 'Fresh pieces from the latest collections')}
                   </p>
                 </div>
@@ -606,7 +581,7 @@ export default function HomeContentClient({
 
             {shouldAnimate ? (
               <motion.div
-                className="w-full px-6 md:px-12 lg:px-16"
+                className="w-full px-4 sm:px-6 md:px-12 lg:px-16"
                 variants={gridVariants}
                 initial="hidden"
                 whileInView="show"
@@ -614,7 +589,7 @@ export default function HomeContentClient({
               >
                 <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-x-6 gap-y-12 md:gap-y-16">
                   {hasProducts ? (
-                    products.slice(0, 12).map(product => (
+                    products.slice(0, 12).map((product, index) => (
                       <motion.div
                         key={product.id}
                         variants={itemVariants}
@@ -633,6 +608,7 @@ export default function HomeContentClient({
                               ? product.currency
                               : productsCurrency
                           }
+                          priority={index < 2}
                         />
                       </motion.div>
                     ))
@@ -669,7 +645,7 @@ export default function HomeContentClient({
                           <div className="text-earth mb-2">
                             {t('home.noProductsExpected', 'Очікується:')}
                           </div>
-                          <div>NEXT_PUBLIC_API_URL=http://localhost:3000</div>
+                          <div>NEXT_PUBLIC_API_URL=https://api.yourdomain.com</div>
                           <div className="mt-3 text-earth mb-2">
                             {t('home.noProductsBackend', 'Або запустіть backend:')}
                           </div>
@@ -681,10 +657,10 @@ export default function HomeContentClient({
                 </div>
               </motion.div>
             ) : (
-              <div className="w-full px-6 md:px-12 lg:px-16">
+              <div className="w-full px-4 sm:px-6 md:px-12 lg:px-16">
                 <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-x-6 gap-y-12 md:gap-y-16">
                   {hasProducts ? (
-                    products.slice(0, 12).map(product => (
+                    products.slice(0, 12).map((product, index) => (
                       <div
                         key={product.id}
                         className="transition-transform duration-300 hover:-translate-y-1"
@@ -702,6 +678,7 @@ export default function HomeContentClient({
                               ? product.currency
                               : productsCurrency
                           }
+                          priority={index < 2}
                         />
                       </div>
                     ))
@@ -738,7 +715,7 @@ export default function HomeContentClient({
                           <div className="text-earth mb-2">
                             {t('home.noProductsExpected', 'Очікується:')}
                           </div>
-                          <div>NEXT_PUBLIC_API_URL=http://localhost:3000</div>
+                          <div>NEXT_PUBLIC_API_URL=https://api.yourdomain.com</div>
                           <div className="mt-3 text-earth mb-2">
                             {t('home.noProductsBackend', 'Або запустіть backend:')}
                           </div>
@@ -751,7 +728,7 @@ export default function HomeContentClient({
               </div>
             )}
 
-            <div className="max-w-[1800px] mx-auto px-6 md:px-12 lg:px-16">
+            <div className="max-w-[1800px] mx-auto px-4 sm:px-6 md:px-12 lg:px-16">
               <ViewAllButton label={t('home.viewAllProducts', 'View All Products')} />
             </div>
           </section>
@@ -760,7 +737,7 @@ export default function HomeContentClient({
         {/* Recently Viewed Section */}
         <ScrollReveal>
           <section className="py-8 sm:py-12 bg-white border-t border-border">
-            <div className="w-full px-6 md:px-12 lg:px-16">
+            <div className="w-full px-4 sm:px-6 md:px-12 lg:px-16">
               <RecentlyViewedProducts maxItems={8} showClearButton={true} />
             </div>
           </section>

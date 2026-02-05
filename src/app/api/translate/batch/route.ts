@@ -9,7 +9,16 @@ export const dynamic = 'force-dynamic';
 
 export async function POST(request: NextRequest): Promise<NextResponse> {
   try {
-    const backendUrl = process.env.NEXT_PUBLIC_API_URL || process.env.BACKEND_URL || 'http://localhost:3000';
+    const backendUrl = process.env.BACKEND_URL || process.env.NEXT_PUBLIC_API_URL;
+    if (!backendUrl) {
+      return NextResponse.json(
+        {
+          success: false,
+          message: 'Backend URL is not configured',
+        },
+        { status: 500 }
+      );
+    }
     const authHeader = request.headers.get('authorization');
     const body = await request.text();
 

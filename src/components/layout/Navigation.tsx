@@ -16,6 +16,7 @@ const SearchDropdown = dynamic(
 );
 import { LanguageSelector } from '@/components/LanguageSelector';
 import { CurrencySwitch } from '@/components/common/CurrencySwitch';
+import { ThemeToggle } from '@/components/common/ThemeToggle';
 import { useAuth } from '@/features/auth/hooks/useAuth';
 import { useNavigationState } from '@/features/auth/hooks/useNavigationState';
 import { Search, User as UserIcon, Menu, X, ChevronDown } from 'lucide-react';
@@ -23,6 +24,8 @@ import { AnimatePresence, motion, useReducedMotion } from 'framer-motion';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { categoryService, type Category } from '@/services/categoryService';
 import { useIsTouchDevice } from '@/hooks/use-touch-device';
+import { useIsMobile } from '@/hooks/use-mobile';
+import { COLLECTION_SLUGS, getCollectionConfig } from '@/constants/collections';
 
 const isRecord = (value: unknown): value is Record<string, unknown> =>
   typeof value === 'object' && value !== null;
@@ -99,10 +102,13 @@ const Navigation: React.FC = () => {
           );
         }
       })
-      .catch(() => {
+      .catch(error => {
         if (!isActive) return;
-        setCategoryTree([]);
-        setFlatCategories([]);
+        console.warn('Failed to load categories:', error);
+        // Use fallback categories when API fails - they now include subcategories
+        const fallback = categoryService.getFallbackCategories();
+        setCategoryTree(fallback);
+        setFlatCategories(fallback);
       });
 
     return () => {
@@ -127,6 +133,7 @@ const Navigation: React.FC = () => {
   // Use navigation state hook
   const nav = useNavigationState();
   const { mobileMenuOpen, closeAll } = nav;
+  const isMobile = useIsMobile();
 
   useEffect(() => {
     if (!mobileMenuOpen) {
@@ -138,6 +145,12 @@ const Navigation: React.FC = () => {
   useEffect(() => {
     closeAll();
   }, [pathname, closeAll]);
+
+  useEffect(() => {
+    if (!isMobile && mobileMenuOpen) {
+      nav.closeMobileMenu();
+    }
+  }, [isMobile, mobileMenuOpen, nav]);
 
   const handleLogoClick = () => {
     if (pathname === '/') {
@@ -214,6 +227,17 @@ const Navigation: React.FC = () => {
     return columns;
   }, [categoryTree, flatCategories, t]);
 
+  const collectionLinks = useMemo(() => {
+    const locale = i18n.language === 'en' ? 'en' : 'uk';
+    return COLLECTION_SLUGS.map(slug => {
+      const config = getCollectionConfig(slug);
+      return {
+        label: config?.title[locale] ?? config?.title.en ?? slug,
+        href: `/collections/${slug}`,
+      };
+    });
+  }, [i18n.language]);
+
   const mobileCategoryNodes = useMemo(() => {
     return categoryTree.length > 0 ? categoryTree : flatCategories;
   }, [categoryTree, flatCategories]);
@@ -275,7 +299,17 @@ const Navigation: React.FC = () => {
   > = categoryColumns.length
     ? {
         '/products': {
-          columns: categoryColumns,
+          columns: [
+            ...categoryColumns.slice(0, 3),
+            ...(collectionLinks.length
+              ? [
+                  {
+                    title: t('mega.collections', 'Collections'),
+                    links: collectionLinks,
+                  },
+                ]
+              : []),
+          ],
           imageTitle: t('mega.featureTitle', 'Curated picks'),
           imageCopy: t(
             'mega.featureCopy',
@@ -329,12 +363,14 @@ const Navigation: React.FC = () => {
 
   return (
     <header
-      className={`fixed left-0 right-0 top-0 z-50 pointer-events-auto transition-[background-color,box-shadow] duration-500 ${
-        isScrolled ? 'bg-white/95 shadow-sm' : 'bg-transparent'
+      className={`fixed left-0 right-0 top-0 z-[80] pointer-events-auto transition-[background-color,box-shadow] duration-300 ${
+        isScrolled
+          ? 'bg-background/95 shadow-sm backdrop-blur border-b border-border/60'
+          : 'bg-background/95 md:bg-transparent'
       }`}
     >
       <nav
-        className="flex items-center justify-between gap-0 max-w-[1800px] w-full mx-auto px-6 md:px-12 lg:px-16 py-4"
+        className="flex items-center justify-between gap-0 max-w-[1800px] w-full mx-auto px-4 sm:px-6 md:px-12 lg:px-16 py-3 sm:py-4 min-h-[60px] sm:min-h-0"
         role="navigation"
         aria-label={t('aria.mainNavigation')}
         suppressHydrationWarning
@@ -356,7 +392,7 @@ const Navigation: React.FC = () => {
             className="h-7 w-7 sm:h-9 sm:w-9 object-contain"
             priority
           />
-          <span className="font-logo flex items-center leading-none text-earth text-[13px] sm:text-lg md:text-xl uppercase tracking-[0.04em] sm:tracking-[0.05em] whitespace-nowrap">
+          <span className="flex font-logo items-center leading-none text-foreground text-xs sm:text-lg md:text-xl uppercase tracking-[0.06em] sm:tracking-[0.05em] whitespace-nowrap">
             Wearsearch
           </span>
         </button>
@@ -416,7 +452,7 @@ const Navigation: React.FC = () => {
         </div>
 
         {/* Right Section - Search, Language, Menu & Profile */}
-        <div className="flex items-center gap-2 sm:gap-3 px-2 sm:px-3 py-2">
+        <div className="flex items-center gap-1 sm:gap-3 px-1.5 sm:px-3 py-2">
           {/* Mobile Menu Button */}
           <button
             className="md:hidden min-w-[40px] min-h-[40px] w-10 h-10 rounded-full flex items-center justify-center border border-earth/20 text-earth hover:border-earth/40 active:scale-95 transition-all duration-150 touch-manipulation"
@@ -434,6 +470,8 @@ const Navigation: React.FC = () => {
           >
             <Search className="w-5 h-5" />
           </button>
+
+          <ThemeToggle className="flex" />
 
           <div className="hidden sm:block">
             <LanguageSelector />
@@ -488,7 +526,7 @@ const Navigation: React.FC = () => {
         <AnimatePresence>
           {activeMegaMenu && (
             <motion.div
-              className="hidden md:block absolute top-full left-0 right-0 bg-white border-t border-border overflow-hidden"
+              className="hidden md:block absolute top-full left-0 right-0 bg-background/95 border-t border-border overflow-hidden"
               variants={megaVariants}
               initial="hidden"
               animate="show"
@@ -527,7 +565,7 @@ const Navigation: React.FC = () => {
                     animate={{ opacity: 1, scale: 1 }}
                     className="relative rounded-3xl bg-muted overflow-hidden flex flex-col justify-end p-6"
                   >
-                    <div className="absolute inset-0 bg-gradient-to-br from-white via-muted to-border opacity-90" />
+                    <div className="absolute inset-0 bg-gradient-to-br from-background via-muted to-border opacity-90" />
                     <div className="relative z-10">
                       <div className="text-xs uppercase tracking-[0.2em] text-warm-gray mb-2">
                         {activeMegaMenu.imageTitle}
@@ -545,7 +583,7 @@ const Navigation: React.FC = () => {
         </AnimatePresence>
       ) : activeMegaMenu ? (
         <div
-          className="hidden md:block absolute top-full left-0 right-0 bg-white border-t border-border overflow-hidden"
+          className="hidden md:block absolute top-full left-0 right-0 bg-background/95 border-t border-border overflow-hidden"
           onMouseEnter={cancelMegaClose}
           onMouseLeave={scheduleMegaClose}
         >
@@ -572,7 +610,7 @@ const Navigation: React.FC = () => {
                 </div>
               ))}
               <div className="relative rounded-3xl bg-muted overflow-hidden flex flex-col justify-end p-6">
-                <div className="absolute inset-0 bg-gradient-to-br from-white via-muted to-border opacity-90" />
+                <div className="absolute inset-0 bg-gradient-to-br from-background via-muted to-border opacity-90" />
                 <div className="relative z-10">
                   <div className="text-xs uppercase tracking-[0.2em] text-warm-gray mb-2">
                     {activeMegaMenu.imageTitle}
@@ -588,7 +626,7 @@ const Navigation: React.FC = () => {
         </div>
       ) : null}
 
-      {shouldAnimate ? (
+      {shouldAnimate && isMobile ? (
         <AnimatePresence>
           {nav.mobileMenuOpen && (
             <>
@@ -602,7 +640,7 @@ const Navigation: React.FC = () => {
                 transition={reduceMotion ? { duration: 0 } : { duration: 0.3 }}
               />
               <motion.div
-                className="md:hidden fixed inset-y-0 left-0 w-[82vw] max-w-[360px] bg-sand/95 text-earth rounded-r-3xl border-r border-earth/10 shadow-[18px_0_40px_rgba(0,0,0,0.16)] backdrop-blur-xl overflow-hidden z-50 flex flex-col"
+                className="md:hidden fixed top-0 left-0 h-[100dvh] w-[82vw] max-w-[360px] bg-sand/95 text-earth rounded-r-3xl border-r border-earth/10 shadow-[18px_0_40px_rgba(0,0,0,0.16)] backdrop-blur-xl overflow-hidden z-50 flex flex-col"
                 role="menu"
                 aria-label={t('aria.mainNavigation')}
                 initial={reduceMotion ? { opacity: 1, x: 0 } : { opacity: 0, x: -40 }}
@@ -612,7 +650,7 @@ const Navigation: React.FC = () => {
                   reduceMotion ? { duration: 0 } : { duration: 0.4, ease: [0.22, 1, 0.36, 1] }
                 }
               >
-                <div className="flex items-center justify-between px-6 pt-6 pb-3">
+                <div className="sticky top-0 z-10 flex items-center justify-between px-6 pt-6 pb-3 bg-sand/95 backdrop-blur border-b border-earth/10">
                   <div className="text-xs uppercase tracking-[0.2em] text-warm-gray">
                     {t('nav.menu', 'Menu')}
                   </div>
@@ -641,12 +679,18 @@ const Navigation: React.FC = () => {
                 )}
 
                 <div className="flex-1 flex flex-col gap-3 overflow-y-auto px-4 pb-6">
+                  <div className="flex items-center gap-2 px-2">
+                    <ThemeToggle />
+                    <span className="text-xs uppercase tracking-[0.2em] text-warm-gray">
+                      {t('common.theme', 'Theme')}
+                    </span>
+                  </div>
                   {navLinks.map(link => {
                     if (link.href === '/products') {
                       return (
                         <div
                           key={link.name}
-                          className="rounded-2xl border border-earth/10 bg-white/70"
+                          className="rounded-2xl border border-earth/10 bg-card/70"
                         >
                           <button
                             type="button"
@@ -676,8 +720,8 @@ const Navigation: React.FC = () => {
                         onClick={nav.closeMobileMenu}
                         className={`px-5 py-3.5 min-h-[52px] text-sm uppercase tracking-[0.2em] transition-all duration-150 touch-manipulation active:scale-[0.98] flex items-center gap-3 rounded-full border ${
                           pathname === link.href
-                            ? 'text-earth border-earth/40 bg-white'
-                            : 'text-warm-gray border-earth/10 bg-white/70 active:text-earth active:border-earth/30'
+                            ? 'text-earth border-earth/40 bg-card'
+                            : 'text-warm-gray border-earth/10 bg-card/70 active:text-earth active:border-earth/30'
                         }`}
                       >
                         {link.name}
@@ -686,7 +730,7 @@ const Navigation: React.FC = () => {
                   })}
 
                   <button
-                    className="px-5 py-3.5 min-h-[52px] text-sm uppercase tracking-[0.2em] transition-all duration-150 text-warm-gray active:text-earth text-left rounded-full border border-earth/10 bg-white/70 flex items-center gap-3"
+                    className="px-5 py-3.5 min-h-[52px] text-sm uppercase tracking-[0.2em] transition-all duration-150 text-warm-gray active:text-earth text-left rounded-full border border-earth/10 bg-card/70 flex items-center gap-3"
                     onClick={() => {
                       nav.closeMobileMenu();
                       document
@@ -703,8 +747,8 @@ const Navigation: React.FC = () => {
                       onClick={nav.closeMobileMenu}
                       className={`px-5 py-3.5 min-h-[52px] text-sm uppercase tracking-[0.2em] transition-all duration-150 flex items-center gap-3 rounded-full border ${
                         pathname === '/store-menu' || pathname.startsWith('/store-menu/')
-                          ? 'text-earth border-earth/40 bg-white'
-                          : 'text-warm-gray border-earth/10 bg-white/70 active:text-earth active:border-earth/30'
+                          ? 'text-earth border-earth/40 bg-card'
+                          : 'text-warm-gray border-earth/10 bg-card/70 active:text-earth active:border-earth/30'
                       }`}
                     >
                       {t('nav.storeMenu', 'Мій магазин')}
@@ -717,8 +761,8 @@ const Navigation: React.FC = () => {
                       onClick={nav.closeMobileMenu}
                       className={`px-5 py-3.5 min-h-[52px] text-sm uppercase tracking-[0.2em] transition-all duration-150 flex items-center gap-3 rounded-full border ${
                         pathname === '/admin'
-                          ? 'text-earth border-earth/40 bg-white'
-                          : 'text-warm-gray border-earth/10 bg-white/70 active:text-earth active:border-earth/30'
+                          ? 'text-earth border-earth/40 bg-card'
+                          : 'text-warm-gray border-earth/10 bg-card/70 active:text-earth active:border-earth/30'
                       }`}
                     >
                       {t('nav.admin')}
@@ -727,7 +771,7 @@ const Navigation: React.FC = () => {
 
                   {isMounted && user && (
                     <button
-                      className="px-5 py-3.5 min-h-[52px] text-sm uppercase tracking-[0.2em] transition-all duration-150 text-destructive text-left rounded-full border border-destructive/30 bg-white/70 flex items-center gap-3"
+                      className="px-5 py-3.5 min-h-[52px] text-sm uppercase tracking-[0.2em] transition-all duration-150 text-destructive text-left rounded-full border border-destructive/30 bg-card/70 flex items-center gap-3"
                       onClick={() => {
                         nav.closeMobileMenu();
                         router.push('/auth');
@@ -741,7 +785,7 @@ const Navigation: React.FC = () => {
             </>
           )}
         </AnimatePresence>
-      ) : nav.mobileMenuOpen ? (
+      ) : nav.mobileMenuOpen && isMobile ? (
         <>
           <div
             className="md:hidden fixed inset-0 bg-black/20 z-40"
@@ -749,7 +793,7 @@ const Navigation: React.FC = () => {
             aria-hidden="true"
           />
           <div
-            className="md:hidden fixed inset-y-0 left-0 w-[82vw] max-w-[360px] bg-sand/95 text-earth rounded-r-3xl border-r border-earth/10 shadow-[18px_0_40px_rgba(0,0,0,0.16)] backdrop-blur-xl overflow-hidden z-50 flex flex-col"
+            className="md:hidden fixed top-0 left-0 h-[100dvh] w-[82vw] max-w-[360px] bg-sand/95 text-earth rounded-r-3xl border-r border-earth/10 shadow-[18px_0_40px_rgba(0,0,0,0.16)] backdrop-blur-xl overflow-hidden z-50 flex flex-col"
             role="menu"
             aria-label={t('aria.mainNavigation')}
           >
@@ -783,7 +827,7 @@ const Navigation: React.FC = () => {
               {navLinks.map(link => {
                 if (link.href === '/products') {
                   return (
-                    <div key={link.name} className="rounded-2xl border border-earth/10 bg-white/70">
+                    <div key={link.name} className="rounded-2xl border border-earth/10 bg-card/70">
                       <button
                         type="button"
                         onClick={() => setMobileCategoriesOpen(prev => !prev)}
@@ -812,8 +856,8 @@ const Navigation: React.FC = () => {
                     onClick={nav.closeMobileMenu}
                     className={`px-5 py-3.5 min-h-[52px] text-sm uppercase tracking-[0.2em] transition-all duration-150 touch-manipulation active:scale-[0.98] flex items-center gap-3 rounded-full border ${
                       pathname === link.href
-                        ? 'text-earth border-earth/40 bg-white'
-                        : 'text-warm-gray border-earth/10 bg-white/70 active:text-earth active:border-earth/30'
+                        ? 'text-earth border-earth/40 bg-card'
+                        : 'text-warm-gray border-earth/10 bg-card/70 active:text-earth active:border-earth/30'
                     }`}
                   >
                     {link.name}
@@ -822,7 +866,7 @@ const Navigation: React.FC = () => {
               })}
 
               <button
-                className="px-5 py-3.5 min-h-[52px] text-sm uppercase tracking-[0.2em] transition-all duration-150 text-warm-gray active:text-earth text-left rounded-full border border-earth/10 bg-white/70 flex items-center gap-3"
+                className="px-5 py-3.5 min-h-[52px] text-sm uppercase tracking-[0.2em] transition-all duration-150 text-warm-gray active:text-earth text-left rounded-full border border-earth/10 bg-card/70 flex items-center gap-3"
                 onClick={() => {
                   nav.closeMobileMenu();
                   document
@@ -839,8 +883,8 @@ const Navigation: React.FC = () => {
                   onClick={nav.closeMobileMenu}
                   className={`px-5 py-3.5 min-h-[52px] text-sm uppercase tracking-[0.2em] transition-all duration-150 flex items-center gap-3 rounded-full border ${
                     pathname === '/store-menu' || pathname.startsWith('/store-menu/')
-                      ? 'text-earth border-earth/40 bg-white'
-                      : 'text-warm-gray border-earth/10 bg-white/70 active:text-earth active:border-earth/30'
+                      ? 'text-earth border-earth/40 bg-card'
+                      : 'text-warm-gray border-earth/10 bg-card/70 active:text-earth active:border-earth/30'
                   }`}
                 >
                   {t('nav.storeMenu', 'Мій магазин')}
@@ -853,8 +897,8 @@ const Navigation: React.FC = () => {
                   onClick={nav.closeMobileMenu}
                   className={`px-5 py-3.5 min-h-[52px] text-sm uppercase tracking-[0.2em] transition-all duration-150 flex items-center gap-3 rounded-full border ${
                     pathname === '/admin'
-                      ? 'text-earth border-earth/40 bg-white'
-                      : 'text-warm-gray border-earth/10 bg-white/70 active:text-earth active:border-earth/30'
+                      ? 'text-earth border-earth/40 bg-card'
+                      : 'text-warm-gray border-earth/10 bg-card/70 active:text-earth active:border-earth/30'
                   }`}
                 >
                   {t('nav.admin')}
@@ -863,7 +907,7 @@ const Navigation: React.FC = () => {
 
               {isMounted && user && (
                 <button
-                  className="px-5 py-3.5 min-h-[52px] text-sm uppercase tracking-[0.2em] transition-all duration-150 text-destructive text-left rounded-full border border-destructive/30 bg-white/70 flex items-center gap-3"
+                  className="px-5 py-3.5 min-h-[52px] text-sm uppercase tracking-[0.2em] transition-all duration-150 text-destructive text-left rounded-full border border-destructive/30 bg-card/70 flex items-center gap-3"
                   onClick={() => {
                     nav.closeMobileMenu();
                     router.push('/auth');

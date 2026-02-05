@@ -197,10 +197,14 @@ export const StoreManagement = ({
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div className="flex flex-col sm:flex-row gap-4 justify-between">
+      <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 justify-between">
         <div>
-          <h2 className="font-display text-2xl font-bold mb-2">{t('admin.storeManagement')}</h2>
-          <p className="text-muted-foreground">{t('admin.manageStoresDescription')}</p>
+          <h2 className="font-display text-xl sm:text-2xl font-bold mb-2">
+            {t('admin.storeManagement')}
+          </h2>
+          <p className="text-muted-foreground text-sm sm:text-base">
+            {t('admin.manageStoresDescription')}
+          </p>
         </div>
 
         <Dialog
@@ -212,13 +216,13 @@ export const StoreManagement = ({
           modal={false}
         >
           <DialogTrigger asChild>
-            <Button variant="pill" size="pill">
+            <Button variant="pill" size="pill" className="w-full sm:w-auto">
               <Plus className="w-4 h-4 mr-2" />
               {t('admin.addStore')}
             </Button>
           </DialogTrigger>
 
-          <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+          <DialogContent className="w-[calc(100vw-1.5rem)] sm:max-w-2xl max-h-[85svh] sm:max-h-[90vh] overflow-y-auto">
             <DialogHeader>
               <DialogTitle>{editingStore ? t('admin.editStore') : t('admin.addStore')}</DialogTitle>
               <DialogDescription>

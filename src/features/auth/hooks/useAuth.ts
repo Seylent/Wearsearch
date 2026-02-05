@@ -7,7 +7,7 @@ import { useCallback, useEffect, useState } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { authService } from '@/services/authService';
 import { clearAuth, getAuth, isCookieAuthMode, setCookieSessionActive } from '@/utils/authStorage';
-import { logAuthError, logError, logInfo, logWarn } from '@/services/logger';
+import { logAuthError, logInfo, logWarn } from '@/services/logger';
 import type { User } from '@/types';
 import { deriveAuthPermissions } from '@/features/auth/permissions';
 
@@ -30,8 +30,18 @@ const getErrorStatus = (error: unknown): number | undefined => {
 const asError = (error: unknown): Error => {
   if (error instanceof Error) return error;
   if (typeof error === 'string') return new Error(error);
-  if (error && typeof error === 'object') return new Error(JSON.stringify(error));
-  return new Error(error instanceof Error ? error.message : JSON.stringify(error));
+  if (error && typeof error === 'object') {
+    // Try to extract message from error-like objects
+    const errorObj = error as Record<string, unknown>;
+    const message =
+      typeof errorObj.message === 'string'
+        ? errorObj.message
+        : typeof errorObj.error === 'string'
+          ? errorObj.error
+          : 'Unknown error';
+    return new Error(message);
+  }
+  return new Error('Unknown error');
 };
 
 export const useAuth = () => {
@@ -86,11 +96,6 @@ export const useAuth = () => {
           });
           return null;
         }
-        logError('Auth check failed', {
-          component: 'useAuth',
-          action: 'CHECK_AUTH',
-          metadata: { error },
-        });
         logAuthError(asError(error), 'CHECK_AUTH');
         return null;
       }

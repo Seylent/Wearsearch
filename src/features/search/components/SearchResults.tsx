@@ -57,10 +57,10 @@ export const SearchResults: React.FC<SearchResultsProps> = React.memo(
     if (isLoading && query.length >= 2) {
       return (
         <div className="pb-6">
-          <div className="grid grid-cols-2 lg:grid-cols-3 gap-4">
+          <div className="grid grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4">
             {skeletonRows.map(i => (
-              <div key={i} className="p-3 border border-border rounded-2xl">
-                <Skeleton className="h-28 w-full rounded-xl bg-muted" />
+              <div key={i} className="p-2 sm:p-3 border border-border rounded-2xl">
+                <Skeleton className="h-24 sm:h-28 w-full rounded-xl bg-muted" />
                 <div className="mt-3 space-y-2">
                   <Skeleton className="h-3 w-3/4 bg-muted" />
                   <Skeleton className="h-3 w-1/2 bg-muted" />
@@ -77,7 +77,7 @@ export const SearchResults: React.FC<SearchResultsProps> = React.memo(
 
     if (showNoResults) {
       return (
-        <div className="p-6 text-center">
+        <div className="p-4 sm:p-6 text-center">
           <div className="w-14 h-14 mx-auto mb-4 rounded-full bg-muted flex items-center justify-center">
             <Search className="w-6 h-6 text-muted-foreground" />
           </div>
@@ -99,13 +99,13 @@ export const SearchResults: React.FC<SearchResultsProps> = React.memo(
       <>
         {productResults.length > 0 && (
           <div className="mb-6">
-            <div className="flex items-center gap-2 mb-4">
-              <span className="text-xs uppercase tracking-[0.3em] text-muted-foreground">
+            <div className="flex items-center gap-2 mb-3 sm:mb-4">
+              <span className="text-xs uppercase tracking-[0.2em] sm:tracking-[0.3em] text-muted-foreground">
                 {t('search.suggestedProducts', 'Suggested products')}
               </span>
             </div>
             <motion.div
-              className="grid grid-cols-2 lg:grid-cols-3 gap-4"
+              className="grid grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4"
               variants={listVariants}
               initial="hidden"
               animate="show"
@@ -114,10 +114,10 @@ export const SearchResults: React.FC<SearchResultsProps> = React.memo(
                 <motion.button
                   key={`product-${result.id}`}
                   onClick={() => onResultClick({ id: result.id, type: result.type })}
-                  className="group text-left rounded-2xl border border-border bg-white hover:bg-muted/40 transition-colors p-3"
+                  className="group text-left rounded-2xl border border-border bg-white hover:bg-muted/40 transition-colors p-2.5 sm:p-3"
                   variants={itemVariants}
                 >
-                  <div className="relative w-full h-28 rounded-xl overflow-hidden bg-muted">
+                  <div className="relative w-full h-24 sm:h-28 rounded-xl overflow-hidden bg-muted">
                     {result.image ? (
                       <Image
                         src={convertS3UrlToHttps(result.image)}
@@ -134,8 +134,10 @@ export const SearchResults: React.FC<SearchResultsProps> = React.memo(
                     )}
                   </div>
                   <div className="mt-3">
-                    <p className="text-sm font-medium text-foreground truncate">{result.name}</p>
-                    <div className="mt-1 flex items-center justify-between text-xs text-muted-foreground">
+                    <p className="text-xs sm:text-sm font-medium text-foreground truncate">
+                      {result.name}
+                    </p>
+                    <div className="mt-1 flex items-center justify-between text-[11px] sm:text-xs text-muted-foreground">
                       <span className="truncate">
                         {result.category ? getCategoryTranslation(result.category) : ''}
                       </span>
@@ -154,8 +156,8 @@ export const SearchResults: React.FC<SearchResultsProps> = React.memo(
 
         {storeResults.length > 0 && (
           <div>
-            <div className="flex items-center gap-2 mb-4">
-              <span className="text-xs uppercase tracking-[0.3em] text-muted-foreground">
+            <div className="flex items-center gap-2 mb-3 sm:mb-4">
+              <span className="text-xs uppercase tracking-[0.2em] sm:tracking-[0.3em] text-muted-foreground">
                 {t('search.suggestedStores', 'Stores')}
               </span>
             </div>
@@ -169,10 +171,10 @@ export const SearchResults: React.FC<SearchResultsProps> = React.memo(
                 <motion.button
                   key={`store-${result.id}`}
                   onClick={() => onResultClick({ id: result.id, type: result.type })}
-                  className="w-full p-3 flex items-center gap-3 rounded-xl border border-border bg-white hover:bg-muted/40 transition-colors text-left"
+                  className="w-full p-2.5 sm:p-3 flex items-center gap-3 rounded-xl border border-border bg-white hover:bg-muted/40 transition-colors text-left"
                   variants={itemVariants}
                 >
-                  <div className="w-12 h-12 rounded-lg overflow-hidden flex-shrink-0 border border-border bg-muted">
+                  <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-lg overflow-hidden flex-shrink-0 border border-border bg-muted">
                     {result.logo_url ? (
                       <Image
                         src={convertS3UrlToHttps(result.logo_url)}
@@ -190,7 +192,7 @@ export const SearchResults: React.FC<SearchResultsProps> = React.memo(
                   </div>
                   <div className="flex-1 min-w-0">
                     <p className="text-sm font-medium text-foreground truncate">{result.name}</p>
-                    <p className="text-xs text-muted-foreground">
+                    <p className="text-[11px] sm:text-xs text-muted-foreground">
                       {result.product_count !== undefined
                         ? `${result.product_count} ${t('search.products', 'products')}`
                         : t('search.viewStore', 'View store')}

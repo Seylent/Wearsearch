@@ -14,6 +14,7 @@ import {
 import { SEOTextSection } from '@/components/seo/SEOTextSection';
 import { fetchBackendJson } from '@/lib/backendFetch';
 import { PresignedImage } from '@/components/common/PresignedImage';
+import Link from 'next/link';
 import { getServerLanguage } from '@/utils/languageStorage';
 
 export const revalidate = 3600;
@@ -68,14 +69,14 @@ const resolvePresignedUrl = async (value?: string): Promise<string | undefined> 
 };
 
 interface CategoryPageProps {
-  params: {
+  params: Promise<{
     slug: string;
-  };
+  }>;
 }
 
 // Генерація metadata для SEO
 export async function generateMetadata({ params }: CategoryPageProps): Promise<Metadata> {
-  const { slug } = params;
+  const { slug } = await params;
 
   try {
     const lang = await getServerLanguage();
@@ -121,7 +122,7 @@ export async function generateMetadata({ params }: CategoryPageProps): Promise<M
       openGraph: {
         title: categorySeoTitle || categoryName,
         description: categorySeoDescription || categoryDescription,
-        images: categoryImageUrl ? [categoryImageUrl] : [],
+        images: categoryImageUrl ? [categoryImageUrl] : [`${siteUrl}/og-image.svg`],
         type: 'website',
         siteName: 'Wearsearch',
         url: canonicalUrl,
@@ -130,7 +131,7 @@ export async function generateMetadata({ params }: CategoryPageProps): Promise<M
         card: 'summary_large_image',
         title: categorySeoTitle || categoryName,
         description: categorySeoDescription || categoryDescription,
-        images: categoryImageUrl ? [categoryImageUrl] : [],
+        images: categoryImageUrl ? [categoryImageUrl] : [`${siteUrl}/og-image.svg`],
       },
       robots: {
         index: true,
@@ -149,7 +150,7 @@ export async function generateMetadata({ params }: CategoryPageProps): Promise<M
 
 // Основний компонент сторінки
 export default async function CategoryPage({ params }: Readonly<CategoryPageProps>) {
-  const { slug } = params;
+  const { slug } = await params;
 
   try {
     const lang = await getServerLanguage();
@@ -333,6 +334,24 @@ export default async function CategoryPage({ params }: Readonly<CategoryPageProp
           )}
 
           {/* SEO-текст ПІД списком товарів (згідно ТЗ) */}
+          <section className="mt-12 rounded-3xl border border-foreground/10 p-6 sm:p-8">
+            <h2 className="text-xl sm:text-2xl font-semibold mb-4">Shop by gender</h2>
+            <div className="grid gap-3 sm:grid-cols-3">
+              {[
+                { slug: 'men', label: 'Men' },
+                { slug: 'women', label: 'Women' },
+                { slug: 'unisex', label: 'Unisex' },
+              ].map(item => (
+                <Link
+                  key={item.slug}
+                  href={`/gender/${item.slug}`}
+                  className="rounded-2xl border border-foreground/10 px-4 py-3 text-sm font-medium text-foreground hover:bg-muted/40 transition"
+                >
+                  {item.label}
+                </Link>
+              ))}
+            </div>
+          </section>
           {categorySeoText && (
             <SEOTextSection
               title={`Все про ${categoryName.toLowerCase()}`}

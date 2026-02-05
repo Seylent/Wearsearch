@@ -676,7 +676,7 @@ const ProductDetail = ({ initialDetailData, initialCurrency = 'UAH' }: ProductDe
 
   return (
     <div className="min-h-screen text-earth font-sans">
-      <div className="max-w-[1800px] mx-auto px-6 md:px-12 lg:px-16 py-20 pt-28">
+      <div className="max-w-[1800px] mx-auto px-4 sm:px-6 md:px-12 lg:px-16 py-14 sm:py-20 pt-24 sm:pt-28">
         {/* Breadcrumbs */}
         <Breadcrumbs
           items={[
@@ -717,9 +717,9 @@ const ProductDetail = ({ initialDetailData, initialCurrency = 'UAH' }: ProductDe
         </div>
 
         {/* Product Layout - Two Columns (big image, right sidebar) */}
-        <div className="grid grid-cols-1 lg:grid-cols-[1fr,380px] gap-10 lg:gap-16 mb-20 items-start">
+        <div className="grid grid-cols-1 lg:grid-cols-[1fr,380px] gap-6 sm:gap-10 lg:gap-16 mb-12 sm:mb-20 items-start">
           {/* Left: Image & Details */}
-          <div className="space-y-8">
+          <div className="space-y-6 sm:space-y-8">
             {/* Image Section */}
             <div className="relative animate-fade-in">
               <div className="relative rounded-3xl overflow-hidden border border-border bg-muted/40">
@@ -737,37 +737,37 @@ const ProductDetail = ({ initialDetailData, initialCurrency = 'UAH' }: ProductDe
               )}
 
               {/* Title */}
-              <h1 className="font-serif text-4xl sm:text-5xl md:text-6xl lg:text-7xl tracking-tight leading-[0.95] mb-6">
+              <h1 className="font-serif text-3xl sm:text-5xl md:text-6xl lg:text-7xl tracking-tight leading-[0.95] mb-5 sm:mb-6">
                 {product.name}
               </h1>
 
-              <div className="flex flex-wrap items-center gap-3 mb-8">
+              <div className="flex flex-wrap items-center gap-2 sm:gap-3 mb-6 sm:mb-8">
                 <FavoriteButton
                   productId={String(id)}
                   variant="ghost"
-                  className="h-11 w-11 rounded-full border border-earth text-earth hover:bg-earth hover:text-cream"
+                  className="h-10 w-10 sm:h-11 sm:w-11 rounded-full border border-earth text-earth hover:bg-earth hover:text-cream"
                 />
                 <AddToWishlistButton
                   productId={String(id)}
                   productName={product.name}
-                  className="h-11 rounded-full px-5 border border-earth text-earth hover:bg-earth hover:text-cream"
+                  className="h-10 sm:h-11 rounded-full px-4 sm:px-5 border border-earth text-earth hover:bg-earth hover:text-cream"
                 />
                 <ShareButton
                   title={product.name}
                   description={product.description}
                   variant="ghost"
-                  className="h-11 w-11 rounded-full border border-earth text-earth hover:bg-earth hover:text-cream"
+                  className="h-10 w-10 sm:h-11 sm:w-11 rounded-full border border-earth text-earth hover:bg-earth hover:text-cream"
                   productImage={primaryImage}
                   productName={product.name}
                 />
               </div>
 
               {/* Details */}
-              <div className="space-y-4 mb-8">
+              <div className="space-y-3 sm:space-y-4 mb-6 sm:mb-8">
                 {product.type && (
                   <div className="flex items-center gap-2 sm:gap-3">
                     <Tag className="w-4 h-4 sm:w-5 sm:h-5 text-warm-gray flex-shrink-0" />
-                    <span className="text-xs sm:text-sm text-warm-gray uppercase tracking-[0.2em]">
+                    <span className="text-[10px] sm:text-sm text-warm-gray uppercase tracking-[0.16em] sm:tracking-[0.2em]">
                       {t('products.category')}:
                     </span>
                     <span className="text-sm sm:text-base font-medium capitalize text-earth">
@@ -778,7 +778,7 @@ const ProductDetail = ({ initialDetailData, initialCurrency = 'UAH' }: ProductDe
                 {product.color && (
                   <div className="flex items-center gap-2 sm:gap-3">
                     <Package className="w-4 h-4 sm:w-5 sm:h-5 text-warm-gray flex-shrink-0" />
-                    <span className="text-xs sm:text-sm text-warm-gray uppercase tracking-[0.2em]">
+                    <span className="text-[10px] sm:text-sm text-warm-gray uppercase tracking-[0.16em] sm:tracking-[0.2em]">
                       {t('products.color')}:
                     </span>
                     <span className="text-sm sm:text-base font-medium capitalize text-earth">
@@ -789,7 +789,7 @@ const ProductDetail = ({ initialDetailData, initialCurrency = 'UAH' }: ProductDe
                 {product.gender && (
                   <div className="flex items-center gap-2 sm:gap-3">
                     <Package className="w-4 h-4 sm:w-5 sm:h-5 text-warm-gray flex-shrink-0" />
-                    <span className="text-xs sm:text-sm text-warm-gray uppercase tracking-[0.2em]">
+                    <span className="text-[10px] sm:text-sm text-warm-gray uppercase tracking-[0.16em] sm:tracking-[0.2em]">
                       {t('products.gender')}:
                     </span>
                     <span className="text-sm sm:text-base font-medium capitalize text-earth">
@@ -800,14 +800,14 @@ const ProductDetail = ({ initialDetailData, initialCurrency = 'UAH' }: ProductDe
                 {materialLabels.length > 0 && (
                   <div className="flex items-start gap-2 sm:gap-3">
                     <Tag className="w-4 h-4 sm:w-5 sm:h-5 text-warm-gray flex-shrink-0" />
-                    <span className="text-xs sm:text-sm text-warm-gray uppercase tracking-[0.2em]">
+                    <span className="text-[10px] sm:text-sm text-warm-gray uppercase tracking-[0.16em] sm:tracking-[0.2em]">
                       {t('products.materials', 'Materials')}:
                     </span>
                     <div className="flex flex-wrap gap-2">
                       {materialLabels.map(label => (
                         <span
                           key={`material-${label}`}
-                          className="text-xs sm:text-sm px-2.5 py-1 rounded-full border border-border text-earth"
+                          className="text-[10px] sm:text-sm px-2.5 py-1 rounded-full border border-border text-earth"
                         >
                           {label}
                         </span>
@@ -818,14 +818,14 @@ const ProductDetail = ({ initialDetailData, initialCurrency = 'UAH' }: ProductDe
                 {technologyLabels.length > 0 && (
                   <div className="flex items-start gap-2 sm:gap-3">
                     <Tag className="w-4 h-4 sm:w-5 sm:h-5 text-warm-gray flex-shrink-0" />
-                    <span className="text-xs sm:text-sm text-warm-gray uppercase tracking-[0.2em]">
+                    <span className="text-[10px] sm:text-sm text-warm-gray uppercase tracking-[0.16em] sm:tracking-[0.2em]">
                       {t('products.technologies', 'Technologies')}:
                     </span>
                     <div className="flex flex-wrap gap-2">
                       {technologyLabels.map(label => (
                         <span
                           key={`technology-${label}`}
-                          className="text-xs sm:text-sm px-2.5 py-1 rounded-full border border-border text-earth"
+                          className="text-[10px] sm:text-sm px-2.5 py-1 rounded-full border border-border text-earth"
                         >
                           {label}
                         </span>
@@ -836,14 +836,14 @@ const ProductDetail = ({ initialDetailData, initialCurrency = 'UAH' }: ProductDe
                 {sizeLabels.length > 0 && (
                   <div className="flex items-start gap-2 sm:gap-3">
                     <Tag className="w-4 h-4 sm:w-5 sm:h-5 text-warm-gray flex-shrink-0" />
-                    <span className="text-xs sm:text-sm text-warm-gray uppercase tracking-[0.2em]">
+                    <span className="text-[10px] sm:text-sm text-warm-gray uppercase tracking-[0.16em] sm:tracking-[0.2em]">
                       {t('products.sizes', 'Sizes')}:
                     </span>
                     <div className="flex flex-wrap gap-2">
                       {sizeLabels.map(label => (
                         <span
                           key={`size-${label}`}
-                          className="text-xs sm:text-sm px-2.5 py-1 rounded-full border border-border text-earth"
+                          className="text-[10px] sm:text-sm px-2.5 py-1 rounded-full border border-border text-earth"
                         >
                           {label}
                         </span>
@@ -855,9 +855,13 @@ const ProductDetail = ({ initialDetailData, initialCurrency = 'UAH' }: ProductDe
 
               {/* Description */}
               {descriptionText && (
-                <div className="mb-10 p-6 rounded-2xl border border-border bg-muted/30">
-                  <h3 className="font-serif text-xl mb-3">{t('productDetail.description')}</h3>
-                  <p className="text-warm-gray leading-relaxed">{descriptionText}</p>
+                <div className="mb-8 sm:mb-10 p-4 sm:p-6 rounded-2xl border border-border bg-muted/30">
+                  <h3 className="font-serif text-lg sm:text-xl mb-2 sm:mb-3">
+                    {t('productDetail.description')}
+                  </h3>
+                  <p className="text-warm-gray leading-relaxed text-sm sm:text-base">
+                    {descriptionText}
+                  </p>
                 </div>
               )}
             </div>

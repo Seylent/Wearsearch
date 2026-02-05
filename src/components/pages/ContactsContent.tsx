@@ -120,15 +120,15 @@ const ContactsContent = () => {
     <div className="relative min-h-screen overflow-x-hidden bg-white text-foreground font-sans">
       <div className="relative z-10">
         {/* Hero Section */}
-        <section className="relative min-h-[40vh] flex items-center justify-center overflow-hidden pt-28 pb-12">
+        <section className="relative min-h-[34vh] sm:min-h-[40vh] flex items-center justify-center overflow-hidden pt-24 sm:pt-28 pb-10 sm:pb-12">
           <div className="absolute inset-0 z-0 opacity-30" aria-hidden="true">
             <NeonAbstractions />
           </div>
-          <div className="max-w-[1800px] mx-auto px-6 md:px-12 lg:px-16 relative z-10 text-center">
-            <h1 className="font-display text-5xl sm:text-6xl md:text-7xl font-bold mb-4 tracking-tight">
+          <div className="max-w-[1800px] mx-auto px-4 sm:px-6 md:px-12 lg:px-16 relative z-10 text-center">
+            <h1 className="font-display text-3xl sm:text-6xl md:text-7xl font-bold mb-3 sm:mb-4 tracking-tight">
               <span className="neon-text">{t('contacts.title', 'Contact Us')}</span>
             </h1>
-            <p className="text-lg sm:text-xl text-muted-foreground max-w-2xl mx-auto font-serif">
+            <p className="text-base sm:text-xl text-muted-foreground max-w-2xl mx-auto font-serif">
               {t(
                 'contacts.subtitle',
                 "We'd love to hear from you! Reach out via social media or email."
@@ -138,14 +138,16 @@ const ContactsContent = () => {
         </section>
 
         {/* Main Content */}
-        <section className="relative py-16 sm:py-24">
-          <div className="max-w-[1600px] mx-auto px-6 md:px-12 lg:px-16">
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-12">
+        <section className="relative py-12 sm:py-24">
+          <div className="max-w-[1600px] mx-auto px-4 sm:px-6 md:px-12 lg:px-16">
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 sm:gap-12">
               {/* Left Column - Contact Channels */}
               <div className="space-y-6">
                 <div>
-                  <h2 className="text-3xl font-bold mb-4">{t('contacts.reachUs', 'Reach Us')}</h2>
-                  <p className="text-muted-foreground mb-8 font-serif">
+                  <h2 className="text-2xl sm:text-3xl font-bold mb-3 sm:mb-4">
+                    {t('contacts.reachUs', 'Reach Us')}
+                  </h2>
+                  <p className="text-muted-foreground mb-6 sm:mb-8 font-serif text-sm sm:text-base">
                     {t(
                       'contacts.reachDescription',
                       'Choose your preferred way to connect with us. We respond to all messages within 24 hours.'
@@ -160,16 +162,18 @@ const ContactsContent = () => {
                       href={`https://t.me/${contacts.telegram.replace('@', '')}`}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="flex items-center gap-4 p-5 rounded-xl border border-black/10 bg-white/80 backdrop-blur-sm hover:bg-white hover:border-black/20 hover:shadow-[0_12px_30px_rgba(15,15,15,0.12)] transition-all duration-300 group"
+                      className="flex items-center gap-3 sm:gap-4 p-4 sm:p-5 rounded-xl border border-black/10 bg-white/80 backdrop-blur-sm hover:bg-white hover:border-black/20 hover:shadow-[0_12px_30px_rgba(15,15,15,0.12)] transition-all duration-300 group"
                     >
-                      <div className="w-14 h-14 rounded-full bg-black/5 border border-black/10 flex items-center justify-center group-hover:bg-black/10 transition-all">
-                        <Send className="w-7 h-7 text-foreground" />
+                      <div className="w-12 h-12 sm:w-14 sm:h-14 rounded-full bg-black/5 border border-black/10 flex items-center justify-center group-hover:bg-black/10 transition-all">
+                        <Send className="w-6 h-6 sm:w-7 sm:h-7 text-foreground" />
                       </div>
                       <div className="flex-1">
-                        <h3 className="font-semibold text-foreground mb-1 text-lg">
+                        <h3 className="font-semibold text-foreground mb-1 text-base sm:text-lg">
                           {t('contacts.telegram', 'Telegram')}
                         </h3>
-                        <p className="text-sm text-muted-foreground">{contacts.telegram}</p>
+                        <p className="text-xs sm:text-sm text-muted-foreground">
+                          {contacts.telegram}
+                        </p>
                       </div>
                     </a>
                   )}
@@ -179,11 +183,11 @@ const ContactsContent = () => {
                       href={`https://instagram.com/${contacts.instagram.replace('@', '')}`}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="flex items-center gap-4 p-5 rounded-xl border border-black/10 bg-white/80 backdrop-blur-sm hover:bg-white hover:border-black/20 hover:shadow-[0_12px_30px_rgba(15,15,15,0.12)] transition-all duration-300 group"
+                      className="flex items-center gap-3 sm:gap-4 p-4 sm:p-5 rounded-xl border border-black/10 bg-white/80 backdrop-blur-sm hover:bg-white hover:border-black/20 hover:shadow-[0_12px_30px_rgba(15,15,15,0.12)] transition-all duration-300 group"
                     >
-                      <div className="w-14 h-14 rounded-full bg-black/5 border border-black/10 flex items-center justify-center group-hover:bg-black/10 transition-all">
+                      <div className="w-12 h-12 sm:w-14 sm:h-14 rounded-full bg-black/5 border border-black/10 flex items-center justify-center group-hover:bg-black/10 transition-all">
                         <svg
-                          className="w-7 h-7 text-foreground"
+                          className="w-6 h-6 sm:w-7 sm:h-7 text-foreground"
                           fill="currentColor"
                           viewBox="0 0 24 24"
                         >
@@ -191,10 +195,12 @@ const ContactsContent = () => {
                         </svg>
                       </div>
                       <div className="flex-1">
-                        <h3 className="font-semibold text-foreground mb-1 text-lg">
+                        <h3 className="font-semibold text-foreground mb-1 text-base sm:text-lg">
                           {t('contacts.instagram', 'Instagram')}
                         </h3>
-                        <p className="text-sm text-muted-foreground">{contacts.instagram}</p>
+                        <p className="text-xs sm:text-sm text-muted-foreground">
+                          {contacts.instagram}
+                        </p>
                       </div>
                     </a>
                   )}
@@ -204,16 +210,18 @@ const ContactsContent = () => {
                       href={`https://tiktok.com/@${contacts.tiktok.replace('@', '')}`}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="flex items-center gap-4 p-5 rounded-xl border border-black/10 bg-white/80 backdrop-blur-sm hover:bg-white hover:border-black/20 hover:shadow-[0_12px_30px_rgba(15,15,15,0.12)] transition-all duration-300 group"
+                      className="flex items-center gap-3 sm:gap-4 p-4 sm:p-5 rounded-xl border border-black/10 bg-white/80 backdrop-blur-sm hover:bg-white hover:border-black/20 hover:shadow-[0_12px_30px_rgba(15,15,15,0.12)] transition-all duration-300 group"
                     >
-                      <div className="w-14 h-14 rounded-full bg-black/5 border border-black/10 flex items-center justify-center group-hover:bg-black/10 transition-all">
-                        <Video className="w-7 h-7 text-foreground" />
+                      <div className="w-12 h-12 sm:w-14 sm:h-14 rounded-full bg-black/5 border border-black/10 flex items-center justify-center group-hover:bg-black/10 transition-all">
+                        <Video className="w-6 h-6 sm:w-7 sm:h-7 text-foreground" />
                       </div>
                       <div className="flex-1">
-                        <h3 className="font-semibold text-foreground mb-1 text-lg">
+                        <h3 className="font-semibold text-foreground mb-1 text-base sm:text-lg">
                           {t('contacts.tiktok', 'TikTok')}
                         </h3>
-                        <p className="text-sm text-muted-foreground">{contacts.tiktok}</p>
+                        <p className="text-xs sm:text-sm text-muted-foreground">
+                          {contacts.tiktok}
+                        </p>
                       </div>
                     </a>
                   )}
@@ -221,16 +229,18 @@ const ContactsContent = () => {
                   {contacts.email && (
                     <a
                       href={`mailto:${contacts.email}`}
-                      className="flex items-center gap-4 p-5 rounded-xl border border-black/10 bg-white/80 backdrop-blur-sm hover:bg-white hover:border-black/20 hover:shadow-[0_12px_30px_rgba(15,15,15,0.12)] transition-all duration-300 group"
+                      className="flex items-center gap-3 sm:gap-4 p-4 sm:p-5 rounded-xl border border-black/10 bg-white/80 backdrop-blur-sm hover:bg-white hover:border-black/20 hover:shadow-[0_12px_30px_rgba(15,15,15,0.12)] transition-all duration-300 group"
                     >
-                      <div className="w-14 h-14 rounded-full bg-black/5 border border-black/10 flex items-center justify-center group-hover:bg-black/10 transition-all">
-                        <Mail className="w-7 h-7 text-foreground" />
+                      <div className="w-12 h-12 sm:w-14 sm:h-14 rounded-full bg-black/5 border border-black/10 flex items-center justify-center group-hover:bg-black/10 transition-all">
+                        <Mail className="w-6 h-6 sm:w-7 sm:h-7 text-foreground" />
                       </div>
                       <div className="flex-1">
-                        <h3 className="font-semibold text-foreground mb-1 text-lg">
+                        <h3 className="font-semibold text-foreground mb-1 text-base sm:text-lg">
                           {t('contacts.email', 'Електронна пошта')}
                         </h3>
-                        <p className="text-sm text-muted-foreground break-all">{contacts.email}</p>
+                        <p className="text-xs sm:text-sm text-muted-foreground break-all">
+                          {contacts.email}
+                        </p>
                       </div>
                     </a>
                   )}
@@ -238,18 +248,18 @@ const ContactsContent = () => {
               </div>
 
               {/* Right Column - Partnership Info */}
-              <div className="space-y-8">
+              <div className="space-y-6 sm:space-y-8">
                 {/* Add Your Store */}
-                <div className="p-6 rounded-xl border border-black/10 bg-white/80 backdrop-blur-sm shadow-[0_8px_24px_rgba(15,15,15,0.08)]">
-                  <div className="flex items-start gap-4 mb-4">
-                    <div className="w-12 h-12 rounded-full bg-black/5 border border-black/10 flex items-center justify-center flex-shrink-0">
-                      <Store className="w-6 h-6 text-foreground" />
+                <div className="p-4 sm:p-6 rounded-xl border border-black/10 bg-white/80 backdrop-blur-sm shadow-[0_8px_24px_rgba(15,15,15,0.08)]">
+                  <div className="flex items-start gap-3 sm:gap-4 mb-3 sm:mb-4">
+                    <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-full bg-black/5 border border-black/10 flex items-center justify-center flex-shrink-0">
+                      <Store className="w-5 h-5 sm:w-6 sm:h-6 text-foreground" />
                     </div>
                     <div>
-                      <h3 className="text-xl font-bold mb-2">
+                      <h3 className="text-lg sm:text-xl font-bold mb-2">
                         {t('contacts.addStore', 'Add Your Store')}
                       </h3>
-                      <p className="text-muted-foreground">
+                      <p className="text-muted-foreground text-sm sm:text-base">
                         {t(
                           'contacts.addStoreDescription',
                           'Are you a fashion retailer? Partner with us to showcase your products to thousands of shoppers. We help you reach more customers and grow your business.'
@@ -257,7 +267,7 @@ const ContactsContent = () => {
                       </p>
                     </div>
                   </div>
-                  <div className="space-y-2 text-sm text-muted-foreground ml-16">
+                  <div className="space-y-2 text-xs sm:text-sm text-muted-foreground ml-0 sm:ml-16">
                     <p>✓ {t('contacts.benefit1', 'Free listing for your store')}</p>
                     <p>✓ {t('contacts.benefit2', 'Reach targeted fashion audience')}</p>
                     <p>✓ {t('contacts.benefit3', 'Easy product management')}</p>
@@ -266,16 +276,16 @@ const ContactsContent = () => {
                 </div>
 
                 {/* Suggestions */}
-                <div className="p-6 rounded-xl border border-black/10 bg-white/80 backdrop-blur-sm shadow-[0_8px_24px_rgba(15,15,15,0.08)]">
-                  <div className="flex items-start gap-4 mb-4">
-                    <div className="w-12 h-12 rounded-full bg-black/5 border border-black/10 flex items-center justify-center flex-shrink-0">
-                      <Lightbulb className="w-6 h-6 text-foreground" />
+                <div className="p-4 sm:p-6 rounded-xl border border-black/10 bg-white/80 backdrop-blur-sm shadow-[0_8px_24px_rgba(15,15,15,0.08)]">
+                  <div className="flex items-start gap-3 sm:gap-4 mb-3 sm:mb-4">
+                    <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-full bg-black/5 border border-black/10 flex items-center justify-center flex-shrink-0">
+                      <Lightbulb className="w-5 h-5 sm:w-6 sm:h-6 text-foreground" />
                     </div>
                     <div>
-                      <h3 className="text-xl font-bold mb-2">
+                      <h3 className="text-lg sm:text-xl font-bold mb-2">
                         {t('contacts.suggestions', 'Suggestions & Feedback')}
                       </h3>
-                      <p className="text-muted-foreground">
+                      <p className="text-muted-foreground text-sm sm:text-base">
                         {t(
                           'contacts.suggestionsDescription',
                           'Have an idea to make WearSearch better? We love hearing from our users! Share your suggestions, report bugs, or request new features.'
@@ -283,7 +293,7 @@ const ContactsContent = () => {
                       </p>
                     </div>
                   </div>
-                  <div className="space-y-2 text-sm text-muted-foreground ml-16">
+                  <div className="space-y-2 text-xs sm:text-sm text-muted-foreground ml-0 sm:ml-16">
                     <p>• {t('contacts.feedback1', 'Feature requests')}</p>
                     <p>• {t('contacts.feedback2', 'Bug reports')}</p>
                     <p>• {t('contacts.feedback3', 'UI/UX improvements')}</p>
@@ -292,8 +302,8 @@ const ContactsContent = () => {
                 </div>
 
                 {/* Response Time */}
-                <div className="p-4 rounded-lg bg-white/80 border border-black/10">
-                  <p className="text-sm text-center text-muted-foreground">
+                <div className="p-3 sm:p-4 rounded-lg bg-white/80 border border-black/10">
+                  <p className="text-xs sm:text-sm text-center text-muted-foreground">
                     ⏱️ {t('contacts.responseTime', 'We typically respond within 24 hours')}
                   </p>
                 </div>

@@ -135,10 +135,12 @@ export const handleApiError = (error: unknown): ApiError => {
       getString(v1Error, 'message') ??
       getString(responseData, 'message') ??
       getString(responseData, 'error') ??
-      axiosError.message ??
-      'An unexpected error occurred';
+      axiosError.message;
 
-    return new ApiError(message, status, axiosError.code, errorCode);
+    // Ensure we always have a meaningful message
+    const finalMessage = message || (status ? `HTTP ${status} error` : 'Network error');
+
+    return new ApiError(finalMessage, status, axiosError.code, errorCode);
   }
 
   // Handle standard Error objects

@@ -23,13 +23,13 @@ const toOptionalString = (value: unknown): string | undefined =>
   typeof value === 'string' ? value : undefined;
 
 interface StorePageProps {
-  params: {
+  params: Promise<{
     id: string;
-  };
+  }>;
 }
 
 export async function generateMetadata({ params }: StorePageProps): Promise<Metadata> {
-  const { id } = params;
+  const { id } = await params;
   const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://wearsearch.com';
 
   try {
@@ -80,7 +80,7 @@ export async function generateMetadata({ params }: StorePageProps): Promise<Meta
       openGraph: {
         title: storeSeoTitle || storeName,
         description: storeDescription,
-        images: storeLogoUrl ? [storeLogoUrl] : [],
+        images: storeLogoUrl ? [storeLogoUrl] : [`${siteUrl}/og-image.svg`],
         type: 'website',
         siteName: 'Wearsearch',
         url: canonicalUrl,
@@ -89,7 +89,7 @@ export async function generateMetadata({ params }: StorePageProps): Promise<Meta
         card: 'summary_large_image',
         title: storeSeoTitle || storeName,
         description: storeDescription,
-        images: storeLogoUrl ? [storeLogoUrl] : [],
+        images: storeLogoUrl ? [storeLogoUrl] : [`${siteUrl}/og-image.svg`],
       },
       robots: { index: true, follow: true },
     };
@@ -104,7 +104,7 @@ export async function generateMetadata({ params }: StorePageProps): Promise<Meta
 }
 
 export default async function StoreDetailPage({ params }: StorePageProps) {
-  const { id } = params;
+  const { id } = await params;
   let storeStructuredData: Record<string, unknown> | null = null;
   let breadcrumbData: Record<string, unknown> | null = null;
 

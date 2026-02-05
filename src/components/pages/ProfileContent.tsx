@@ -223,27 +223,27 @@ const Profile = () => {
   return (
     <div className="min-h-screen text-foreground">
       {/* Hero Section */}
-      <section className="relative min-h-[35vh] flex items-center justify-center overflow-hidden pt-28 pb-8">
-        <div className="max-w-[1800px] mx-auto px-6 md:px-12 lg:px-16 relative z-10 text-center">
-          <div className="inline-flex items-center gap-2 px-5 py-2.5 glass-card-strong rounded-full mb-6">
+      <section className="relative min-h-[32vh] sm:min-h-[35vh] flex items-center justify-center overflow-hidden pt-24 sm:pt-28 pb-6 sm:pb-8">
+        <div className="max-w-[1800px] mx-auto px-4 sm:px-6 md:px-12 lg:px-16 relative z-10 text-center">
+          <div className="inline-flex items-center gap-2 px-4 sm:px-5 py-2 glass-card-strong rounded-full mb-5 sm:mb-6">
             <Sparkles className="w-3 h-3" />
-            <span className="text-xs text-foreground/80 tracking-wider uppercase font-medium">
+            <span className="text-[10px] sm:text-xs text-foreground/80 tracking-[0.16em] sm:tracking-wider uppercase font-medium">
               {t('profile.accountSettings', 'Account Settings')}
             </span>
           </div>
 
-          <h1 className="font-display text-4xl sm:text-5xl md:text-6xl font-bold mb-3 tracking-tight">
+          <h1 className="font-display text-3xl sm:text-5xl md:text-6xl font-bold mb-2 sm:mb-3 tracking-tight">
             {t('profile.myAccount')} <span className="neon-text">{t('profile.title')}</span>
           </h1>
 
-          <p className="text-lg text-muted-foreground">{email}</p>
+          <p className="text-sm sm:text-lg text-muted-foreground break-all">{email}</p>
         </div>
       </section>
 
-      <main className="max-w-[1800px] mx-auto px-6 md:px-12 lg:px-16 pb-16">
+      <main className="max-w-[1800px] mx-auto px-4 sm:px-6 md:px-12 lg:px-16 pb-12 sm:pb-16">
         <div className="max-w-2xl mx-auto">
           {/* Logout Button */}
-          <div className="flex justify-end mb-6">
+          <div className="flex justify-end mb-4 sm:mb-6">
             <Button
               variant="pillOutline"
               onClick={handleLogout}
@@ -256,36 +256,36 @@ const Profile = () => {
           </div>
 
           <Tabs defaultValue="profile" className="w-full">
-            <TabsList className="grid w-full grid-cols-3 glass-card p-1 rounded-xl mb-8">
+            <TabsList className="grid w-full grid-cols-3 gap-1 glass-card p-1 rounded-xl mb-6 sm:mb-8">
               <TabsTrigger
                 value="profile"
-                className="data-[state=active]:bg-foreground data-[state=active]:text-background rounded-lg transition-all"
+                className="data-[state=active]:bg-foreground data-[state=active]:text-background rounded-lg transition-all text-[11px] sm:text-sm"
               >
-                <User className="w-4 h-4 mr-2" />
+                <User className="w-4 h-4 mr-2 hidden sm:inline" />
                 {t('profile.profileInfo')}
               </TabsTrigger>
               <TabsTrigger
                 value="password"
-                className="data-[state=active]:bg-foreground data-[state=active]:text-background rounded-lg transition-all"
+                className="data-[state=active]:bg-foreground data-[state=active]:text-background rounded-lg transition-all text-[11px] sm:text-sm"
               >
-                <Lock className="w-4 h-4 mr-2" />
+                <Lock className="w-4 h-4 mr-2 hidden sm:inline" />
                 {t('profile.changePassword')}
               </TabsTrigger>
               <TabsTrigger
                 value="danger"
-                className="data-[state=active]:bg-destructive data-[state=active]:text-destructive-foreground rounded-lg transition-all"
+                className="data-[state=active]:bg-destructive data-[state=active]:text-destructive-foreground rounded-lg transition-all text-[11px] sm:text-sm"
               >
-                <Trash2 className="w-4 h-4 mr-2" />
+                <Trash2 className="w-4 h-4 mr-2 hidden sm:inline" />
                 {t('profile.dangerZone')}
               </TabsTrigger>
             </TabsList>
 
             <TabsContent value="profile">
-              <div className="p-8 rounded-2xl glass-card">
-                <h2 className="font-display text-xl font-semibold mb-6">
+              <div className="p-5 sm:p-8 rounded-2xl glass-card">
+                <h2 className="font-display text-lg sm:text-xl font-semibold mb-4 sm:mb-6">
                   {t('profile.profileInfo')}
                 </h2>
-                <form onSubmit={handleUpdateProfile} className="space-y-6">
+                <form onSubmit={handleUpdateProfile} className="space-y-5">
                   <div className="space-y-2">
                     <Label htmlFor="email" className="text-sm font-medium">
                       {t('auth.email')}
@@ -295,7 +295,7 @@ const Profile = () => {
                       type="email"
                       value={email}
                       disabled
-                      className="h-12 bg-card/30 border-border/30 rounded-xl text-muted-foreground"
+                      className="h-11 sm:h-12 bg-card/30 border-border/30 rounded-xl text-muted-foreground"
                     />
                     <p className="text-xs text-muted-foreground">
                       {t('profile.emailCannotBeChanged')}
@@ -313,7 +313,7 @@ const Profile = () => {
                       onChange={e => setDisplayName(e.target.value)}
                       placeholder={t('profile.displayNamePlaceholder')}
                       maxLength={50}
-                      className="h-12 bg-card/50 border-border/50 rounded-xl focus-visible:ring-1 focus-visible:ring-foreground/30"
+                      className="h-11 sm:h-12 bg-card/50 border-border/50 rounded-xl focus-visible:ring-1 focus-visible:ring-foreground/30"
                     />
                     <p className="text-xs text-muted-foreground">{t('profile.displayNameHint')}</p>
                   </div>
@@ -329,7 +329,7 @@ const Profile = () => {
                       onChange={e => setUsername(e.target.value)}
                       placeholder={t('profile.usernamePlaceholder')}
                       maxLength={30}
-                      className="h-12 bg-card/50 border-border/50 rounded-xl focus-visible:ring-1 focus-visible:ring-foreground/30"
+                      className="h-11 sm:h-12 bg-card/50 border-border/50 rounded-xl focus-visible:ring-1 focus-visible:ring-foreground/30"
                     />
                     <p className="text-xs text-muted-foreground">{t('profile.usernameHint')}</p>
                   </div>
@@ -348,11 +348,11 @@ const Profile = () => {
             </TabsContent>
 
             <TabsContent value="password">
-              <div className="p-8 rounded-2xl glass-card">
-                <h2 className="font-display text-xl font-semibold mb-6">
+              <div className="p-5 sm:p-8 rounded-2xl glass-card">
+                <h2 className="font-display text-lg sm:text-xl font-semibold mb-4 sm:mb-6">
                   {t('profile.changePassword')}
                 </h2>
-                <form onSubmit={handleChangePassword} className="space-y-6">
+                <form onSubmit={handleChangePassword} className="space-y-5">
                   <div className="space-y-2">
                     <Label htmlFor="currentPassword" className="text-sm font-medium">
                       {t('profile.currentPassword')}
@@ -364,7 +364,7 @@ const Profile = () => {
                       onChange={e => setCurrentPassword(e.target.value)}
                       placeholder={t('auth.enterPassword')}
                       required
-                      className="h-12 bg-card/50 border-border/50 rounded-xl focus-visible:ring-1 focus-visible:ring-foreground/30"
+                      className="h-11 sm:h-12 bg-card/50 border-border/50 rounded-xl focus-visible:ring-1 focus-visible:ring-foreground/30"
                     />
                   </div>
 
@@ -380,7 +380,7 @@ const Profile = () => {
                       placeholder={t('auth.enterPassword')}
                       required
                       minLength={6}
-                      className="h-12 bg-card/50 border-border/50 rounded-xl focus-visible:ring-1 focus-visible:ring-foreground/30"
+                      className="h-11 sm:h-12 bg-card/50 border-border/50 rounded-xl focus-visible:ring-1 focus-visible:ring-foreground/30"
                     />
                   </div>
 
@@ -396,7 +396,7 @@ const Profile = () => {
                       placeholder={t('auth.confirmPassword')}
                       required
                       minLength={6}
-                      className="h-12 bg-card/50 border-border/50 rounded-xl focus-visible:ring-1 focus-visible:ring-foreground/30"
+                      className="h-11 sm:h-12 bg-card/50 border-border/50 rounded-xl focus-visible:ring-1 focus-visible:ring-foreground/30"
                     />
                   </div>
 
@@ -414,24 +414,26 @@ const Profile = () => {
             </TabsContent>
 
             <TabsContent value="danger">
-              <div className="p-8 rounded-2xl glass-card border border-destructive/20">
-                <h2 className="font-display text-xl font-semibold mb-2 text-destructive">
+              <div className="p-5 sm:p-8 rounded-2xl glass-card border border-destructive/20">
+                <h2 className="font-display text-lg sm:text-xl font-semibold mb-2 text-destructive">
                   {t('profile.deleteAccount')}
                 </h2>
-                <p className="text-sm text-muted-foreground mb-6">{t('profile.deleteWarning')}</p>
+                <p className="text-sm text-muted-foreground mb-5 sm:mb-6">
+                  {t('profile.deleteWarning')}
+                </p>
 
                 <AlertDialog open={showDeleteDialog} onOpenChange={setShowDeleteDialog}>
                   <AlertDialogTrigger asChild>
                     <Button
                       variant="destructive"
                       size="pill"
-                      className="h-12 px-8 rounded-full w-full sm:w-auto"
+                      className="h-11 sm:h-12 px-6 sm:px-8 rounded-full w-full sm:w-auto"
                     >
                       <Trash2 className="w-4 h-4 mr-2" />
                       {t('profile.deleteMyAccount')}
                     </Button>
                   </AlertDialogTrigger>
-                  <AlertDialogContent className="bg-zinc-900 border-destructive/20">
+                  <AlertDialogContent className="w-[calc(100vw-1.5rem)] sm:max-w-lg bg-zinc-900 border-destructive/20">
                     <AlertDialogHeader>
                       <AlertDialogTitle className="text-destructive">
                         {t('profile.deleteConfirmTitle')}
@@ -451,7 +453,7 @@ const Profile = () => {
                         value={deletePassword}
                         onChange={e => setDeletePassword(e.target.value)}
                         placeholder={t('auth.password')}
-                        className="h-12 bg-card/50 border-border/50 rounded-xl focus-visible:ring-1 focus-visible:ring-destructive/30"
+                        className="h-11 sm:h-12 bg-card/50 border-border/50 rounded-xl focus-visible:ring-1 focus-visible:ring-destructive/30"
                       />
                     </div>
 

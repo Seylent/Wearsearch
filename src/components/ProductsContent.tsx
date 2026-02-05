@@ -3,7 +3,7 @@
 import { useState, useEffect, useMemo, useRef, type ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
 import type { TFunction } from 'i18next';
-import { useSearchParams } from 'next/navigation';
+import { usePathname, useSearchParams } from 'next/navigation';
 import ProductCard from '@/components/ProductCard';
 import { ProductGridSkeleton } from '@/components/common/SkeletonLoader';
 import {
@@ -58,6 +58,7 @@ import type { Product } from '@/types';
 import { translateGender } from '@/utils/errorTranslation';
 import { getColorTranslation, getCategoryTranslation } from '@/utils/translations';
 import { seoApi, type SEOData } from '@/services/api/seo.api';
+import { getCollectionType } from '@/constants/collections';
 import PriceRangeFilter from '@/components/PriceRangeFilter';
 import dynamic from 'next/dynamic';
 import type { Banner } from '@/types/banner';
@@ -179,7 +180,7 @@ function buildApiFilters(args: {
 
 // Helper to avoid nested ternaries for grid classes
 function computeGridClass(columns: number): string {
-  if (columns === 2) return 'grid-cols-1 sm:grid-cols-2';
+  if (columns === 2) return 'grid-cols-2 sm:grid-cols-2';
   if (columns === 4) return 'grid-cols-2 sm:grid-cols-3 lg:grid-cols-4';
   return 'grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-6';
 }
@@ -867,7 +868,9 @@ export function ProductsContent({
   banners = [],
 }: ProductsContentProps) {
   const { t } = useTranslation();
+  const [isClient, setIsClient] = useState(false);
   const searchParamsHook = useSearchParams();
+  const pathname = usePathname();
   const { currency } = useCurrency();
   const { getCurrencySymbol } = useCurrencyConversion();
   const maxPriceLimit = getMaxPriceLimit(currency);
@@ -877,12 +880,17 @@ export function ProductsContent({
 
   // Dynamic SEO based on filters
   const [seoData, setSeoData] = useState<SEOData | null>(null);
-  const typeParam = searchParams?.get('type') || '';
+  const collectionSlug = pathname?.match(/^\/collections\/(.+?)(?:\/|$)/)?.[1];
+  const collectionType = getCollectionType(collectionSlug);
+  const typeParam = searchParams?.get('type') || collectionType || '';
   const colorParam = searchParams?.get('color') || '';
   const materialParam = searchParams?.get('material') || '';
   const technologyParam = searchParams?.get('technology') || '';
   const sizeParam = searchParams?.get('size') || '';
-  const genderParam = searchParams?.get('gender');
+  const genderParam =
+    searchParams?.get('gender') ||
+    pathname?.match(/^\/gender\/(men|women|unisex)(?:\/|$)/)?.[1] ||
+    null;
   const storeIdParam = searchParams?.get('store_id') || '';
 
   // Debounce SEO params to reduce API calls
@@ -931,6 +939,10 @@ export function ProductsContent({
     debouncedTechnologyParam,
     debouncedSizeParam,
   ]);
+
+  useEffect(() => {
+    setIsClient(true);
+  }, []);
 
   useEffect(() => {
     if (seoData) {
@@ -1242,14 +1254,14 @@ export function ProductsContent({
 
   return (
     <div className="min-h-screen">
-      <main className="w-full px-6 md:px-12 lg:px-16 py-8 pt-24 sm:pt-28">
+      <main className="w-full px-4 sm:px-6 md:px-12 lg:px-16 py-6 sm:py-8 pt-24 sm:pt-28">
         <div className="max-w-[1800px] mx-auto">
-          <div className="flex flex-col md:flex-row justify-between items-start md:items-end gap-6 mb-8">
+          <div className="flex flex-col md:flex-row justify-between items-start md:items-end gap-4 sm:gap-6 mb-6 sm:mb-8">
             <div>
-              <h1 className="text-3xl sm:text-4xl md:text-5xl font-display font-bold text-foreground mb-4 neon-text">
+              <h1 className="text-2xl sm:text-4xl md:text-5xl font-display font-bold text-foreground mb-3 sm:mb-4 neon-text">
                 {pageHeading}
               </h1>
-              <p className="text-muted-foreground max-w-2xl text-lg neon-description font-serif">
+              <p className="text-muted-foreground max-w-2xl text-base sm:text-lg neon-description font-serif">
                 {pageDescription}
               </p>
             </div>
@@ -1261,7 +1273,7 @@ export function ProductsContent({
             </div>
           )}
 
-          <div className="sticky top-[72px] rounded-3xl z-30 bg-background/85 backdrop-blur-xl border border-earth/20 p-4 mb-8 shadow-2xl transition-all duration-300">
+          <div className="sticky top-[64px] sm:top-[72px] rounded-2xl sm:rounded-3xl z-30 bg-background/85 backdrop-blur-xl border border-earth/20 p-3 sm:p-4 mb-6 sm:mb-8 shadow-2xl transition-all duration-300">
             <div className="flex flex-col gap-4">
               <div className="flex flex-col lg:flex-row gap-4 items-stretch lg:items-center justify-between">
                 {/* Search with animated border */}
@@ -1286,91 +1298,109 @@ export function ProductsContent({
                 </div>
 
                 <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
-                  {/* Filter Dialog */}
-                  <Dialog open={filterOpen} onOpenChange={setFilterOpen} modal={false}>
-                    <DialogTrigger asChild>
+                  {isClient ? (
+                    <>
+                      {/* Filter Dialog */}
+                      <Dialog open={filterOpen} onOpenChange={setFilterOpen} modal={false}>
+                        <DialogTrigger asChild>
+                          <Button
+                            variant={isFilterActive ? 'default' : 'outline'}
+                            className={`h-11 px-4 gap-2 rounded-full w-full sm:w-auto relative overflow-hidden border border-earth/20 transition-all duration-150 touch-manipulation active:scale-95 ${
+                              isFilterActive
+                                ? 'bg-sand/40 text-earth border-earth/40'
+                                : 'bg-background text-warm-gray hover:text-earth hover:border-earth/40'
+                            }`}
+                          >
+                            <Filter className="w-4 h-4" />
+                            <span>{t('products.filters')}</span>
+                            {isFilterActive && (
+                              <div className="absolute top-2 right-2 w-2 h-2 rounded-full bg-primary animate-pulse" />
+                            )}
+                          </Button>
+                        </DialogTrigger>
+                        <DialogContent className="w-[calc(100vw-1.5rem)] sm:max-w-[425px] overflow-hidden flex flex-col max-h-[85svh] sm:max-h-[90vh] rounded-2xl sm:rounded-3xl border border-earth/20 bg-background/95 text-earth">
+                          <DialogHeader>
+                            <DialogTitle>{t('products.filters')}</DialogTitle>
+                            <DialogDescription className="text-warm-gray">
+                              {t(
+                                'products.filtersDescription',
+                                'Оберіть параметри для фільтрації товарів'
+                              )}
+                            </DialogDescription>
+                          </DialogHeader>
+                          <div className="flex-1 overflow-y-auto pr-2">
+                            <FiltersDialogContent
+                              t={t}
+                              visibleColors={visibleColors}
+                              colors={colors}
+                              showAllColors={showAllColors}
+                              setShowAllColors={setShowAllColors}
+                              visibleCategories={visibleCategories}
+                              categories={categories}
+                              categoryLabels={categoryLabels}
+                              showAllCategories={showAllCategories}
+                              setShowAllCategories={setShowAllCategories}
+                              COMPACT_LIMIT={COMPACT_LIMIT}
+                              genders={genders}
+                              materials={materials}
+                              visibleMaterials={visibleMaterials}
+                              showAllMaterials={showAllMaterials}
+                              setShowAllMaterials={setShowAllMaterials}
+                              technologies={technologies}
+                              visibleTechnologies={visibleTechnologies}
+                              showAllTechnologies={showAllTechnologies}
+                              setShowAllTechnologies={setShowAllTechnologies}
+                              sizes={sizes}
+                              visibleSizes={visibleSizes}
+                              showAllSizes={showAllSizes}
+                              setShowAllSizes={setShowAllSizes}
+                              filters={filters}
+                              brands={brands}
+                              brandSearchQuery={brandSearchQuery}
+                              setBrandSearchQuery={setBrandSearchQuery}
+                              setCurrentPage={setCurrentPage}
+                              getCurrencySymbol={getCurrencySymbol}
+                              currency={currency}
+                              setFilterOpen={setFilterOpen}
+                            />
+                          </div>
+                        </DialogContent>
+                      </Dialog>
+
+                      {/* Sort Select */}
+                      <Select
+                        value={sort.sortBy}
+                        onValueChange={value => {
+                          sort.setSortBy(value as SortOption);
+                          setCurrentPage(1);
+                        }}
+                      >
+                        <SelectTrigger className="w-full sm:w-[220px] h-11 bg-background/60 border-earth/20 rounded-full text-earth hover:text-earth hover:border-earth/40">
+                          <SelectValue placeholder={t('products.sortBy')} />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="default">{t('products.sortDefault')}</SelectItem>
+                          <SelectItem value="price_asc">{t('products.priceAsc')}</SelectItem>
+                          <SelectItem value="price_desc">{t('products.priceDesc')}</SelectItem>
+                          <SelectItem value="newest">{t('products.newest')}</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </>
+                  ) : (
+                    <>
                       <Button
-                        variant={isFilterActive ? 'default' : 'outline'}
-                        className={`h-11 px-4 gap-2 rounded-full w-full sm:w-auto relative overflow-hidden border border-earth/20 transition-all duration-150 touch-manipulation active:scale-95 ${
-                          isFilterActive
-                            ? 'bg-sand/40 text-earth border-earth/40'
-                            : 'bg-background text-warm-gray hover:text-earth hover:border-earth/40'
-                        }`}
+                        variant="outline"
+                        className="h-11 px-4 gap-2 rounded-full w-full sm:w-auto border border-earth/20 bg-background text-warm-gray"
+                        disabled
                       >
                         <Filter className="w-4 h-4" />
-                        <span className="hidden sm:inline">{t('products.filters')}</span>
-                        {isFilterActive && (
-                          <div className="absolute top-2 right-2 w-2 h-2 rounded-full bg-primary animate-pulse" />
-                        )}
+                        <span>{t('products.filters')}</span>
                       </Button>
-                    </DialogTrigger>
-                    <DialogContent className="sm:max-w-[425px] overflow-hidden flex flex-col max-h-[90vh] rounded-3xl border border-earth/20 bg-background/95 text-earth">
-                      <DialogHeader>
-                        <DialogTitle>{t('products.filters')}</DialogTitle>
-                        <DialogDescription className="text-warm-gray">
-                          {t(
-                            'products.filtersDescription',
-                            'Оберіть параметри для фільтрації товарів'
-                          )}
-                        </DialogDescription>
-                      </DialogHeader>
-                      <div className="flex-1 overflow-y-auto pr-2">
-                        <FiltersDialogContent
-                          t={t}
-                          visibleColors={visibleColors}
-                          colors={colors}
-                          showAllColors={showAllColors}
-                          setShowAllColors={setShowAllColors}
-                          visibleCategories={visibleCategories}
-                          categories={categories}
-                          categoryLabels={categoryLabels}
-                          showAllCategories={showAllCategories}
-                          setShowAllCategories={setShowAllCategories}
-                          COMPACT_LIMIT={COMPACT_LIMIT}
-                          genders={genders}
-                          materials={materials}
-                          visibleMaterials={visibleMaterials}
-                          showAllMaterials={showAllMaterials}
-                          setShowAllMaterials={setShowAllMaterials}
-                          technologies={technologies}
-                          visibleTechnologies={visibleTechnologies}
-                          showAllTechnologies={showAllTechnologies}
-                          setShowAllTechnologies={setShowAllTechnologies}
-                          sizes={sizes}
-                          visibleSizes={visibleSizes}
-                          showAllSizes={showAllSizes}
-                          setShowAllSizes={setShowAllSizes}
-                          filters={filters}
-                          brands={brands}
-                          brandSearchQuery={brandSearchQuery}
-                          setBrandSearchQuery={setBrandSearchQuery}
-                          setCurrentPage={setCurrentPage}
-                          getCurrencySymbol={getCurrencySymbol}
-                          currency={currency}
-                          setFilterOpen={setFilterOpen}
-                        />
+                      <div className="w-full sm:w-[220px] h-11 px-4 rounded-full border border-earth/20 bg-background/60 text-warm-gray flex items-center">
+                        {t('products.sortBy')}
                       </div>
-                    </DialogContent>
-                  </Dialog>
-
-                  {/* Sort Select */}
-                  <Select
-                    value={sort.sortBy}
-                    onValueChange={value => {
-                      sort.setSortBy(value as SortOption);
-                      setCurrentPage(1);
-                    }}
-                  >
-                    <SelectTrigger className="w-full sm:w-[220px] h-11 bg-background/60 border-earth/20 rounded-full text-earth hover:text-earth hover:border-earth/40">
-                      <SelectValue placeholder={t('products.sortBy')} />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="default">{t('products.sortDefault')}</SelectItem>
-                      <SelectItem value="price_asc">{t('products.priceAsc')}</SelectItem>
-                      <SelectItem value="price_desc">{t('products.priceDesc')}</SelectItem>
-                      <SelectItem value="newest">{t('products.newest')}</SelectItem>
-                    </SelectContent>
-                  </Select>
+                    </>
+                  )}
 
                   {/* View Layout Toggle */}
                   <div className="hidden sm:flex bg-background/60 p-1 rounded-full border border-earth/20">

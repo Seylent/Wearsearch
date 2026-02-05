@@ -8,7 +8,6 @@ import React, { useEffect } from 'react';
 import { X } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
-import { lockBodyScroll, unlockBodyScroll } from '@/lib/scrollLock';
 
 interface BottomSheetProps {
   open: boolean;
@@ -25,21 +24,6 @@ export const BottomSheet: React.FC<BottomSheetProps> = ({
   children,
   className,
 }) => {
-  // Prevent body scroll when sheet is open
-  useEffect(() => {
-    if (open) {
-      lockBodyScroll();
-    } else {
-      unlockBodyScroll();
-    }
-
-    return () => {
-      if (open) {
-        unlockBodyScroll();
-      }
-    };
-  }, [open]);
-
   // Close on escape key
   useEffect(() => {
     const handleEscape = (e: KeyboardEvent) => {

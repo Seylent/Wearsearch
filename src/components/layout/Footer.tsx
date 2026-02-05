@@ -3,14 +3,24 @@
 import Image from 'next/image';
 import Link from 'next/link';
 import { useTranslation } from 'react-i18next';
+import { COLLECTION_SLUGS, getCollectionConfig } from '@/constants/collections';
 
 const Footer = () => {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
+  const locale = i18n.language === 'en' ? 'en' : 'uk';
+  const collectionLinks = COLLECTION_SLUGS.map(slug => {
+    const config = getCollectionConfig(slug);
+    return {
+      slug,
+      label: config?.title[locale] ?? config?.title.en ?? slug,
+    };
+  });
 
   const footerLinks = {
     company: [
       { name: t('footer.about'), href: '/about' },
       { name: t('footer.contact'), href: '/contacts' },
+      { name: t('footer.stores', 'Магазини'), href: '/stores' },
     ],
     legal: [
       { name: t('footer.privacyPolicy'), href: '/privacy' },
@@ -21,7 +31,7 @@ const Footer = () => {
   return (
     <footer className="bg-transparent pt-12 sm:pt-14 pb-8 sm:pb-10">
       <div className="max-w-[1800px] mx-auto px-6 md:px-12 lg:px-16">
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-[2fr_1fr_1fr_1fr] gap-10 sm:gap-12 lg:gap-16">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-[2fr_1fr] gap-10 sm:gap-12 lg:gap-16">
           <div className="space-y-4">
             <Link
               href="/"
@@ -41,46 +51,58 @@ const Footer = () => {
             </p>
           </div>
 
-          <div>
-            <h4 className="font-serif mb-4 text-[11px] sm:text-xs tracking-[0.18em] sm:tracking-[0.25em] uppercase text-earth">
-              {t('footer.company')}
-            </h4>
-            <ul className="space-y-3">
-              {footerLinks.company.map(link => (
-                <li key={link.name}>
-                  <Link
-                    href={link.href}
-                    className="text-sm text-warm-gray hover:text-earth transition-colors select-none"
-                  >
-                    {link.name}
-                  </Link>
-                </li>
-              ))}
-            </ul>
-          </div>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-10 sm:gap-12">
+            <div>
+              <h4 className="font-serif mb-4 text-[11px] sm:text-xs tracking-[0.18em] sm:tracking-[0.25em] uppercase text-earth">
+                {t('footer.company')}
+              </h4>
+              <ul className="space-y-3">
+                {footerLinks.company.map(link => (
+                  <li key={link.name}>
+                    <Link
+                      href={link.href}
+                      className="text-sm text-warm-gray hover:text-earth transition-colors select-none"
+                    >
+                      {link.name}
+                    </Link>
+                  </li>
+                ))}
+              </ul>
+            </div>
 
-          <div>
-            <h4 className="font-serif mb-4 text-[11px] sm:text-xs tracking-[0.18em] sm:tracking-[0.25em] uppercase text-earth">
-              {t('footer.legal', 'Правова інформація')}
-            </h4>
-            <ul className="space-y-3">
-              {footerLinks.legal.map(link => (
-                <li key={link.name}>
-                  <Link
-                    href={link.href}
-                    className="text-sm text-warm-gray hover:text-earth transition-colors select-none"
-                  >
-                    {link.name}
-                  </Link>
-                </li>
-              ))}
-            </ul>
+            <div>
+              <h4 className="font-serif mb-4 text-[11px] sm:text-xs tracking-[0.18em] sm:tracking-[0.25em] uppercase text-earth">
+                {t('footer.collections', 'Collections')}
+              </h4>
+              <ul className="space-y-3">
+                {collectionLinks.map(link => (
+                  <li key={link.slug}>
+                    <Link
+                      href={`/collections/${link.slug}`}
+                      className="text-sm text-warm-gray hover:text-earth transition-colors select-none"
+                    >
+                      {link.label}
+                    </Link>
+                  </li>
+                ))}
+              </ul>
+            </div>
           </div>
         </div>
 
-        <div className="mt-10 sm:mt-12 pt-6 sm:pt-8 flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+        <div className="mt-10 sm:mt-12 pt-6 sm:pt-8 flex flex-col gap-4 border-t border-border/60">
           <div className="text-[11px] sm:text-xs uppercase tracking-[0.18em] sm:tracking-[0.2em] text-warm-gray">
             © 2026 Wearsearch
+          </div>
+          <div className="flex flex-wrap items-center gap-4 text-xs text-warm-gray">
+            <span className="uppercase tracking-[0.18em]">
+              {t('footer.legal', 'Правова інформація')}
+            </span>
+            {footerLinks.legal.map(link => (
+              <Link key={link.name} href={link.href} className="hover:text-earth transition-colors">
+                {link.name}
+              </Link>
+            ))}
           </div>
         </div>
       </div>

@@ -34,7 +34,7 @@ export function HomeContent({ products, seoData, isLoading }: Readonly<HomeConte
             <NeonAbstractions />
           </div>
 
-          <div className="max-w-[1800px] mx-auto px-6 md:px-12 lg:px-16 relative z-10">
+          <div className="max-w-[1800px] mx-auto px-4 sm:px-6 md:px-12 lg:px-16 relative z-10">
             <div className="max-w-4xl mx-auto text-center mt-4 sm:mt-16 md:mt-20">
               {/* Main headline - LCP element, render immediately */}
               <h1 className="font-display text-4xl sm:text-5xl md:text-6xl lg:text-7xl xl:text-8xl font-bold mb-4 sm:mb-6 tracking-tight">
@@ -68,7 +68,7 @@ export function HomeContent({ products, seoData, isLoading }: Readonly<HomeConte
 
         {/* New Arrivals Section */}
         <section id="products-section" className="py-12 sm:py-16 md:py-20 bg-white">
-          <div className="max-w-[1800px] mx-auto px-6 md:px-12 lg:px-16">
+          <div className="max-w-[1800px] mx-auto px-4 sm:px-6 md:px-12 lg:px-16">
             {/* Section Header */}
             <header className="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-4 sm:gap-6 mb-6 sm:mb-10">
               <div>
@@ -119,7 +119,7 @@ export function HomeContent({ products, seoData, isLoading }: Readonly<HomeConte
 
         {/* Recently Viewed Section */}
         <section className="py-8 sm:py-12 bg-white border-t border-border">
-          <div className="max-w-[1800px] mx-auto px-6 md:px-12 lg:px-16">
+          <div className="max-w-[1800px] mx-auto px-4 sm:px-6 md:px-12 lg:px-16">
             <RecentlyViewedProducts maxItems={8} showClearButton={true} />
           </div>
         </section>

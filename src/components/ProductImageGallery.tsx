@@ -42,7 +42,7 @@ export const ProductImageGallery = ({ images, productName }: Props) => {
   return (
     <>
       <div className="flex flex-col-reverse lg:flex-row gap-4">
-        <div className="flex lg:flex-col gap-3 overflow-x-auto lg:overflow-y-auto lg:w-24 scrollbar-hide">
+        <div className="flex lg:flex-col gap-3 mobile-x-scroll lg:overflow-x-visible lg:overflow-y-auto lg:w-24 scrollbar-hide">
           {activeImages.map((img, i) => (
             <button
               key={`${img}-${i}`}

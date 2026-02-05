@@ -43,12 +43,7 @@ interface FilterSectionProps {
 }
 
 // Filter Section Component
-const FilterSection: React.FC<FilterSectionProps> = ({ 
-  title, 
-  isExpanded, 
-  onToggle, 
-  children 
-}) => {
+const FilterSection: React.FC<FilterSectionProps> = ({ title, isExpanded, onToggle, children }) => {
   return (
     <div className="border-b border-zinc-800 pb-4 mb-4 last:border-b-0">
       <button
@@ -57,17 +52,9 @@ const FilterSection: React.FC<FilterSectionProps> = ({
         aria-expanded={isExpanded}
       >
         {title}
-        {isExpanded ? (
-          <ChevronUp className="w-4 h-4" />
-        ) : (
-          <ChevronDown className="w-4 h-4" />
-        )}
+        {isExpanded ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
       </button>
-      {isExpanded && (
-        <div className="mt-3 space-y-2">
-          {children}
-        </div>
-      )}
+      {isExpanded && <div className="mt-3 space-y-2">{children}</div>}
     </div>
   );
 };
@@ -76,7 +63,7 @@ const FilterPanel: React.FC<FilterPanelProps> = ({
   categories,
   brands,
   currentFilters,
-  onFilterChange
+  onFilterChange,
 }) => {
   const { t } = useTranslation();
 
@@ -97,52 +84,79 @@ const FilterPanel: React.FC<FilterPanelProps> = ({
   const toggleSection = useCallback((section: keyof typeof expandedSections) => {
     setExpandedSections(prev => ({
       ...prev,
-      [section]: !prev[section]
+      [section]: !prev[section],
     }));
   }, []);
 
   // Filter handlers
-  const handleCategoryChange = useCallback((categorySlug: string) => {
-    onFilterChange({
-      category: categorySlug === currentFilters.category ? undefined : categorySlug
-    });
-  }, [currentFilters.category, onFilterChange]);
+  const handleCategoryChange = useCallback(
+    (categorySlug: string) => {
+      onFilterChange({
+        category: categorySlug === currentFilters.category ? undefined : categorySlug,
+      });
+    },
+    [currentFilters.category, onFilterChange]
+  );
 
-  const handleBrandChange = useCallback((brandSlug: string) => {
-    onFilterChange({
-      brand: brandSlug === currentFilters.brand ? undefined : brandSlug
-    });
-  }, [currentFilters.brand, onFilterChange]);
+  const handleBrandChange = useCallback(
+    (brandSlug: string) => {
+      onFilterChange({
+        brand: brandSlug === currentFilters.brand ? undefined : brandSlug,
+      });
+    },
+    [currentFilters.brand, onFilterChange]
+  );
 
-  const handleColorChange = useCallback((color: string) => {
-    onFilterChange({
-      color: color === currentFilters.color ? undefined : color
-    });
-  }, [currentFilters.color, onFilterChange]);
+  const handleColorChange = useCallback(
+    (color: string) => {
+      onFilterChange({
+        color: color === currentFilters.color ? undefined : color,
+      });
+    },
+    [currentFilters.color, onFilterChange]
+  );
 
-  const handleGenderChange = useCallback((gender: string) => {
-    onFilterChange({
-      gender: gender === currentFilters.gender ? undefined : gender
-    });
-  }, [currentFilters.gender, onFilterChange]);
+  const handleGenderChange = useCallback(
+    (gender: string) => {
+      onFilterChange({
+        gender: gender === currentFilters.gender ? undefined : gender,
+      });
+    },
+    [currentFilters.gender, onFilterChange]
+  );
 
-  const handlePriceChange = useCallback((minPrice: string, maxPrice: string) => {
-    onFilterChange({
-      minPrice: minPrice ? Number(minPrice) : undefined,
-      maxPrice: maxPrice ? Number(maxPrice) : undefined,
-    });
-  }, [onFilterChange]);
+  const handlePriceChange = useCallback(
+    (minPrice: string, maxPrice: string) => {
+      onFilterChange({
+        minPrice: minPrice ? Number(minPrice) : undefined,
+        maxPrice: maxPrice ? Number(maxPrice) : undefined,
+      });
+    },
+    [onFilterChange]
+  );
 
-  const clearFilter = useCallback((filterKey: string) => {
-    onFilterChange({ [filterKey]: undefined });
-  }, [onFilterChange]);
+  const clearFilter = useCallback(
+    (filterKey: string) => {
+      onFilterChange({ [filterKey]: undefined });
+    },
+    [onFilterChange]
+  );
 
   // Predefined options
   const colors = [
-    t('colors.black'), t('colors.white'), t('colors.gray'), t('colors.brown'), 
-    t('colors.beige'), t('colors.navy'), t('colors.blue'), t('colors.green'), 
-    t('colors.red'), t('colors.pink'), t('colors.purple'), t('colors.yellow'), 
-    t('colors.orange')
+    t('colors.black'),
+    t('colors.white'),
+    t('colors.gray'),
+    t('colors.brown'),
+    t('colors.beige'),
+    t('colors.navy'),
+    t('colors.blue'),
+    t('colors.green'),
+    t('colors.red'),
+    t('colors.pink'),
+    t('colors.purple'),
+    t('colors.yellow'),
+    t('colors.orange'),
   ];
 
   const genders = [
@@ -163,8 +177,8 @@ const FilterPanel: React.FC<FilterPanelProps> = ({
             <h3 className="text-sm font-medium text-white">
               {t('filters.activeFilters', 'Active Filters')} ({activeFiltersCount})
             </h3>
-            <Button 
-              variant="ghost" 
+            <Button
+              variant="ghost"
               size="sm"
               onClick={() => onFilterChange({})}
               className="text-xs text-gray-400 hover:text-white"
@@ -172,13 +186,14 @@ const FilterPanel: React.FC<FilterPanelProps> = ({
               {t('filters.clearAll', 'Clear All')}
             </Button>
           </div>
-          
+
           {/* Active Filter Tags */}
           <div className="flex flex-wrap gap-2">
             {currentFilters.category && (
               <Badge variant="secondary" className="text-xs bg-zinc-800 text-white border-zinc-700">
-                {categories.find(c => c.slug === currentFilters.category)?.name || currentFilters.category}
-                <button 
+                {categories.find(c => c.slug === currentFilters.category)?.name ||
+                  currentFilters.category}
+                <button
                   onClick={() => clearFilter('category')}
                   className="ml-1 hover:text-gray-400"
                 >
@@ -186,47 +201,39 @@ const FilterPanel: React.FC<FilterPanelProps> = ({
                 </button>
               </Badge>
             )}
-            
+
             {currentFilters.brand && (
               <Badge variant="secondary" className="text-xs bg-zinc-800 text-white border-zinc-700">
                 {brands.find(b => b.slug === currentFilters.brand)?.name || currentFilters.brand}
-                <button 
-                  onClick={() => clearFilter('brand')}
-                  className="ml-1 hover:text-gray-400"
-                >
+                <button onClick={() => clearFilter('brand')} className="ml-1 hover:text-gray-400">
                   <X className="w-3 h-3" />
                 </button>
               </Badge>
             )}
-            
+
             {currentFilters.color && (
               <Badge variant="secondary" className="text-xs bg-zinc-800 text-white border-zinc-700">
                 {currentFilters.color}
-                <button 
-                  onClick={() => clearFilter('color')}
-                  className="ml-1 hover:text-gray-400"
-                >
+                <button onClick={() => clearFilter('color')} className="ml-1 hover:text-gray-400">
                   <X className="w-3 h-3" />
                 </button>
               </Badge>
             )}
-            
+
             {currentFilters.gender && (
               <Badge variant="secondary" className="text-xs bg-zinc-800 text-white border-zinc-700">
-                {genders.find(g => g.value === currentFilters.gender)?.label || currentFilters.gender}
-                <button 
-                  onClick={() => clearFilter('gender')}
-                  className="ml-1 hover:text-gray-400"
-                >
+                {genders.find(g => g.value === currentFilters.gender)?.label ||
+                  currentFilters.gender}
+                <button onClick={() => clearFilter('gender')} className="ml-1 hover:text-gray-400">
                   <X className="w-3 h-3" />
                 </button>
               </Badge>
             )}
-            
+
             {Boolean(currentFilters.minPrice || currentFilters.maxPrice) && (
               <Badge variant="secondary" className="text-xs bg-zinc-800 text-white border-zinc-700">
                 ${currentFilters.minPrice || 0} - ${currentFilters.maxPrice || '∞'}
-                <button 
+                <button
                   onClick={() => onFilterChange({ minPrice: undefined, maxPrice: undefined })}
                   className="ml-1 hover:text-gray-400"
                 >
@@ -245,22 +252,20 @@ const FilterPanel: React.FC<FilterPanelProps> = ({
         onToggle={() => toggleSection('category')}
       >
         <div className="space-y-2">
-          {categories.map((category) => (
+          {categories.map(category => (
             <div key={category.id} className="flex items-center space-x-2">
               <Checkbox
                 id={`category-${category.id}`}
                 checked={currentFilters.category === category.slug}
                 onCheckedChange={() => handleCategoryChange(category.slug)}
               />
-              <Label 
+              <Label
                 htmlFor={`category-${category.id}`}
                 className="text-sm text-white cursor-pointer flex-1"
               >
                 {category.name}
                 {Boolean(category.productCount) && (
-                  <span className="text-xs text-gray-400 ml-1">
-                    ({category.productCount})
-                  </span>
+                  <span className="text-xs text-gray-400 ml-1">({category.productCount})</span>
                 )}
               </Label>
             </div>
@@ -281,44 +286,44 @@ const FilterPanel: React.FC<FilterPanelProps> = ({
               {t('filters.noBrands', 'No brands available')}
             </div>
           )}
-          
+
           {/* Brand Search */}
           {brands.length > 0 && (
             <Input
               type="text"
               placeholder={t('filters.searchBrand', 'Search brand...')}
               value={brandSearch}
-              onChange={(e) => setBrandSearch(e.target.value)}
+              onChange={e => setBrandSearch(e.target.value)}
               className="bg-zinc-800 border-zinc-700 text-white placeholder:text-gray-500"
             />
           )}
-          
+
           {/* Brand List */}
-          {brands.length > 0 && brands
-            .filter(brand => brand.name?.toLowerCase().includes(brandSearch.toLowerCase()))
-            .slice(0, 10)
-            .map((brand) => (
-            <div key={brand.id} className="flex items-center space-x-2">
-              <Checkbox
-                id={`brand-${brand.id}`}
-                checked={currentFilters.brand === brand.slug}
-                onCheckedChange={() => handleBrandChange(brand.slug)}
-              />
-              <Label 
-                htmlFor={`brand-${brand.id}`}
-                className="text-sm text-white cursor-pointer flex-1"
-              >
-                {brand.name}
-                {Boolean(brand.productCount) && (
-                  <span className="text-xs text-gray-400 ml-1">
-                    ({brand.productCount})
-                  </span>
-                )}
-              </Label>
-            </div>
-          ))}
-          
-          {brands.filter(brand => brand.name?.toLowerCase().includes(brandSearch.toLowerCase())).length > 10 && (
+          {brands.length > 0 &&
+            brands
+              .filter(brand => brand.name?.toLowerCase().includes(brandSearch.toLowerCase()))
+              .slice(0, 10)
+              .map(brand => (
+                <div key={brand.id} className="flex items-center space-x-2">
+                  <Checkbox
+                    id={`brand-${brand.id}`}
+                    checked={currentFilters.brand === brand.slug}
+                    onCheckedChange={() => handleBrandChange(brand.slug)}
+                  />
+                  <Label
+                    htmlFor={`brand-${brand.id}`}
+                    className="text-sm text-white cursor-pointer flex-1"
+                  >
+                    {brand.name}
+                    {Boolean(brand.productCount) && (
+                      <span className="text-xs text-gray-400 ml-1">({brand.productCount})</span>
+                    )}
+                  </Label>
+                </div>
+              ))}
+
+          {brands.filter(brand => brand.name?.toLowerCase().includes(brandSearch.toLowerCase()))
+            .length > 10 && (
             <div className="text-sm text-gray-300 text-center pt-2">
               {t('filters.showingResults', 'Showing top 10 results')}
             </div>
@@ -333,19 +338,20 @@ const FilterPanel: React.FC<FilterPanelProps> = ({
         onToggle={() => toggleSection('color')}
       >
         <div className="grid grid-cols-2 gap-2">
-          {colors.map((color) => (
+          {colors.map(color => (
             <button
               key={color}
               onClick={() => handleColorChange(color)}
               className={`
                 flex items-center space-x-2 p-2 rounded-md border text-left text-sm text-white
-                ${currentFilters.color === color 
-                  ? 'border-white bg-zinc-800' 
-                  : 'border-zinc-700 hover:border-zinc-600'
+                ${
+                  currentFilters.color === color
+                    ? 'border-white bg-zinc-800'
+                    : 'border-zinc-700 hover:border-zinc-600'
                 }
               `}
             >
-              <div 
+              <div
                 className="w-4 h-4 rounded-full border border-zinc-600"
                 style={{ backgroundColor: color.toLowerCase() }}
               />
@@ -357,19 +363,19 @@ const FilterPanel: React.FC<FilterPanelProps> = ({
 
       {/* Gender Filter */}
       <FilterSection
-        title={t('filters.gender', 'Gender')}
+        title={t('filters.genderLabel', 'Gender')}
         isExpanded={expandedSections.gender}
         onToggle={() => toggleSection('gender')}
       >
         <div className="space-y-2">
-          {genders.map((gender) => (
+          {genders.map(gender => (
             <div key={gender.value} className="flex items-center space-x-2">
               <Checkbox
                 id={`gender-${gender.value}`}
                 checked={currentFilters.gender === gender.value}
                 onCheckedChange={() => handleGenderChange(gender.value)}
               />
-              <Label 
+              <Label
                 htmlFor={`gender-${gender.value}`}
                 className="text-sm text-white cursor-pointer"
               >
@@ -392,18 +398,22 @@ const FilterPanel: React.FC<FilterPanelProps> = ({
               type="number"
               placeholder={t('filters.minPrice', 'Min')}
               value={currentFilters.minPrice || ''}
-              onChange={(e) => handlePriceChange(e.target.value, String(currentFilters.maxPrice || ''))}
+              onChange={e =>
+                handlePriceChange(e.target.value, String(currentFilters.maxPrice || ''))
+              }
               className="text-sm"
             />
             <Input
               type="number"
               placeholder={t('filters.maxPrice', 'Max')}
               value={currentFilters.maxPrice || ''}
-              onChange={(e) => handlePriceChange(String(currentFilters.minPrice || ''), e.target.value)}
+              onChange={e =>
+                handlePriceChange(String(currentFilters.minPrice || ''), e.target.value)
+              }
               className="text-sm"
             />
           </div>
-          
+
           {/* Quick Price Ranges */}
           <div className="grid grid-cols-2 gap-2">
             {[
@@ -411,10 +421,12 @@ const FilterPanel: React.FC<FilterPanelProps> = ({
               { label: '$25-50', min: 25, max: 50 },
               { label: '$50-100', min: 50, max: 100 },
               { label: 'Over $100', min: 100, max: undefined },
-            ].map((range) => (
+            ].map(range => (
               <button
                 key={range.label}
-                onClick={() => handlePriceChange(String(range.min), range.max ? String(range.max) : '')}
+                onClick={() =>
+                  handlePriceChange(String(range.min), range.max ? String(range.max) : '')
+                }
                 className="text-xs p-2 border border-zinc-700 rounded-md hover:border-zinc-600 text-white"
               >
                 {range.label}

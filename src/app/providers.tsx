@@ -6,6 +6,7 @@
 'use client';
 
 import { ReactNode, Suspense } from 'react';
+import { ThemeProvider } from 'next-themes';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { TooltipProvider } from '@/components/ui/tooltip';
 import { Toaster } from '@/components/ui/toaster';
@@ -80,22 +81,24 @@ export const AppProviders = ({ children, initialCurrency, initialLanguage }: App
   // Resource hints будуть додані через окремий компонент в layout
 
   return (
-    <QueryClientProvider client={queryClient}>
-      <Suspense fallback={null}>
-        <CurrencyProvider initialCurrency={initialCurrency}>
-          <FavoritesProvider>
-            <TooltipProvider>
-              <AuthErrorBoundary>
-                <ClientInitializer />
-                {children}
-              </AuthErrorBoundary>
-              <Toaster />
-              <Sonner />
-            </TooltipProvider>
-          </FavoritesProvider>
-        </CurrencyProvider>
-      </Suspense>
-    </QueryClientProvider>
+    <ThemeProvider attribute="class" defaultTheme="dark" enableSystem>
+      <QueryClientProvider client={queryClient}>
+        <Suspense fallback={null}>
+          <CurrencyProvider initialCurrency={initialCurrency}>
+            <FavoritesProvider>
+              <TooltipProvider>
+                <AuthErrorBoundary>
+                  <ClientInitializer />
+                  {children}
+                </AuthErrorBoundary>
+                <Toaster />
+                <Sonner />
+              </TooltipProvider>
+            </FavoritesProvider>
+          </CurrencyProvider>
+        </Suspense>
+      </QueryClientProvider>
+    </ThemeProvider>
   );
 };
 

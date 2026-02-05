@@ -182,13 +182,13 @@ export const UserRoleManagement = () => {
 
   return (
     <Card className="border border-border/50 bg-card/40 backdrop-blur-sm">
-      <CardHeader>
-        <CardTitle className="text-2xl font-bold">
+      <CardHeader className="pb-4">
+        <CardTitle className="text-xl sm:text-2xl font-bold">
           {t('admin.rolesTitle', 'User Role Management')}
         </CardTitle>
       </CardHeader>
-      <CardContent>
-        <form onSubmit={handleSubmit} className="space-y-6">
+      <CardContent className="p-5 sm:p-6">
+        <form onSubmit={handleSubmit} className="space-y-5 sm:space-y-6">
           <div className="space-y-2">
             <Label htmlFor="role-email">{t('admin.rolesEmail', 'Email')}</Label>
             <Input

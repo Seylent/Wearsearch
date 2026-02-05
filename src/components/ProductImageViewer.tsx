@@ -2,7 +2,6 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import NextImage from 'next/image';
 import { X, ChevronLeft, ChevronRight, ZoomIn } from 'lucide-react';
-import { lockBodyScroll, unlockBodyScroll } from '@/lib/scrollLock';
 
 interface ProductImageViewerProps {
   isOpen: boolean;
@@ -38,10 +37,6 @@ export const ProductImageViewer = ({
     setCurrentIndex(initialIndex);
     setZoom(1);
     zoomRef.current = 1;
-    lockBodyScroll();
-    return () => {
-      unlockBodyScroll();
-    };
   }, [isOpen, initialIndex]);
 
   useEffect(() => {
@@ -173,22 +168,24 @@ export const ProductImageViewer = ({
     >
       <div className="absolute inset-0" onClick={onClose} aria-hidden="true" />
 
-      <div className="relative z-[1] flex flex-col h-full min-h-0">
-        <div className="flex items-center justify-between px-5 sm:px-8 py-4">
+      <div className="relative z-[1] h-full min-h-0">
+        <div className="pointer-events-none absolute inset-x-0 top-0 z-20 flex items-center justify-between px-5 sm:px-8 py-4">
           <div className="text-sm text-white/60">
             {currentIndex + 1} / {allImages.length}
           </div>
           <button
             type="button"
             onClick={onClose}
-            className="inline-flex items-center justify-center w-11 h-11 rounded-full bg-white/10 hover:bg-white/20 transition"
+            className="pointer-events-auto inline-flex items-center justify-center w-11 h-11 rounded-full bg-white/10 hover:bg-white/20 transition"
             aria-label="Close"
           >
             <X className="w-5 h-5" />
           </button>
         </div>
 
-        <div className="relative flex-1 flex items-start justify-center overflow-hidden min-h-0 pt-2 sm:pt-4">
+        <div className="relative flex items-center justify-center w-full h-full overflow-hidden">
+          <div className="absolute inset-y-0 left-0 w-[12vw] min-w-[80px] bg-gradient-to-r from-black/70 to-transparent pointer-events-none" />
+          <div className="absolute inset-y-0 right-0 w-[12vw] min-w-[80px] bg-gradient-to-l from-black/70 to-transparent pointer-events-none" />
           {allImages.length > 1 && zoomRef.current === 1 && (
             <>
               <button
@@ -211,7 +208,7 @@ export const ProductImageViewer = ({
           )}
 
           <div
-            className="relative max-h-[70vh] max-w-[92vw] sm:max-w-[80vw]"
+            className="relative w-full h-full"
             onClick={handleToggleZoom}
             onTouchStart={handleTouchStart}
             onTouchMove={handleTouchMove}
@@ -225,7 +222,7 @@ export const ProductImageViewer = ({
               src={currentImage}
               alt={alt}
               fill
-              sizes="(max-width: 768px) 92vw, 80vw"
+              sizes="100vw"
               className="object-contain select-none"
               draggable={false}
               priority
@@ -244,8 +241,8 @@ export const ProductImageViewer = ({
           </div>
         </div>
 
-        <div className="px-4 sm:px-8 pb-6 flex-none">
-          <div className="flex gap-3 overflow-x-auto py-3">
+        <div className="pointer-events-none absolute inset-x-0 bottom-0 z-20 px-4 sm:px-8 pb-6">
+          <div className="pointer-events-auto flex gap-3 mobile-x-scroll py-3">
             {allImages.map((image, index) => (
               <button
                 key={`${image}-${index}`}
